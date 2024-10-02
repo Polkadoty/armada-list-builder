@@ -1,12 +1,11 @@
+/* eslint-disable @typescript-eslint/no-empty-interface */
+
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, /* CardContent */ } from "@/components/ui/card";
 import { Filter, Printer, ArrowLeft, FileText } from 'lucide-react';
 
-// interface FleetBuilderProps {
-//   faction: string;
-// }
 
 export default function FleetBuilder() {
   const [fleetName, setFleetName] = useState('Untitled Fleet');
