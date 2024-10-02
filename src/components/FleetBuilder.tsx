@@ -1,17 +1,17 @@
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, /* CardContent */ } from "@/components/ui/card";
 import { Filter, Printer, ArrowLeft, FileText } from 'lucide-react';
 
-interface FleetBuilderProps {
-  faction: string;
-}
+// interface FleetBuilderProps {
+//   faction: string;
+// }
 
-export default function FleetBuilder({ faction }: FleetBuilderProps) {
+export default function FleetBuilder() {
   const [fleetName, setFleetName] = useState('Untitled Fleet');
   const [isEditingName, setIsEditingName] = useState(false);
-  const [points, setPoints] = useState(0);
+  const [points] = useState(0);
 
   const handleNameClick = () => {
     setIsEditingName(true);
@@ -26,11 +26,9 @@ export default function FleetBuilder({ faction }: FleetBuilderProps) {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-4">
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex items-center">
-          {/* Placeholder for faction logo */}
-          <div className="w-8 h-8 bg-gray-300 rounded-full mr-2"></div>
+    <div className="max-w-4xl mx-auto">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
+        <div className="mb-2 sm:mb-0">
           {isEditingName ? (
             <Input
               value={fleetName}
@@ -40,28 +38,24 @@ export default function FleetBuilder({ faction }: FleetBuilderProps) {
               autoFocus
             />
           ) : (
-            <h1 className="text-xl font-bold cursor-pointer" onClick={handleNameClick}>
+            <h2 className="text-xl font-bold cursor-pointer" onClick={handleNameClick}>
               {fleetName}
-            </h1>
+            </h2>
           )}
         </div>
         <div className="text-xl font-bold">{points} points</div>
       </div>
 
       <Card className="mb-4">
-        <CardContent className="p-4">
-          <Button className="w-full justify-between" variant="outline">
-            ADD SHIP <Filter size={16} />
-          </Button>
-        </CardContent>
+        <Button className="w-full justify-between bg-white dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700" variant="outline">
+          ADD SHIP <Filter size={16} />
+        </Button>
       </Card>
 
       <Card className="mb-4">
-        <CardContent className="p-4">
-          <Button className="w-full justify-between" variant="outline">
-            ADD SQUADRON <Filter size={16} />
-          </Button>
-        </CardContent>
+        <Button className="w-full justify-between bg-white dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700" variant="outline">
+          ADD SQUADRON <Filter size={16} />
+        </Button>
       </Card>
 
       <div className="space-y-2 mb-4">
@@ -70,14 +64,14 @@ export default function FleetBuilder({ faction }: FleetBuilderProps) {
         <Button variant="outline" className="w-full justify-start">ADD NAVIGATION</Button>
       </div>
 
-      <div className="flex justify-between">
-        <Button variant="outline">
+      <div className="flex flex-wrap justify-between gap-2">
+        <Button variant="outline" className="flex-grow">
           <Printer className="mr-2 h-4 w-4" /> PRINT
         </Button>
-        <Button variant="outline">
+        <Button variant="outline" className="flex-grow">
           <ArrowLeft className="mr-2 h-4 w-4" /> BACK
         </Button>
-        <Button variant="outline">
+        <Button variant="outline" className="flex-grow">
           <FileText className="mr-2 h-4 w-4" /> EXPORT TEXT
         </Button>
       </div>

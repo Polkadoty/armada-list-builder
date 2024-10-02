@@ -32,8 +32,8 @@ export default function FactionSelection() {
                   width={64} 
                   height={64} 
                   className={`transition-colors duration-200 ${
-                    theme === 'dark' ? 'filter invert' : ''
-                  } ${hoveredFaction === faction.slug ? 'filter brightness-125' : ''}`}
+                    theme === 'dark' ? 'invert' : ''
+                  } ${hoveredFaction === faction.slug ? 'brightness-125' : ''}`}
                 />
               </div>
             </Link>
