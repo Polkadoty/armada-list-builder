@@ -7,7 +7,10 @@ const nextConfig = {
       use: ["@svgr/webpack"]
     });
     return config;
-  }
+  },
+  images: {
+    domains: ['a.l3n.co', 'b.l3n.co', 'api.swarmada.wiki'],
+  },
 };
 
 export default nextConfig;

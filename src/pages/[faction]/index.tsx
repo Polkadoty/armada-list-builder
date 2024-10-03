@@ -33,7 +33,7 @@ export default function FactionPage() {
         </div>
         <ThemeToggle />
       </div>
-      <FleetBuilder />
+      <FleetBuilder faction={faction as string} />
     </div>
   );
 }
