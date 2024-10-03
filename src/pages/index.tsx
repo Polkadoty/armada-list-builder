@@ -27,7 +27,14 @@ export default function Home() {
         <div className="mt-8 flex justify-center space-x-4">
           <Button variant="outline" size="sm" className="text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20">SIGN IN</Button>
           <Button variant="outline" size="sm" className="text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20">FAQ</Button>
-          <Button variant="outline" size="sm" className="text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20">DONATE</Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20"
+            onClick={() => window.open('https://ko-fi.com/polkadoty', '_blank')}
+          >
+            DONATE
+          </Button>
         </div>
       </div>
       {isWideScreen && (
