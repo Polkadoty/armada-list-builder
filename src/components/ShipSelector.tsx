@@ -32,19 +32,27 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
 
   useEffect(() => {
     const fetchShips = async () => {
-      try {
-        const response = await axios.get(`https://api.swarmada.wiki/api/ships/search?faction=${faction}`);
-        const shipData: Ship = response.data.ships;
-        const flattenedShips = Object.values(shipData).flatMap(chassis => 
-          Object.values(chassis.models).filter(model => 
-            model.faction === faction &&
-            model.points >= filter.minPoints &&
-            model.points <= filter.maxPoints
-          )
-        );
-        setShips(flattenedShips);
-      } catch (error) {
-        console.error('Error fetching ships:', error);
+      const cacheKey = `ships_${faction}`;
+      const cachedShips = localStorage.getItem(cacheKey);
+
+      if (cachedShips) {
+        setShips(JSON.parse(cachedShips));
+      } else {
+        try {
+          const response = await axios.get(`https://api.swarmada.wiki/api/ships/search?faction=${faction}`);
+          const shipData: Ship = response.data.ships;
+          const flattenedShips = Object.values(shipData).flatMap(chassis => 
+            Object.values(chassis.models).filter(model => 
+              model.faction === faction &&
+              model.points >= filter.minPoints &&
+              model.points <= filter.maxPoints
+            )
+          );
+          setShips(flattenedShips);
+          localStorage.setItem(cacheKey, JSON.stringify(flattenedShips));
+        } catch (error) {
+          console.error('Error fetching ships:', error);
+        }
       }
     };
 

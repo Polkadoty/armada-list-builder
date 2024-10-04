@@ -10,11 +10,12 @@ import { SelectedShip } from './SelectedShip';
 import { ShipFilter } from './ShipFilter';
 
 interface Ship {
-  id: string; // Add this line
+  id: string;
   name: string;
   points: number;
   cardimage: string;
   faction: string;
+  upgrades: string[];
 }
 
 export default function FleetBuilder({ faction }: { faction: string }) {
@@ -43,7 +44,11 @@ export default function FleetBuilder({ faction }: { faction: string }) {
   };
 
   const handleSelectShip = (ship: Ship) => {
-    const newShip = { ...ship, id: Date.now().toString() };
+    const newShip = { 
+      ...ship, 
+      id: Date.now().toString(),
+      upgrades: ship.upgrades || [] // Ensure upgrades are included
+    };
     setSelectedShips([...selectedShips, newShip]);
     setPoints(points + ship.points);
     setShowShipSelector(false);
