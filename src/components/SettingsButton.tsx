@@ -38,7 +38,7 @@ export function SettingsButton() {
           <div className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
             <Button
               variant="ghost"
-              className="block w-full text-left px-4 py-2 text-sm"
+              className="block w-full text-left px-4 py-2 text-sm text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
               onClick={clearCache}
             >
               Flush Cache and Reload

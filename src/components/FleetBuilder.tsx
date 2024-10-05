@@ -16,6 +16,7 @@ import { SquadronModel } from './SquadronSelector';
 import { PointsDisplay } from './PointsDisplay';
 import Link from 'next/link';
 import { useTheme } from 'next-themes';
+import { ObjectiveSelector, ObjectiveModel } from './ObjectiveSelector';
 
 interface Ship {
   id: string;
@@ -67,6 +68,12 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
   const [previousShipPoints, setPreviousShipPoints] = useState(0);
   const [previousSquadronPoints, setPreviousSquadronPoints] = useState(0);
   const { } = useTheme();
+  const [showAssaultObjectiveSelector, setShowAssaultObjectiveSelector] = useState(false);
+  const [showDefenseObjectiveSelector, setShowDefenseObjectiveSelector] = useState(false);
+  const [showNavigationObjectiveSelector, setShowNavigationObjectiveSelector] = useState(false);
+  const [selectedAssaultObjective, setSelectedAssaultObjective] = useState<ObjectiveModel | null>(null);
+  const [selectedDefenseObjective, setSelectedDefenseObjective] = useState<ObjectiveModel | null>(null);
+  const [selectedNavigationObjective, setSelectedNavigationObjective] = useState<ObjectiveModel | null>(null);
 
   const handleNameClick = () => {
     setIsEditingName(true);
@@ -194,6 +201,21 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
     }
   };
 
+  const handleSelectAssaultObjective = (objective: ObjectiveModel) => {
+    setSelectedAssaultObjective(objective);
+    setShowAssaultObjectiveSelector(false);
+  };
+
+  const handleSelectDefenseObjective = (objective: ObjectiveModel) => {
+    setSelectedDefenseObjective(objective);
+    setShowDefenseObjectiveSelector(false);
+  };
+
+  const handleSelectNavigationObjective = (objective: ObjectiveModel) => {
+    setSelectedNavigationObjective(objective);
+    setShowNavigationObjectiveSelector(false);
+  };
+
   return (
     <div className="max-w-4xl mx-auto">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
@@ -262,9 +284,42 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
       </Card>
 
       <div className="space-y-2 mb-4">
-        <Button variant="outline" className="w-full justify-start">ADD ASSAULT</Button>
-        <Button variant="outline" className="w-full justify-start">ADD DEFENSE</Button>
-        <Button variant="outline" className="w-full justify-start">ADD NAVIGATION</Button>
+        <Button 
+          variant="outline" 
+          className="w-full justify-start hover:bg-[#EB3F3A] hover:text-white transition-colors"
+          onClick={() => setShowAssaultObjectiveSelector(true)}
+        >
+          {selectedAssaultObjective ? (
+            <>
+              <div className="w-4 h-4 bg-[#EB3F3A] mr-2"></div>
+              {selectedAssaultObjective.name}
+            </>
+          ) : "ADD ASSAULT"}
+        </Button>
+        <Button 
+          variant="outline" 
+          className="w-full justify-start hover:bg-[#FAEE13] hover:text-black transition-colors"
+          onClick={() => setShowDefenseObjectiveSelector(true)}
+        >
+          {selectedDefenseObjective ? (
+            <>
+              <div className="w-4 h-4 bg-[#FAEE13] mr-2"></div>
+              {selectedDefenseObjective.name}
+            </>
+          ) : "ADD DEFENSE"}
+        </Button>
+        <Button 
+          variant="outline" 
+          className="w-full justify-start hover:bg-[#C2E1F4] hover:text-black transition-colors"
+          onClick={() => setShowNavigationObjectiveSelector(true)}
+        >
+          {selectedNavigationObjective ? (
+            <>
+              <div className="w-4 h-4 bg-[#C2E1F4] mr-2"></div>
+              {selectedNavigationObjective.name}
+            </>
+          ) : "ADD NAVIGATION"}
+        </Button>
       </div>
 
       <div className="flex flex-wrap justify-between gap-2">
@@ -296,6 +351,30 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
           filter={squadronFilter}
           onSelectSquadron={handleSelectSquadron}
           onClose={() => setShowSquadronSelector(false)}
+        />
+      )}
+
+      {showAssaultObjectiveSelector && (
+        <ObjectiveSelector
+          type="assault"
+          onSelectObjective={handleSelectAssaultObjective}
+          onClose={() => setShowAssaultObjectiveSelector(false)}
+        />
+      )}
+
+      {showDefenseObjectiveSelector && (
+        <ObjectiveSelector
+          type="defense"
+          onSelectObjective={handleSelectDefenseObjective}
+          onClose={() => setShowDefenseObjectiveSelector(false)}
+        />
+      )}
+
+      {showNavigationObjectiveSelector && (
+        <ObjectiveSelector
+          type="navigation"
+          onSelectObjective={handleSelectNavigationObjective}
+          onClose={() => setShowNavigationObjectiveSelector(false)}
         />
       )}
     </div>
