@@ -12,7 +12,6 @@ import { ShipModel } from './ShipSelector';
 import { SelectedSquadron } from './SelectedSquadron';
 import { SquadronFilter } from './SquadronFilter';
 import { SquadronSelector } from './SquadronSelector';
-import { SquadronModel } from './SquadronSelector';
 import { PointsDisplay } from './PointsDisplay';
 import Link from 'next/link';
 import { useTheme } from 'next-themes';
@@ -28,9 +27,10 @@ interface Ship {
   unique: boolean;
 }
 
-interface Squadron {
+export interface Squadron {
   id: string;
   name: string;
+  'ace-name'?: string;
   points: number;
   cardimage: string;
   faction: string;
@@ -38,6 +38,7 @@ interface Squadron {
   speed: number;
   unique: boolean;
   count: number;
+  'unique-class': string[];
 }
 
 const SectionHeader = ({ title, points, previousPoints, show }: { title: string; points: number; previousPoints: number; show: boolean }) => (
@@ -74,6 +75,7 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
   const [selectedAssaultObjective, setSelectedAssaultObjective] = useState<ObjectiveModel | null>(null);
   const [selectedDefenseObjective, setSelectedDefenseObjective] = useState<ObjectiveModel | null>(null);
   const [selectedNavigationObjective, setSelectedNavigationObjective] = useState<ObjectiveModel | null>(null);
+  const [uniqueClassNames, setUniqueClassNames] = useState<string[]>([]);
 
   const handleNameClick = () => {
     setIsEditingName(true);
@@ -138,18 +140,31 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
     setShowSquadronSelector(true);
   };
 
-  const handleSelectSquadron = (squadron: SquadronModel) => {
+  const handleSelectSquadron = (squadron: Squadron) => {
+    console.log('Selecting squadron:', squadron);
     const newSquadron: Squadron = { 
       ...squadron, 
       id: Date.now().toString(),
       count: 1,
     };
-    setSelectedSquadrons([...selectedSquadrons, newSquadron]);
+    setSelectedSquadrons(prevSquadrons => {
+      console.log('Previous squadrons:', prevSquadrons);
+      return [...prevSquadrons, newSquadron];
+    });
     setPreviousPoints(points);
     setPreviousSquadronPoints(totalSquadronPoints);
     const newPoints = points + squadron.points;
     setPoints(newPoints);
     setTotalSquadronPoints(totalSquadronPoints + squadron.points);
+    setUniqueClassNames(prevNames => {
+      const newNames = [
+        ...prevNames, 
+        ...(squadron['unique-class'] || []),
+        squadron.name
+      ];
+      console.log('Updated unique class names:', newNames);
+      return Array.from(new Set(newNames)); // Remove duplicates
+    });
     setShowSquadronSelector(false);
   };
 
@@ -162,6 +177,11 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
       const newPoints = points - squadronToRemove.points * squadronToRemove.count;
       setPoints(newPoints);
       setTotalSquadronPoints(totalSquadronPoints - squadronToRemove.points * squadronToRemove.count);
+      setUniqueClassNames(prevNames => 
+        prevNames.filter(name => 
+          !squadronToRemove['unique-class']?.includes(name) && name !== squadronToRemove.name
+        )
+      );
     }
   };
 
@@ -351,6 +371,8 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
           filter={squadronFilter}
           onSelectSquadron={handleSelectSquadron}
           onClose={() => setShowSquadronSelector(false)}
+          selectedSquadrons={selectedSquadrons}
+          uniqueClassNames={uniqueClassNames}
         />
       )}
 

@@ -1,18 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import Image from 'next/image';
 import { useState } from 'react';
-
-interface Squadron {
-  id: string;
-  name: string;
-  points: number;
-  cardimage: string;
-  faction: string;
-  hull: number;
-  speed: number;
-  unique: boolean;
-  count: number;
-}
+import { Squadron } from './FleetBuilder';
 
 interface SelectedSquadronProps {
   squadron: Squadron;
