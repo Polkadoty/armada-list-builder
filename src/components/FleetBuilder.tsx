@@ -8,6 +8,7 @@ import { Filter, Printer, ArrowLeft, FileText } from 'lucide-react';
 import { ShipSelector } from './ShipSelector';
 import { SelectedShip } from './SelectedShip';
 import { ShipFilter } from './ShipFilter';
+import { ShipModel } from './ShipSelector';
 
 interface Ship {
   id: string;
@@ -43,8 +44,8 @@ export default function FleetBuilder({ faction }: { faction: string }) {
     setShowShipSelector(true);
   };
 
-  const handleSelectShip = (ship: Ship) => {
-    const newShip = { 
+  const handleSelectShip = (ship: ShipModel) => {
+    const newShip: Ship = { 
       ...ship, 
       id: Date.now().toString(),
       upgrades: ship.upgrades || [] // Ensure upgrades are included
@@ -60,6 +61,17 @@ export default function FleetBuilder({ faction }: { faction: string }) {
       setSelectedShips(selectedShips.filter(ship => ship.id !== id));
       setPoints(points - shipToRemove.points);
     }
+  };
+
+  const handleUpgradeClick = (shipId: string, upgrade: string) => {
+    // Here you can implement the logic for what happens when an upgrade is clicked
+    console.log(`Upgrade ${upgrade} clicked for ship ${shipId}`);
+    // For example, you might want to open a modal to select a specific upgrade card
+  };
+
+  const handleCopyShip = (shipToCopy: Ship) => {
+    const newShip = { ...shipToCopy, id: Date.now().toString() };
+    setSelectedShips([...selectedShips, newShip]);
   };
 
   return (
@@ -84,7 +96,7 @@ export default function FleetBuilder({ faction }: { faction: string }) {
       </div>
 
       {selectedShips.map((ship) => (
-        <SelectedShip key={ship.id} ship={ship} onRemove={handleRemoveShip} />
+        <SelectedShip key={ship.id} ship={ship} onRemove={handleRemoveShip} onUpgradeClick={handleUpgradeClick} onCopy={handleCopyShip} />
       ))}
 
       <Card className="mb-4 relative">

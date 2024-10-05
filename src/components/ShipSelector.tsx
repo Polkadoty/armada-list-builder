@@ -4,12 +4,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Image from 'next/image';
 
-interface ShipModel {
+export interface ShipModel {
   id: string;
   name: string;
   points: number;
   cardimage: string;
   faction: string;
+  upgrades: string[];
 }
 
 interface Ship {

@@ -1,21 +1,33 @@
 import Image from 'next/image';
+import { Button } from "@/components/ui/button";
 
 interface UpgradeIconsToolbarProps {
   upgrades: string[];
+  onUpgradeClick: (upgrade: string) => void;
 }
 
-export default function UpgradeIconsToolbar({ upgrades }: UpgradeIconsToolbarProps) {
+export default function UpgradeIconsToolbar({ upgrades, onUpgradeClick }: UpgradeIconsToolbarProps) {
   return (
-    <div className="absolute bottom-0 left-0 right-0 bg-gray-200 dark:bg-gray-800 p-2 flex justify-center space-x-2">
+    <div 
+      className="bg-gray-200 dark:bg-gray-800 p-2 flex justify-center space-x-2"
+      onClick={(e) => e.stopPropagation()}
+    >
       {upgrades.map((upgrade, index) => (
-        <div key={index} className="w-6 h-6 relative">
+        <Button
+          key={index}
+          variant="ghost"
+          size="icon"
+          className={`h-8 p-1 ${upgrade === 'weapons-team-offensive-retro' ? 'w-16' : 'w-8'}`}
+          onClick={() => onUpgradeClick(upgrade)}
+        >
           <Image
             src={`/icons/${upgrade}.svg`}
             alt={upgrade}
-            layout="fill"
+            width={upgrade === 'weapons-team-offensive-retro' ? 40 : 24}
+            height={24}
             className="dark:invert"
           />
-        </div>
+        </Button>
       ))}
     </div>
   );
