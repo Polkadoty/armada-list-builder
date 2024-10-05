@@ -25,11 +25,11 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose }: Objectiv
       try {
         const response = await axios.get(`https://api.swarmada.wiki/api/objectives/search?type=${type}`);
         const objectiveData = response.data.objectives;
-        const flattenedObjectives = Object.values(objectiveData).map((objective: any) => ({
-          id: objective._id,
-          name: objective.name,
-          type: objective.type,
-          cardimage: validateImageUrl(objective.cardimage),
+        const flattenedObjectives = Object.entries(objectiveData).map(([_, objective]) => ({
+          id: (objective as { _id: string })._id,
+          name: (objective as { name: string }).name,
+          type: (objective as { type: string }).type,
+          cardimage: validateImageUrl((objective as { cardimage: string }).cardimage),
         }));
         setObjectives(flattenedObjectives);
       } catch (error) {
