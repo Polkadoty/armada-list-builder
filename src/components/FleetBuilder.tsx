@@ -9,6 +9,10 @@ import { ShipSelector } from './ShipSelector';
 import { SelectedShip } from './SelectedShip';
 import { ShipFilter } from './ShipFilter';
 import { ShipModel } from './ShipSelector';
+import { SelectedSquadron } from './SelectedSquadron';
+import { SquadronFilter } from './SquadronFilter';
+import { SquadronSelector } from './SquadronSelector';
+import { SquadronModel } from './SquadronSelector';
 
 interface Ship {
   id: string;
@@ -19,14 +23,28 @@ interface Ship {
   upgrades: string[];
 }
 
+interface Squadron {
+  id: string;
+  name: string;
+  points: number;
+  cardimage: string;
+  faction: string;
+  hull: number;
+  speed: number;
+  // Add other relevant properties
+}
+
 export default function FleetBuilder({ faction }: { faction: string }) {
   const [fleetName, setFleetName] = useState('Untitled Fleet');
   const [isEditingName, setIsEditingName] = useState(false);
   const [points, setPoints] = useState(0);
   const [showShipSelector, setShowShipSelector] = useState(false);
+  const [showSquadronSelector, setShowSquadronSelector] = useState(false);
   const [selectedShips, setSelectedShips] = useState<Ship[]>([]);
+  const [selectedSquadrons, setSelectedSquadrons] = useState<Squadron[]>([]);
   const [showFilter, setShowFilter] = useState(false);
   const [shipFilter, setShipFilter] = useState({ minPoints: 0, maxPoints: 1000 });
+  const [squadronFilter, setSquadronFilter] = useState({ minPoints: 0, maxPoints: 1000 });
 
   const handleNameClick = () => {
     setIsEditingName(true);
@@ -48,7 +66,7 @@ export default function FleetBuilder({ faction }: { faction: string }) {
     const newShip: Ship = { 
       ...ship, 
       id: Date.now().toString(),
-      upgrades: ship.upgrades || [] // Ensure upgrades are included
+      upgrades: ship.upgrades || []
     };
     setSelectedShips([...selectedShips, newShip]);
     setPoints(points + ship.points);
@@ -72,6 +90,29 @@ export default function FleetBuilder({ faction }: { faction: string }) {
   const handleCopyShip = (shipToCopy: Ship) => {
     const newShip = { ...shipToCopy, id: Date.now().toString() };
     setSelectedShips([...selectedShips, newShip]);
+    setPoints(points + shipToCopy.points);
+  };
+
+  const handleAddSquadron = () => {
+    setShowSquadronSelector(true);
+  };
+
+  const handleSelectSquadron = (squadron: SquadronModel) => {
+    const newSquadron: Squadron = { 
+      ...squadron, 
+      id: Date.now().toString(),
+    };
+    setSelectedSquadrons([...selectedSquadrons, newSquadron]);
+    setPoints(points + squadron.points);
+    setShowSquadronSelector(false);
+  };
+
+  const handleRemoveSquadron = (id: string) => {
+    const squadronToRemove = selectedSquadrons.find(squadron => squadron.id === id);
+    if (squadronToRemove) {
+      setSelectedSquadrons(selectedSquadrons.filter(squadron => squadron.id !== id));
+      setPoints(points - squadronToRemove.points);
+    }
   };
 
   return (
@@ -99,6 +140,10 @@ export default function FleetBuilder({ faction }: { faction: string }) {
         <SelectedShip key={ship.id} ship={ship} onRemove={handleRemoveShip} onUpgradeClick={handleUpgradeClick} onCopy={handleCopyShip} />
       ))}
 
+      {selectedSquadrons.map((squadron) => (
+        <SelectedSquadron key={squadron.id} squadron={squadron} onRemove={handleRemoveSquadron} />
+      ))}
+
       <Card className="mb-4 relative">
         <Button className="w-full justify-between bg-white dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700" variant="outline" onClick={handleAddShip}>
           ADD SHIP <Filter size={16} onClick={(e) => { e.stopPropagation(); setShowFilter(!showFilter); }} />
@@ -106,10 +151,11 @@ export default function FleetBuilder({ faction }: { faction: string }) {
         {showFilter && <ShipFilter onApplyFilter={setShipFilter} onClose={() => setShowFilter(false)} />}
       </Card>
 
-      <Card className="mb-4">
-        <Button className="w-full justify-between bg-white dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700" variant="outline">
-          ADD SQUADRON <Filter size={16} />
+      <Card className="mb-4 relative">
+        <Button className="w-full justify-between bg-white dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700" variant="outline" onClick={handleAddSquadron}>
+          ADD SQUADRON <Filter size={16} onClick={(e) => { e.stopPropagation(); setShowFilter(!showFilter); }} />
         </Button>
+        {showFilter && <SquadronFilter onApplyFilter={setSquadronFilter} onClose={() => setShowFilter(false)} />}
       </Card>
 
       <div className="space-y-2 mb-4">
@@ -136,6 +182,15 @@ export default function FleetBuilder({ faction }: { faction: string }) {
           filter={shipFilter}
           onSelectShip={handleSelectShip}
           onClose={() => setShowShipSelector(false)}
+        />
+      )}
+
+      {showSquadronSelector && (
+        <SquadronSelector
+          faction={faction}
+          filter={squadronFilter}
+          onSelectSquadron={handleSelectSquadron}
+          onClose={() => setShowSquadronSelector(false)}
         />
       )}
     </div>

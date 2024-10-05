@@ -70,14 +70,16 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
               <div key={ship.id} className="w-full aspect-[8.75/15]">
                 <Button
                   onClick={() => onSelectShip(ship)}
-                  className="p-0 overflow-hidden relative w-full h-full"
+                  className="p-0 overflow-hidden relative w-full h-full rounded-lg"
                 >
                   <div className="absolute inset-0 bg-gray-200 flex items-center justify-center">
                     <Image
                       src={ship.cardimage}
                       alt={ship.name}
                       layout="fill"
-                      objectFit="contain"
+                      objectFit="cover"
+                      objectPosition="center"
+                      className="scale-[102%]"
                       onError={(e) => {
                         e.currentTarget.src = '/placeholder-ship.png'; // Replace with an actual placeholder image
                       }}

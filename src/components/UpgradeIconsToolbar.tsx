@@ -9,7 +9,7 @@ interface UpgradeIconsToolbarProps {
 export default function UpgradeIconsToolbar({ upgrades, onUpgradeClick }: UpgradeIconsToolbarProps) {
   return (
     <div 
-      className="bg-gray-200 dark:bg-gray-800 p-2 flex justify-center space-x-2"
+      className="bg-gray-200 dark:bg-gray-800 p-2 flex justify-left space-x-2"
       onClick={(e) => e.stopPropagation()}
     >
       {upgrades.map((upgrade, index) => (
