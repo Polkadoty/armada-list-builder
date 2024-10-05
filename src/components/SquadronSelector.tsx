@@ -77,16 +77,6 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose }:
     return `https://api.swarmada.wiki${url.startsWith('/') ? '' : '/'}${url}`;
   };
 
-  // Add this function to clear the cache
-  const clearCache = () => {
-    Object.keys(localStorage).forEach(key => {
-      if (key.startsWith('squadrons_')) {
-        localStorage.removeItem(key);
-      }
-    });
-    window.location.reload();
-  };
-
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <Card className="w-3/4 h-3/4 overflow-auto">

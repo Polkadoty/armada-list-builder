@@ -4,8 +4,7 @@ import FleetBuilder from '../../components/FleetBuilder';
 import { ThemeToggle } from '../../components/ThemeToggle';
 import Image from 'next/image';
 import { SettingsButton } from '../../components/SettingsButton';
-import dynamic from 'next/dynamic';
-import { SVGProps } from 'react';
+
 
 const factionLogos = {
   rebel: '/icons/rebel.svg',

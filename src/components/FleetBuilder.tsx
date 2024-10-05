@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-empty-interface */
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -50,7 +50,7 @@ const SectionHeader = ({ title, points, previousPoints, show }: { title: string;
   ) : null
 );
 
-export default function FleetBuilder({ faction, factionColor }: { faction: string; factionColor: string }) {
+export default function FleetBuilder({ faction }: { faction: string; factionColor: string }) {
   const [fleetName, setFleetName] = useState('Untitled Fleet');
   const [isEditingName, setIsEditingName] = useState(false);
   const [points, setPoints] = useState(0);
@@ -66,7 +66,7 @@ export default function FleetBuilder({ faction, factionColor }: { faction: strin
   const [totalSquadronPoints, setTotalSquadronPoints] = useState(0);
   const [previousShipPoints, setPreviousShipPoints] = useState(0);
   const [previousSquadronPoints, setPreviousSquadronPoints] = useState(0);
-  const { theme } = useTheme();
+  const { } = useTheme();
 
   const handleNameClick = () => {
     setIsEditingName(true);
