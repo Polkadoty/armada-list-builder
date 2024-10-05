@@ -15,10 +15,6 @@ export interface SquadronModel {
   // Add other relevant properties
 }
 
-interface Squadron {
-  [key: string]: SquadronModel;
-}
-
 interface SquadronSelectorProps {
   faction: string;
   filter: { minPoints: number; maxPoints: number };
@@ -40,15 +36,18 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose }:
         try {
           const response = await axios.get(`https://api.swarmada.wiki/api/squadrons/search?faction=${faction}`);
           const squadronData = response.data;
-          const flattenedSquadrons = Object.values(squadronData.squadrons).map((squadron: any) => ({
-            id: squadron.UID,
-            name: squadron.name,
-            points: squadron.points,
-            cardimage: squadron.cardimage,
-            faction: squadron.faction,
-            hull: squadron.hull,
-            speed: squadron.speed,
-          })).filter((squadron: SquadronModel) => 
+          const flattenedSquadrons = Object.values(squadronData.squadrons).map((squadron: unknown) => {
+            const typedSquadron = squadron as SquadronModel;
+            return {
+              id: typedSquadron.id, // Assuming 'id' exists on SquadronModel
+              name: typedSquadron.name,
+              points: typedSquadron.points,
+              cardimage: typedSquadron.cardimage,
+              faction: typedSquadron.faction,
+              hull: typedSquadron.hull,
+              speed: typedSquadron.speed,
+            };
+          }).filter((squadron): squadron is SquadronModel => 
             squadron.points >= filter.minPoints &&
             squadron.points <= filter.maxPoints
           );
