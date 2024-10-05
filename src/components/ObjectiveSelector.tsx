@@ -25,7 +25,7 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose }: Objectiv
       try {
         const response = await axios.get(`https://api.swarmada.wiki/api/objectives/search?type=${type}`);
         const objectiveData = response.data.objectives;
-        const flattenedObjectives = Object.entries(objectiveData).map(([_, objective]) => ({
+        const flattenedObjectives = Object.values(objectiveData).map((objective) => ({
           id: (objective as { _id: string })._id,
           name: (objective as { name: string }).name,
           type: (objective as { type: string }).type,
