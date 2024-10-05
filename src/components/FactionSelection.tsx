@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { useTheme } from 'next-themes';
 
@@ -20,7 +20,14 @@ const factionColors = {
 
 export default function FactionSelection() {
   const [hoveredFaction, setHoveredFaction] = useState<string | null>(null);
-  const { theme } = useTheme();
+  const { theme, systemTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const currentTheme = theme === 'system' ? systemTheme : theme;
 
   return (
     <div className="grid grid-cols-2 gap-4 justify-items-center">
@@ -38,11 +45,11 @@ export default function FactionSelection() {
                 alt={faction.name} 
                 width={64} 
                 height={64} 
-                className={`transition-all duration-200 ${theme === 'dark' ? 'invert' : ''}`}
+                className={`transition-all duration-200 ${!mounted || currentTheme === 'dark' ? 'invert' : ''}`}
                 style={{
                   filter: hoveredFaction === faction.slug 
-                    ? `drop-shadow(0 0 0.75rem ${factionColors[faction.slug as keyof typeof factionColors]}) ${theme === 'dark' ? 'invert(1) hue-rotate(180deg)' : ''}`
-                    : theme === 'dark' ? 'invert(1)' : 'none',
+                    ? `drop-shadow(0 0 0.75rem ${factionColors[faction.slug as keyof typeof factionColors]}) ${!mounted || currentTheme === 'dark' ? 'invert(1) hue-rotate(180deg)' : ''}`
+                    : !mounted || currentTheme === 'dark' ? 'invert(1)' : 'none',
                 }}
               />
               </div>
