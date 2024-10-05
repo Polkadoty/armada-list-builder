@@ -10,7 +10,8 @@ export interface ShipModel {
   points: number;
   cardimage: string;
   faction: string;
-  upgrades: string[];
+  upgrades?: string[];
+  unique: boolean;
 }
 
 interface Ship {
@@ -79,15 +80,18 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
                       layout="fill"
                       objectFit="cover"
                       objectPosition="center"
-                      className="scale-[102%]"
+                      className="scale-[103%]"
                       onError={(e) => {
                         e.currentTarget.src = '/placeholder-ship.png'; // Replace with an actual placeholder image
                       }}
                     />
                   </div>
                   <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2">
-                    <p className="text-sm font-bold truncate">{ship.name}</p>
-                    <p className="text-xs">{ship.points} points</p>
+                    <p className="text-sm font-bold truncate flex items-center justify-center">
+                      {ship.unique && <span className="mr-1 text-yellow-500">●</span>}
+                      {ship.name}
+                    </p>
+                    <p className="text-xs text-center">{ship.points} points</p>
                   </div>
                 </Button>
               </div>

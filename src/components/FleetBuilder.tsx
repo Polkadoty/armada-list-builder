@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-empty-interface */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -13,6 +13,9 @@ import { SelectedSquadron } from './SelectedSquadron';
 import { SquadronFilter } from './SquadronFilter';
 import { SquadronSelector } from './SquadronSelector';
 import { SquadronModel } from './SquadronSelector';
+import { PointsDisplay } from './PointsDisplay';
+import Link from 'next/link';
+import { useTheme } from 'next-themes';
 
 interface Ship {
   id: string;
@@ -21,6 +24,7 @@ interface Ship {
   cardimage: string;
   faction: string;
   upgrades: string[];
+  unique: boolean;
 }
 
 interface Squadron {
@@ -31,13 +35,26 @@ interface Squadron {
   faction: string;
   hull: number;
   speed: number;
-  // Add other relevant properties
+  unique: boolean;
+  count: number;
 }
 
-export default function FleetBuilder({ faction }: { faction: string }) {
+const SectionHeader = ({ title, points, previousPoints, show }: { title: string; points: number; previousPoints: number; show: boolean }) => (
+  show ? (
+    <div className="flex justify-between items-center mb-2 mt-4 border-b border-gray-300 relative">
+      <h3 className="text-lg font-semibold">{title}</h3>
+      <div className="z-40">
+        <PointsDisplay points={points} previousPoints={previousPoints} />
+      </div>
+    </div>
+  ) : null
+);
+
+export default function FleetBuilder({ faction, factionColor }: { faction: string; factionColor: string }) {
   const [fleetName, setFleetName] = useState('Untitled Fleet');
   const [isEditingName, setIsEditingName] = useState(false);
   const [points, setPoints] = useState(0);
+  const [previousPoints, setPreviousPoints] = useState(0);
   const [showShipSelector, setShowShipSelector] = useState(false);
   const [showSquadronSelector, setShowSquadronSelector] = useState(false);
   const [selectedShips, setSelectedShips] = useState<Ship[]>([]);
@@ -45,6 +62,11 @@ export default function FleetBuilder({ faction }: { faction: string }) {
   const [showFilter, setShowFilter] = useState(false);
   const [shipFilter, setShipFilter] = useState({ minPoints: 0, maxPoints: 1000 });
   const [squadronFilter, setSquadronFilter] = useState({ minPoints: 0, maxPoints: 1000 });
+  const [totalShipPoints, setTotalShipPoints] = useState(0);
+  const [totalSquadronPoints, setTotalSquadronPoints] = useState(0);
+  const [previousShipPoints, setPreviousShipPoints] = useState(0);
+  const [previousSquadronPoints, setPreviousSquadronPoints] = useState(0);
+  const { theme } = useTheme();
 
   const handleNameClick = () => {
     setIsEditingName(true);
@@ -69,7 +91,11 @@ export default function FleetBuilder({ faction }: { faction: string }) {
       upgrades: ship.upgrades || []
     };
     setSelectedShips([...selectedShips, newShip]);
-    setPoints(points + ship.points);
+    setPreviousPoints(points);
+    setPreviousShipPoints(totalShipPoints);
+    const newPoints = points + ship.points;
+    setPoints(newPoints);
+    setTotalShipPoints(totalShipPoints + ship.points);
     setShowShipSelector(false);
   };
 
@@ -77,7 +103,11 @@ export default function FleetBuilder({ faction }: { faction: string }) {
     const shipToRemove = selectedShips.find(ship => ship.id === id);
     if (shipToRemove) {
       setSelectedShips(selectedShips.filter(ship => ship.id !== id));
-      setPoints(points - shipToRemove.points);
+      setPreviousPoints(points);
+      setPreviousShipPoints(totalShipPoints);
+      const newPoints = points - shipToRemove.points;
+      setPoints(newPoints);
+      setTotalShipPoints(totalShipPoints - shipToRemove.points);
     }
   };
 
@@ -90,7 +120,11 @@ export default function FleetBuilder({ faction }: { faction: string }) {
   const handleCopyShip = (shipToCopy: Ship) => {
     const newShip = { ...shipToCopy, id: Date.now().toString() };
     setSelectedShips([...selectedShips, newShip]);
-    setPoints(points + shipToCopy.points);
+    setPreviousPoints(points);
+    setPreviousShipPoints(totalShipPoints);
+    const newPoints = points + shipToCopy.points;
+    setPoints(newPoints);
+    setTotalShipPoints(totalShipPoints + shipToCopy.points);
   };
 
   const handleAddSquadron = () => {
@@ -101,9 +135,14 @@ export default function FleetBuilder({ faction }: { faction: string }) {
     const newSquadron: Squadron = { 
       ...squadron, 
       id: Date.now().toString(),
+      count: 1,
     };
     setSelectedSquadrons([...selectedSquadrons, newSquadron]);
-    setPoints(points + squadron.points);
+    setPreviousPoints(points);
+    setPreviousSquadronPoints(totalSquadronPoints);
+    const newPoints = points + squadron.points;
+    setPoints(newPoints);
+    setTotalSquadronPoints(totalSquadronPoints + squadron.points);
     setShowSquadronSelector(false);
   };
 
@@ -111,7 +150,47 @@ export default function FleetBuilder({ faction }: { faction: string }) {
     const squadronToRemove = selectedSquadrons.find(squadron => squadron.id === id);
     if (squadronToRemove) {
       setSelectedSquadrons(selectedSquadrons.filter(squadron => squadron.id !== id));
-      setPoints(points - squadronToRemove.points);
+      setPreviousPoints(points);
+      setPreviousSquadronPoints(totalSquadronPoints);
+      const newPoints = points - squadronToRemove.points * squadronToRemove.count;
+      setPoints(newPoints);
+      setTotalSquadronPoints(totalSquadronPoints - squadronToRemove.points * squadronToRemove.count);
+    }
+  };
+
+  const handleIncrementSquadron = (id: string) => {
+    setSelectedSquadrons(squadrons =>
+      squadrons.map(squadron =>
+        squadron.id === id
+          ? { ...squadron, count: (squadron.count || 1) + 1 }
+          : squadron
+      )
+    );
+    const squadron = selectedSquadrons.find(s => s.id === id);
+    if (squadron) {
+      setPreviousPoints(points);
+      setPreviousSquadronPoints(totalSquadronPoints);
+      const newPoints = points + squadron.points;
+      setPoints(newPoints);
+      setTotalSquadronPoints(totalSquadronPoints + squadron.points);
+    }
+  };
+
+  const handleDecrementSquadron = (id: string) => {
+    setSelectedSquadrons(squadrons =>
+      squadrons.map(squadron =>
+        squadron.id === id && (squadron.count || 1) > 1
+          ? { ...squadron, count: (squadron.count || 1) - 1 }
+          : squadron
+      )
+    );
+    const squadron = selectedSquadrons.find(s => s.id === id);
+    if (squadron && (squadron.count || 1) > 1) {
+      setPreviousPoints(points);
+      setPreviousSquadronPoints(totalSquadronPoints);
+      const newPoints = points - squadron.points;
+      setPoints(newPoints);
+      setTotalSquadronPoints(totalSquadronPoints - squadron.points);
     }
   };
 
@@ -133,26 +212,50 @@ export default function FleetBuilder({ faction }: { faction: string }) {
             </h2>
           )}
         </div>
-        <div className="text-xl font-bold">{points} points</div>
+        <PointsDisplay points={points} previousPoints={previousPoints} />
       </div>
 
-      {selectedShips.map((ship) => (
-        <SelectedShip key={ship.id} ship={ship} onRemove={handleRemoveShip} onUpgradeClick={handleUpgradeClick} onCopy={handleCopyShip} />
-      ))}
+      <SectionHeader 
+        title="Ships" 
+        points={totalShipPoints} 
+        previousPoints={previousShipPoints} 
+        show={selectedShips.length > 0}
+      />
+      <div className="mb-4">
+        {selectedShips.map((ship) => (
+          <SelectedShip key={ship.id} ship={ship} onRemove={handleRemoveShip} onUpgradeClick={handleUpgradeClick} onCopy={handleCopyShip} />
+        ))}
+      </div>
 
-      {selectedSquadrons.map((squadron) => (
-        <SelectedSquadron key={squadron.id} squadron={squadron} onRemove={handleRemoveSquadron} />
-      ))}
+      <SectionHeader 
+        title="Squadrons" 
+        points={totalSquadronPoints} 
+        previousPoints={previousSquadronPoints} 
+        show={selectedSquadrons.length > 0}
+      />
+      <div className="mb-4">
+        {selectedSquadrons.map((squadron) => (
+          <SelectedSquadron key={squadron.id} squadron={squadron} onRemove={handleRemoveSquadron} onIncrement={handleIncrementSquadron} onDecrement={handleDecrementSquadron} />
+        ))}
+      </div>
 
       <Card className="mb-4 relative">
-        <Button className="w-full justify-between bg-white dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700" variant="outline" onClick={handleAddShip}>
+        <Button 
+          className="w-full justify-between bg-white dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+          variant="outline" 
+          onClick={handleAddShip}
+        >
           ADD SHIP <Filter size={16} onClick={(e) => { e.stopPropagation(); setShowFilter(!showFilter); }} />
         </Button>
         {showFilter && <ShipFilter onApplyFilter={setShipFilter} onClose={() => setShowFilter(false)} />}
       </Card>
 
       <Card className="mb-4 relative">
-        <Button className="w-full justify-between bg-white dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700" variant="outline" onClick={handleAddSquadron}>
+        <Button 
+          className="w-full justify-between bg-white dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+          variant="outline" 
+          onClick={handleAddSquadron}
+        >
           ADD SQUADRON <Filter size={16} onClick={(e) => { e.stopPropagation(); setShowFilter(!showFilter); }} />
         </Button>
         {showFilter && <SquadronFilter onApplyFilter={setSquadronFilter} onClose={() => setShowFilter(false)} />}
@@ -168,9 +271,11 @@ export default function FleetBuilder({ faction }: { faction: string }) {
         <Button variant="outline" className="flex-grow">
           <Printer className="mr-2 h-4 w-4" /> PRINT
         </Button>
-        <Button variant="outline" className="flex-grow">
-          <ArrowLeft className="mr-2 h-4 w-4" /> BACK
-        </Button>
+        <Link href="/">
+          <Button variant="outline" className="flex-grow">
+            <ArrowLeft className="mr-2 h-4 w-4" /> BACK
+          </Button>
+        </Link>
         <Button variant="outline" className="flex-grow">
           <FileText className="mr-2 h-4 w-4" /> EXPORT TEXT
         </Button>

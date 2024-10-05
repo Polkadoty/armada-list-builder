@@ -3,6 +3,7 @@ import Image from 'next/image';
 import FactionSelection from '../components/FactionSelection';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { Button } from "@/components/ui/button";
+import { SettingsButton } from '../components/SettingsButton';
 
 export default function Home() {
   const [isWideScreen, setIsWideScreen] = useState(false);
@@ -21,7 +22,10 @@ export default function Home() {
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">
       <div className={`bg-white dark:bg-gray-900 dark:bg-nebula bg-cover p-8 flex-grow lg:w-1/3 lg:min-w-[300px]`}>
-        <ThemeToggle />
+        <div className="flex justify-end space-x-2 mb-4">
+          <SettingsButton />
+          <ThemeToggle />
+        </div>
         <h1 className="text-3xl font-bold mb-8 text-center text-gray-900 dark:text-white">Armada Fleet Builder</h1>
         <FactionSelection />
         <div className="mt-8 flex justify-center space-x-4">

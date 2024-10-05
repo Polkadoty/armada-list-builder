@@ -11,6 +11,7 @@ interface Ship {
     cardimage: string;
     faction: string;
     upgrades: string[];
+    unique: boolean;
   }
 
   interface SelectedShipProps {
@@ -46,7 +47,10 @@ interface Ship {
               />
             </div>
             <div className="flex-grow">
-              <span className="font-bold">{ship.name}</span>
+              <span className="font-bold flex items-center">
+                {ship.unique && <span className="mr-1 text-yellow-500">●</span>}
+                {ship.name}
+              </span>
               <div className="flex items-center">
                 <span className="mr-2">{ship.points} points</span>
                 <button onClick={(e) => { e.stopPropagation(); onCopy(ship); }} className="text-blue-500 hover:text-blue-700 mr-2">

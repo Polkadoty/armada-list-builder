@@ -11,6 +11,13 @@ const factions = [
   { name: 'Separatist Alliance', logo: '/icons/separatist.svg', slug: 'separatist' },
 ];
 
+const factionColors = {
+  rebel: '#D82B2B',
+  empire: '#197c27',
+  republic: '#880606',
+  separatist: '#161FDA',
+};
+
 export default function FactionSelection() {
   const [hoveredFaction, setHoveredFaction] = useState<string | null>(null);
   const { theme } = useTheme();
@@ -26,15 +33,18 @@ export default function FactionSelection() {
                 onMouseEnter={() => setHoveredFaction(faction.slug)}
                 onMouseLeave={() => setHoveredFaction(null)}
               >
-                <Image 
-                  src={faction.logo} 
-                  alt={faction.name} 
-                  width={64} 
-                  height={64} 
-                  className={`transition-colors duration-200 ${
-                    theme === 'dark' ? 'invert' : ''
-                  } ${hoveredFaction === faction.slug ? 'brightness-125' : ''}`}
-                />
+              <Image 
+                src={faction.logo} 
+                alt={faction.name} 
+                width={64} 
+                height={64} 
+                className={`transition-all duration-200 ${theme === 'dark' ? 'invert' : ''}`}
+                style={{
+                  filter: hoveredFaction === faction.slug 
+                    ? `drop-shadow(0 0 0.75rem ${factionColors[faction.slug as keyof typeof factionColors]}) ${theme === 'dark' ? 'invert(1) hue-rotate(180deg)' : ''}`
+                    : theme === 'dark' ? 'invert(1)' : 'none',
+                }}
+              />
               </div>
             </Link>
           </TooltipTrigger>

@@ -3,12 +3,22 @@ import { useTheme } from 'next-themes';
 import FleetBuilder from '../../components/FleetBuilder';
 import { ThemeToggle } from '../../components/ThemeToggle';
 import Image from 'next/image';
+import { SettingsButton } from '../../components/SettingsButton';
+import dynamic from 'next/dynamic';
+import { SVGProps } from 'react';
 
 const factionLogos = {
   rebel: '/icons/rebel.svg',
   empire: '/icons/empire.svg',
   republic: '/icons/republic.svg',
   separatist: '/icons/separatist.svg',
+};
+
+const factionColors = {
+  rebel: '#96001E',
+  empire: '#046000',
+  republic: '#880606',
+  separatist: '#161FDA',
 };
 
 export default function FactionPage() {
@@ -26,14 +36,17 @@ export default function FactionPage() {
               alt={`${faction} logo`}
               width={32}
               height={32}
-              className={`mr-2 ${theme === 'dark' ? 'filter invert' : ''}`}
+              className={`mr-2 ${theme === 'dark' ? 'invert' : ''}`}
             />
           )}
           <h1 className="text-2xl font-bold">Fleet Builder</h1>
         </div>
-        <ThemeToggle />
+        <div className="flex items-center space-x-2">
+          <SettingsButton />
+          <ThemeToggle />
+        </div>
       </div>
-      <FleetBuilder faction={faction as string} />
+      <FleetBuilder faction={faction as string} factionColor={factionColors[faction as keyof typeof factionColors]} />
     </div>
   );
 }
