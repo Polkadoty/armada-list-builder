@@ -9,7 +9,16 @@ const nextConfig = {
     return config;
   },
   images: {
-    domains: ['a.l3n.co', 'b.l3n.co', 'api.swarmada.wiki'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '*.l3n.co',
+      },
+      {
+        protocol: 'https',
+        hostname: 'api.swarmada.wiki',
+      },
+    ],
   },
 };
 
