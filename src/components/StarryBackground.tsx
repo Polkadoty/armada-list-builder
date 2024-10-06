@@ -1,7 +1,22 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 const StarryBackground: React.FC<{ show: boolean }> = ({ show }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+
+  useEffect(() => {
+    const updateDimensions = () => {
+      setDimensions({
+        width: window.innerWidth,
+        height: window.innerHeight
+      });
+    };
+
+    updateDimensions();
+    window.addEventListener('resize', updateDimensions);
+
+    return () => window.removeEventListener('resize', updateDimensions);
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -10,13 +25,11 @@ const StarryBackground: React.FC<{ show: boolean }> = ({ show }) => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    canvas.width = dimensions.width;
+    canvas.height = dimensions.height;
+
     let animationFrameId: number;
     let hue = 0;
-
-    const resizeCanvas = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
 
     const generateStars = () => {
       const stars = [];
@@ -51,7 +64,6 @@ const StarryBackground: React.FC<{ show: boolean }> = ({ show }) => {
       ctx.fillStyle = '#000000';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Create a subtle radial gradient for the Milky Way effect
       const gradient = ctx.createRadialGradient(
         canvas.width / 2, canvas.height / 2, 0,
         canvas.width / 2, canvas.height / 2, canvas.width / 2
@@ -63,7 +75,6 @@ const StarryBackground: React.FC<{ show: boolean }> = ({ show }) => {
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Draw stars
       stars.forEach(star => {
         ctx.beginPath();
         ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
@@ -71,7 +82,6 @@ const StarryBackground: React.FC<{ show: boolean }> = ({ show }) => {
         ctx.fill();
       });
 
-      // Draw dust/galaxy pattern
       ctx.globalAlpha = 0.1;
       dust.forEach(particle => {
         const y = particle.y + Math.cos(particle.x / canvas.width * Math.PI * 2 + time / 10000) * canvas.height / 10;
@@ -82,22 +92,17 @@ const StarryBackground: React.FC<{ show: boolean }> = ({ show }) => {
       });
       ctx.globalAlpha = 1;
 
-      // Slowly shift hue
       hue = (hue + 0.03) % 360;
 
       animationFrameId = requestAnimationFrame(drawBackground);
     };
 
-    resizeCanvas();
     drawBackground(0);
 
-    window.addEventListener('resize', resizeCanvas);
-
     return () => {
-      window.removeEventListener('resize', resizeCanvas);
       cancelAnimationFrame(animationFrameId);
     };
-  }, []);
+  }, [dimensions]);
 
   return (
     <canvas 
