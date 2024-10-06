@@ -18,8 +18,6 @@ import { useTheme } from 'next-themes';
 import { ObjectiveSelector, ObjectiveModel } from './ObjectiveSelector';
 import UpgradeSelector from './UpgradeSelector';
 import { ExportTextPopup } from './ExportTextPopup';
-import { ImportTextPopup } from './ImportTextPopup';
-import axios from 'axios';
 
 export interface Ship {
   id: string;
@@ -76,93 +74,6 @@ const SectionHeader = ({ title, points, previousPoints, show }: { title: string;
   ) : null
 );
 
-// const fetchObjective = async (type: string, name: string): Promise<ObjectiveModel | null> => {
-//   try {
-//     const response = await axios.get(`https://api.swarmada.wiki/api/objectives/search?type=${type}`);
-//     const objectives = response.data.objectives;
-//     const objective = Object.values(objectives).find((obj: any) => obj.name === name);
-//     return objective ? {
-//       id: objective._id,
-//       name: objective.name,
-//       type: objective.type,
-//       cardimage: objective.cardimage
-//     } : null;
-//   } catch (error) {
-//     console.error('Error fetching objective:', error);
-//     return null;
-//   }
-// };
-
-// const fetchShip = async (name: string, faction: string): Promise<Ship | null> => {
-//   try {
-//     const response = await axios.get(`https://api.swarmada.wiki/api/ships/search?faction=${faction}`);
-//     const ships = response.data.ships;
-//     const ship = Object.values(ships).flatMap((chassis: any) => 
-//       Object.values(chassis.models)
-//     ).find((ship: any) => ship.name === name);
-//     return ship ? {
-//       id: ship._id,
-//       name: ship.name,
-//       points: ship.points,
-//       cardimage: ship.cardimage,
-//       faction: ship.faction,
-//       availableUpgrades: ship.upgrades || [],
-//       assignedUpgrades: [],
-//       unique: ship.unique
-//     } as Ship : null;
-//   } catch (error) {
-//     console.error('Error fetching ship:', error);
-//     return null;
-//   }
-// };
-
-// const fetchSquadron = async (name: string, faction: string): Promise<Squadron | null> => {
-//   try {
-//     const response = await axios.get(`https://api.swarmada.wiki/api/squadrons/search?faction=${faction}`);
-//     const squadrons = response.data.squadrons;
-//     const squadron = Object.values(squadrons).find((squad: any) => squad.name === name || squad['ace-name'] === name);
-//     return squadron ? {
-//       id: squadron._id,
-//       name: squadron['ace-name'] || squadron.name,
-//       'ace-name': squadron['ace-name'],
-//       points: squadron.points,
-//       cardimage: squadron.cardimage,
-//       faction: squadron.faction,
-//       hull: squadron.hull,
-//       speed: squadron.speed,
-//       unique: squadron.unique,
-//       count: 1,
-//       'unique-class': squadron['unique-class'] || []
-//     } as Squadron : null;
-//   } catch (error) {
-//     console.error('Error fetching squadron:', error);
-//     return null;
-//   }
-// };
-
-// const fetchUpgrade = async (name: string, faction: string): Promise<Upgrade | null> => {
-//   try {
-//     const response = await axios.get(`https://api.swarmada.wiki/api/upgrades/search?faction=${faction}&include_neutral=true`);
-//     const upgrades = response.data.upgrades;
-//     const upgrade = Object.values(upgrades).find((upgrade: any) => upgrade.name === name);
-//     return upgrade ? {
-//       name: upgrade.name,
-//       points: upgrade.points,
-//       ability: upgrade.ability,
-//       unique: upgrade.unique,
-//       artwork: upgrade.artwork,
-//       cardimage: upgrade.cardimage,
-//       type: upgrade.type,
-//       faction: upgrade.faction,
-//       'unique-class': upgrade['unique-class'] || [],
-//       bound_shiptype: upgrade['bound-shiptype'] || null
-//     } as Upgrade : null;
-//   } catch (error) {
-//     console.error('Error fetching upgrade:', error);
-//     return null;
-//   }
-// };
-
 export default function FleetBuilder({ faction }: { faction: string; factionColor: string }) {
   const [fleetName, setFleetName] = useState('Untitled Fleet');
   const [isEditingName, setIsEditingName] = useState(false);
@@ -191,7 +102,6 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
   const [currentUpgradeType, setCurrentUpgradeType] = useState('');
   const [currentShipId, setCurrentShipId] = useState('');
   const [showExportPopup, setShowExportPopup] = useState(false);
-  const [showImportPopup, setShowImportPopup] = useState(false);
 
   const handleNameClick = () => {
     setIsEditingName(true);
@@ -455,99 +365,6 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
     return text;
   };
 
-  // const importFleet = async (content: string) => {
-  //   const lines = content.split('\n');
-  //   let currentSection = '';
-  //   let importErrors: string[] = [];
-
-  //   setSelectedShips([]);
-  //   setSelectedSquadrons([]);
-  //   setSelectedAssaultObjective(null);
-  //   setSelectedDefenseObjective(null);
-  //   setSelectedNavigationObjective(null);
-
-  //   for (const line of lines) {
-  //     if (line.startsWith('Name:')) {
-  //       setFleetName(line.split(':')[1].trim());
-  //     } else if (line.startsWith('Faction:')) {
-  //       const importedFaction = line.split(':')[1].trim().toLowerCase();
-  //       if (importedFaction !== faction) {
-  //         importErrors.push(`Imported faction (${importedFaction}) does not match current faction (${faction})`);
-  //       }
-  //     } else if (line.startsWith('Commander:')) {
-  //       // Commander will be handled with ship upgrades
-  //     } else if (line.startsWith('Assault:')) {
-  //       const objectiveName = line.split(':')[1].trim();
-  //       const objective = await fetchObjective('assault', objectiveName);
-  //       if (objective) {
-  //         handleSelectAssaultObjective(objective);
-  //       } else {
-  //         importErrors.push(`Assault objective "${objectiveName}" not found`);
-  //       }
-  //     } else if (line.startsWith('Defense:')) {
-  //       const objectiveName = line.split(':')[1].trim();
-  //       const objective = await fetchObjective('defense', objectiveName);
-  //       if (objective) {
-  //         handleSelectDefenseObjective(objective);
-  //       } else {
-  //         importErrors.push(`Defense objective "${objectiveName}" not found`);
-  //       }
-  //     } else if (line.startsWith('Navigation:')) {
-  //       const objectiveName = line.split(':')[1].trim();
-  //       const objective = await fetchObjective('navigation', objectiveName);
-  //       if (objective) {
-  //         handleSelectNavigationObjective(objective);
-  //       } else {
-  //         importErrors.push(`Navigation objective "${objectiveName}" not found`);
-  //       }
-  //     } else if (line.trim() === 'Squadrons:') {
-  //       currentSection = 'squadrons';
-  //     } else if (line.includes('(') && line.includes(')')) {
-  //       if (currentSection === 'squadrons') {
-  //         const [name, pointsStr] = line.split('(');
-  //         const squadronName = name.trim().replace('• ', '');
-  //         const count = line.includes('x') ? parseInt(line.split('x')[1]) : 1;
-  //         const squadron = await fetchSquadron(squadronName, faction);
-  //         if (squadron) {
-  //           handleSelectSquadron({ ...squadron, count });
-  //         } else {
-  //           importErrors.push(`Squadron "${squadronName}" not found`);
-  //         }
-  //       } else {
-  //         // This is a ship
-  //         const [name, pointsStr] = line.split('(');
-  //         const shipName = name.trim();
-  //         const ship = await fetchShip(shipName, faction);
-  //         if (ship) {
-  //           const newShip = { ...ship, id: Date.now().toString(), assignedUpgrades: [] };
-  //           handleSelectShip(newShip);
-            
-  //           // Process upgrades for this ship
-  //           let nextLine = lines[lines.indexOf(line) + 1];
-  //           while (nextLine && nextLine.startsWith('•')) {
-  //             const [upgradeName, upgradePointsStr] = nextLine.substring(1).split('(');
-  //             const upgrade = await fetchUpgrade(upgradeName.trim(), faction);
-  //             if (upgrade) {
-  //               handleSelectUpgrade(upgrade);
-  //             } else {
-  //               importErrors.push(`Upgrade "${upgradeName.trim()}" not found for ship ${shipName}`);
-  //             }
-  //             nextLine = lines[lines.indexOf(nextLine) + 1];
-  //           }
-  //         } else {
-  //           importErrors.push(`Ship "${shipName}" not found`);
-  //         }
-  //       }
-  //     }
-  //   }
-
-  //   if (importErrors.length > 0) {
-  //     alert(`Import completed with warnings:\n${importErrors.join('\n')}`);
-  //   } else {
-  //     alert('Fleet imported successfully!');
-  //   }
-  // };
-
   return (
     <div className="max-w-4xl mx-auto">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
@@ -690,9 +507,6 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
         <Button variant="outline" className="flex-grow" onClick={() => setShowExportPopup(true)}>
           <FileText className="mr-2 h-4 w-4" /> EXPORT TEXT
         </Button>
-        <Button variant="outline" className="flex-grow" onClick={() => setShowImportPopup(true)}>
-          <FileText className="mr-2 h-4 w-4" /> IMPORT FLEET
-        </Button>
       </div>
 
       {showShipSelector && (
@@ -758,13 +572,6 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
           onClose={() => setShowExportPopup(false)}
         />
       )}
-
-      {/* {showImportPopup && (
-        <ImportTextPopup
-          onImport={importFleet}
-          onClose={() => setShowImportPopup(false)}
-        />
-      )} */}
 
     </div>
   );

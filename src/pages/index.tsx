@@ -5,6 +5,7 @@ import { ThemeToggle } from '../components/ThemeToggle';
 import { Button } from "@/components/ui/button";
 import { SettingsButton } from '../components/SettingsButton';
 import StarryBackground from '../components/StarryBackground';
+import Link from 'next/link';
 
 // a
 
@@ -42,7 +43,9 @@ export default function Home() {
         <FactionSelection onHover={setHoveredFaction} />
         <div className="mt-8 flex justify-center space-x-4">
           <Button variant="outline" size="sm" className="text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20">SIGN IN</Button>
-          <Button variant="outline" size="sm" className="text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20">FAQ</Button>
+          <Link href="/faq">
+            <Button variant="outline" size="sm" className="text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20">FAQ</Button>
+          </Link>
           <Button
             variant="outline"
             size="sm"
@@ -59,7 +62,7 @@ export default function Home() {
             <div
               key={faction}
               className={`absolute inset-0 transition-opacity duration-300 ${
-                hoveredFaction === faction ? 'opacity-50' : 'opacity-0'
+                hoveredFaction === faction ? 'opacity-75' : 'opacity-0'
               }`}
             >
               <Image 
