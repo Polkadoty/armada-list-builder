@@ -4,7 +4,7 @@ import FleetBuilder from '../../components/FleetBuilder';
 import { ThemeToggle } from '../../components/ThemeToggle';
 import Image from 'next/image';
 import { SettingsButton } from '../../components/SettingsButton';
-
+import StarryBackground from '../../components/StarryBackground';
 
 const factionLogos = {
   rebel: '/icons/rebel.svg',
@@ -26,26 +26,29 @@ export default function FactionPage() {
   const { theme } = useTheme();
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 dark:bg-nebula bg-cover text-gray-900 dark:text-white p-4">
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex items-center">
-          {faction && (
-            <Image
-              src={factionLogos[faction as keyof typeof factionLogos]}
-              alt={`${faction} logo`}
-              width={32}
-              height={32}
-              className={`mr-2 ${theme === 'dark' ? 'invert' : ''}`}
-            />
-          )}
-          <h1 className="text-2xl font-bold">Fleet Builder</h1>
+    <div className="min-h-screen text-gray-900 dark:text-white relative">
+      <StarryBackground show={theme === 'dark'} />
+      <div className="relative z-10 p-4">
+        <div className="flex justify-between items-center mb-4">
+          <div className="flex items-center">
+            {faction && (
+              <Image
+                src={factionLogos[faction as keyof typeof factionLogos]}
+                alt={`${faction} logo`}
+                width={32}
+                height={32}
+                className={`mr-2 ${theme === 'dark' ? 'invert' : ''}`}
+              />
+            )}
+            <h1 className="text-2xl font-bold">Fleet Builder</h1>
+          </div>
+          <div className="flex items-center space-x-2">
+            <SettingsButton />
+            <ThemeToggle />
+          </div>
         </div>
-        <div className="flex items-center space-x-2">
-          <SettingsButton />
-          <ThemeToggle />
-        </div>
+        <FleetBuilder faction={faction as string} factionColor={factionColors[faction as keyof typeof factionColors]} />
       </div>
-      <FleetBuilder faction={faction as string} factionColor={factionColors[faction as keyof typeof factionColors]} />
     </div>
   );
 }

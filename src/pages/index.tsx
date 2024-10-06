@@ -4,10 +4,13 @@ import FactionSelection from '../components/FactionSelection';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { Button } from "@/components/ui/button";
 import { SettingsButton } from '../components/SettingsButton';
+import StarryBackground from '../components/StarryBackground';
+import { useTheme } from 'next-themes';
 
 export default function Home() {
   const [isWideScreen, setIsWideScreen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const { theme } = useTheme();
 
   useEffect(() => {
     setMounted(true);
@@ -20,8 +23,9 @@ export default function Home() {
   if (!mounted) return null;
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row">
-      <div className={`bg-white dark:bg-gray-900 dark:bg-nebula bg-cover p-8 flex-grow lg:w-1/3 lg:min-w-[300px]`}>
+    <div className="min-h-screen flex flex-col lg:flex-row relative">
+      <StarryBackground show={theme === 'dark'} />
+      <div className={`bg-white dark:bg-gray-900 p-8 flex-grow lg:w-1/3 lg:min-w-[300px] relative z-10`}>
         <div className="flex justify-end space-x-2 mb-4">
           <SettingsButton />
           <ThemeToggle />

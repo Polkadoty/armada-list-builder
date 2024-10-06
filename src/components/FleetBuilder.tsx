@@ -160,6 +160,8 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
           : ship
       )
     );
+    setPreviousPoints(points);
+    setPreviousShipPoints(totalShipPoints);
     setPoints(prevPoints => prevPoints + upgrade.points);
     setTotalShipPoints(prevTotal => prevTotal + upgrade.points);
     setShowUpgradeSelector(false);
@@ -171,6 +173,8 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
         if (ship.id === shipId) {
           const upgradeToRemove = ship.assignedUpgrades.find(u => u.type === upgradeType);
           if (upgradeToRemove) {
+            setPreviousPoints(points);
+            setPreviousShipPoints(totalShipPoints);
             setPoints(prevPoints => prevPoints - upgradeToRemove.points);
             setTotalShipPoints(prevTotal => prevTotal - upgradeToRemove.points);
           }
@@ -185,13 +189,18 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
   };
 
   const handleCopyShip = (shipToCopy: Ship) => {
-    const newShip = { ...shipToCopy, id: Date.now().toString() };
+    const newShip = { 
+      ...shipToCopy, 
+      id: Date.now().toString(),
+      assignedUpgrades: shipToCopy.assignedUpgrades.filter(upgrade => !upgrade.unique)
+    };
+    const newShipPoints = newShip.points + newShip.assignedUpgrades.reduce((total, upgrade) => total + upgrade.points, 0);
     setSelectedShips([...selectedShips, newShip]);
     setPreviousPoints(points);
     setPreviousShipPoints(totalShipPoints);
-    const newPoints = points + shipToCopy.points;
+    const newPoints = points + newShipPoints;
     setPoints(newPoints);
-    setTotalShipPoints(totalShipPoints + shipToCopy.points);
+    setTotalShipPoints(totalShipPoints + newShipPoints);
   };
 
   const handleAddSquadron = () => {

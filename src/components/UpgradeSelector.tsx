@@ -32,7 +32,7 @@ export default function UpgradeSelector({
     const fetchUpgrades = async () => {
       setLoading(true);
       try {
-        let url = `https://api.swarmada.wiki/api/upgrades/search?type=${upgradeType}&faction=${faction}`;
+        let url = `https://api.swarmada.wiki/api/upgrades/search?type=${upgradeType}&faction=${faction}&include_neutral=true`;
         const response = await fetch(url);
         if (!response.ok) {
           throw new Error('Failed to fetch upgrades');
