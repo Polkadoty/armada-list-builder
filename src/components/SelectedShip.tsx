@@ -3,7 +3,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import UpgradeIconsToolbar from './UpgradeIconsToolbar';
 import { Button } from "@/components/ui/button";
-import { Ship, Upgrade } from "./FleetBuilder";
+import { Ship } from "./FleetBuilder";
 
 interface SelectedShipProps {
   ship: Ship;

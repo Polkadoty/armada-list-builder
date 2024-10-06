@@ -99,7 +99,12 @@ const StarryBackground: React.FC<{ show: boolean }> = ({ show }) => {
     };
   }, []);
 
-  return show ? <canvas ref={canvasRef} className="fixed inset-0 z-[-1]" /> : null;
+  return (
+    <canvas 
+      ref={canvasRef} 
+      className={`fixed inset-0 z-[-1] transition-opacity duration-300 ${show ? 'opacity-100' : 'opacity-0'}`} 
+    />
+  );
 };
 
 export default StarryBackground;

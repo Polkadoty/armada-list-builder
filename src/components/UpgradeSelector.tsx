@@ -23,7 +23,6 @@ export default function UpgradeSelector({
   selectedUpgrades,
   uniqueClassNames,
   shipType,
-  isCommander = false
 }: UpgradeSelectorProps) {
   const [upgrades, setUpgrades] = useState<Upgrade[]>([]);
   const [loading, setLoading] = useState(true);

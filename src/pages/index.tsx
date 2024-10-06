@@ -10,7 +10,7 @@ import { useTheme } from 'next-themes';
 export default function Home() {
   const [isWideScreen, setIsWideScreen] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const { theme } = useTheme();
+  const { theme, systemTheme } = useTheme();
 
   useEffect(() => {
     setMounted(true);
@@ -22,10 +22,12 @@ export default function Home() {
 
   if (!mounted) return null;
 
+  const currentTheme = theme === 'system' ? systemTheme : theme;
+
   return (
     <div className="min-h-screen flex flex-col lg:flex-row relative">
-      <StarryBackground show={theme === 'dark'} />
-      <div className={`bg-white dark:bg-gray-900 p-8 flex-grow lg:w-1/3 lg:min-w-[300px] relative z-10`}>
+      <StarryBackground show={currentTheme === 'dark'} />
+      <div className={`bg-white dark:bg-transparent p-8 flex-grow lg:w-1/3 lg:min-w-[300px] relative z-10`}>
         <div className="flex justify-end space-x-2 mb-4">
           <SettingsButton />
           <ThemeToggle />
@@ -45,7 +47,7 @@ export default function Home() {
           </Button>
         </div>
       </div>
-      {isWideScreen && (
+      {isWideScreen && mounted && (
         <div className="flex-grow relative lg:w-2/3">
           <Image 
             src="/images/space-battle.webp" 
