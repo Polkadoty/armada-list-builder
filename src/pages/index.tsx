@@ -17,7 +17,6 @@ const factionShips = {
 export default function Home() {
   const [isWideScreen, setIsWideScreen] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const { theme, systemTheme } = useTheme();
   const [hoveredFaction, setHoveredFaction] = useState<string | null>(null);
 
   useEffect(() => {
