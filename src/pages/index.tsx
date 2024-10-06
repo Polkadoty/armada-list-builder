@@ -5,7 +5,8 @@ import { ThemeToggle } from '../components/ThemeToggle';
 import { Button } from "@/components/ui/button";
 import { SettingsButton } from '../components/SettingsButton';
 import StarryBackground from '../components/StarryBackground';
-import { useTheme } from 'next-themes';
+
+// a
 
 const factionShips = {
   rebel: '/images/cr90.webp',
