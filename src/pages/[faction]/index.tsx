@@ -7,7 +7,7 @@ import { SettingsButton } from '../../components/SettingsButton';
 import StarryBackground from '../../components/StarryBackground';
 import { useEffect, useState } from 'react';
 
-const factionLogos = {
+export const factionLogos = {
   rebel: '/icons/rebel.svg',
   empire: '/icons/empire.svg',
   republic: '/icons/republic.svg',
