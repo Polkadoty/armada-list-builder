@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-empty-interface */
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
