@@ -13,6 +13,7 @@ interface UpgradeSelectorProps {
   uniqueClassNames: string[];
   shipType?: string;
   isCommander?: boolean;
+  chassis?: string; // Add this line
 }
 
 export default function UpgradeSelector({
@@ -23,6 +24,8 @@ export default function UpgradeSelector({
   selectedUpgrades,
   uniqueClassNames,
   shipType,
+  isCommander,
+  chassis, // Add this line
 }: UpgradeSelectorProps) {
   const [upgrades, setUpgrades] = useState<Upgrade[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,7 +34,11 @@ export default function UpgradeSelector({
     const fetchUpgrades = async () => {
       setLoading(true);
       try {
-        const url = `https://api.swarmada.wiki/api/upgrades/search?type=${upgradeType}&faction=${faction}&include_neutral=true`;
+        let url = `https://api.swarmada.wiki/api/upgrades/search?type=${upgradeType}&faction=${faction}&include_neutral=true`;
+        if (upgradeType === 'title' && chassis) {
+          url += `&bound_shiptype=${encodeURIComponent(chassis)}`;
+        }
+        console.log('Fetching upgrades from:', url); // Add this line for debugging
         const response = await fetch(url);
         if (!response.ok) {
           throw new Error('Failed to fetch upgrades');
@@ -48,11 +55,20 @@ export default function UpgradeSelector({
     };
 
     fetchUpgrades();
-  }, [upgradeType, faction]);
+  }, [upgradeType, faction, chassis]);
 
+  
   const isUpgradeAvailable = (upgrade: Upgrade) => {
-    if (upgrade.bound_shiptype && upgrade.bound_shiptype !== shipType) {
-      return false;
+    if (upgradeType === 'title') {
+      // For title upgrades, check if the bound_shiptype matches the chassis
+      if (upgrade.bound_shiptype && upgrade.bound_shiptype !== chassis) {
+        return false;
+      }
+    } else {
+      // For non-title upgrades, use the existing check
+      if (upgrade.bound_shiptype && upgrade.bound_shiptype !== shipType) {
+        return false;
+      }
     }
 
     if (upgrade.unique && selectedUpgrades.some(su => su.name === upgrade.name)) {

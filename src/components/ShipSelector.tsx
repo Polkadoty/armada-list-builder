@@ -12,6 +12,7 @@ export interface ShipModel {
   faction: string;
   upgrades?: string[];
   unique: boolean;
+  chassis: string;
 }
 
 interface Ship {

@@ -29,6 +29,7 @@ export interface Ship {
   availableUpgrades: string[];
   assignedUpgrades: Upgrade[];
   unique: boolean;
+  chassis: string;
 }
 
 export interface Squadron {
@@ -125,7 +126,8 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
       ...ship, 
       id: Date.now().toString(),
       availableUpgrades: ship.upgrades || [],
-      assignedUpgrades: []
+      assignedUpgrades: [],
+      chassis: ship.chassis || ship.name
     };
     setSelectedShips([...selectedShips, newShip]);
     setPreviousPoints(points);
@@ -657,6 +659,7 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
           uniqueClassNames={[]} // You'll need to implement this
           shipType={selectedShips.find(ship => ship.id === currentShipId)?.name}
           isCommander={currentUpgradeType === 'commander'}
+          chassis={selectedShips.find(ship => ship.id === currentShipId)?.chassis}
         />
       )}
 
