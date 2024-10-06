@@ -36,9 +36,9 @@ export default function FactionPage() {
   const currentTheme = theme === 'system' ? systemTheme : theme;
 
   return (
-    <div className="min-h-screen text-gray-900 dark:text-white relative">
+    <div className="min-h-screen text-gray-900 dark:text-white relative bg-white dark:bg-transparent">
       <StarryBackground show={currentTheme === 'dark'} />
-      <div className="relative z-10 p-4 bg-white dark:bg-transparent">
+      <div className="relative z-10 p-4">
         <div className="flex justify-between items-center mb-4">
           <div className="flex items-center">
             {faction && (

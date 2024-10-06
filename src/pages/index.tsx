@@ -30,8 +30,6 @@ export default function Home() {
 
   if (!mounted) return null;
 
-  const currentTheme = theme === 'system' ? systemTheme : theme;
-
   return (
     <div className="min-h-screen flex flex-col lg:flex-row relative">
       <StarryBackground show={true} />
