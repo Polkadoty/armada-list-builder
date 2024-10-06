@@ -383,7 +383,7 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
   const generatePrintContent = () => {
     const factionLogo = factionLogos[faction as keyof typeof factionLogos];
     
-    let content = `
+    const content = `
       <!DOCTYPE html>
       <html lang="en">
       <head>
@@ -658,7 +658,6 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
           selectedUpgrades={selectedShips.flatMap(ship => ship.assignedUpgrades).filter((upgrade): upgrade is Upgrade => typeof upgrade !== 'string')}
           uniqueClassNames={[]} // You'll need to implement this
           shipType={selectedShips.find(ship => ship.id === currentShipId)?.name}
-          isCommander={currentUpgradeType === 'commander'}
           chassis={selectedShips.find(ship => ship.id === currentShipId)?.chassis}
         />
       )}

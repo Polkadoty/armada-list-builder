@@ -12,7 +12,6 @@ interface UpgradeSelectorProps {
   selectedUpgrades: Upgrade[];
   uniqueClassNames: string[];
   shipType?: string;
-  isCommander?: boolean;
   chassis?: string; // Add this line
 }
 
@@ -24,8 +23,7 @@ export default function UpgradeSelector({
   selectedUpgrades,
   uniqueClassNames,
   shipType,
-  isCommander,
-  chassis, // Add this line
+  chassis // Add this line
 }: UpgradeSelectorProps) {
   const [upgrades, setUpgrades] = useState<Upgrade[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,7 +55,7 @@ export default function UpgradeSelector({
     fetchUpgrades();
   }, [upgradeType, faction, chassis]);
 
-  
+
   const isUpgradeAvailable = (upgrade: Upgrade) => {
     if (upgradeType === 'title') {
       // For title upgrades, check if the bound_shiptype matches the chassis
