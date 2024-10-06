@@ -16,14 +16,16 @@ import { PointsDisplay } from './PointsDisplay';
 import Link from 'next/link';
 import { useTheme } from 'next-themes';
 import { ObjectiveSelector, ObjectiveModel } from './ObjectiveSelector';
+import UpgradeSelector from './UpgradeSelector';
 
-interface Ship {
+export interface Ship {
   id: string;
   name: string;
   points: number;
   cardimage: string;
   faction: string;
-  upgrades: string[];
+  availableUpgrades: string[];
+  assignedUpgrades: Upgrade[];
   unique: boolean;
 }
 
@@ -39,6 +41,25 @@ export interface Squadron {
   unique: boolean;
   count: number;
   'unique-class': string[];
+}
+
+export interface Upgrade {
+  name: string;
+  points: number;
+  ability: string;
+  unique: boolean;
+  artwork: string;
+  cardimage: string;
+  type: string;
+  faction: string[];
+  "unique-class": string[];
+  bound_shiptype: string;
+}
+
+export interface Ship extends ShipModel {
+  id: string;
+  availableUpgrades: string[];
+  assignedUpgrades: Upgrade[];
 }
 
 const SectionHeader = ({ title, points, previousPoints, show }: { title: string; points: number; previousPoints: number; show: boolean }) => (
@@ -76,6 +97,9 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
   const [selectedDefenseObjective, setSelectedDefenseObjective] = useState<ObjectiveModel | null>(null);
   const [selectedNavigationObjective, setSelectedNavigationObjective] = useState<ObjectiveModel | null>(null);
   const [uniqueClassNames, setUniqueClassNames] = useState<string[]>([]);
+  const [showUpgradeSelector, setShowUpgradeSelector] = useState(false);
+  const [currentUpgradeType, setCurrentUpgradeType] = useState('');
+  const [currentShipId, setCurrentShipId] = useState('');
 
   const handleNameClick = () => {
     setIsEditingName(true);
@@ -97,7 +121,8 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
     const newShip: Ship = { 
       ...ship, 
       id: Date.now().toString(),
-      upgrades: ship.upgrades || []
+      availableUpgrades: ship.upgrades || [],
+      assignedUpgrades: []
     };
     setSelectedShips([...selectedShips, newShip]);
     setPreviousPoints(points);
@@ -111,19 +136,52 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
   const handleRemoveShip = (id: string) => {
     const shipToRemove = selectedShips.find(ship => ship.id === id);
     if (shipToRemove) {
+      const shipPoints = shipToRemove.points + shipToRemove.assignedUpgrades.reduce((total, upgrade) => total + upgrade.points, 0);
       setSelectedShips(selectedShips.filter(ship => ship.id !== id));
       setPreviousPoints(points);
       setPreviousShipPoints(totalShipPoints);
-      const newPoints = points - shipToRemove.points;
+      const newPoints = points - shipPoints;
       setPoints(newPoints);
-      setTotalShipPoints(totalShipPoints - shipToRemove.points);
+      setTotalShipPoints(totalShipPoints - shipPoints);
     }
   };
 
-  const handleUpgradeClick = (shipId: string, upgrade: string) => {
-    // Here you can implement the logic for what happens when an upgrade is clicked
-    console.log(`Upgrade ${upgrade} clicked for ship ${shipId}`);
-    // For example, you might want to open a modal to select a specific upgrade card
+  const handleUpgradeClick = (shipId: string, upgradeType: string) => {
+    setCurrentShipId(shipId);
+    setCurrentUpgradeType(upgradeType);
+    setShowUpgradeSelector(true);
+  };
+  
+  const handleSelectUpgrade = (upgrade: Upgrade) => {
+    setSelectedShips(prevShips => 
+      prevShips.map(ship => 
+        ship.id === currentShipId
+          ? { ...ship, assignedUpgrades: [...ship.assignedUpgrades, upgrade] }
+          : ship
+      )
+    );
+    setPoints(prevPoints => prevPoints + upgrade.points);
+    setTotalShipPoints(prevTotal => prevTotal + upgrade.points);
+    setShowUpgradeSelector(false);
+  };
+
+  const handleRemoveUpgrade = (shipId: string, upgradeType: string) => {
+    setSelectedShips(prevShips => 
+      prevShips.map(ship => {
+        if (ship.id === shipId) {
+          const upgradeToRemove = ship.assignedUpgrades.find(u => u.type === upgradeType);
+          if (upgradeToRemove) {
+            setPoints(prevPoints => prevPoints - upgradeToRemove.points);
+            setTotalShipPoints(prevTotal => prevTotal - upgradeToRemove.points);
+          }
+          return {
+            ...ship,
+            assignedUpgrades: ship.assignedUpgrades.filter(u => u.type !== upgradeType)
+          };
+        }
+        return ship;
+      })
+    );
   };
 
   const handleCopyShip = (shipToCopy: Ship) => {
@@ -236,6 +294,18 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
     setShowNavigationObjectiveSelector(false);
   };
 
+  const handleRemoveAssaultObjective = () => {
+    setSelectedAssaultObjective(null);
+  };
+  
+  const handleRemoveDefenseObjective = () => {
+    setSelectedDefenseObjective(null);
+  };
+  
+  const handleRemoveNavigationObjective = () => {
+    setSelectedNavigationObjective(null);
+  };
+
   return (
     <div className="max-w-4xl mx-auto">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
@@ -265,7 +335,7 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
       />
       <div className="mb-4">
         {selectedShips.map((ship) => (
-          <SelectedShip key={ship.id} ship={ship} onRemove={handleRemoveShip} onUpgradeClick={handleUpgradeClick} onCopy={handleCopyShip} />
+          <SelectedShip key={ship.id} ship={ship} onRemove={handleRemoveShip} onUpgradeClick={handleUpgradeClick} onCopy={handleCopyShip} handleRemoveUpgrade={handleRemoveUpgrade} />
         ))}
       </div>
 
@@ -310,10 +380,18 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
           onClick={() => setShowAssaultObjectiveSelector(true)}
         >
           {selectedAssaultObjective ? (
-            <>
-              <div className="w-4 h-4 bg-[#EB3F3A] mr-2"></div>
-              {selectedAssaultObjective.name}
-            </>
+            <div className="flex justify-between items-center w-full">
+              <div className="flex items-center">
+                <div className="w-4 h-4 bg-[#EB3F3A] mr-2"></div>
+                {selectedAssaultObjective.name}
+              </div>
+              <button 
+                onClick={(e) => { e.stopPropagation(); handleRemoveAssaultObjective(); }}
+                className="text-red-500 hover:text-red-700"
+              >
+                ✕
+              </button>
+            </div>
           ) : "ADD ASSAULT"}
         </Button>
         <Button 
@@ -322,10 +400,18 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
           onClick={() => setShowDefenseObjectiveSelector(true)}
         >
           {selectedDefenseObjective ? (
-            <>
-              <div className="w-4 h-4 bg-[#FAEE13] mr-2"></div>
-              {selectedDefenseObjective.name}
-            </>
+            <div className="flex justify-between items-center w-full">
+              <div className="flex items-center">
+                <div className="w-4 h-4 bg-[#FAEE13] mr-2"></div>
+                {selectedDefenseObjective.name}
+              </div>
+              <button 
+                onClick={(e) => { e.stopPropagation(); handleRemoveDefenseObjective(); }}
+                className="text-red-500 hover:text-red-700"
+              >
+                ✕
+              </button>
+            </div>
           ) : "ADD DEFENSE"}
         </Button>
         <Button 
@@ -334,10 +420,18 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
           onClick={() => setShowNavigationObjectiveSelector(true)}
         >
           {selectedNavigationObjective ? (
-            <>
-              <div className="w-4 h-4 bg-[#C2E1F4] mr-2"></div>
-              {selectedNavigationObjective.name}
-            </>
+            <div className="flex justify-between items-center w-full">
+              <div className="flex items-center">
+                <div className="w-4 h-4 bg-[#C2E1F4] mr-2"></div>
+                {selectedNavigationObjective.name}
+              </div>
+              <button 
+                onClick={(e) => { e.stopPropagation(); handleRemoveNavigationObjective(); }}
+                className="text-red-500 hover:text-red-700"
+              >
+                ✕
+              </button>
+            </div>
           ) : "ADD NAVIGATION"}
         </Button>
       </div>
@@ -397,6 +491,19 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
           type="navigation"
           onSelectObjective={handleSelectNavigationObjective}
           onClose={() => setShowNavigationObjectiveSelector(false)}
+        />
+      )}
+
+      {showUpgradeSelector && (
+        <UpgradeSelector
+          upgradeType={currentUpgradeType}
+          faction={faction}
+          onSelectUpgrade={handleSelectUpgrade}
+          onClose={() => setShowUpgradeSelector(false)}
+          selectedUpgrades={selectedShips.flatMap(ship => ship.assignedUpgrades).filter((upgrade): upgrade is Upgrade => typeof upgrade !== 'string')}
+          uniqueClassNames={[]} // You'll need to implement this
+          shipType={selectedShips.find(ship => ship.id === currentShipId)?.name}
+          isCommander={currentUpgradeType === 'commander'}
         />
       )}
     </div>
