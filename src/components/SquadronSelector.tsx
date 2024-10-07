@@ -13,16 +13,13 @@ interface SquadronSelectorProps {
   selectedSquadrons: Squadron[];
   uniqueClassNames: string[];
 }
-// Add this constant at the top of your file
+
 const CACHE_VERSION = '1';
 
 export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, selectedSquadrons, uniqueClassNames }: SquadronSelectorProps) {
   const [squadrons, setSquadrons] = useState<Squadron[]>([]);
   const [showPopup, setShowPopup] = useState(false);
   const [popupMessage, setPopupMessage] = useState('');
-
-  console.log('Unique Class Names:', uniqueClassNames);
-  console.log('Selected Squadrons:', selectedSquadrons);
 
   useEffect(() => {
     const fetchSquadrons = async () => {
@@ -64,7 +61,6 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
     fetchSquadrons();
   }, [faction, filter]);
 
-  // Add this function to validate and fix image URLs
   const validateImageUrl = (url: string): string => {
     if (url.startsWith('http://') || url.startsWith('https://')) {
       return url;
@@ -78,12 +74,6 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
         uniqueClassNames.includes(squadron.name) ||
         squadron['unique-class']?.some(uc => uniqueClassNames.includes(uc))
       ));
-    console.log(`Checking ${squadron.name}:`, {
-      isSelected,
-      squadronUniqueClass: squadron['unique-class'],
-      uniqueClassNames,
-      isUnique: squadron.unique
-    });
     return isSelected;
   };
 
@@ -99,10 +89,17 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <Card className="w-3/4 h-3/4 overflow-auto relative">
-        <CardContent>
-          <h2 className="text-2xl font-bold mb-4">Select a Squadron</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+      <Card className="w-full h-full sm:w-11/12 sm:h-5/6 lg:w-3/4 lg:h-3/4 overflow-auto relative">
+        <CardContent className="p-2 sm:p-4">
+          <div className="flex justify-between items-center mb-2 sm:mb-4">
+            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold">Select a Squadron</h2>
+            <Button variant="ghost" onClick={onClose} className="p-1">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </Button>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3 md:gap-4">
             {squadrons.map((squadron) => (
               <div key={squadron.id} className="w-full aspect-[2/3]">
                 <Button
@@ -119,25 +116,23 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
                       layout="fill"
                       objectFit="cover"
                       objectPosition="center"
-                      className="scale-[102%]"
+                      className="scale-[103%]"
                       onError={(e) => {
-                        console.error(`Error loading image for ${squadron.name}:`, squadron.cardimage);
                         e.currentTarget.src = '/placeholder-squadron.png';
                       }}
                     />
                   </div>
-                  <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2">
-                    <p className="text-sm font-bold truncate flex items-center justify-center">
-                      {squadron.unique && <span className="mr-1 text-yellow-500">●</span>}
-                      {squadron.name}
+                  <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-1 sm:p-2">
+                    <p className="text-xs sm:text-sm font-bold flex items-center justify-center">
+                      {squadron.unique && <span className="mr-1 text-yellow-500 text-xs sm:text-sm">●</span>}
+                      <span className="break-words line-clamp-2 text-center">{squadron.name}</span>
                     </p>
-                    <p className="text-xs text-center">{squadron.points} points</p>
+                    <p className="text-xs sm:text-sm text-center">{squadron.points} points</p>
                   </div>
                 </Button>
               </div>
             ))}
           </div>
-          <Button onClick={onClose} className="mt-4">Close</Button>
         </CardContent>
         {showPopup && (
           <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-red-500 text-white p-4 rounded-lg shadow-lg z-50 animate-shake">
@@ -148,4 +143,3 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
     </div>
   );
 }
-
