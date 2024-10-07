@@ -363,7 +363,7 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
       }, {} as Record<string, number>);
 
       Object.entries(groupedSquadrons).forEach(([squadronKey, count]) => {
-        text += `  - ${count} x ${squadronKey}\n`;
+        text += ` - ${count} x ${squadronKey}\n`;
       });
     }
     text += `= ${totalSquadronPoints} Points\n\n`;
