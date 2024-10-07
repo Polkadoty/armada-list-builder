@@ -105,11 +105,13 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
   const [selectedAssaultObjective, setSelectedAssaultObjective] = useState<ObjectiveModel | null>(null);
   const [selectedDefenseObjective, setSelectedDefenseObjective] = useState<ObjectiveModel | null>(null);
   const [selectedNavigationObjective, setSelectedNavigationObjective] = useState<ObjectiveModel | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [uniqueClassNames, setUniqueClassNames] = useState<string[]>([]);
   const [showUpgradeSelector, setShowUpgradeSelector] = useState(false);
   const [currentUpgradeType, setCurrentUpgradeType] = useState('');
   const [currentShipId, setCurrentShipId] = useState('');
   const [showExportPopup, setShowExportPopup] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { addUniqueClassName, removeUniqueClassName } = useUniqueClassContext();
 
   const handleNameClick = () => {
