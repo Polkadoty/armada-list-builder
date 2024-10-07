@@ -353,12 +353,17 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
     
     text += `Squadrons:\n`;
     if (selectedSquadrons.length > 0) {
-      selectedSquadrons.forEach(squadron => {
-        text += `• ${squadron.name} (${squadron.points})`;
-        if (squadron.count > 1) {
-          text += ` x${squadron.count}`;
+      const groupedSquadrons = selectedSquadrons.reduce((acc, squadron) => {
+        const key = `${squadron.name} (${squadron.points})`;
+        if (!acc[key]) {
+          acc[key] = 0;
         }
-        text += `\n`;
+        acc[key] += squadron.count || 1;
+        return acc;
+      }, {} as Record<string, number>);
+
+      Object.entries(groupedSquadrons).forEach(([squadronKey, count]) => {
+        text += ` - ${count} x ${squadronKey}\n`;
       });
     }
     text += `= ${totalSquadronPoints} Points\n\n`;
