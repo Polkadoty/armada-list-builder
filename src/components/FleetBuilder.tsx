@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Filter, Printer, ArrowLeft, FileText } from 'lucide-react';
+import { Pencil, Filter, Printer, ArrowLeft, FileText, Trash2 } from 'lucide-react';
 import { ShipSelector } from './ShipSelector';
 import { SelectedShip } from './SelectedShip';
 import { ShipFilter } from './ShipFilter';
@@ -65,11 +65,16 @@ export interface Ship extends ShipModel {
   assignedUpgrades: Upgrade[];
 }
 
-const SectionHeader = ({ title, points, previousPoints, show }: { title: string; points: number; previousPoints: number; show: boolean }) => (
+const SectionHeader = ({ title, points, previousPoints, show, onClearAll }: { title: string; points: number; previousPoints: number; show: boolean; onClearAll: () => void }) => (
   show ? (
     <div className="flex justify-between items-center mb-2 mt-4 border-b border-gray-300 relative">
-      <h3 className="text-lg font-semibold">{title}</h3>
-      <div className="z-40">
+      <div className="flex items-center">
+        <h3 className="text-lg font-semibold">{title}</h3>
+      </div>
+      <div className="flex items-center z-40">
+        <button onClick={onClearAll} className="mr-2 text-red-500 hover:text-red-700">
+          <Trash2 size={16} />
+        </button>
         <PointsDisplay points={points} previousPoints={previousPoints} />
       </div>
     </div>
@@ -320,6 +325,22 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
     setSelectedNavigationObjective(null);
   };
 
+  const clearAllShips = () => {
+    setPreviousPoints(points);
+    setPreviousShipPoints(totalShipPoints);
+    setPoints(points - totalShipPoints);
+    setTotalShipPoints(0);
+    setSelectedShips([]);
+  };
+  
+  const clearAllSquadrons = () => {
+    setPreviousPoints(points);
+    setPreviousSquadronPoints(totalSquadronPoints);
+    setPoints(points - totalSquadronPoints);
+    setTotalSquadronPoints(0);
+    setSelectedSquadrons([]);
+  };
+
   const generateExportText = () => {
     let text = `Name: ${fleetName}\n`;
     text += `Faction: ${faction.charAt(0).toUpperCase() + faction.slice(1)}\n`;
@@ -469,7 +490,7 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
   return (
     <div className="max-w-4xl mx-auto">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
-        <div className="mb-2 sm:mb-0">
+        <div className="mb-2 sm:mb-0 flex items-center">
           {isEditingName ? (
             <Input
               value={fleetName}
@@ -479,9 +500,12 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
               autoFocus
             />
           ) : (
-            <h2 className="text-xl font-bold cursor-pointer" onClick={handleNameClick}>
-              {fleetName}
-            </h2>
+            <div className="flex items-center cursor-pointer" onClick={handleNameClick}>
+              <h2 className="text-xl font-bold mr-2">
+                {fleetName}
+              </h2>
+              <Pencil className="h-4 w-4 text-gray-500" />
+            </div>
           )}
         </div>
         <PointsDisplay points={points} previousPoints={previousPoints} />
@@ -492,6 +516,7 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
         points={totalShipPoints} 
         previousPoints={previousShipPoints} 
         show={selectedShips.length > 0}
+        onClearAll={clearAllShips}
       />
       <div className="mb-4">
         {selectedShips.map((ship) => (
@@ -504,6 +529,7 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
         points={totalSquadronPoints} 
         previousPoints={previousSquadronPoints} 
         show={selectedSquadrons.length > 0}
+        onClearAll={clearAllSquadrons}
       />
       <div className="mb-4">
         {selectedSquadrons.map((squadron) => (

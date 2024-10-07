@@ -1,22 +1,59 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 
 const StarryBackground: React.FC<{ show: boolean }> = ({ show }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const animationFrameIdRef = useRef<number>();
+
+  const updateDimensions = useCallback(() => {
+    setDimensions({
+      width: window.innerWidth,
+      height: window.innerHeight
+    });
+  }, []);
 
   useEffect(() => {
-    const updateDimensions = () => {
-      setDimensions({
-        width: window.innerWidth,
-        height: window.innerHeight
-      });
-    };
-
     updateDimensions();
-    window.addEventListener('resize', updateDimensions);
+    let timeoutId: NodeJS.Timeout;
+    const handleResize = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(updateDimensions, 200);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      clearTimeout(timeoutId);
+    };
+  }, [updateDimensions]);
 
-    return () => window.removeEventListener('resize', updateDimensions);
+  const generateStars = useCallback((width: number, height: number) => {
+    const stars = [];
+    for (let i = 0; i < 1000; i++) {
+      stars.push({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        radius: Math.random() * 1.5,
+        opacity: Math.random(),
+      });
+    }
+    return stars;
   }, []);
+
+  const generateDust = useCallback((width: number, height: number) => {
+    const dust = [];
+    for (let i = 0; i < 1000; i++) {
+      dust.push({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        radius: Math.random() * 2,
+        hue: Math.random() * 60 + 20,
+      });
+    }
+    return dust;
+  }, []);
+
+  const stars = useMemo(() => generateStars(dimensions.width, dimensions.height), [dimensions, generateStars]);
+  const dust = useMemo(() => generateDust(dimensions.width, dimensions.height), [dimensions, generateDust]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -28,37 +65,7 @@ const StarryBackground: React.FC<{ show: boolean }> = ({ show }) => {
     canvas.width = dimensions.width;
     canvas.height = dimensions.height;
 
-    let animationFrameId: number;
     let hue = 0;
-
-    const generateStars = () => {
-      const stars = [];
-      for (let i = 0; i < 1000; i++) {
-        stars.push({
-          x: Math.random() * canvas.width,
-          y: Math.random() * canvas.height,
-          radius: Math.random() * 1.5,
-          opacity: Math.random(),
-        });
-      }
-      return stars;
-    };
-
-    const generateDust = () => {
-      const dust = [];
-      for (let i = 0; i < 1000; i++) {
-        dust.push({
-          x: Math.random() * canvas.width,
-          y: Math.random() * canvas.height,
-          radius: Math.random() * 2,
-          hue: Math.random() * 60 + 20,
-        });
-      }
-      return dust;
-    };
-
-    const stars = generateStars();
-    const dust = generateDust();
 
     const drawBackground = (time: number) => {
       ctx.fillStyle = '#000000';
@@ -94,15 +101,17 @@ const StarryBackground: React.FC<{ show: boolean }> = ({ show }) => {
 
       hue = (hue + 0.03) % 360;
 
-      animationFrameId = requestAnimationFrame(drawBackground);
+      animationFrameIdRef.current = requestAnimationFrame(drawBackground);
     };
 
     drawBackground(0);
 
     return () => {
-      cancelAnimationFrame(animationFrameId);
+      if (animationFrameIdRef.current) {
+        cancelAnimationFrame(animationFrameIdRef.current);
+      }
     };
-  }, [dimensions]);
+  }, [dimensions, stars, dust]);
 
   return (
     <canvas 
