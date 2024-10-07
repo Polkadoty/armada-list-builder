@@ -1,0 +1,25 @@
+Name: Untitled Fleet
+Faction: Rebel
+Commander: General Dodonna
+
+Assault: Advanced Gunnery
+Defense: Contested Outpost
+Navigation: Intel Sweep
+
+CR90 Corvette A (44)
+• General Dodonna (20)
+• Leia Organa (3)
+• Nav Team (4)
+= 71 Points
+
+CR90 Corvette B (39)
+• Overload Pulse (8)
+= 47 Points
+
+Squadrons:
+• Biggs Darklighter (19)
+• Luke Skywalker (20)
+• X-wing Squadron (13)
+= 52 Points
+
+Total Points: 170

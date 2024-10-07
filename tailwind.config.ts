@@ -71,6 +71,9 @@ const config: Config = {
   		shake: 'shake 0.5s cubic-bezier(.36,.07,.19,.97) both',
   	},
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    require("tailwindcss-animate"),
+    require('@tailwindcss/typography'),
+  ],
 };
 export default config;

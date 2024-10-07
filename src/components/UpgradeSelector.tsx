@@ -12,7 +12,7 @@ interface UpgradeSelectorProps {
   selectedUpgrades: Upgrade[];
   uniqueClassNames: string[];
   shipType?: string;
-  isCommander?: boolean;
+  chassis?: string;
 }
 
 export default function UpgradeSelector({
@@ -23,6 +23,7 @@ export default function UpgradeSelector({
   selectedUpgrades,
   uniqueClassNames,
   shipType,
+  chassis
 }: UpgradeSelectorProps) {
   const [upgrades, setUpgrades] = useState<Upgrade[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,7 +32,10 @@ export default function UpgradeSelector({
     const fetchUpgrades = async () => {
       setLoading(true);
       try {
-        const url = `https://api.swarmada.wiki/api/upgrades/search?type=${upgradeType}&faction=${faction}&include_neutral=true`;
+        let url = `https://api.swarmada.wiki/api/upgrades/search?type=${upgradeType}&faction=${faction}&include_neutral=true`;
+        if (upgradeType === 'title' && chassis) {
+          url += `&bound_shiptype=${encodeURIComponent(chassis)}`;
+        }
         const response = await fetch(url);
         if (!response.ok) {
           throw new Error('Failed to fetch upgrades');
@@ -48,11 +52,17 @@ export default function UpgradeSelector({
     };
 
     fetchUpgrades();
-  }, [upgradeType, faction]);
+  }, [upgradeType, faction, chassis]);
 
   const isUpgradeAvailable = (upgrade: Upgrade) => {
-    if (upgrade.bound_shiptype && upgrade.bound_shiptype !== shipType) {
-      return false;
+    if (upgradeType === 'title') {
+      if (upgrade.bound_shiptype && upgrade.bound_shiptype !== chassis) {
+        return false;
+      }
+    } else {
+      if (upgrade.bound_shiptype && upgrade.bound_shiptype !== shipType) {
+        return false;
+      }
     }
 
     if (upgrade.unique && selectedUpgrades.some(su => su.name === upgrade.name)) {
@@ -75,13 +85,20 @@ export default function UpgradeSelector({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <Card className="w-3/4 h-3/4 overflow-auto">
-        <CardContent>
-          <h2 className="text-2xl font-bold mb-4">Select {upgradeType}</h2>
+      <Card className="w-full h-full sm:w-11/12 sm:h-5/6 lg:w-3/4 lg:h-3/4 overflow-auto relative">
+        <CardContent className="p-2 sm:p-4">
+          <div className="flex justify-between items-center mb-2 sm:mb-4">
+            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold">Select {upgradeType}</h2>
+            <Button variant="ghost" onClick={onClose} className="p-1">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </Button>
+          </div>
           {loading ? (
             <p>Loading upgrades...</p>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3 md:gap-4">
               {upgrades.filter(isUpgradeAvailable).map((upgrade) => (
                 <div key={upgrade.name} className="w-full aspect-[2/3]">
                   <Button
@@ -95,26 +112,24 @@ export default function UpgradeSelector({
                         layout="fill"
                         objectFit="cover"
                         objectPosition="center"
-                        className="scale-[102%]"
+                        className="scale-[103%]"
                         onError={(e) => {
-                          console.error(`Error loading image for ${upgrade.name}:`, upgrade.cardimage);
                           e.currentTarget.src = '/placeholder-upgrade.png';
                         }}
                       />
                     </div>
-                    <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2">
-                      <p className="text-sm font-bold truncate flex items-center justify-center">
-                        {upgrade.unique && <span className="mr-1 text-yellow-500">●</span>}
-                        {upgrade.name}
+                    <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-1 sm:p-2">
+                      <p className="text-xs sm:text-sm font-bold flex items-center justify-center">
+                        {upgrade.unique && <span className="mr-1 text-yellow-500 text-xs sm:text-sm">●</span>}
+                        <span className="break-words line-clamp-2 text-center">{upgrade.name}</span>
                       </p>
-                      <p className="text-xs text-center">{upgrade.points} points</p>
+                      <p className="text-xs sm:text-sm text-center">{upgrade.points} points</p>
                     </div>
                   </Button>
                 </div>
               ))}
             </div>
           )}
-          <Button onClick={onClose} className="mt-4">Close</Button>
         </CardContent>
       </Card>
     </div>

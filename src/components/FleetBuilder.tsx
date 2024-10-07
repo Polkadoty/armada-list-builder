@@ -17,6 +17,8 @@ import Link from 'next/link';
 import { useTheme } from 'next-themes';
 import { ObjectiveSelector, ObjectiveModel } from './ObjectiveSelector';
 import UpgradeSelector from './UpgradeSelector';
+import { ExportTextPopup } from './ExportTextPopup';
+import { factionLogos } from '../pages/[faction]';
 
 export interface Ship {
   id: string;
@@ -27,6 +29,7 @@ export interface Ship {
   availableUpgrades: string[];
   assignedUpgrades: Upgrade[];
   unique: boolean;
+  chassis: string;
 }
 
 export interface Squadron {
@@ -100,6 +103,7 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
   const [showUpgradeSelector, setShowUpgradeSelector] = useState(false);
   const [currentUpgradeType, setCurrentUpgradeType] = useState('');
   const [currentShipId, setCurrentShipId] = useState('');
+  const [showExportPopup, setShowExportPopup] = useState(false);
 
   const handleNameClick = () => {
     setIsEditingName(true);
@@ -122,7 +126,8 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
       ...ship, 
       id: Date.now().toString(),
       availableUpgrades: ship.upgrades || [],
-      assignedUpgrades: []
+      assignedUpgrades: [],
+      chassis: ship.chassis || ship.name
     };
     setSelectedShips([...selectedShips, newShip]);
     setPreviousPoints(points);
@@ -315,6 +320,147 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
     setSelectedNavigationObjective(null);
   };
 
+  const generateExportText = () => {
+    let text = `Name: ${fleetName}\n`;
+    text += `Faction: ${faction.charAt(0).toUpperCase() + faction.slice(1)}\n`;
+    
+    const commander = selectedShips.flatMap(ship => ship.assignedUpgrades).find(upgrade => upgrade.type === 'commander');
+    if (commander) {
+      text += `Commander: ${commander.name}\n`;
+    }
+    
+    text += `\n`;
+    if (selectedAssaultObjective) {
+      text += `Assault: ${selectedAssaultObjective.name}\n`;
+    }
+    if (selectedDefenseObjective) {
+      text += `Defense: ${selectedDefenseObjective.name}\n`;
+    }
+    if (selectedNavigationObjective) {
+      text += `Navigation: ${selectedNavigationObjective.name}\n`;
+    }
+    
+    if (selectedShips.length > 0) {
+      text += `\n`;
+      selectedShips.forEach(ship => {
+        text += `${ship.name} (${ship.points})\n`;
+        ship.assignedUpgrades.forEach(upgrade => {
+          text += `• ${upgrade.name} (${upgrade.points})\n`;
+        });
+        text += `= ${ship.points + ship.assignedUpgrades.reduce((total, upgrade) => total + upgrade.points, 0)} Points\n\n`;
+      });
+    }
+    
+    text += `Squadrons:\n`;
+    if (selectedSquadrons.length > 0) {
+      selectedSquadrons.forEach(squadron => {
+        text += `• ${squadron.name} (${squadron.points})`;
+        if (squadron.count > 1) {
+          text += ` x${squadron.count}`;
+        }
+        text += `\n`;
+      });
+    }
+    text += `= ${totalSquadronPoints} Points\n\n`;
+    
+    text += `Total Points: ${points}`;
+    
+    return text;
+  };
+
+  // Generate import text
+
+  const handlePrint = () => {
+    const printContent = generatePrintContent();
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      printWindow.print();
+    }
+  };
+
+  const generatePrintContent = () => {
+    const factionLogo = factionLogos[faction as keyof typeof factionLogos];
+    
+    const content = `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>${fleetName}</title>
+        <style>
+          @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+          body { 
+            font-family: 'Roboto', sans-serif; 
+            line-height: 1.6; 
+            max-width: 800px; 
+            margin: 0 auto; 
+            padding: 20px;
+          }
+          .logo { width: 100px; height: 100px; }
+          h1 { margin-bottom: 0; font-size: 24px; }
+          h2 { margin-top: 0; color: #666; font-size: 18px; }
+          .two-columns { 
+            display: flex; 
+            justify-content: space-between; 
+          }
+          .column { width: 48%; }
+          .section { margin-top: 20px; }
+          .ship, .squadron { margin-bottom: 10px; }
+          .upgrade { margin-left: 20px; }
+          .total { font-weight: bold; margin-top: 20px; }
+          .objectives { margin-top: 30px; border-top: 1px solid #ccc; padding-top: 20px; }
+        </style>
+      </head>
+      <body>
+        <img src="${factionLogo}" alt="${faction} logo" class="logo">
+        <h1>${fleetName}</h1>
+        <h2>Faction: ${faction.charAt(0).toUpperCase() + faction.slice(1)}</h2>
+        
+        <div class="two-columns">
+          <div class="column">
+            <div class="section">
+              <h3>Ships</h3>
+              ${selectedShips.map(ship => `
+                <div class="ship">
+                  ${ship.name} (${ship.points})
+                  ${ship.assignedUpgrades.map(upgrade => `
+                    <div class="upgrade">• ${upgrade.name} (${upgrade.points})</div>
+                  `).join('')}
+                  = ${ship.points + ship.assignedUpgrades.reduce((total, upgrade) => total + upgrade.points, 0)} Points
+                </div>
+              `).join('')}
+            </div>
+          </div>
+          
+          <div class="column">
+            <div class="section">
+              <h3>Squadrons</h3>
+              ${selectedSquadrons.map(squadron => `
+                <div class="squadron">• ${squadron.name} (${squadron.points})${squadron.count > 1 ? ` x${squadron.count}` : ''}</div>
+              `).join('')}
+              = ${totalSquadronPoints} Points
+            </div>
+          </div>
+        </div>
+        
+        <div class="total">Total Fleet Points: ${points}</div>
+        
+        <div class="objectives">
+          <h3>Objectives</h3>
+          <p>Assault: ${selectedAssaultObjective ? selectedAssaultObjective.name : 'None'}</p>
+          <p>Defense: ${selectedDefenseObjective ? selectedDefenseObjective.name : 'None'}</p>
+          <p>Navigation: ${selectedNavigationObjective ? selectedNavigationObjective.name : 'None'}</p>
+        </div>
+      </body>
+      </html>
+    `;
+    
+    return content;
+  };
+
   return (
     <div className="max-w-4xl mx-auto">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
@@ -446,7 +592,7 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
       </div>
 
       <div className="flex flex-wrap justify-between gap-2">
-        <Button variant="outline" className="flex-grow">
+        <Button variant="outline" className="flex-grow" onClick={handlePrint}>
           <Printer className="mr-2 h-4 w-4" /> PRINT
         </Button>
         <Link href="/">
@@ -454,7 +600,7 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
             <ArrowLeft className="mr-2 h-4 w-4" /> BACK
           </Button>
         </Link>
-        <Button variant="outline" className="flex-grow">
+        <Button variant="outline" className="flex-grow" onClick={() => setShowExportPopup(true)}>
           <FileText className="mr-2 h-4 w-4" /> EXPORT TEXT
         </Button>
       </div>
@@ -512,9 +658,17 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
           selectedUpgrades={selectedShips.flatMap(ship => ship.assignedUpgrades).filter((upgrade): upgrade is Upgrade => typeof upgrade !== 'string')}
           uniqueClassNames={[]} // You'll need to implement this
           shipType={selectedShips.find(ship => ship.id === currentShipId)?.name}
-          isCommander={currentUpgradeType === 'commander'}
+          chassis={selectedShips.find(ship => ship.id === currentShipId)?.chassis}
         />
       )}
+
+      {showExportPopup && (
+        <ExportTextPopup
+          text={generateExportText()}
+          onClose={() => setShowExportPopup(false)}
+        />
+      )}
+
     </div>
   );
 }
