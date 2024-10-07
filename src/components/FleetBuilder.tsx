@@ -19,6 +19,7 @@ import { ObjectiveSelector, ObjectiveModel } from './ObjectiveSelector';
 import UpgradeSelector from './UpgradeSelector';
 import { ExportTextPopup } from './ExportTextPopup';
 import { factionLogos } from '../pages/[faction]';
+import { useUniqueClassContext } from '../contexts/UniqueClassContext';
 
 export interface Ship {
   id: string;
@@ -109,6 +110,7 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
   const [currentUpgradeType, setCurrentUpgradeType] = useState('');
   const [currentShipId, setCurrentShipId] = useState('');
   const [showExportPopup, setShowExportPopup] = useState(false);
+  const { addUniqueClassName, removeUniqueClassName } = useUniqueClassContext();
 
   const handleNameClick = () => {
     setIsEditingName(true);
@@ -187,6 +189,9 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
             setPreviousShipPoints(totalShipPoints);
             setPoints(prevPoints => prevPoints - upgradeToRemove.points);
             setTotalShipPoints(prevTotal => prevTotal - upgradeToRemove.points);
+            
+            // Remove unique class names when upgrade is removed
+            upgradeToRemove["unique-class"]?.forEach(removeUniqueClassName);
           }
           return {
             ...ship,
@@ -254,11 +259,10 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
       const newPoints = points - squadronToRemove.points * squadronToRemove.count;
       setPoints(newPoints);
       setTotalSquadronPoints(totalSquadronPoints - squadronToRemove.points * squadronToRemove.count);
-      setUniqueClassNames(prevNames => 
-        prevNames.filter(name => 
-          !squadronToRemove['unique-class']?.includes(name) && name !== squadronToRemove.name
-        )
-      );
+      
+      // Remove unique class names when squadron is removed
+      squadronToRemove['unique-class']?.forEach(removeUniqueClassName);
+      removeUniqueClassName(squadronToRemove.name);
     }
   };
 
@@ -652,7 +656,6 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
           onSelectSquadron={handleSelectSquadron}
           onClose={() => setShowSquadronSelector(false)}
           selectedSquadrons={selectedSquadrons}
-          uniqueClassNames={uniqueClassNames}
         />
       )}
 
@@ -686,8 +689,7 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
           faction={faction}
           onSelectUpgrade={handleSelectUpgrade}
           onClose={() => setShowUpgradeSelector(false)}
-          selectedUpgrades={selectedShips.flatMap(ship => ship.assignedUpgrades).filter((upgrade): upgrade is Upgrade => typeof upgrade !== 'string')}
-          uniqueClassNames={[]} // You'll need to implement this
+          selectedUpgrades={selectedShips.flatMap(ship => ship.assignedUpgrades).filter((upgrade): upgrade is Upgrade => typeof upgrade !== 'string')} // You'll need to implement this
           shipType={selectedShips.find(ship => ship.id === currentShipId)?.name}
           chassis={selectedShips.find(ship => ship.id === currentShipId)?.chassis}
         />

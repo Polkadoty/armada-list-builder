@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Image from 'next/image';
 import { Upgrade } from './FleetBuilder';
+import { useUniqueClassContext } from '../contexts/UniqueClassContext';
 
 interface UpgradeSelectorProps {
   upgradeType: string;
@@ -10,7 +11,6 @@ interface UpgradeSelectorProps {
   onSelectUpgrade: (upgrade: Upgrade) => void;
   onClose: () => void;
   selectedUpgrades: Upgrade[];
-  uniqueClassNames: string[];
   shipType?: string;
   chassis?: string;
 }
@@ -21,12 +21,12 @@ export default function UpgradeSelector({
   onSelectUpgrade,
   onClose,
   selectedUpgrades,
-  uniqueClassNames,
   shipType,
   chassis
 }: UpgradeSelectorProps) {
   const [upgrades, setUpgrades] = useState<Upgrade[]>([]);
   const [loading, setLoading] = useState(true);
+  const { uniqueClassNames, addUniqueClassName } = useUniqueClassContext();
 
   useEffect(() => {
     const fetchUpgrades = async () => {
@@ -69,11 +69,18 @@ export default function UpgradeSelector({
       return false;
     }
 
-    if (upgrade["unique-class"] && upgrade["unique-class"].some(uc => uniqueClassNames.includes(uc))) {
-      return false;
-    }
-
     return true;
+  };
+
+  const isUpgradeGreyedOut = (upgrade: Upgrade) => {
+    return upgrade["unique-class"] && upgrade["unique-class"].some(uc => uniqueClassNames.includes(uc));
+  };
+
+  const handleUpgradeClick = (upgrade: Upgrade) => {
+    if (isUpgradeAvailable(upgrade) && !isUpgradeGreyedOut(upgrade)) {
+      onSelectUpgrade(upgrade);
+      upgrade["unique-class"]?.forEach(addUniqueClassName);
+    }
   };
 
   const validateImageUrl = (url: string): string => {
@@ -99,11 +106,14 @@ export default function UpgradeSelector({
             <p>Loading upgrades...</p>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3 md:gap-4">
-              {upgrades.filter(isUpgradeAvailable).map((upgrade) => (
+              {upgrades.map((upgrade) => (
                 <div key={upgrade.name} className="w-full aspect-[2/3]">
                   <Button
-                    onClick={() => onSelectUpgrade(upgrade)}
-                    className="p-0 overflow-hidden relative w-full h-full rounded-lg"
+                    onClick={() => handleUpgradeClick(upgrade)}
+                    className={`p-0 overflow-hidden relative w-full h-full rounded-lg ${
+                      !isUpgradeAvailable(upgrade) || isUpgradeGreyedOut(upgrade) ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
+                    disabled={!isUpgradeAvailable(upgrade) || isUpgradeGreyedOut(upgrade)}
                   >
                     <div className="absolute inset-0 bg-gray-200 flex items-center justify-center">
                       <Image
