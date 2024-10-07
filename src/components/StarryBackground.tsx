@@ -105,10 +105,14 @@ const StarryBackground: React.FC<{ show: boolean }> = ({ show }) => {
   }, [dimensions]);
 
   return (
-    <canvas 
-      ref={canvasRef} 
-      className={`fixed inset-0 z-[-1] transition-opacity duration-300 ${show ? 'opacity-100' : 'opacity-0'}`} 
-    />
+    <>
+        <img src='/images/background.jpg' className='w-full h-full z-[-1] fixed dark:hidden'/>
+
+        <canvas 
+        ref={canvasRef} 
+        className={`fixed inset-0 z-[-1] transition-opacity duration-300 ${show ? 'opacity-100' : 'opacity-0'} hidden dark:block`} 
+        />
+    </>
   );
 };
 

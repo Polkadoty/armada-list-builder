@@ -19,6 +19,7 @@ import { ObjectiveSelector, ObjectiveModel } from './ObjectiveSelector';
 import UpgradeSelector from './UpgradeSelector';
 import { ExportTextPopup } from './ExportTextPopup';
 import { factionLogos } from '../pages/[faction]';
+import Image from 'next/image';
 
 export interface Ship {
   id: string;
@@ -104,6 +105,8 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
   const [currentUpgradeType, setCurrentUpgradeType] = useState('');
   const [currentShipId, setCurrentShipId] = useState('');
   const [showExportPopup, setShowExportPopup] = useState(false);
+const { theme, systemTheme } = useTheme();
+const currentTheme = theme === 'system' ? systemTheme : theme;
 
   const handleNameClick = () => {
     setIsEditingName(true);
@@ -462,23 +465,27 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="p-2">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
-        <div className="mb-2 sm:mb-0">
-          {isEditingName ? (
-            <Input
-              value={fleetName}
-              onChange={handleNameChange}
-              onBlur={handleNameBlur}
-              className="text-xl font-bold"
-              autoFocus
+        <div className="flex py-2 items-center">
+            {faction && (
+                <Image
+                    src={factionLogos[faction as keyof typeof factionLogos]}
+                    alt={`${faction} logo`}
+                    width={32}
+                    height={32}
+                    className={`mr-2 ${currentTheme === 'dark' ? 'invert' : ''}`}
+                />
+            )}
+            <input
+                value={fleetName}
+                onChange={handleNameChange}
+                onBlur={handleNameBlur}
+                className="text-xl font-bold focus-visible:outline-none bg-transparent"
+                autoFocus
             />
-          ) : (
-            <h2 className="text-xl font-bold cursor-pointer" onClick={handleNameClick}>
-              {fleetName}
-            </h2>
-          )}
         </div>
+        
         <PointsDisplay points={points} previousPoints={previousPoints} />
       </div>
 

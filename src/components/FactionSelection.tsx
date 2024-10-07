@@ -35,32 +35,32 @@ export default function FactionSelection({ onHover }: { onHover: (faction: strin
   };
 
   return (
-    <div className="grid grid-cols-2 gap-4 justify-items-center">
+    <div className="gap-12 p-4 grid grid-cols-2">
       {factions.map((faction) => (
         <Tooltip key={faction.slug}>
           <TooltipTrigger>
             <Link href={`/${faction.slug}`}>
               <div 
-                className="p-4 hover:bg-gray-200 dark:hover:bg-white/20 transition-colors duration-200 rounded-lg"
+                className="transition-colors duration-200 rounded-lg"
                 onMouseEnter={() => handleHover(faction.slug)}
                 onMouseLeave={() => handleHover(null)}
               >
               <Image 
                 src={faction.logo} 
                 alt={faction.name} 
-                width={64} 
-                height={64} 
-                className={`transition-all duration-200 ${!mounted || currentTheme === 'dark' ? 'invert' : ''}`}
-                style={{
-                  filter: hoveredFaction === faction.slug 
-                    ? `drop-shadow(0 0 0.75rem ${factionColors[faction.slug as keyof typeof factionColors]}) ${!mounted || currentTheme === 'dark' ? 'invert(1) hue-rotate(180deg)' : ''}`
-                    : !mounted || currentTheme === 'dark' ? 'invert(1)' : 'none',
-                }}
+                width={72} 
+                height={72} 
+                className={`transition-all duration-300 ${!mounted || currentTheme === 'dark' ? 'invert' : ''} hover:scale-[1.04]`}
+                // style={{
+                //   filter: hoveredFaction === faction.slug 
+                //     ? `drop-shadow(0 0 0.75rem ${factionColors[faction.slug as keyof typeof factionColors]}) ${!mounted || currentTheme === 'dark' ? 'invert(1) hue-rotate(180deg)' : ''}`
+                //     : !mounted || currentTheme === 'dark' ? 'invert(1)' : 'none',
+                // }}
               />
               </div>
             </Link>
           </TooltipTrigger>
-          <TooltipContent>{faction.name}</TooltipContent>
+          {/* <TooltipContent>{faction.name}</TooltipContent> */}
         </Tooltip>
       ))}
     </div>
