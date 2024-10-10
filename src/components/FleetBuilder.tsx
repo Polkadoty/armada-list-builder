@@ -58,6 +58,8 @@ export interface Upgrade {
   faction: string[];
   "unique-class": string[];
   bound_shiptype: string;
+  modification?: boolean;
+  slotIndex?: number;
 }
 
 export interface Ship extends ShipModel {
@@ -113,6 +115,7 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
   const [showExportPopup, setShowExportPopup] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { addUniqueClassName, removeUniqueClassName } = useUniqueClassContext();
+  const [currentUpgradeIndex, setCurrentUpgradeIndex] = useState<number>(0);
 
   const handleNameClick = () => {
     setIsEditingName(true);
@@ -160,19 +163,34 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
     }
   };
 
-  const handleUpgradeClick = (shipId: string, upgradeType: string) => {
-    setCurrentShipId(shipId);
-    setCurrentUpgradeType(upgradeType);
-    setShowUpgradeSelector(true);
+  const handleUpgradeClick = (shipId: string, upgradeType: string, upgradeIndex: number) => {
+    const ship = selectedShips.find(s => s.id === shipId);
+    if (ship) {
+      setCurrentShipId(shipId);
+      setCurrentUpgradeType(upgradeType);
+      setCurrentUpgradeIndex(upgradeIndex);
+      setShowUpgradeSelector(true);
+    }
   };
   
   const handleSelectUpgrade = (upgrade: Upgrade) => {
     setSelectedShips(prevShips => 
-      prevShips.map(ship => 
-        ship.id === currentShipId
-          ? { ...ship, assignedUpgrades: [...ship.assignedUpgrades, upgrade] }
-          : ship
-      )
+      prevShips.map(ship => {
+        if (ship.id === currentShipId) {
+          const newUpgrade = { ...upgrade, slotIndex: currentUpgradeIndex };
+          const existingUpgradeIndex = ship.assignedUpgrades.findIndex(u => u.type === currentUpgradeType && u.slotIndex === currentUpgradeIndex);
+          if (existingUpgradeIndex !== -1) {
+            // Replace existing upgrade
+            const updatedUpgrades = [...ship.assignedUpgrades];
+            updatedUpgrades[existingUpgradeIndex] = newUpgrade;
+            return { ...ship, assignedUpgrades: updatedUpgrades };
+          } else {
+            // Add new upgrade
+            return { ...ship, assignedUpgrades: [...ship.assignedUpgrades, newUpgrade] };
+          }
+        }
+        return ship;
+      })
     );
     setPreviousPoints(points);
     setPreviousShipPoints(totalShipPoints);
@@ -181,11 +199,11 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
     setShowUpgradeSelector(false);
   };
 
-  const handleRemoveUpgrade = (shipId: string, upgradeType: string) => {
+  const handleRemoveUpgrade = (shipId: string, upgradeType: string, upgradeIndex: number) => {
     setSelectedShips(prevShips => 
       prevShips.map(ship => {
         if (ship.id === shipId) {
-          const upgradeToRemove = ship.assignedUpgrades.find(u => u.type === upgradeType);
+          const upgradeToRemove = ship.assignedUpgrades.find(u => u.type === upgradeType && u.slotIndex === upgradeIndex);
           if (upgradeToRemove) {
             setPreviousPoints(points);
             setPreviousShipPoints(totalShipPoints);
@@ -193,11 +211,21 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
             setTotalShipPoints(prevTotal => prevTotal - upgradeToRemove.points);
             
             // Remove unique class names when upgrade is removed
-            upgradeToRemove["unique-class"]?.forEach(removeUniqueClassName);
+            if (upgradeToRemove["unique-class"] && upgradeToRemove["unique-class"].length > 0) {
+              upgradeToRemove["unique-class"].forEach(uc => {
+                // Only remove the unique class if it's not used by other upgrades
+                const isUsedByOtherUpgrades = selectedShips.some(s => 
+                  s.id !== shipId && s.assignedUpgrades.some(u => u["unique-class"]?.includes(uc))
+                );
+                if (!isUsedByOtherUpgrades) {
+                  removeUniqueClassName(uc);
+                }
+              });
+            }
           }
           return {
             ...ship,
-            assignedUpgrades: ship.assignedUpgrades.filter(u => u.type !== upgradeType)
+            assignedUpgrades: ship.assignedUpgrades.filter(u => !(u.type === upgradeType && u.slotIndex === upgradeIndex))
           };
         }
         return ship;
@@ -526,7 +554,14 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
       />
       <div className="mb-4">
         {selectedShips.map((ship) => (
-          <SelectedShip key={ship.id} ship={ship} onRemove={handleRemoveShip} onUpgradeClick={handleUpgradeClick} onCopy={handleCopyShip} handleRemoveUpgrade={handleRemoveUpgrade} />
+          <SelectedShip 
+            key={ship.id} 
+            ship={ship} 
+            onRemove={handleRemoveShip} 
+            onUpgradeClick={handleUpgradeClick} 
+            onCopy={handleCopyShip} 
+            handleRemoveUpgrade={handleRemoveUpgrade} 
+          />
         ))}
       </div>
 
@@ -691,9 +726,10 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
           faction={faction}
           onSelectUpgrade={handleSelectUpgrade}
           onClose={() => setShowUpgradeSelector(false)}
-          selectedUpgrades={selectedShips.flatMap(ship => ship.assignedUpgrades).filter((upgrade): upgrade is Upgrade => typeof upgrade !== 'string')} // You'll need to implement this
+          selectedUpgrades={selectedShips.flatMap(ship => ship.assignedUpgrades)}
           shipType={selectedShips.find(ship => ship.id === currentShipId)?.name}
           chassis={selectedShips.find(ship => ship.id === currentShipId)?.chassis}
+          currentShipUpgrades={selectedShips.find(ship => ship.id === currentShipId)?.assignedUpgrades || []}
         />
       )}
 

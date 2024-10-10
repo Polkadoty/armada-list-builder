@@ -4,20 +4,21 @@ import Image from 'next/image';
 import UpgradeIconsToolbar from './UpgradeIconsToolbar';
 import { Button } from "@/components/ui/button";
 import { Ship } from "./FleetBuilder";
+import { Upgrade } from "./FleetBuilder";
 
 interface SelectedShipProps {
   ship: Ship;
   onRemove: (id: string) => void;
-  onUpgradeClick: (shipId: string, upgrade: string) => void;
+  onUpgradeClick: (shipId: string, upgrade: string, index: number) => void;
   onCopy: (ship: Ship) => void;
-  handleRemoveUpgrade: (shipId: string, upgradeType: string) => void;
+  handleRemoveUpgrade: (shipId: string, upgradeType: string, index: number) => void;
 }
 
 export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRemoveUpgrade }: SelectedShipProps) {
   const [isToolbarVisible, setIsToolbarVisible] = useState(false);
 
-  const handleUpgradeClick = (upgrade: string) => {
-    onUpgradeClick(ship.id, upgrade);
+  const handleUpgradeClick = (upgrade: string, index: number) => {
+    onUpgradeClick(ship.id, upgrade, index);
   };
 
   const toggleToolbar = () => {
@@ -29,6 +30,21 @@ export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRem
   };
 
   const totalShipPoints = ship.points + ship.assignedUpgrades.reduce((total, upgrade) => total + (upgrade.points || 0), 0);
+
+  // Group upgrades by type
+  const groupedUpgrades = ship.availableUpgrades.reduce((acc, upgradeType) => {
+    if (!acc[upgradeType]) {
+      acc[upgradeType] = [];
+    }
+    const assignedUpgrades = ship.assignedUpgrades.filter(u => u.type === upgradeType);
+    const emptySlots = Math.max(0, ship.availableUpgrades.filter(u => u === upgradeType).length - assignedUpgrades.length);
+    acc[upgradeType] = [...assignedUpgrades, ...Array(emptySlots).fill(null)];
+    return acc;
+  }, {} as Record<string, (Upgrade | null)[]>);
+
+  const handleRemoveUpgradeClick = (upgradeType: string, index: number) => {
+    handleRemoveUpgrade(ship.id, upgradeType, index);
+  };
 
   return (
     <div className="mb-2">
@@ -73,53 +89,63 @@ export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRem
         {isToolbarVisible && (
           <>
             <div className="p-2 space-y-2">
-              {ship.availableUpgrades.map((upgradeType) => {
-                const upgrade = ship.assignedUpgrades.find(u => u.type === upgradeType);
-                if (upgrade) {
-                  return (
-                    <div key={upgradeType} className="flex items-center justify-between bg-gray-100 dark:bg-gray-700 rounded p-2">
-                      <div className="flex items-center">
-                        <Image
-                          src={`/icons/${upgradeType}.svg`}
-                          alt={upgradeType}
-                          width={24}
-                          height={24}
-                          className="dark:invert mr-2"
-                        />
-                        <span className="font-medium">
-                          {upgrade.unique && <span className="mr-1 text-yellow-500">●</span>}
-                          {upgrade.name}
-                        </span>
+              {Object.entries(groupedUpgrades).map(([upgradeType, upgrades]) => (
+                upgrades.some(upgrade => upgrade !== null) && (
+                  <div key={upgradeType}>
+                    {upgrades.map((upgrade, index) => (
+                      <div key={`${upgradeType}-${index}`} className="flex items-center justify-between bg-gray-100 dark:bg-gray-700 rounded p-2 mb-2">
+                        <div className="flex items-center">
+                          <Image
+                            src={`/icons/${upgradeType}.svg`}
+                            alt={upgradeType}
+                            width={24}
+                            height={24}
+                            className="dark:invert mr-2"
+                          />
+                          <span className="font-medium">
+                            {upgrade ? (
+                              <>
+                                {upgrade.unique && <span className="mr-1 text-yellow-500">●</span>}
+                                {upgrade.name}
+                              </>
+                            ) : (
+                              `Empty ${upgradeType} slot`
+                            )}
+                          </span>
+                        </div>
+                        <div className="flex items-center">
+                          {upgrade && <span className="mr-2">{upgrade.points} pts</span>}
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-6 w-6 mr-1"
+                            onClick={() => handleUpgradeClick(upgradeType, index)}
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M8 3L4 7l4 4"/>
+                              <path d="M4 7h16"/>
+                              <path d="m16 21 4-4-4-4"/>
+                              <path d="M20 17H4"/>
+                            </svg>
+                          </Button>
+                          {upgrade && (
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-6 w-6"
+                              onClick={() => handleRemoveUpgradeClick(upgradeType, index)}
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                                <path d="M18 6L6 18M6 6l12 12" />
+                              </svg>
+                            </Button>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex items-center">
-                        <span className="mr-2">{upgrade.points} pts</span>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="h-6 w-6 mr-1"
-                          onClick={() => handleUpgradeClick(upgradeType)}
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
-                            <path d="M17 1l4 4-4 4M3 11l4 4-4 4" />
-                            <path d="M21 5H9M7 19H3" />
-                          </svg>
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="h-6 w-6"
-                          onClick={() => handleRemoveUpgrade(ship.id, upgradeType)}
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
-                            <path d="M18 6L6 18M6 6l12 12" />
-                          </svg>
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                }
-                return null;
-              })}
+                    ))}
+                  </div>
+                )
+              ))}
             </div>
             <UpgradeIconsToolbar 
               upgrades={getUpgradeSlots()}

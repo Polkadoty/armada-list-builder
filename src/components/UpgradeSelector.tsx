@@ -13,6 +13,7 @@ interface UpgradeSelectorProps {
   selectedUpgrades: Upgrade[];
   shipType?: string;
   chassis?: string;
+  currentShipUpgrades: Upgrade[];
 }
 
 export default function UpgradeSelector({
@@ -22,7 +23,8 @@ export default function UpgradeSelector({
   onClose,
   selectedUpgrades,
   shipType,
-  chassis
+  chassis,
+  currentShipUpgrades
 }: UpgradeSelectorProps) {
   const [upgrades, setUpgrades] = useState<Upgrade[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,17 +71,41 @@ export default function UpgradeSelector({
       return false;
     }
 
+    // Check if the ship already has this specific upgrade
+    if (currentShipUpgrades.some(su => su.name === upgrade.name)) {
+      return false;
+    }
+
+    // Check if the ship already has a modification
+    if (upgrade.modification && currentShipUpgrades.some(su => su.modification)) {
+      return false;
+    }
+
     return true;
   };
 
   const isUpgradeGreyedOut = (upgrade: Upgrade) => {
-    return upgrade["unique-class"] && upgrade["unique-class"].some(uc => uniqueClassNames.includes(uc));
+    // Only check for unique class conflicts if the upgrade has a unique class
+    if (upgrade["unique-class"] && upgrade["unique-class"].length > 0) {
+      return upgrade["unique-class"].some(uc => 
+        uniqueClassNames.includes(uc) && 
+        !selectedUpgrades.some(su => su["unique-class"]?.includes(uc))
+      );
+    }
+    return false; // Non-unique upgrades or upgrades without a unique class are not greyed out
   };
 
   const handleUpgradeClick = (upgrade: Upgrade) => {
     if (isUpgradeAvailable(upgrade) && !isUpgradeGreyedOut(upgrade)) {
       onSelectUpgrade(upgrade);
-      upgrade["unique-class"]?.forEach(addUniqueClassName);
+      // Only add unique class names if the upgrade has them and they're not already in the context
+      if (upgrade["unique-class"] && upgrade["unique-class"].length > 0) {
+        upgrade["unique-class"].forEach(uc => {
+          if (!uniqueClassNames.includes(uc)) {
+            addUniqueClassName(uc);
+          }
+        });
+      }
     }
   };
 
