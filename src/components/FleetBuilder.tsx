@@ -919,6 +919,8 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
           shipType={selectedShips.find(ship => ship.id === currentShipId)?.name}
           chassis={selectedShips.find(ship => ship.id === currentShipId)?.chassis}
           currentShipUpgrades={selectedShips.find(ship => ship.id === currentShipId)?.assignedUpgrades || []}
+          disqualifiedUpgrades={disabledUpgrades[currentShipId] || []}
+          disabledUpgrades={disabledUpgrades[currentShipId] || []}
         />
       )}
 

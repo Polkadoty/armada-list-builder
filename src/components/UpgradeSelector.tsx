@@ -14,6 +14,8 @@ interface UpgradeSelectorProps {
   shipType?: string;
   chassis?: string;
   currentShipUpgrades: Upgrade[];
+  disqualifiedUpgrades: string[];
+  disabledUpgrades: string[];
 }
 
 export default function UpgradeSelector({
@@ -24,7 +26,9 @@ export default function UpgradeSelector({
   selectedUpgrades,
   shipType,
   chassis,
-  currentShipUpgrades
+  currentShipUpgrades,
+  disqualifiedUpgrades,
+  disabledUpgrades
 }: UpgradeSelectorProps) {
   const [upgrades, setUpgrades] = useState<Upgrade[]>([]);
   const [loading, setLoading] = useState(true);
@@ -79,6 +83,19 @@ export default function UpgradeSelector({
     // Check if the ship already has a modification
     if (upgrade.modification && currentShipUpgrades.some(su => su.modification)) {
       return false;
+    }
+
+    // Check if the upgrade is disqualified or disabled
+    if (disqualifiedUpgrades.includes(upgrade.type) || disabledUpgrades.includes(upgrade.type)) {
+      return false;
+    }
+
+    // Check if the upgrade disqualifies or disables any currently equipped upgrades
+    if (upgrade.restrictions) {
+      const disqualOrDisable = [...(upgrade.restrictions.disqual_upgrades || []), ...(upgrade.restrictions.disable_upgrades || [])];
+      if (currentShipUpgrades.some(su => disqualOrDisable.includes(su.type))) {
+        return false;
+      }
     }
 
     return true;
