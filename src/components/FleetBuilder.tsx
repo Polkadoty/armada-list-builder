@@ -369,7 +369,7 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
   
               // Update filledSlots
               setFilledSlots(prevFilledSlots => {
-                const shipSlots = {...prevFilledSlots[shipId]} || {};
+                const shipSlots = prevFilledSlots[shipId] || {};
                 const upgradeTypeSlots = [...(shipSlots[upgrade.type] || [])];
                 const updatedSlots = upgradeTypeSlots.filter(slot => slot !== upgrade.slotIndex);
                 
