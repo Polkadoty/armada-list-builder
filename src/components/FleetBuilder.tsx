@@ -289,6 +289,20 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
             };
           });
   
+          if (upgrade.type === 'weapons-team-offensive-retro') {
+            const weaponsTeamIndex = ship.availableUpgrades.indexOf('weapons-team');
+            const offensiveRetroIndex = ship.availableUpgrades.indexOf('offensive-retro');
+            setFilledSlots(prevFilledSlots => ({
+              ...prevFilledSlots,
+              [ship.id]: {
+                ...prevFilledSlots[ship.id],
+                'weapons-team': [...(prevFilledSlots[ship.id]?.['weapons-team'] || []), weaponsTeamIndex],
+                'offensive-retro': [...(prevFilledSlots[ship.id]?.['offensive-retro'] || []), offensiveRetroIndex],
+                'weapons-team-offensive-retro': [...(prevFilledSlots[ship.id]?.['weapons-team-offensive-retro'] || []), currentUpgradeIndex]
+              }
+            }));
+          }
+  
           return { ...ship, assignedUpgrades: updatedAssignedUpgrades };
         }
         return ship;
@@ -334,20 +348,16 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
               }
   
               // Update disabled upgrades
-              if (upgrade.restrictions?.disable_upgrades) {
-                setDisabledUpgrades(prev => ({
-                  ...prev,
-                  [shipId]: (prev[shipId] || []).filter(u => !upgrade.restrictions?.disable_upgrades?.includes(u))
-                }));
-              }
+              setDisabledUpgrades(prev => ({
+                ...prev,
+                [shipId]: (prev[shipId] || []).filter(u => !upgrade.restrictions?.disable_upgrades?.includes(u))
+              }));
   
               // Update enabled upgrades
-              if (upgrade.restrictions?.enable_upgrades) {
-                setEnabledUpgrades(prev => ({
-                  ...prev,
-                  [shipId]: (prev[shipId] || []).filter(u => !upgrade.restrictions?.enable_upgrades?.includes(u))
-                }));
-              }
+              setEnabledUpgrades(prev => ({
+                ...prev,
+                [shipId]: (prev[shipId] || []).filter(u => !upgrade.restrictions?.enable_upgrades?.includes(u))
+              }));
   
               // If it's a title, remove the 'title' from disabled upgrades
               if (upgrade.type === 'title') {
@@ -359,16 +369,31 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
   
               // Update filledSlots
               setFilledSlots(prevFilledSlots => {
-                const shipSlots = prevFilledSlots[shipId] || {};
-                const upgradeTypeSlots = shipSlots[upgrade.type] || [];
+                const shipSlots = {...prevFilledSlots[shipId]} || {};
+                const upgradeTypeSlots = [...(shipSlots[upgrade.type] || [])];
                 const updatedSlots = upgradeTypeSlots.filter(slot => slot !== upgrade.slotIndex);
-                return {
-                  ...prevFilledSlots,
-                  [shipId]: {
-                    ...shipSlots,
-                    [upgrade.type]: updatedSlots
-                  }
-                };
+                
+                if (upgrade.type === 'weapons-team-offensive-retro') {
+                  const weaponsTeamSlots = [...(shipSlots['weapons-team'] || [])];
+                  const offensiveRetroSlots = [...(shipSlots['offensive-retro'] || [])];
+                  return {
+                    ...prevFilledSlots,
+                    [shipId]: {
+                      ...shipSlots,
+                      'weapons-team': weaponsTeamSlots.filter(slot => slot !== upgrade.slotIndex),
+                      'offensive-retro': offensiveRetroSlots.filter(slot => slot !== upgrade.slotIndex),
+                      [upgrade.type]: updatedSlots
+                    }
+                  };
+                } else {
+                  return {
+                    ...prevFilledSlots,
+                    [shipId]: {
+                      ...shipSlots,
+                      [upgrade.type]: updatedSlots
+                    }
+                  };
+                }
               });
             });
   
@@ -381,7 +406,7 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
             return {
               ...ship,
               assignedUpgrades: ship.assignedUpgrades.filter(u => 
-                !upgradesToRemove.some(ur => ur.type === u.type && ur.slotIndex === u.slotIndex)
+                !(u.type === upgradeType && u.slotIndex === upgradeIndex)
               )
             };
           }
