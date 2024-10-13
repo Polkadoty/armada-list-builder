@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Image from 'next/image';
 import { Squadron } from './FleetBuilder';
+import { useUniqueClassContext } from '../contexts/UniqueClassContext';
 
 interface SquadronSelectorProps {
   faction: string;
@@ -11,15 +12,15 @@ interface SquadronSelectorProps {
   onSelectSquadron: (squadron: Squadron) => void;
   onClose: () => void;
   selectedSquadrons: Squadron[];
-  uniqueClassNames: string[];
 }
 
 const CACHE_VERSION = '1';
 
-export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, selectedSquadrons, uniqueClassNames }: SquadronSelectorProps) {
+export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, selectedSquadrons }: SquadronSelectorProps) {
   const [squadrons, setSquadrons] = useState<Squadron[]>([]);
   const [showPopup, setShowPopup] = useState(false);
   const [popupMessage, setPopupMessage] = useState('');
+  const { uniqueClassNames, addUniqueClassName } = useUniqueClassContext();
 
   useEffect(() => {
     const fetchSquadrons = async () => {
@@ -84,6 +85,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
       setTimeout(() => setShowPopup(false), 2000);
     } else {
       onSelectSquadron(squadron);
+      squadron['unique-class']?.forEach(addUniqueClassName);
     }
   };
 

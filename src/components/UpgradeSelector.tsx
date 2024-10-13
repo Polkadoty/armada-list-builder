@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Image from 'next/image';
 import { Upgrade } from './FleetBuilder';
+import { useUniqueClassContext } from '../contexts/UniqueClassContext';
 
 interface UpgradeSelectorProps {
   upgradeType: string;
@@ -10,9 +11,11 @@ interface UpgradeSelectorProps {
   onSelectUpgrade: (upgrade: Upgrade) => void;
   onClose: () => void;
   selectedUpgrades: Upgrade[];
-  uniqueClassNames: string[];
   shipType?: string;
   chassis?: string;
+  currentShipUpgrades: Upgrade[];
+  disqualifiedUpgrades: string[];
+  disabledUpgrades: string[];
 }
 
 export default function UpgradeSelector({
@@ -21,12 +24,15 @@ export default function UpgradeSelector({
   onSelectUpgrade,
   onClose,
   selectedUpgrades,
-  uniqueClassNames,
   shipType,
-  chassis
+  chassis,
+  currentShipUpgrades,
+  disqualifiedUpgrades,
+  disabledUpgrades
 }: UpgradeSelectorProps) {
   const [upgrades, setUpgrades] = useState<Upgrade[]>([]);
   const [loading, setLoading] = useState(true);
+  const { uniqueClassNames, addUniqueClassName } = useUniqueClassContext();
 
   useEffect(() => {
     const fetchUpgrades = async () => {
@@ -69,11 +75,55 @@ export default function UpgradeSelector({
       return false;
     }
 
-    if (upgrade["unique-class"] && upgrade["unique-class"].some(uc => uniqueClassNames.includes(uc))) {
+    // Check if the ship already has this specific upgrade
+    if (currentShipUpgrades.some(su => su.name === upgrade.name)) {
       return false;
     }
 
+    // Check if the ship already has a modification
+    if (upgrade.modification && currentShipUpgrades.some(su => su.modification)) {
+      return false;
+    }
+
+    // Check if the upgrade is disqualified or disabled
+    if (disqualifiedUpgrades.includes(upgrade.type) || disabledUpgrades.includes(upgrade.type)) {
+      return false;
+    }
+
+    // Check if the upgrade disqualifies or disables any currently equipped upgrades
+    if (upgrade.restrictions) {
+      const disqualOrDisable = [...(upgrade.restrictions.disqual_upgrades || []), ...(upgrade.restrictions.disable_upgrades || [])];
+      if (currentShipUpgrades.some(su => disqualOrDisable.includes(su.type))) {
+        return false;
+      }
+    }
+
     return true;
+  };
+
+  const isUpgradeGreyedOut = (upgrade: Upgrade) => {
+    // Only check for unique class conflicts if the upgrade has a unique class
+    if (upgrade["unique-class"] && upgrade["unique-class"].length > 0) {
+      return upgrade["unique-class"].some(uc => 
+        uniqueClassNames.includes(uc) && 
+        !selectedUpgrades.some(su => su["unique-class"]?.includes(uc))
+      );
+    }
+    return false; // Non-unique upgrades or upgrades without a unique class are not greyed out
+  };
+
+  const handleUpgradeClick = (upgrade: Upgrade) => {
+    if (isUpgradeAvailable(upgrade) && !isUpgradeGreyedOut(upgrade)) {
+      onSelectUpgrade(upgrade);
+      // Only add unique class names if the upgrade has them and they're not already in the context
+      if (upgrade["unique-class"] && upgrade["unique-class"].length > 0) {
+        upgrade["unique-class"].forEach(uc => {
+          if (!uniqueClassNames.includes(uc)) {
+            addUniqueClassName(uc);
+          }
+        });
+      }
+    }
   };
 
   const validateImageUrl = (url: string): string => {
@@ -99,11 +149,14 @@ export default function UpgradeSelector({
             <p>Loading upgrades...</p>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3 md:gap-4">
-              {upgrades.filter(isUpgradeAvailable).map((upgrade) => (
+              {upgrades.map((upgrade) => (
                 <div key={upgrade.name} className="w-full aspect-[2/3]">
                   <Button
-                    onClick={() => onSelectUpgrade(upgrade)}
-                    className="p-0 overflow-hidden relative w-full h-full rounded-lg"
+                    onClick={() => handleUpgradeClick(upgrade)}
+                    className={`p-0 overflow-hidden relative w-full h-full rounded-lg ${
+                      !isUpgradeAvailable(upgrade) || isUpgradeGreyedOut(upgrade) ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
+                    disabled={!isUpgradeAvailable(upgrade) || isUpgradeGreyedOut(upgrade)}
                   >
                     <div className="absolute inset-0 bg-gray-200 flex items-center justify-center">
                       <Image

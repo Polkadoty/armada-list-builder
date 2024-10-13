@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Image from 'next/image';
+import { useUniqueClassContext } from '../contexts/UniqueClassContext';
 
 export interface ShipModel {
   id: string;
@@ -32,6 +33,7 @@ interface ShipSelectorProps {
 
 export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSelectorProps) {
   const [ships, setShips] = useState<ShipModel[]>([]);
+  const { uniqueClassNames, addUniqueClassName } = useUniqueClassContext();
 
   useEffect(() => {
     const fetchShips = async () => {
@@ -62,6 +64,19 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
     fetchShips();
   }, [faction, filter]);
 
+  const isShipAvailable = (ship: ShipModel) => {
+    return !ship.unique || !uniqueClassNames.includes(ship.name);
+  };
+
+  const handleShipClick = (ship: ShipModel) => {
+    if (isShipAvailable(ship)) {
+      onSelectShip(ship);
+      if (ship.unique) {
+        addUniqueClassName(ship.name);
+      }
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <Card className="w-full h-full sm:w-11/12 sm:h-5/6 lg:w-3/4 lg:h-3/4 overflow-auto relative">
@@ -78,8 +93,11 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
             {ships.map((ship) => (
               <div key={ship.id} className="w-full aspect-[8.75/15]">
                 <Button
-                  onClick={() => onSelectShip(ship)}
-                  className="p-0 overflow-hidden relative w-full h-full rounded-lg"
+                  onClick={() => handleShipClick(ship)}
+                  className={`p-0 overflow-hidden relative w-full h-full rounded-lg ${
+                    !isShipAvailable(ship) ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
+                  disabled={!isShipAvailable(ship)}
                 >
                   <div className="absolute inset-0 bg-gray-200 flex items-center justify-center">
                     <Image
