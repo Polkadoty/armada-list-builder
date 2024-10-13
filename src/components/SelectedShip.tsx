@@ -28,26 +28,23 @@ export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRem
   };
 
   const getUpgradeSlots = () => {
-    return Array.from(new Set([...ship.availableUpgrades, ...enabledUpgrades]));
+    return ship.availableUpgrades;
   };
 
   const totalShipPoints = ship.points + ship.assignedUpgrades.reduce((total, upgrade) => total + (upgrade.points || 0), 0);
 
-  // Group upgrades by type, including enabled upgrades
+  // Group upgrades by type, including enabled upgrades and preserving duplicates
   const groupedUpgrades = getUpgradeSlots().reduce((acc, upgradeType) => {
     if (!acc[upgradeType]) {
       acc[upgradeType] = [];
     }
     const assignedUpgrades = ship.assignedUpgrades.filter(u => u.type === upgradeType);
-    const baseSlots = ship.availableUpgrades.filter(u => u === upgradeType).length;
-    const enabledSlots = enabledUpgrades.includes(upgradeType) ? 1 : 0;
-    const totalSlots = baseSlots + enabledSlots;
-    acc[upgradeType] = [...assignedUpgrades, ...Array(Math.max(0, totalSlots - assignedUpgrades.length)).fill(null)];
+    acc[upgradeType] = assignedUpgrades;
     return acc;
-  }, {} as Record<string, (Upgrade | null)[]>);
+  }, {} as Record<string, Upgrade[]>);
 
-  const handleRemoveUpgradeClick = (upgradeType: string, index: number) => {
-    handleRemoveUpgrade(ship.id, upgradeType, index);
+  const handleRemoveUpgradeClick = (upgradeType: string, slotIndex: number) => {
+    handleRemoveUpgrade(ship.id, upgradeType, slotIndex);
   };
 
   return (
@@ -103,58 +100,48 @@ export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRem
               {Object.entries(groupedUpgrades).map(([upgradeType, upgrades]) => (
                 <div key={upgradeType}>
                   {upgrades.map((upgrade, index) => (
-                    upgrade ? (
-                      <div key={`${upgradeType}-${index}`} className="flex items-center justify-between bg-gray-100 dark:bg-gray-700 rounded p-2 mb-2">
-                        <div className="flex items-center">
-                          <Image
-                            src={`/icons/${upgradeType}.svg`}
-                            alt={upgradeType}
-                            width={24}
-                            height={24}
-                            className="dark:invert mr-2"
-                          />
-                          <span className="font-medium">
-                            {upgrade ? (
-                              <>
-                                {upgrade.unique && <span className="mr-1 text-yellow-500">●</span>}
-                                {upgrade.name}
-                              </>
-                            ) : (
-                              `Empty ${upgradeType} slot`
-                            )}
-                          </span>
-                        </div>
-                        <div className="flex items-center">
-                          {upgrade && <span className="mr-2">{upgrade.points} pts</span>}
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-6 w-6 mr-1"
-                            onClick={() => handleUpgradeClick(upgradeType, index)}
-                            disabled={disabledUpgrades.includes(upgradeType)}
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M8 3L4 7l4 4"/>
-                              <path d="M4 7h16"/>
-                              <path d="m16 21 4-4-4-4"/>
-                              <path d="M20 17H4"/>
-                            </svg>
-                          </Button>
-                          {upgrade && (
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              className="h-6 w-6"
-                              onClick={() => handleRemoveUpgradeClick(upgradeType, index)}
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
-                                <path d="M18 6L6 18M6 6l12 12" />
-                              </svg>
-                            </Button>
-                          )}
-                        </div>
+                    <div key={`${upgradeType}-${index}`} className="flex items-center justify-between bg-gray-100 dark:bg-gray-700 rounded p-2 mb-2">
+                      <div className="flex items-center">
+                        <Image
+                          src={`/icons/${upgradeType}.svg`}
+                          alt={upgradeType}
+                          width={24}
+                          height={24}
+                          className="dark:invert mr-2"
+                        />
+                        <span className="font-medium">
+                          {upgrade.unique && <span className="mr-1 text-yellow-500">●</span>}
+                          {upgrade.name}
+                        </span>
                       </div>
-                    ) : null
+                      <div className="flex items-center">
+                        <span className="mr-2">{upgrade.points} pts</span>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-6 w-6 mr-1"
+                          onClick={() => handleUpgradeClick(upgradeType, index)}
+                          disabled={disabledUpgrades.includes(upgradeType)}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M8 3L4 7l4 4"/>
+                            <path d="M4 7h16"/>
+                            <path d="m16 21 4-4-4-4"/>
+                            <path d="M20 17H4"/>
+                          </svg>
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() => handleRemoveUpgradeClick(upgradeType, index)}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                            <path d="M18 6L6 18M6 6l12 12" />
+                          </svg>
+                        </Button>
+                      </div>
+                    </div>
                   ))}
                 </div>
               ))}
