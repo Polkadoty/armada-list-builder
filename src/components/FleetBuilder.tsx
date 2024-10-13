@@ -60,6 +60,11 @@ export interface Upgrade {
   bound_shiptype: string;
   modification?: boolean;
   slotIndex?: number;
+  restrictions?: {
+    disable_upgrades?: string[];
+    enable_upgrades?: string[];
+    disqual_upgrades?: string[];
+  };
 }
 
 export interface Ship extends ShipModel {
@@ -116,6 +121,8 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { addUniqueClassName, removeUniqueClassName } = useUniqueClassContext();
   const [currentUpgradeIndex, setCurrentUpgradeIndex] = useState<number>(0);
+  const [disabledUpgrades, setDisabledUpgrades] = useState<Record<string, string[]>>({});
+  const [enabledUpgrades, setEnabledUpgrades] = useState<Record<string, string[]>>({});
 
   const handleNameClick = () => {
     setIsEditingName(true);
@@ -174,6 +181,18 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
       const newPoints = points - shipPoints;
       setPoints(newPoints);
       setTotalShipPoints(totalShipPoints - shipPoints);
+  
+      // Clear disabled and enabled upgrades for the removed ship
+      setDisabledUpgrades(prev => {
+        const newDisabled = {...prev};
+        delete newDisabled[id];
+        return newDisabled;
+      });
+      setEnabledUpgrades(prev => {
+        const newEnabled = {...prev};
+        delete newEnabled[id];
+        return newEnabled;
+      });
     }
   };
 
@@ -188,49 +207,125 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
   };
   
   const handleSelectUpgrade = (upgrade: Upgrade) => {
+    let totalPointDifference = 0;
+  
     setSelectedShips(prevShips => 
       prevShips.map(ship => {
         if (ship.id === currentShipId) {
           const newUpgrade = { ...upgrade, slotIndex: currentUpgradeIndex };
-          const existingUpgradeIndex = ship.assignedUpgrades.findIndex(u => u.type === currentUpgradeType && u.slotIndex === currentUpgradeIndex);
+          const updatedAssignedUpgrades = [...ship.assignedUpgrades];
+          const existingUpgradeIndex = updatedAssignedUpgrades.findIndex(u => u.type === currentUpgradeType && u.slotIndex === currentUpgradeIndex);
+  
+          let pointDifference = upgrade.points;
+  
+          // Remove old upgrade if it exists
           if (existingUpgradeIndex !== -1) {
-            // Replace existing upgrade
-            const updatedUpgrades = [...ship.assignedUpgrades];
-            updatedUpgrades[existingUpgradeIndex] = newUpgrade;
-            return { ...ship, assignedUpgrades: updatedUpgrades };
-          } else {
-            // Add new upgrade
-            return { ...ship, assignedUpgrades: [...ship.assignedUpgrades, newUpgrade] };
+            const oldUpgrade = updatedAssignedUpgrades[existingUpgradeIndex];
+            // Remove old unique class
+            if (oldUpgrade.unique) {
+              removeUniqueClassName(oldUpgrade.name);
+            }
+            if (oldUpgrade["unique-class"]) {
+              oldUpgrade["unique-class"].forEach(uc => removeUniqueClassName(uc));
+            }
+            // Calculate point difference
+            pointDifference = upgrade.points - oldUpgrade.points;
           }
+  
+          totalPointDifference += pointDifference;
+  
+          // Add new upgrade
+          if (existingUpgradeIndex !== -1) {
+            updatedAssignedUpgrades[existingUpgradeIndex] = newUpgrade;
+          } else {
+            updatedAssignedUpgrades.push(newUpgrade);
+          }
+  
+          // Add new unique class
+          if (upgrade.unique) {
+            addUniqueClassName(upgrade.name);
+          }
+          if (upgrade["unique-class"]) {
+            upgrade["unique-class"].forEach(uc => addUniqueClassName(uc));
+          }
+  
+          // Handle disabled upgrades
+          const newDisabledUpgrades = [...(disabledUpgrades[ship.id] || [])];
+          if (upgrade.restrictions?.disable_upgrades) {
+            newDisabledUpgrades.push(...upgrade.restrictions.disable_upgrades);
+          }
+          if (upgrade.type === 'title') {
+            newDisabledUpgrades.push('title');
+          }
+          setDisabledUpgrades({...disabledUpgrades, [ship.id]: newDisabledUpgrades});
+  
+          // Handle enabled upgrades
+          const newEnabledUpgrades = [...(enabledUpgrades[ship.id] || [])];
+          if (upgrade.restrictions?.enable_upgrades) {
+            upgrade.restrictions.enable_upgrades.forEach(enabledUpgrade => {
+              if (!newEnabledUpgrades.includes(enabledUpgrade)) {
+                newEnabledUpgrades.push(enabledUpgrade);
+              }
+            });
+          }
+          setEnabledUpgrades({...enabledUpgrades, [ship.id]: newEnabledUpgrades});
+  
+          return { ...ship, assignedUpgrades: updatedAssignedUpgrades };
         }
         return ship;
       })
     );
+  
     setPreviousPoints(points);
     setPreviousShipPoints(totalShipPoints);
-    setPoints(prevPoints => prevPoints + upgrade.points);
-    setTotalShipPoints(prevTotal => prevTotal + upgrade.points);
+    setPoints(prevPoints => prevPoints + totalPointDifference);
+    setTotalShipPoints(prevTotal => prevTotal + totalPointDifference);
     setShowUpgradeSelector(false);
   };
-
+  
   const handleRemoveUpgrade = (shipId: string, upgradeType: string, upgradeIndex: number) => {
     setSelectedShips(prevShips => 
       prevShips.map(ship => {
         if (ship.id === shipId) {
           const upgradeToRemove = ship.assignedUpgrades.find(u => u.type === upgradeType && u.slotIndex === upgradeIndex);
           if (upgradeToRemove) {
-            setPreviousPoints(points);
-            setPreviousShipPoints(totalShipPoints);
-            setPoints(prevPoints => prevPoints - upgradeToRemove.points);
-            setTotalShipPoints(prevTotal => prevTotal - upgradeToRemove.points);
-            
-            // Remove unique class names when upgrade is removed
+            // Remove unique class
             if (upgradeToRemove.unique) {
               removeUniqueClassName(upgradeToRemove.name);
             }
             if (upgradeToRemove["unique-class"]) {
               upgradeToRemove["unique-class"].forEach(uc => removeUniqueClassName(uc));
             }
+  
+            // Update disabled upgrades
+            if (upgradeToRemove.restrictions?.disable_upgrades) {
+              setDisabledUpgrades(prev => ({
+                ...prev,
+                [shipId]: (prev[shipId] || []).filter(u => !upgradeToRemove.restrictions?.disable_upgrades?.includes(u))
+              }));
+            }
+  
+            // Update enabled upgrades
+            if (upgradeToRemove.restrictions?.enable_upgrades) {
+              setEnabledUpgrades(prev => ({
+                ...prev,
+                [shipId]: (prev[shipId] || []).filter(u => !upgradeToRemove.restrictions?.enable_upgrades?.includes(u))
+              }));
+            }
+  
+            // If it's a title, remove the 'title' from disabled upgrades
+            if (upgradeToRemove.type === 'title') {
+              setDisabledUpgrades(prev => ({
+                ...prev,
+                [shipId]: (prev[shipId] || []).filter(u => u !== 'title')
+              }));
+            }
+  
+            // Update points
+            setPreviousPoints(points);
+            setPreviousShipPoints(totalShipPoints);
+            setPoints(prevPoints => prevPoints - upgradeToRemove.points);
+            setTotalShipPoints(prevTotal => prevTotal - upgradeToRemove.points);
           }
           return {
             ...ship,
@@ -590,13 +685,15 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
       />
       <div className="mb-4">
         {selectedShips.map((ship) => (
-          <SelectedShip 
-            key={ship.id} 
-            ship={ship} 
-            onRemove={handleRemoveShip} 
-            onUpgradeClick={handleUpgradeClick} 
-            onCopy={handleCopyShip} 
-            handleRemoveUpgrade={handleRemoveUpgrade} 
+          <SelectedShip
+            key={ship.id}
+            ship={ship}
+            onRemove={handleRemoveShip}
+            onUpgradeClick={handleUpgradeClick}
+            onCopy={handleCopyShip}
+            handleRemoveUpgrade={handleRemoveUpgrade}
+            disabledUpgrades={disabledUpgrades[ship.id] || []}
+            enabledUpgrades={enabledUpgrades[ship.id] || []}
           />
         ))}
       </div>

@@ -1,41 +1,27 @@
 import Image from 'next/image';
 import { Button } from "@/components/ui/button";
 import { Upgrade } from './FleetBuilder';
-import { useEffect, useState } from 'react';
 
 interface UpgradeIconsToolbarProps {
   upgrades: string[];
   onUpgradeClick: (upgrade: string, index: number) => void;
   assignedUpgrades: Upgrade[];
+  disabledUpgrades: string[];
+  enabledUpgrades: string[];
 }
 
-const iconTypes = [
-  'commander', 'officer', 'weapons-team', 'support-team', 'fleet-command',
-  'fleet-support', 'offensive-retro', 'defensive-retro', 'experimental-retro',
-  'turbolaser', 'ion-cannon', 'ordnance', 'super-weapon', 'title',
-  'weapons-team-offensive-retro'
-];
-
-export default function UpgradeIconsToolbar({ upgrades, onUpgradeClick, assignedUpgrades }: UpgradeIconsToolbarProps) {
-  const [preloadedIcons, setPreloadedIcons] = useState<Set<string>>(new Set());
-
-  useEffect(() => {
-    const preloadIcons = async () => {
-      const iconPromises = iconTypes.map(async (iconType) => {
-        const iconUrl = `/icons/${iconType}.svg`;
-        await fetch(iconUrl);
-        setPreloadedIcons((prev) => new Set(prev).add(iconUrl));
-      });
-      await Promise.all(iconPromises);
-    };
-
-    preloadIcons();
-  }, []);
-
+export default function UpgradeIconsToolbar({ upgrades, onUpgradeClick, assignedUpgrades, disabledUpgrades, enabledUpgrades }: UpgradeIconsToolbarProps) {
   const upgradeCounts = upgrades.reduce((acc, upgrade) => {
     acc[upgrade] = (acc[upgrade] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
+
+  // Add enabled upgrades to the counts
+  enabledUpgrades.forEach(upgrade => {
+    if (!upgradeCounts[upgrade]) {
+      upgradeCounts[upgrade] = 1;
+    }
+  });
 
   const assignedUpgradeCounts = assignedUpgrades.reduce((acc, upgrade) => {
     acc[upgrade.type] = (acc[upgrade.type] || 0) + 1;
@@ -73,7 +59,9 @@ export default function UpgradeIconsToolbar({ upgrades, onUpgradeClick, assigned
           } else if (upgrade === 'offensive-retro') {
             isDisabled = index < totalAssignedOffensiveRetrofit;
           } else {
-            isDisabled = (assignedUpgradeCounts[upgrade] || 0) > index;
+            isDisabled = (assignedUpgradeCounts[upgrade] || 0) > index || 
+                         disabledUpgrades.includes(upgrade) || 
+                         (upgrade === 'title' && assignedUpgrades.some(u => u.type === 'title'));
           }
 
           return (
@@ -85,15 +73,13 @@ export default function UpgradeIconsToolbar({ upgrades, onUpgradeClick, assigned
               onClick={() => !isDisabled && onUpgradeClick(upgrade, index)}
               disabled={isDisabled}
             >
-              {preloadedIcons.has(`/icons/${upgrade}.svg`) && (
-                <Image
-                  src={`/icons/${upgrade}.svg`}
-                  alt={upgrade}
-                  width={upgrade === 'weapons-team-offensive-retro' ? 40 : 24}
-                  height={24}
-                  className={`dark:invert ${isDisabled ? 'opacity-50' : ''}`}
-                />
-              )}
+              <Image
+                src={`/icons/${upgrade}.svg`}
+                alt={upgrade}
+                width={upgrade === 'weapons-team-offensive-retro' ? 40 : 24}
+                height={24}
+                className={`dark:invert ${isDisabled ? 'opacity-50' : ''}`}
+              />
             </Button>
           );
         })

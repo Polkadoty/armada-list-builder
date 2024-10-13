@@ -12,9 +12,11 @@ interface SelectedShipProps {
   onUpgradeClick: (shipId: string, upgrade: string, index: number) => void;
   onCopy: (ship: Ship) => void;
   handleRemoveUpgrade: (shipId: string, upgradeType: string, index: number) => void;
+  disabledUpgrades: string[];
+  enabledUpgrades: string[];
 }
 
-export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRemoveUpgrade }: SelectedShipProps) {
+export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRemoveUpgrade, disabledUpgrades, enabledUpgrades }: SelectedShipProps) {
   const [isToolbarVisible, setIsToolbarVisible] = useState(false);
 
   const handleUpgradeClick = (upgrade: string, index: number) => {
@@ -26,19 +28,21 @@ export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRem
   };
 
   const getUpgradeSlots = () => {
-    return ship.availableUpgrades;
+    return Array.from(new Set([...ship.availableUpgrades, ...enabledUpgrades]));
   };
 
   const totalShipPoints = ship.points + ship.assignedUpgrades.reduce((total, upgrade) => total + (upgrade.points || 0), 0);
 
-  // Group upgrades by type
-  const groupedUpgrades = ship.availableUpgrades.reduce((acc, upgradeType) => {
+  // Group upgrades by type, including enabled upgrades
+  const groupedUpgrades = getUpgradeSlots().reduce((acc, upgradeType) => {
     if (!acc[upgradeType]) {
       acc[upgradeType] = [];
     }
     const assignedUpgrades = ship.assignedUpgrades.filter(u => u.type === upgradeType);
-    const emptySlots = Math.max(0, ship.availableUpgrades.filter(u => u === upgradeType).length - assignedUpgrades.length);
-    acc[upgradeType] = [...assignedUpgrades, ...Array(emptySlots).fill(null)];
+    const baseSlots = ship.availableUpgrades.filter(u => u === upgradeType).length;
+    const enabledSlots = enabledUpgrades.includes(upgradeType) ? 1 : 0;
+    const totalSlots = baseSlots + enabledSlots;
+    acc[upgradeType] = [...assignedUpgrades, ...Array(Math.max(0, totalSlots - assignedUpgrades.length)).fill(null)];
     return acc;
   }, {} as Record<string, (Upgrade | null)[]>);
 
@@ -88,11 +92,18 @@ export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRem
         </Button>
         {isToolbarVisible && (
           <>
+            <UpgradeIconsToolbar
+              upgrades={getUpgradeSlots()}
+              onUpgradeClick={handleUpgradeClick}
+              assignedUpgrades={ship.assignedUpgrades}
+              disabledUpgrades={disabledUpgrades}
+              enabledUpgrades={enabledUpgrades}
+            />
             <div className="p-2 space-y-2">
               {Object.entries(groupedUpgrades).map(([upgradeType, upgrades]) => (
-                upgrades.some(upgrade => upgrade !== null) && (
-                  <div key={upgradeType}>
-                    {upgrades.map((upgrade, index) => (
+                <div key={upgradeType}>
+                  {upgrades.map((upgrade, index) => (
+                    upgrade ? (
                       <div key={`${upgradeType}-${index}`} className="flex items-center justify-between bg-gray-100 dark:bg-gray-700 rounded p-2 mb-2">
                         <div className="flex items-center">
                           <Image
@@ -120,6 +131,7 @@ export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRem
                             size="icon"
                             className="h-6 w-6 mr-1"
                             onClick={() => handleUpgradeClick(upgradeType, index)}
+                            disabled={disabledUpgrades.includes(upgradeType)}
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                               <path d="M8 3L4 7l4 4"/>
@@ -142,16 +154,11 @@ export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRem
                           )}
                         </div>
                       </div>
-                    ))}
-                  </div>
-                )
+                    ) : null
+                  ))}
+                </div>
               ))}
             </div>
-            <UpgradeIconsToolbar 
-              upgrades={getUpgradeSlots()}
-              onUpgradeClick={handleUpgradeClick}
-              assignedUpgrades={ship.assignedUpgrades}
-            />
           </>
         )}
       </Card>
