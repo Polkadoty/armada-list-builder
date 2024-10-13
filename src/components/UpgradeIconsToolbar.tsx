@@ -44,14 +44,20 @@ export default function UpgradeIconsToolbar({ upgrades, onUpgradeClick, assigned
           const isDisabled = 
             disabledUpgrades.includes(upgrade) || 
             (upgrade === 'title' && assignedUpgrades.some(u => u.type === 'title')) ||
-            (upgrade === 'weapons-team' && usedWeaponsTeamSlots >= upgradeCounts['weapons-team']) ||
-            (upgrade === 'offensive-retro' && usedOffensiveRetroSlots >= upgradeCounts['offensive-retro']) ||
+            (upgrade === 'weapons-team' && (
+              usedWeaponsTeamSlots >= upgradeCounts['weapons-team'] ||
+              (filledSlots['weapons-team-offensive-retro'] && filledSlots['weapons-team-offensive-retro'].includes(index))
+            )) ||
+            (upgrade === 'offensive-retro' && (
+              usedOffensiveRetroSlots >= upgradeCounts['offensive-retro'] ||
+              (filledSlots['weapons-team-offensive-retro'] && filledSlots['weapons-team-offensive-retro'].includes(index))
+            )) ||
             (upgrade === 'weapons-team-offensive-retro' && 
-             (usedWeaponsTeamSlots >= upgradeCounts['weapons-team'] || 
-              usedOffensiveRetroSlots >= upgradeCounts['offensive-retro'])) ||
+              (usedWeaponsTeamSlots >= upgradeCounts['weapons-team'] || 
+               usedOffensiveRetroSlots >= upgradeCounts['offensive-retro'])) ||
             (assignedUpgradeCounts[upgrade] && assignedUpgradeCounts[upgrade] >= upgradeCounts[upgrade]) ||
             (filledSlots[upgrade] && filledSlots[upgrade].includes(index));
-        
+          
           return (
             <Button
               key={`${upgrade}-${index}`}
