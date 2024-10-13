@@ -48,21 +48,12 @@ export default function UpgradeIconsToolbar({ upgrades, onUpgradeClick, assigned
     >
       {Object.entries(upgradeCounts).flatMap(([upgrade, count]) => 
         Array(count).fill(0).map((_, index) => {
-          let isDisabled = false;
-
-          if (upgrade === 'weapons-team-offensive-retro') {
-            isDisabled = (availableWeaponsTeam === 0 || availableOffensiveRetrofit === 0) ||
-                         (index < assignedCombinedSlot);
-          } else if (upgrade === 'weapons-team') {
-            isDisabled = index < totalAssignedWeaponsTeam;
-          } else if (upgrade === 'offensive-retro') {
-            isDisabled = index < totalAssignedOffensiveRetrofit;
-          } else {
-            isDisabled = (assignedUpgradeCounts[upgrade] || 0) > index || 
-                         disabledUpgrades.includes(upgrade) || 
-                         (upgrade === 'title' && assignedUpgrades.some(u => u.type === 'title'));
-          }
-
+          const isDisabled = disabledUpgrades.includes(upgrade) || 
+                             (upgrade === 'title' && assignedUpgrades.some(u => u.type === 'title'));
+          const count = upgrade === 'fleet-support' 
+            ? (upgrades.filter(u => u === upgrade).length + (enabledUpgrades.includes(upgrade) ? 1 : 0))
+            : upgrades.filter(u => u === upgrade).length;
+          
           return (
             <Button
               key={`${upgrade}-${index}`}
