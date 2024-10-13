@@ -154,6 +154,20 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
     const shipToRemove = selectedShips.find(ship => ship.id === id);
     if (shipToRemove) {
       const shipPoints = shipToRemove.points + shipToRemove.assignedUpgrades.reduce((total, upgrade) => total + upgrade.points, 0);
+      
+      // Remove unique class names for the ship and its upgrades
+      if (shipToRemove.unique) {
+        removeUniqueClassName(shipToRemove.name);
+      }
+      shipToRemove.assignedUpgrades.forEach(upgrade => {
+        if (upgrade.unique) {
+          removeUniqueClassName(upgrade.name);
+        }
+        if (upgrade["unique-class"]) {
+          upgrade["unique-class"].forEach(uc => removeUniqueClassName(uc));
+        }
+      });
+  
       setSelectedShips(selectedShips.filter(ship => ship.id !== id));
       setPreviousPoints(points);
       setPreviousShipPoints(totalShipPoints);
@@ -211,16 +225,11 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
             setTotalShipPoints(prevTotal => prevTotal - upgradeToRemove.points);
             
             // Remove unique class names when upgrade is removed
-            if (upgradeToRemove["unique-class"] && upgradeToRemove["unique-class"].length > 0) {
-              upgradeToRemove["unique-class"].forEach(uc => {
-                // Only remove the unique class if it's not used by other upgrades
-                const isUsedByOtherUpgrades = selectedShips.some(s => 
-                  s.id !== shipId && s.assignedUpgrades.some(u => u["unique-class"]?.includes(uc))
-                );
-                if (!isUsedByOtherUpgrades) {
-                  removeUniqueClassName(uc);
-                }
-              });
+            if (upgradeToRemove.unique) {
+              removeUniqueClassName(upgradeToRemove.name);
+            }
+            if (upgradeToRemove["unique-class"]) {
+              upgradeToRemove["unique-class"].forEach(uc => removeUniqueClassName(uc));
             }
           }
           return {
@@ -283,16 +292,19 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
   const handleRemoveSquadron = (id: string) => {
     const squadronToRemove = selectedSquadrons.find(squadron => squadron.id === id);
     if (squadronToRemove) {
+      if (squadronToRemove.unique) {
+        removeUniqueClassName(squadronToRemove.name);
+      }
+      if (squadronToRemove['unique-class']) {
+        squadronToRemove['unique-class'].forEach(uc => removeUniqueClassName(uc));
+      }
+  
       setSelectedSquadrons(selectedSquadrons.filter(squadron => squadron.id !== id));
       setPreviousPoints(points);
       setPreviousSquadronPoints(totalSquadronPoints);
       const newPoints = points - squadronToRemove.points * squadronToRemove.count;
       setPoints(newPoints);
       setTotalSquadronPoints(totalSquadronPoints - squadronToRemove.points * squadronToRemove.count);
-      
-      // Remove unique class names when squadron is removed
-      squadronToRemove['unique-class']?.forEach(removeUniqueClassName);
-      removeUniqueClassName(squadronToRemove.name);
     }
   };
 
@@ -360,14 +372,38 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
   };
 
   const clearAllShips = () => {
+    selectedShips.forEach(ship => {
+      if (ship.unique) {
+        removeUniqueClassName(ship.name);
+      }
+      ship.assignedUpgrades.forEach(upgrade => {
+        if (upgrade.unique) {
+          removeUniqueClassName(upgrade.name);
+        }
+        if (upgrade["unique-class"]) {
+          upgrade["unique-class"].forEach(uc => removeUniqueClassName(uc));
+        }
+      });
+    });
+  
+    setSelectedShips([]);
     setPreviousPoints(points);
     setPreviousShipPoints(totalShipPoints);
-    setPoints(points - totalShipPoints);
+    const newPoints = points - totalShipPoints;
+    setPoints(newPoints);
     setTotalShipPoints(0);
-    setSelectedShips([]);
   };
   
   const clearAllSquadrons = () => {
+    selectedSquadrons.forEach(squadron => {
+      if (squadron.unique) {
+        removeUniqueClassName(squadron.name);
+      }
+      if (squadron['unique-class']) {
+        squadron['unique-class'].forEach(uc => removeUniqueClassName(uc));
+      }
+    });
+  
     setPreviousPoints(points);
     setPreviousSquadronPoints(totalSquadronPoints);
     setPoints(points - totalSquadronPoints);
