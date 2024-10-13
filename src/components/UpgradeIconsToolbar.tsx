@@ -8,16 +8,17 @@ interface UpgradeIconsToolbarProps {
   assignedUpgrades: Upgrade[];
   disabledUpgrades: string[];
   enabledUpgrades: string[];
+  filledSlots: Record<string, number[]>;
 }
 
-export default function UpgradeIconsToolbar({ upgrades, onUpgradeClick, assignedUpgrades, disabledUpgrades, enabledUpgrades }: UpgradeIconsToolbarProps) {
+export default function UpgradeIconsToolbar({ upgrades, onUpgradeClick, assignedUpgrades, disabledUpgrades, enabledUpgrades, filledSlots }: UpgradeIconsToolbarProps) {
   const upgradeCounts = upgrades.reduce((acc, upgrade) => {
     acc[upgrade] = (acc[upgrade] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
 
-  // Add enabled upgrades to the counts
-  enabledUpgrades.forEach(upgrade => {
+  // Filter out empty strings and add enabled upgrades to the counts
+  enabledUpgrades.filter(upgrade => upgrade.trim() !== '').forEach(upgrade => {
     if (!upgradeCounts[upgrade]) {
       upgradeCounts[upgrade] = 1;
     } else {
@@ -48,7 +49,8 @@ export default function UpgradeIconsToolbar({ upgrades, onUpgradeClick, assigned
             (upgrade === 'weapons-team-offensive-retro' && 
              (usedWeaponsTeamSlots >= upgradeCounts['weapons-team'] || 
               usedOffensiveRetroSlots >= upgradeCounts['offensive-retro'])) ||
-            (assignedUpgradeCounts[upgrade] && assignedUpgradeCounts[upgrade] >= upgradeCounts[upgrade]);
+            (assignedUpgradeCounts[upgrade] && assignedUpgradeCounts[upgrade] >= upgradeCounts[upgrade]) ||
+            (filledSlots[upgrade] && filledSlots[upgrade].includes(index));
         
           return (
             <Button

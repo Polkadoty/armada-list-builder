@@ -14,9 +14,10 @@ interface SelectedShipProps {
   handleRemoveUpgrade: (shipId: string, upgradeType: string, index: number) => void;
   disabledUpgrades: string[];
   enabledUpgrades: string[];
+  filledSlots: Record<string, number[]>;
 }
 
-export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRemoveUpgrade, disabledUpgrades, enabledUpgrades }: SelectedShipProps) {
+export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRemoveUpgrade, disabledUpgrades, enabledUpgrades, filledSlots }: SelectedShipProps) {
   const [isToolbarVisible, setIsToolbarVisible] = useState(false);
 
   const handleUpgradeClick = (upgrade: string, index: number) => {
@@ -96,6 +97,7 @@ export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRem
               assignedUpgrades={ship.assignedUpgrades}
               disabledUpgrades={disabledUpgrades}
               enabledUpgrades={enabledUpgrades}
+              filledSlots={filledSlots}
             />
             <div className="p-2 space-y-2">
               {Object.entries(groupedUpgrades).map(([upgradeType, upgrades]) => (

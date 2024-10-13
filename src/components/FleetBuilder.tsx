@@ -123,6 +123,7 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
   const [currentUpgradeIndex, setCurrentUpgradeIndex] = useState<number>(0);
   const [disabledUpgrades, setDisabledUpgrades] = useState<Record<string, string[]>>({});
   const [enabledUpgrades, setEnabledUpgrades] = useState<Record<string, string[]>>({});
+  const [filledSlots, setFilledSlots] = useState<Record<string, Record<string, number[]>>>({});
 
   const handleNameClick = () => {
     setIsEditingName(true);
@@ -262,13 +263,31 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
           // Handle enabled upgrades
           const newEnabledUpgrades = [...(enabledUpgrades[ship.id] || [])];
           if (upgrade.restrictions?.enable_upgrades) {
-            upgrade.restrictions.enable_upgrades.forEach(enabledUpgrade => {
-              if (!newEnabledUpgrades.includes(enabledUpgrade)) {
-                newEnabledUpgrades.push(enabledUpgrade);
-              }
-            });
+            upgrade.restrictions.enable_upgrades
+              .filter(enabledUpgrade => enabledUpgrade.trim() !== '')
+              .forEach(enabledUpgrade => {
+                if (!newEnabledUpgrades.includes(enabledUpgrade)) {
+                  newEnabledUpgrades.push(enabledUpgrade);
+                }
+              });
           }
           setEnabledUpgrades({...enabledUpgrades, [ship.id]: newEnabledUpgrades});
+  
+          // Update filledSlots
+          setFilledSlots(prevFilledSlots => {
+            const shipSlots = prevFilledSlots[ship.id] || {};
+            const upgradeTypeSlots = shipSlots[currentUpgradeType] || [];
+            const updatedSlots = upgradeTypeSlots.includes(currentUpgradeIndex)
+              ? upgradeTypeSlots
+              : [...upgradeTypeSlots, currentUpgradeIndex];
+            return {
+              ...prevFilledSlots,
+              [ship.id]: {
+                ...shipSlots,
+                [currentUpgradeType]: updatedSlots
+              }
+            };
+          });
   
           return { ...ship, assignedUpgrades: updatedAssignedUpgrades };
         }
@@ -337,6 +356,20 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
                   [shipId]: (prev[shipId] || []).filter(u => u !== 'title')
                 }));
               }
+  
+              // Update filledSlots
+              setFilledSlots(prevFilledSlots => {
+                const shipSlots = prevFilledSlots[shipId] || {};
+                const upgradeTypeSlots = shipSlots[upgrade.type] || [];
+                const updatedSlots = upgradeTypeSlots.filter(slot => slot !== upgrade.slotIndex);
+                return {
+                  ...prevFilledSlots,
+                  [shipId]: {
+                    ...shipSlots,
+                    [upgrade.type]: updatedSlots
+                  }
+                };
+              });
             });
   
             // Update points
@@ -358,7 +391,7 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
     );
     console.log('After removal:', selectedShips);
   };
-  
+
   const handleCopyShip = (shipToCopy: Ship) => {
     const newShip = { 
       ...shipToCopy, 
@@ -716,6 +749,7 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
             handleRemoveUpgrade={handleRemoveUpgrade}
             disabledUpgrades={disabledUpgrades[ship.id] || []}
             enabledUpgrades={enabledUpgrades[ship.id] || []}
+            filledSlots={filledSlots[ship.id] || {}}
           />
         ))}
       </div>
