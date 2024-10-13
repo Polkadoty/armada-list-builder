@@ -30,7 +30,6 @@ export default function UpgradeIconsToolbar({ upgrades, onUpgradeClick, assigned
 
   const weaponsTeamCount = upgradeCounts['weapons-team'] || 0;
   const offensiveRetrofitCount = upgradeCounts['offensive-retro'] || 0;
-  const combinedSlotCount = upgradeCounts['weapons-team-offensive-retro'] || 0;
 
   const assignedWeaponsTeam = assignedUpgradeCounts['weapons-team'] || 0;
   const assignedOffensiveRetrofit = assignedUpgradeCounts['offensive-retro'] || 0;
