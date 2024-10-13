@@ -34,7 +34,7 @@ export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRem
   const totalShipPoints = ship.points + ship.assignedUpgrades.reduce((total, upgrade) => total + (upgrade.points || 0), 0);
 
   // Group upgrades by type, including enabled upgrades and preserving duplicates
-  const groupedUpgrades = getUpgradeSlots().reduce((acc, upgradeType) => {
+  const groupedUpgrades = [...getUpgradeSlots(), ...enabledUpgrades].reduce((acc, upgradeType) => {
     if (!acc[upgradeType]) {
       acc[upgradeType] = [];
     }
@@ -44,6 +44,7 @@ export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRem
   }, {} as Record<string, Upgrade[]>);
 
   const handleRemoveUpgradeClick = (upgradeType: string, slotIndex: number) => {
+    console.log('Removing upgrade:', upgradeType, slotIndex);
     handleRemoveUpgrade(ship.id, upgradeType, slotIndex);
   };
 
