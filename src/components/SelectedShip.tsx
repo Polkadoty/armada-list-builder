@@ -20,7 +20,7 @@ interface SelectedShipProps {
 
 export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRemoveUpgrade, disabledUpgrades, enabledUpgrades, filledSlots, hasCommander}: SelectedShipProps) {
 
-  const [isToolbarVisible, setIsToolbarVisible] = useState(false);
+  const [isToolbarVisible, setIsToolbarVisible] = useState(true);
 
   const handleUpgradeClick = (upgrade: string, index: number) => {
     onUpgradeClick(ship.id, upgrade, index);

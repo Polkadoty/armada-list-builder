@@ -181,6 +181,9 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
     if (shipToRemove) {
       const shipPoints = shipToRemove.points + shipToRemove.assignedUpgrades.reduce((total, upgrade) => total + upgrade.points, 0);
       
+      // Check if the ship had a commander upgrade
+      const hadCommander = shipToRemove.assignedUpgrades.some(upgrade => upgrade.type === 'commander');
+      
       // Remove unique class names for the ship and its upgrades
       if (shipToRemove.unique) {
         removeUniqueClassName(shipToRemove.name);
@@ -212,6 +215,11 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
         delete newEnabled[id];
         return newEnabled;
       });
+  
+      // Set hasCommander to false if the removed ship had a commander
+      if (hadCommander) {
+        setHasCommander(false);
+      }
     }
   };
 
@@ -598,6 +606,7 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
     const newPoints = points - totalShipPoints;
     setPoints(newPoints);
     setTotalShipPoints(0);
+    setHasCommander(false);  // Add this line
   };
   
   const clearAllSquadrons = () => {
