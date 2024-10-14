@@ -226,48 +226,39 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
   };
   
   const handleSelectUpgrade = (upgrade: Upgrade) => {
+    if (upgrade.type === 'commander' && hasCommander) {
+      alert("Only one commander is allowed per fleet.");
+      return;
+    }
+
     let totalPointDifference = 0;
 
-    if (upgrade.type === 'commander') {
-      if (hasCommander) {
-        alert("Only one commander is allowed per fleet.");
-        return;
-      }
-      setHasCommander(true);
-    }
-  
     setSelectedShips(prevShips => 
       prevShips.map(ship => {
         if (ship.id === currentShipId) {
           const newUpgrade = { ...upgrade, slotIndex: currentUpgradeIndex };
           const updatedAssignedUpgrades = [...ship.assignedUpgrades];
           const existingUpgradeIndex = updatedAssignedUpgrades.findIndex(u => u.type === currentUpgradeType && u.slotIndex === currentUpgradeIndex);
-  
+
           let pointDifference = upgrade.points;
-  
+
           // Remove old upgrade if it exists
           if (existingUpgradeIndex !== -1) {
             const oldUpgrade = updatedAssignedUpgrades[existingUpgradeIndex];
-
-            // Remove old unique class
             if (oldUpgrade.unique) {
               removeUniqueClassName(oldUpgrade.name);
             }
             if (oldUpgrade["unique-class"]) {
               oldUpgrade["unique-class"].forEach(uc => removeUniqueClassName(uc));
             }
-            // Calculate point difference
             pointDifference = upgrade.points - oldUpgrade.points;
-          }
-  
-          totalPointDifference += pointDifference;
-  
-          // Add new upgrade
-          if (existingUpgradeIndex !== -1) {
             updatedAssignedUpgrades[existingUpgradeIndex] = newUpgrade;
           } else {
             updatedAssignedUpgrades.push(newUpgrade);
           }
+
+          totalPointDifference += pointDifference;
+
           // Add new unique class
           if (upgrade.unique) {
             addUniqueClassName(upgrade.name);
@@ -275,7 +266,7 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
           if (upgrade["unique-class"]) {
             upgrade["unique-class"].forEach(uc => addUniqueClassName(uc));
           }
-  
+
           // Handle disabled upgrades
           const newDisabledUpgrades = [...(disabledUpgrades[ship.id] || [])];
           if (upgrade.restrictions?.disable_upgrades) {
@@ -285,7 +276,7 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
             newDisabledUpgrades.push('title');
           }
           setDisabledUpgrades({...disabledUpgrades, [ship.id]: newDisabledUpgrades});
-  
+
           // Handle enabled upgrades
           const newEnabledUpgrades = [...(enabledUpgrades[ship.id] || [])];
           if (upgrade.restrictions?.enable_upgrades) {
@@ -298,7 +289,7 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
               });
           }
           setEnabledUpgrades({...enabledUpgrades, [ship.id]: newEnabledUpgrades});
-  
+
           // Update filledSlots
           setFilledSlots(prevFilledSlots => {
             const shipSlots = prevFilledSlots[ship.id] || {};
@@ -314,6 +305,7 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
               }
             };
           });
+
           if (upgrade.type === 'weapons-team-offensive-retro') {
             const weaponsTeamIndex = ship.availableUpgrades.indexOf('weapons-team');
             const offensiveRetroIndex = ship.availableUpgrades.indexOf('offensive-retro');
@@ -327,7 +319,7 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
               }
             }));
           }
-  
+
           return { ...ship, assignedUpgrades: updatedAssignedUpgrades };
         }
         return ship;
@@ -338,6 +330,11 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
     setPreviousShipPoints(totalShipPoints);
     setPoints(prevPoints => prevPoints + totalPointDifference);
     setTotalShipPoints(prevTotal => prevTotal + totalPointDifference);
+
+    if (upgrade.type === 'commander') {
+      setHasCommander(true);
+    }
+
     setShowUpgradeSelector(false);
   };
 
