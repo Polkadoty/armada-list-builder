@@ -142,7 +142,6 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
   const [filledSlots, setFilledSlots] = useState<Record<string, Record<string, number[]>>>({});
   const [hasCommander, setHasCommander] = useState(false);
   const [squadronToSwap, setSquadronToSwap] = useState<string | null>(null);
-  const [isSwappingUpgrade, setIsSwappingUpgrade] = useState(false);
 
   const handleNameClick = () => {
     setIsEditingName(true);
@@ -232,7 +231,6 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
       setCurrentShipId(shipId);
       setCurrentUpgradeType(upgradeType);
       setCurrentUpgradeIndex(upgradeIndex);
-      setIsSwappingUpgrade(true);
       setShowUpgradeSelector(true);
     }
   };
