@@ -20,6 +20,7 @@ import UpgradeSelector from './UpgradeSelector';
 import { ExportTextPopup } from './ExportTextPopup';
 import { factionLogos } from '../pages/[faction]';
 import { useUniqueClassContext } from '../contexts/UniqueClassContext';
+import { SwipeableObjective } from './SwipeableObjective';
 
 export interface Ship {
   id: string;
@@ -483,11 +484,28 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
       setSelectedSquadrons(prevSquadrons => 
         prevSquadrons.map(s => {
           if (s.id === squadronToSwap) {
+            // Remove unique class names from the old squadron
+            if (s.unique) {
+              removeUniqueClassName(s.name);
+            }
+            if (s['unique-class']) {
+              s['unique-class'].forEach(uc => removeUniqueClassName(uc));
+            }
+
             const pointDifference = squadron.points - s.points;
             setPreviousPoints(points);
             setPreviousSquadronPoints(totalSquadronPoints);
             setPoints(prevPoints => prevPoints + pointDifference);
             setTotalSquadronPoints(prevTotal => prevTotal + pointDifference);
+
+            // Add unique class names for the new squadron
+            if (squadron.unique) {
+              addUniqueClassName(squadron.name);
+            }
+            if (squadron['unique-class']) {
+              squadron['unique-class'].forEach(uc => addUniqueClassName(uc));
+            }
+
             return { ...squadron, id: Date.now().toString(), count: 1 };
           }
           return s;
@@ -506,9 +524,18 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
       const newPoints = points + squadron.points;
       setPoints(newPoints);
       setTotalSquadronPoints(totalSquadronPoints + squadron.points);
+
+      // Add unique class names for the new squadron
+      if (squadron.unique) {
+        addUniqueClassName(squadron.name);
+      }
+      if (squadron['unique-class']) {
+        squadron['unique-class'].forEach(uc => addUniqueClassName(uc));
+      }
     }
     setShowSquadronSelector(false);
   };
+
 
   const handleRemoveSquadron = (id: string) => {
     const squadronToRemove = selectedSquadrons.find(squadron => squadron.id === id);
@@ -902,67 +929,29 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
       ))}
       </div>
 
+
       <div className="space-y-2 mb-4">
-        <Button 
-          variant="outline" 
-          className="w-full justify-start hover:bg-[#EB3F3A] hover:text-white transition-colors"
-          onClick={() => setShowAssaultObjectiveSelector(true)}
-        >
-          {selectedAssaultObjective ? (
-            <div className="flex justify-between items-center w-full">
-              <div className="flex items-center">
-                <div className="w-4 h-4 bg-[#EB3F3A] mr-2"></div>
-                {selectedAssaultObjective.name}
-              </div>
-              <button 
-                onClick={(e) => { e.stopPropagation(); handleRemoveAssaultObjective(); }}
-                className="text-red-500 hover:text-red-700"
-              >
-                ✕
-              </button>
-            </div>
-          ) : "ADD ASSAULT"}
-        </Button>
-        <Button 
-          variant="outline" 
-          className="w-full justify-start hover:bg-[#FAEE13] hover:text-black transition-colors"
-          onClick={() => setShowDefenseObjectiveSelector(true)}
-        >
-          {selectedDefenseObjective ? (
-            <div className="flex justify-between items-center w-full">
-              <div className="flex items-center">
-                <div className="w-4 h-4 bg-[#FAEE13] mr-2"></div>
-                {selectedDefenseObjective.name}
-              </div>
-              <button 
-                onClick={(e) => { e.stopPropagation(); handleRemoveDefenseObjective(); }}
-                className="text-red-500 hover:text-red-700"
-              >
-                ✕
-              </button>
-            </div>
-          ) : "ADD DEFENSE"}
-        </Button>
-        <Button 
-          variant="outline" 
-          className="w-full justify-start hover:bg-[#C2E1F4] hover:text-black transition-colors"
-          onClick={() => setShowNavigationObjectiveSelector(true)}
-        >
-          {selectedNavigationObjective ? (
-            <div className="flex justify-between items-center w-full">
-              <div className="flex items-center">
-                <div className="w-4 h-4 bg-[#C2E1F4] mr-2"></div>
-                {selectedNavigationObjective.name}
-              </div>
-              <button 
-                onClick={(e) => { e.stopPropagation(); handleRemoveNavigationObjective(); }}
-                className="text-red-500 hover:text-red-700"
-              >
-                ✕
-              </button>
-            </div>
-          ) : "ADD NAVIGATION"}
-        </Button>
+        <SwipeableObjective
+          type="assault"
+          selectedObjective={selectedAssaultObjective}
+          onRemove={handleRemoveAssaultObjective}
+          onOpen={() => setShowAssaultObjectiveSelector(true)}
+          color="#EB3F3A"
+        />
+        <SwipeableObjective
+          type="defense"
+          selectedObjective={selectedDefenseObjective}
+          onRemove={handleRemoveDefenseObjective}
+          onOpen={() => setShowDefenseObjectiveSelector(true)}
+          color="#FAEE13"
+        />
+        <SwipeableObjective
+          type="navigation"
+          selectedObjective={selectedNavigationObjective}
+          onRemove={handleRemoveNavigationObjective}
+          onOpen={() => setShowNavigationObjectiveSelector(true)}
+          color="#C2E1F4"
+        />
       </div>
 
       <div className="flex flex-wrap justify-between gap-2">
