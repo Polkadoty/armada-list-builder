@@ -9,9 +9,10 @@ interface UpgradeIconsToolbarProps {
   disabledUpgrades: string[];
   enabledUpgrades: string[];
   filledSlots: Record<string, number[]>;
+  hasCommander: boolean;
 }
 
-export default function UpgradeIconsToolbar({ upgrades, onUpgradeClick, assignedUpgrades, disabledUpgrades, enabledUpgrades, filledSlots }: UpgradeIconsToolbarProps) {
+export default function UpgradeIconsToolbar({ upgrades, onUpgradeClick, assignedUpgrades, disabledUpgrades, enabledUpgrades, filledSlots, hasCommander }: UpgradeIconsToolbarProps) {
   const upgradeCounts = upgrades.reduce((acc, upgrade) => {
     acc[upgrade] = (acc[upgrade] || 0) + 1;
     return acc;
@@ -42,21 +43,22 @@ export default function UpgradeIconsToolbar({ upgrades, onUpgradeClick, assigned
       {Object.entries(upgradeCounts).flatMap(([upgrade, count]) => 
         Array(count).fill(0).map((_, index) => {
           const isDisabled = 
-            disabledUpgrades.includes(upgrade) || 
-            (upgrade === 'title' && assignedUpgrades.some(u => u.type === 'title')) ||
-            (upgrade === 'weapons-team' && (
-              usedWeaponsTeamSlots >= upgradeCounts['weapons-team'] ||
-              (filledSlots['weapons-team-offensive-retro'] && filledSlots['weapons-team-offensive-retro'].includes(index))
-            )) ||
-            (upgrade === 'offensive-retro' && (
-              usedOffensiveRetroSlots >= upgradeCounts['offensive-retro'] ||
-              (filledSlots['weapons-team-offensive-retro'] && filledSlots['weapons-team-offensive-retro'].includes(index))
-            )) ||
-            (upgrade === 'weapons-team-offensive-retro' && 
-              (usedWeaponsTeamSlots >= upgradeCounts['weapons-team'] || 
-               usedOffensiveRetroSlots >= upgradeCounts['offensive-retro'])) ||
-            (assignedUpgradeCounts[upgrade] && assignedUpgradeCounts[upgrade] >= upgradeCounts[upgrade]) ||
-            (filledSlots[upgrade] && filledSlots[upgrade].includes(index));
+          disabledUpgrades.includes(upgrade) || 
+          (upgrade === 'title' && assignedUpgrades.some(u => u.type === 'title')) ||
+          (upgrade === 'commander' && hasCommander) ||
+          (upgrade === 'weapons-team' && (
+            usedWeaponsTeamSlots >= upgradeCounts['weapons-team'] ||
+            (filledSlots['weapons-team-offensive-retro'] && filledSlots['weapons-team-offensive-retro'].includes(index))
+          )) ||
+          (upgrade === 'offensive-retro' && (
+            usedOffensiveRetroSlots >= upgradeCounts['offensive-retro'] ||
+            (filledSlots['weapons-team-offensive-retro'] && filledSlots['weapons-team-offensive-retro'].includes(index))
+          )) ||
+          (upgrade === 'weapons-team-offensive-retro' && 
+            (usedWeaponsTeamSlots >= upgradeCounts['weapons-team'] || 
+             usedOffensiveRetroSlots >= upgradeCounts['offensive-retro'])) ||
+          (assignedUpgradeCounts[upgrade] && assignedUpgradeCounts[upgrade] >= upgradeCounts[upgrade]) ||
+          (filledSlots[upgrade] && filledSlots[upgrade].includes(index));
           
           return (
             <Button

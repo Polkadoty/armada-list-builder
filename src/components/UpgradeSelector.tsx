@@ -13,9 +13,12 @@ interface UpgradeSelectorProps {
   selectedUpgrades: Upgrade[];
   shipType?: string;
   chassis?: string;
+  shipSize?: string;
+  shipTraits?: string[];
   currentShipUpgrades: Upgrade[];
   disqualifiedUpgrades: string[];
   disabledUpgrades: string[];
+  hasCommander: boolean;
 }
 
 export default function UpgradeSelector({
@@ -26,9 +29,12 @@ export default function UpgradeSelector({
   selectedUpgrades,
   shipType,
   chassis,
+  shipSize,
+  shipTraits, 
   currentShipUpgrades,
   disqualifiedUpgrades,
-  disabledUpgrades
+  disabledUpgrades,
+  hasCommander
 }: UpgradeSelectorProps) {
   const [upgrades, setUpgrades] = useState<Upgrade[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,6 +67,10 @@ export default function UpgradeSelector({
   }, [upgradeType, faction, chassis]);
 
   const isUpgradeAvailable = (upgrade: Upgrade) => {
+    if (upgrade.type === 'commander' && hasCommander) {
+      return false;
+    }
+
     if (upgradeType === 'title') {
       if (upgrade.bound_shiptype && upgrade.bound_shiptype !== chassis) {
         return false;
@@ -97,6 +107,24 @@ export default function UpgradeSelector({
         return false;
       }
     }
+
+    // Check size restriction
+    if (upgrade.restrictions?.size && upgrade.restrictions.size.length > 0 && shipSize) {
+      const validSizes = upgrade.restrictions.size.filter(size => size.trim() !== '');
+      if (validSizes.length > 0 && !validSizes.includes(shipSize)) {
+        return false;
+      }
+    }
+
+    // Check trait restriction
+    if (upgrade.restrictions?.traits && upgrade.restrictions.traits.length > 0 && shipTraits) {
+      const validTraits = upgrade.restrictions.traits.filter(trait => trait.trim() !== '');
+      if (validTraits.length > 0 && !validTraits.some(trait => shipTraits.includes(trait))) {
+        return false;
+      }
+    }
+    
+
 
     return true;
   };
