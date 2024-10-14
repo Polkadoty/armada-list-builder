@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import Image from 'next/image';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useSpring, animated, config } from 'react-spring';
+import { useSpring, animated } from 'react-spring';
 import UpgradeIconsToolbar from './UpgradeIconsToolbar';
 import { Ship, Upgrade } from "./FleetBuilder";
 import { Copy, Trash2, ArrowLeftRight, X } from 'lucide-react';
@@ -20,10 +20,9 @@ interface SelectedShipProps {
   traits: string[];
 }
 
-export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRemoveUpgrade, disabledUpgrades, enabledUpgrades, filledSlots, hasCommander, traits }: SelectedShipProps) {
+export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRemoveUpgrade, disabledUpgrades, enabledUpgrades, filledSlots, hasCommander }: SelectedShipProps) {
   const [isToolbarVisible, setIsToolbarVisible] = useState(true);
-  const [activeUpgrade, setActiveUpgrade] = useState<{ type: string, index: number } | null>(null);
-
+  
   const [{ x: shipX }, shipApi] = useSpring(() => ({ x: 0 }));
   
   const isDragging = useRef(false);

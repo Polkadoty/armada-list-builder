@@ -14,7 +14,6 @@ interface SelectedSquadronProps {
 }
 
 export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement, onSwapSquadron }: SelectedSquadronProps) {
-  const [showPointChange, setShowPointChange] = useState(false);
   const [{ x }, api] = useSpring(() => ({ x: 0 }));
   const isDragging = useRef(false);
   const startX = useRef(0);
