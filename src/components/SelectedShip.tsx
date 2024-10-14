@@ -4,20 +4,24 @@ import Image from 'next/image';
 import UpgradeIconsToolbar from './UpgradeIconsToolbar';
 import { Button } from "@/components/ui/button";
 import { Ship } from "./FleetBuilder";
+import { Upgrade } from "./FleetBuilder";
 
 interface SelectedShipProps {
   ship: Ship;
   onRemove: (id: string) => void;
-  onUpgradeClick: (shipId: string, upgrade: string) => void;
+  onUpgradeClick: (shipId: string, upgrade: string, index: number) => void;
   onCopy: (ship: Ship) => void;
-  handleRemoveUpgrade: (shipId: string, upgradeType: string) => void;
+  handleRemoveUpgrade: (shipId: string, upgradeType: string, index: number) => void;
+  disabledUpgrades: string[];
+  enabledUpgrades: string[];
+  filledSlots: Record<string, number[]>;
 }
 
-export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRemoveUpgrade }: SelectedShipProps) {
+export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRemoveUpgrade, disabledUpgrades, enabledUpgrades, filledSlots }: SelectedShipProps) {
   const [isToolbarVisible, setIsToolbarVisible] = useState(false);
 
-  const handleUpgradeClick = (upgrade: string) => {
-    onUpgradeClick(ship.id, upgrade);
+  const handleUpgradeClick = (upgrade: string, index: number) => {
+    onUpgradeClick(ship.id, upgrade, index);
   };
 
   const toggleToolbar = () => {
@@ -29,6 +33,21 @@ export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRem
   };
 
   const totalShipPoints = ship.points + ship.assignedUpgrades.reduce((total, upgrade) => total + (upgrade.points || 0), 0);
+
+  // Group upgrades by type, including enabled upgrades and preserving duplicates
+  const groupedUpgrades = [...getUpgradeSlots(), ...enabledUpgrades].reduce((acc, upgradeType) => {
+    if (!acc[upgradeType]) {
+      acc[upgradeType] = [];
+    }
+    const assignedUpgrades = ship.assignedUpgrades.filter(u => u.type === upgradeType);
+    acc[upgradeType] = assignedUpgrades;
+    return acc;
+  }, {} as Record<string, Upgrade[]>);
+
+  const handleRemoveUpgradeClick = (upgradeType: string, slotIndex: number) => {
+    console.log('Removing upgrade:', upgradeType, slotIndex);
+    handleRemoveUpgrade(ship.id, upgradeType, slotIndex);
+  };
 
   return (
     <div className="mb-2">
@@ -72,12 +91,19 @@ export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRem
         </Button>
         {isToolbarVisible && (
           <>
+            <UpgradeIconsToolbar
+              upgrades={getUpgradeSlots()}
+              onUpgradeClick={handleUpgradeClick}
+              assignedUpgrades={ship.assignedUpgrades}
+              disabledUpgrades={disabledUpgrades}
+              enabledUpgrades={enabledUpgrades}
+              filledSlots={filledSlots}
+            />
             <div className="p-2 space-y-2">
-              {ship.availableUpgrades.map((upgradeType) => {
-                const upgrade = ship.assignedUpgrades.find(u => u.type === upgradeType);
-                if (upgrade) {
-                  return (
-                    <div key={upgradeType} className="flex items-center justify-between bg-gray-100 dark:bg-gray-700 rounded p-2">
+              {Object.entries(groupedUpgrades).map(([upgradeType, upgrades]) => (
+                <div key={upgradeType}>
+                  {upgrades.map((upgrade, index) => (
+                    <div key={`${upgradeType}-${index}`} className="flex items-center justify-between bg-gray-100 dark:bg-gray-700 rounded p-2 mb-2">
                       <div className="flex items-center">
                         <Image
                           src={`/icons/${upgradeType}.svg`}
@@ -97,18 +123,21 @@ export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRem
                           variant="outline"
                           size="icon"
                           className="h-6 w-6 mr-1"
-                          onClick={() => handleUpgradeClick(upgradeType)}
+                          onClick={() => handleUpgradeClick(upgradeType, index)}
+                          disabled={disabledUpgrades.includes(upgradeType)}
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
-                            <path d="M17 1l4 4-4 4M3 11l4 4-4 4" />
-                            <path d="M21 5H9M7 19H3" />
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M8 3L4 7l4 4"/>
+                            <path d="M4 7h16"/>
+                            <path d="m16 21 4-4-4-4"/>
+                            <path d="M20 17H4"/>
                           </svg>
                         </Button>
                         <Button
                           variant="outline"
                           size="icon"
                           className="h-6 w-6"
-                          onClick={() => handleRemoveUpgrade(ship.id, upgradeType)}
+                          onClick={() => handleRemoveUpgradeClick(upgradeType, upgrade.slotIndex ?? index)}
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
                             <path d="M18 6L6 18M6 6l12 12" />
@@ -116,16 +145,10 @@ export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRem
                         </Button>
                       </div>
                     </div>
-                  );
-                }
-                return null;
-              })}
+                  ))}
+                </div>
+              ))}
             </div>
-            <UpgradeIconsToolbar 
-              upgrades={getUpgradeSlots()}
-              onUpgradeClick={handleUpgradeClick}
-              assignedUpgrades={ship.assignedUpgrades}
-            />
           </>
         )}
       </Card>
