@@ -1,8 +1,9 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { useState } from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
-import UpgradeIconsToolbar from './UpgradeIconsToolbar';
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useSwipeable, SwipeableHandlers } from 'react-swipeable';
+import UpgradeIconsToolbar from './UpgradeIconsToolbar';
 import { Ship } from "./FleetBuilder";
 import { Upgrade } from "./FleetBuilder";
 
@@ -20,8 +21,9 @@ interface SelectedShipProps {
 }
 
 export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRemoveUpgrade, disabledUpgrades, enabledUpgrades, filledSlots, hasCommander}: SelectedShipProps) {
-
   const [isToolbarVisible, setIsToolbarVisible] = useState(true);
+  const [swipeOffset, setSwipeOffset] = useState(0);
+  const [upgradeSwipeOffset, setUpgradeSwipeOffset] = useState<Record<string, number>>({});
 
   const handleUpgradeClick = (upgrade: string, index: number) => {
     onUpgradeClick(ship.id, upgrade, index);
@@ -66,38 +68,97 @@ export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRem
     }
   };
 
+  const shipSwipeHandlers = useSwipeable({
+    onSwiping: (eventData) => {
+      setSwipeOffset(eventData.deltaX);
+    },
+    onSwipedLeft: () => {
+      if (swipeOffset < -50) {
+        onRemove(ship.id);
+      }
+      setSwipeOffset(0);
+    },
+    onSwipedRight: () => {
+      if (swipeOffset > 50) {
+        onCopy(ship);
+      }
+      setSwipeOffset(0);
+    },
+    onSwiped: () => {
+      setSwipeOffset(0);
+    },
+    trackMouse: true
+  });
+
+  const upgradeSwipeHandlers: SwipeableHandlers = useSwipeable({
+    onSwiping: (eventData) => {
+      const target = eventData.event.target as HTMLElement;
+      const key = `${target.dataset.upgradeType}-${target.dataset.slotIndex}`;
+      setUpgradeSwipeOffset(prev => ({ ...prev, [key]: eventData.deltaX }));
+    },
+    onSwipedLeft: (eventData) => {
+      const target = eventData.event.target as HTMLElement;
+      const upgradeType = target.dataset.upgradeType;
+      const slotIndex = parseInt(target.dataset.slotIndex || '0');
+      if (upgradeType && Math.abs(upgradeSwipeOffset[`${upgradeType}-${slotIndex}`] || 0) > 50) {
+        handleRemoveUpgradeClick(upgradeType, slotIndex);
+      }
+      setUpgradeSwipeOffset(prev => ({ ...prev, [`${upgradeType}-${slotIndex}`]: 0 }));
+    },
+    onSwipedRight: (eventData) => {
+      const target = eventData.event.target as HTMLElement;
+      const upgradeType = target.dataset.upgradeType;
+      const slotIndex = parseInt(target.dataset.slotIndex || '0');
+      if (upgradeType && Math.abs(upgradeSwipeOffset[`${upgradeType}-${slotIndex}`] || 0) > 50) {
+        handleUpgradeClick(upgradeType, slotIndex);
+      }
+      setUpgradeSwipeOffset(prev => ({ ...prev, [`${upgradeType}-${slotIndex}`]: 0 }));
+    },
+    onSwiped: (eventData) => {
+      const target = eventData.event.target as HTMLElement;
+      const upgradeType = target.dataset.upgradeType;
+      const slotIndex = target.dataset.slotIndex;
+      if (upgradeType && slotIndex) {
+        setUpgradeSwipeOffset(prev => ({ ...prev, [`${upgradeType}-${slotIndex}`]: 0 }));
+      }
+    },
+    trackMouse: true
+  });
+
   return (
-    <div className="mb-2">
+    <div className="mb-2 overflow-hidden">
       <Card className="relative">
-        <CardContent className="flex items-center p-2">
-          <div className="w-16 aspect-[8/3] mr-4 relative overflow-hidden">
-            <Image 
-              src={ship.cardimage} 
-              alt={ship.name}
-              layout="fill"
-              objectFit="cover"
-              objectPosition="top"
-              className="scale-[100%]"
-            />
-          </div>
-          <div className="flex-grow">
-            <span className="font-bold flex items-center">
-              {ship.unique && <span className="mr-1 text-yellow-500">●</span>}
-              {ship.name}
-            </span>
-            <div className="flex items-center">
-              <span className="mr-2">{totalShipPoints} points</span>
-              <button onClick={(e) => { e.stopPropagation(); onCopy(ship); }} className="text-blue-500 hover:text-blue-700 mr-2">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
-              </button>
-              <button onClick={(e) => { e.stopPropagation(); onRemove(ship.id); }} className="text-red-500 hover:text-red-700">
-                ✕
-              </button>
+        <div {...shipSwipeHandlers} className="relative" style={{ transform: `translateX(${swipeOffset}px)`, transition: 'transform 0.2s ease-out' }}>
+          <CardContent className="flex items-center p-2">
+            <div className="w-16 aspect-[8/3] mr-4 relative overflow-hidden">
+              <Image 
+                src={ship.cardimage} 
+                alt={ship.name}
+                layout="fill"
+                objectFit="cover"
+                objectPosition="top"
+                className="scale-[100%]"
+              />
             </div>
-          </div>
-        </CardContent>
+            <div className="flex-grow">
+              <span className="font-bold flex items-center">
+                {ship.unique && <span className="mr-1 text-yellow-500">●</span>}
+                {ship.name}
+              </span>
+              <div className="flex items-center">
+                <span className="mr-2">{totalShipPoints} points</span>
+                <button onClick={(e) => { e.stopPropagation(); onCopy(ship); }} className="text-blue-500 hover:text-blue-700 mr-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                </button>
+                <button onClick={(e) => { e.stopPropagation(); onRemove(ship.id); }} className="text-red-500 hover:text-red-700">
+                  ✕
+                </button>
+              </div>
+            </div>
+          </CardContent>
+        </div>
         <Button
           variant="ghost"
           className="w-full text-left p-2 flex justify-between items-center"
@@ -122,46 +183,57 @@ export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRem
               {Object.entries(groupedUpgrades).map(([upgradeType, upgrades]) => (
                 <div key={upgradeType}>
                   {upgrades.map((upgrade, index) => (
-                    <div key={`${upgradeType}-${index}`} className="flex items-center justify-between bg-gray-100 dark:bg-gray-700 rounded p-2 mb-2">
-                      <div className="flex items-center">
-                        <Image
-                          src={`/icons/${upgradeType}.svg`}
-                          alt={upgradeType}
-                          width={24}
-                          height={24}
-                          className="dark:invert mr-2"
-                        />
-                        <span className="font-medium">
-                          {upgrade.unique && <span className="mr-1 text-yellow-500">●</span>}
-                          {upgrade.name}
-                        </span>
-                      </div>
-                      <div className="flex items-center">
-                        <span className="mr-2">{upgrade.points} pts</span>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="h-6 w-6 mr-1"
-                          onClick={() => handleUpgradeClick(upgradeType, index)}
-                          disabled={disabledUpgrades.includes(upgradeType)}
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M8 3L4 7l4 4"/>
-                            <path d="M4 7h16"/>
-                            <path d="m16 21 4-4-4-4"/>
-                            <path d="M20 17H4"/>
-                          </svg>
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="h-6 w-6"
-                          onClick={() => handleRemoveUpgradeClick(upgradeType, upgrade.slotIndex ?? index)}
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
-                            <path d="M18 6L6 18M6 6l12 12" />
-                          </svg>
-                        </Button>
+                    <div key={`${upgradeType}-${index}`} className="overflow-hidden">
+                      <div 
+                        {...upgradeSwipeHandlers} 
+                        data-upgrade-type={upgradeType}
+                        data-slot-index={upgrade.slotIndex ?? index}
+                        className="flex items-center justify-between bg-gray-100 dark:bg-gray-700 rounded p-2 mb-2"
+                        style={{ 
+                          transform: `translateX(${upgradeSwipeOffset[`${upgradeType}-${upgrade.slotIndex ?? index}`] || 0}px)`, 
+                          transition: 'transform 0.2s ease-out' 
+                        }}
+                      >
+                        <div className="flex items-center">
+                          <Image
+                            src={`/icons/${upgradeType}.svg`}
+                            alt={upgradeType}
+                            width={24}
+                            height={24}
+                            className="dark:invert mr-2"
+                          />
+                          <span className="font-medium">
+                            {upgrade.unique && <span className="mr-1 text-yellow-500">●</span>}
+                            {upgrade.name}
+                          </span>
+                        </div>
+                        <div className="flex items-center">
+                          <span className="mr-2">{upgrade.points} pts</span>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-6 w-6 mr-1"
+                            onClick={() => handleUpgradeClick(upgradeType, index)}
+                            disabled={disabledUpgrades.includes(upgradeType)}
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M8 3L4 7l4 4"/>
+                              <path d="M4 7h16"/>
+                              <path d="m16 21 4-4-4-4"/>
+                              <path d="M20 17H4"/>
+                            </svg>
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => handleRemoveUpgradeClick(upgradeType, upgrade.slotIndex ?? index)}
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                              <path d="M18 6L6 18M6 6l12 12" />
+                            </svg>
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   ))}

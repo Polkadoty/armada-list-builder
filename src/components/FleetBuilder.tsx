@@ -140,6 +140,7 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
   const [enabledUpgrades, setEnabledUpgrades] = useState<Record<string, string[]>>({});
   const [filledSlots, setFilledSlots] = useState<Record<string, Record<string, number[]>>>({});
   const [hasCommander, setHasCommander] = useState(false);
+  const [squadronToSwap, setSquadronToSwap] = useState<string | null>(null);
 
   const handleNameClick = () => {
     setIsEditingName(true);
@@ -478,30 +479,34 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
   };
 
   const handleSelectSquadron = (squadron: Squadron) => {
-    console.log('Selecting squadron:', squadron);
-    const newSquadron: Squadron = { 
-      ...squadron, 
-      id: Date.now().toString(),
-      count: 1,
-    };
-    setSelectedSquadrons(prevSquadrons => {
-      console.log('Previous squadrons:', prevSquadrons);
-      return [...prevSquadrons, newSquadron];
-    });
-    setPreviousPoints(points);
-    setPreviousSquadronPoints(totalSquadronPoints);
-    const newPoints = points + squadron.points;
-    setPoints(newPoints);
-    setTotalSquadronPoints(totalSquadronPoints + squadron.points);
-    setUniqueClassNames(prevNames => {
-      const newNames = [
-        ...prevNames, 
-        ...(squadron['unique-class'] || []),
-        squadron.name
-      ];
-      console.log('Updated unique class names:', newNames);
-      return Array.from(new Set(newNames)); // Remove duplicates
-    });
+    if (squadronToSwap) {
+      setSelectedSquadrons(prevSquadrons => 
+        prevSquadrons.map(s => {
+          if (s.id === squadronToSwap) {
+            const pointDifference = squadron.points - s.points;
+            setPreviousPoints(points);
+            setPreviousSquadronPoints(totalSquadronPoints);
+            setPoints(prevPoints => prevPoints + pointDifference);
+            setTotalSquadronPoints(prevTotal => prevTotal + pointDifference);
+            return { ...squadron, id: Date.now().toString(), count: 1 };
+          }
+          return s;
+        })
+      );
+      setSquadronToSwap(null);
+    } else {
+      const newSquadron: Squadron = { 
+        ...squadron, 
+        id: Date.now().toString(),
+        count: 1,
+      };
+      setSelectedSquadrons(prevSquadrons => [...prevSquadrons, newSquadron]);
+      setPreviousPoints(points);
+      setPreviousSquadronPoints(totalSquadronPoints);
+      const newPoints = points + squadron.points;
+      setPoints(newPoints);
+      setTotalSquadronPoints(totalSquadronPoints + squadron.points);
+    }
     setShowSquadronSelector(false);
   };
 
@@ -543,21 +548,45 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
   };
 
   const handleDecrementSquadron = (id: string) => {
-    setSelectedSquadrons(squadrons =>
-      squadrons.map(squadron =>
-        squadron.id === id && (squadron.count || 1) > 1
-          ? { ...squadron, count: (squadron.count || 1) - 1 }
-          : squadron
-      )
-    );
-    const squadron = selectedSquadrons.find(s => s.id === id);
-    if (squadron && (squadron.count || 1) > 1) {
-      setPreviousPoints(points);
-      setPreviousSquadronPoints(totalSquadronPoints);
-      const newPoints = points - squadron.points;
-      setPoints(newPoints);
-      setTotalSquadronPoints(totalSquadronPoints - squadron.points);
-    }
+    setSelectedSquadrons(prevSquadrons => {
+      return prevSquadrons.reduce((acc, squadron) => {
+        if (squadron.id === id) {
+          const newCount = (squadron.count || 1) - 1;
+          if (newCount === 0) {
+            // Squadron will be removed
+            setPreviousPoints(points);
+            setPreviousSquadronPoints(totalSquadronPoints);
+            const newPoints = points - squadron.points;
+            setPoints(newPoints);
+            setTotalSquadronPoints(totalSquadronPoints - squadron.points);
+  
+            // Remove unique class names if it's the last squadron
+            if (squadron.unique) {
+              removeUniqueClassName(squadron.name);
+            }
+            if (squadron['unique-class']) {
+              squadron['unique-class'].forEach(uc => removeUniqueClassName(uc));
+            }
+            // Don't add this squadron to the accumulator
+            return acc;
+          } else {
+            // Squadron count is decremented
+            setPreviousPoints(points);
+            setPreviousSquadronPoints(totalSquadronPoints);
+            const newPoints = points - squadron.points;
+            setPoints(newPoints);
+            setTotalSquadronPoints(totalSquadronPoints - squadron.points);
+            return [...acc, { ...squadron, count: newCount }];
+          }
+        }
+        return [...acc, squadron];
+      }, [] as Squadron[]);
+    });
+  };
+
+  const handleSwapSquadron = (id: string) => {
+    setShowSquadronSelector(true);
+    setSquadronToSwap(id);
   };
 
   const handleSelectAssaultObjective = (objective: ObjectiveModel) => {
@@ -861,9 +890,16 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
       )}
   
       <div className="mb-4">
-        {selectedSquadrons.map((squadron) => (
-          <SelectedSquadron key={squadron.id} squadron={squadron} onRemove={handleRemoveSquadron} onIncrement={handleIncrementSquadron} onDecrement={handleDecrementSquadron} />
-        ))}
+      {selectedSquadrons.map((squadron) => (
+        <SelectedSquadron
+          key={squadron.id}
+          squadron={squadron}
+          onRemove={handleRemoveSquadron}
+          onIncrement={handleIncrementSquadron}
+          onDecrement={handleDecrementSquadron}
+          onSwapSquadron={handleSwapSquadron}
+        />
+      ))}
       </div>
 
       <div className="space-y-2 mb-4">
