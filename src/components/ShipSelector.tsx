@@ -57,13 +57,13 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
                   ...model,
                   size: chassisInfo.size,
                   id: `${chassisName}-${model.name}`,
-                  traits: chassisInfo.traits || [], // Add this line
-                }).filter(([value]) => {
+                  traits: model.traits || [],
+                }).map(([key, value]) => {
                   if (Array.isArray(value)) {
-                    return value.length > 0 && value.some(item => item !== '');
+                    return [key, value.filter(item => item.trim() !== '')];
                   }
-                  return value !== '' && value !== null && value !== undefined;
-                })
+                  return [key, value];
+                }).filter(([, value]) => value !== '' && value !== null && value !== undefined)
               ) as ShipModel;
               return filteredModel;
             }).filter(model => 
@@ -99,16 +99,16 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <Card className="w-full h-full sm:w-11/12 sm:h-5/6 lg:w-3/4 lg:h-3/4 overflow-auto relative">
-        <CardContent className="p-2 sm:p-4">
-          <div className="flex justify-between items-center mb-2 sm:mb-4">
-            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold">Select a Ship</h2>
-            <Button variant="ghost" onClick={onClose} className="p-1">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </Button>
-          </div>
+      <Card className="w-full h-full sm:w-11/12 sm:h-5/6 lg:w-3/4 lg:h-3/4 flex flex-col">
+        <div className="p-2 sm:p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+          <h2 className="text-lg sm:text-xl lg:text-2xl font-bold">Select a Ship</h2>
+          <Button variant="ghost" onClick={onClose} className="p-1">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </Button>
+        </div>
+        <CardContent className="p-2 sm:p-4 flex-grow overflow-auto">
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3 md:gap-4">
             {ships.map((ship) => (
               <div key={ship.id} className="w-full aspect-[8.75/15]">
@@ -123,10 +123,9 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
                     <Image
                       src={ship.cardimage}
                       alt={ship.name}
-                      layout="fill"
-                      objectFit="cover"
-                      objectPosition="center"
-                      className="scale-[103%]"
+                      fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      className="object-cover object-center scale-[103%]"
                       onError={(e) => {
                         e.currentTarget.src = '/placeholder-ship.png';
                       }}

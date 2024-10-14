@@ -91,16 +91,16 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <Card className="w-full h-full sm:w-11/12 sm:h-5/6 lg:w-3/4 lg:h-3/4 overflow-auto relative">
-        <CardContent className="p-2 sm:p-4">
-          <div className="flex justify-between items-center mb-2 sm:mb-4">
-            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold">Select a Squadron</h2>
-            <Button variant="ghost" onClick={onClose} className="p-1">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </Button>
-          </div>
+      <Card className="w-full h-full sm:w-11/12 sm:h-5/6 lg:w-3/4 lg:h-3/4 flex flex-col">
+        <div className="p-2 sm:p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+          <h2 className="text-lg sm:text-xl lg:text-2xl font-bold">Select a Squadron</h2>
+          <Button variant="ghost" onClick={onClose} className="p-1">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </Button>
+        </div>
+        <CardContent className="p-2 sm:p-4 flex-grow overflow-auto">
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3 md:gap-4">
             {squadrons.map((squadron) => (
               <div key={squadron.id} className="w-full aspect-[2/3]">
@@ -115,10 +115,9 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
                     <Image
                       src={squadron.cardimage}
                       alt={squadron.name}
-                      layout="fill"
-                      objectFit="cover"
-                      objectPosition="center"
-                      className="scale-[103%]"
+                      fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      className="object-cover object-center scale-[103%]"
                       onError={(e) => {
                         e.currentTarget.src = '/placeholder-squadron.png';
                       }}
@@ -136,12 +135,12 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
             ))}
           </div>
         </CardContent>
-        {showPopup && (
-          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-red-500 text-white p-4 rounded-lg shadow-lg z-50 animate-shake">
-            {popupMessage}
-          </div>
-        )}
       </Card>
+      {showPopup && (
+        <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-red-500 text-white p-4 rounded-lg shadow-lg z-50 animate-shake">
+          {popupMessage}
+        </div>
+      )}
     </div>
   );
 }
