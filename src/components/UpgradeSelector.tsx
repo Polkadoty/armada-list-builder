@@ -77,6 +77,10 @@ export default function UpgradeSelector({
       if (upgrade.bound_shiptype && upgrade.bound_shiptype !== chassis) {
         return false;
       }
+    } else if (upgrade.type === 'super-weapon') {
+      if (upgrade.bound_shiptype && upgrade.bound_shiptype !== chassis) {
+        return false;
+      }
     } else {
       if (upgrade.bound_shiptype && upgrade.bound_shiptype !== shipType) {
         return false;
