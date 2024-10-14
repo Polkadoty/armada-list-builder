@@ -356,7 +356,6 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
       setHasCommander(false);
     }
   
-    console.log('Before removal:', selectedShips);
     setSelectedShips(prevShips => 
       prevShips.map(ship => {
         if (ship.id === shipId) {
@@ -436,12 +435,14 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
               });
             });
   
-            // Update points only once
+            // Special condition for commander upgrade
+            const pointsToRemoveFromHeader = upgradeToRemove.type === 'commander' ? pointsToRemove / 2 : pointsToRemove;
+  
+            // Update points
             setPreviousPoints(points);
             setPreviousShipPoints(totalShipPoints);
             setPoints(prevPoints => prevPoints - pointsToRemove);
-            setTotalShipPoints(prevTotal => prevTotal - pointsToRemove);
-
+            setTotalShipPoints(prevTotal => prevTotal - pointsToRemoveFromHeader);
   
             return {
               ...ship,
@@ -455,7 +456,6 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
         return ship;
       })
     );
-    console.log('After removal:', selectedShips);
   };
 
 
