@@ -48,7 +48,21 @@ export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRem
 
   const handleRemoveUpgradeClick = (upgradeType: string, slotIndex: number) => {
     console.log('Removing upgrade:', upgradeType, slotIndex);
-    handleRemoveUpgrade(ship.id, upgradeType, slotIndex);
+    const upgradeToRemove = ship.assignedUpgrades.find(u => u.type === upgradeType && u.slotIndex === slotIndex);
+    
+    if (upgradeToRemove && upgradeToRemove.restrictions?.enable_upgrades) {
+      // Remove the main upgrade and all enabled upgrades
+      const upgradesToRemove = [upgradeToRemove, ...ship.assignedUpgrades.filter(u => 
+        upgradeToRemove.restrictions?.enable_upgrades?.includes(u.type)
+      )];
+      
+      upgradesToRemove.forEach(upgrade => {
+        handleRemoveUpgrade(ship.id, upgrade.type, upgrade.slotIndex ?? slotIndex);
+      });
+    } else {
+      // Remove only the clicked upgrade
+      handleRemoveUpgrade(ship.id, upgradeType, slotIndex);
+    }
   };
 
   return (

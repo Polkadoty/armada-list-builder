@@ -435,16 +435,18 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
               });
             });
   
-            // Update points
+            // Update points only once
             setPreviousPoints(points);
             setPreviousShipPoints(totalShipPoints);
             setPoints(prevPoints => prevPoints - pointsToRemove);
             setTotalShipPoints(prevTotal => prevTotal - pointsToRemove);
+
   
             return {
               ...ship,
+              points: ship.points,  // Keep the ship's base points unchanged
               assignedUpgrades: ship.assignedUpgrades.filter(u => 
-                !(u.type === upgradeType && u.slotIndex === upgradeIndex)
+                !upgradesToRemove.includes(u)
               )
             };
           }
