@@ -82,7 +82,11 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
                     <button 
                       onClick={(e) => { 
                         e.stopPropagation(); 
-                        squadron.count === 1 ? onRemove(squadron.id) : onDecrement(squadron.id); 
+                        if (squadron.count === 1) {
+                          onRemove(squadron.id);
+                        } else {
+                          onDecrement(squadron.id);
+                        }
                       }}
                       onMouseEnter={() => setShowPointChange(true)}
                       onMouseLeave={() => setShowPointChange(false)}
