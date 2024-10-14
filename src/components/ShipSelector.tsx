@@ -58,7 +58,7 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
                   size: chassisInfo.size,
                   id: `${chassisName}-${model.name}`,
                   traits: chassisInfo.traits || [], // Add this line
-                }).filter(([_key, value]) => {
+                }).filter(([value]) => {
                   if (Array.isArray(value)) {
                     return value.length > 0 && value.some(item => item !== '');
                   }
