@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { Card, CardContent } from "@/components/ui/card";
-import { useSwipeable } from 'react-swipeable';
+import { useSpring, animated } from 'react-spring';
 import { Squadron } from './FleetBuilder';
 
 interface SelectedSquadronProps {
@@ -14,44 +14,61 @@ interface SelectedSquadronProps {
 
 export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement, onSwapSquadron }: SelectedSquadronProps) {
   const [showPointChange, setShowPointChange] = useState(false);
-  const [swipeOffset, setSwipeOffset] = useState(0);
+  const [{ x }, api] = useSpring(() => ({ x: 0 }));
+  const isDragging = useRef(false);
+  const startX = useRef(0);
 
   const count = squadron.count || 1;
   const totalPoints = squadron.points * count;
 
-  const handlers = useSwipeable({
-    onSwiping: (eventData) => {
-      setSwipeOffset(eventData.deltaX);
-    },
-    onSwipedLeft: () => {
-      if (swipeOffset < -50) { // Threshold to trigger action
+  const SWIPE_THRESHOLD = 50;
+
+  useEffect(() => {
+    const handleTouchStart = (e: TouchEvent) => {
+      isDragging.current = true;
+      startX.current = e.touches[0].clientX;
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!isDragging.current) return;
+      const currentX = e.touches[0].clientX;
+      const deltaX = currentX - startX.current;
+      api.start({ x: deltaX, immediate: true });
+    };
+
+    const handleTouchEnd = () => {
+      isDragging.current = false;
+      const currentX = x.get();
+      if (currentX < -SWIPE_THRESHOLD) {
         if (squadron.unique) {
           onRemove(squadron.id);
         } else {
           onDecrement(squadron.id);
         }
-      }
-      setSwipeOffset(0);
-    },
-    onSwipedRight: () => {
-      if (swipeOffset > 50) { // Threshold to trigger action
+      } else if (currentX > SWIPE_THRESHOLD) {
         if (squadron.unique) {
           onSwapSquadron(squadron.id);
         } else {
           onIncrement(squadron.id);
         }
       }
-      setSwipeOffset(0);
-    },
-    onSwiped: () => {
-      setSwipeOffset(0);
-    },
-    trackMouse: true
-  });
+      api.start({ x: 0, immediate: false });
+    };
+
+    window.addEventListener('touchstart', handleTouchStart);
+    window.addEventListener('touchmove', handleTouchMove);
+    window.addEventListener('touchend', handleTouchEnd);
+
+    return () => {
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [api, squadron, onRemove, onDecrement, onSwapSquadron, onIncrement, x]);
 
   return (
-    <div className="mb-2 overflow-hidden" {...handlers}>
-      <div className="relative" style={{ transform: `translateX(${swipeOffset}px)`, transition: 'transform 0.2s ease-out' }}>
+    <div className="mb-2 overflow-hidden relative">
+      <animated.div style={{ x }} className="relative">
         <Card>
           <CardContent className="flex items-center p-2">
             <div className="w-16 aspect-[3.75/2] mr-4 relative overflow-hidden">
@@ -122,7 +139,43 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
             </div>
           </CardContent>
         </Card>
-      </div>
+      </animated.div>
+      <animated.div
+        style={{
+          position: 'absolute',
+          right: '100%',
+          top: 0,
+          bottom: 0,
+          display: 'flex',
+          alignItems: 'center',
+          paddingRight: '1rem',
+          opacity: x.to(value => value > 0 ? Math.min(value / SWIPE_THRESHOLD, 1) : 0),
+        }}
+      >
+        {squadron.unique ? (
+          <span className="text-blue-500">Swap</span>
+        ) : (
+          <span className="text-green-500">Add</span>
+        )}
+      </animated.div>
+      <animated.div
+        style={{
+          position: 'absolute',
+          left: '100%',
+          top: 0,
+          bottom: 0,
+          display: 'flex',
+          alignItems: 'center',
+          paddingLeft: '1rem',
+          opacity: x.to(value => value < 0 ? Math.min(-value / SWIPE_THRESHOLD, 1) : 0),
+        }}
+      >
+        {squadron.unique ? (
+          <span className="text-red-500">Remove</span>
+        ) : (
+          <span className="text-blue-500">Decrease</span>
+        )}
+      </animated.div>
     </div>
   );
 }
