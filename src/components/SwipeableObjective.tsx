@@ -16,30 +16,50 @@ export function SwipeableObjective({ type, selectedObjective, onRemove, onOpen, 
   const [{ x }, api] = useSpring(() => ({ x: 0 }));
   const isDragging = useRef(false);
   const startX = useRef(0);
+  const startY = useRef(0);
+  const isHorizontalSwipe = useRef(false);
 
   const SWIPE_THRESHOLD = 50;
+  const ANGLE_THRESHOLD = 30; // Degrees
 
   const handleTouchStart = (e: React.TouchEvent) => {
     isDragging.current = true;
     startX.current = e.touches[0].clientX;
+    startY.current = e.touches[0].clientY;
+    isHorizontalSwipe.current = false;
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!isDragging.current) return;
+    
     const currentX = e.touches[0].clientX;
+    const currentY = e.touches[0].clientY;
     const deltaX = currentX - startX.current;
-    api.start({ x: deltaX, immediate: true });
+    const deltaY = currentY - startY.current;
+
+    if (!isHorizontalSwipe.current) {
+      const angle = Math.abs(Math.atan2(deltaY, deltaX) * 180 / Math.PI);
+      isHorizontalSwipe.current = angle < ANGLE_THRESHOLD || angle > (180 - ANGLE_THRESHOLD);
+    }
+
+    if (isHorizontalSwipe.current) {
+      e.preventDefault();
+      api.start({ x: deltaX, immediate: true });
+    }
   };
 
   const handleTouchEnd = () => {
     isDragging.current = false;
-    const currentX = x.get();
-    if (currentX < -SWIPE_THRESHOLD) {
-      onRemove();
-    } else if (currentX > SWIPE_THRESHOLD) {
-      onOpen();
+    if (isHorizontalSwipe.current) {
+      const currentX = x.get();
+      if (currentX < -SWIPE_THRESHOLD) {
+        onRemove();
+      } else if (currentX > SWIPE_THRESHOLD) {
+        onOpen();
+      }
     }
     api.start({ x: 0, immediate: false });
+    isHorizontalSwipe.current = false;
   };
 
   return (
@@ -53,23 +73,23 @@ export function SwipeableObjective({ type, selectedObjective, onRemove, onOpen, 
       >
         <Button 
           variant="outline" 
-          className={`w-full justify-start hover:bg-[${color}] hover:text-${color === '#FAEE13' ? 'black' : 'white'} transition-colors`}
+          className="w-full justify-start transition-colors"
           onClick={onOpen}
         >
-          {selectedObjective ? (
-            <div className="flex justify-between items-center w-full">
-              <div className="flex items-center">
-                <div className={`w-4 h-4 bg-[${color}] mr-2`}></div>
-                {selectedObjective.name}
-              </div>
+          <div className="flex justify-between items-center w-full">
+            <div className="flex items-center">
+              <div style={{ width: '16px', height: '16px', backgroundColor: color, marginRight: '8px' }}></div>
+              {selectedObjective ? selectedObjective.name : `ADD ${type.toUpperCase()}`}
+            </div>
+            {selectedObjective && (
               <button 
                 onClick={(e) => { e.stopPropagation(); onRemove(); }}
                 className="text-red-500 hover:text-red-700"
               >
                 ✕
               </button>
-            </div>
-          ) : `ADD ${type.toUpperCase()}`}
+            )}
+          </div>
         </Button>
         <div className="absolute left-0 top-0 bottom-0 flex items-center justify-center w-16 text-blue-500 bg-gray-800 bg-opacity-75" style={{ transform: 'translateX(-100%)' }}>
           <ArrowLeftRight size={20} />
