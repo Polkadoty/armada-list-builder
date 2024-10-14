@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useSwipeable, SwipeableHandlers } from 'react-swipeable';
+import { useSwipeable } from 'react-swipeable';
 import UpgradeIconsToolbar from './UpgradeIconsToolbar';
 import { Ship } from "./FleetBuilder";
 import { Upgrade } from "./FleetBuilder";
@@ -23,7 +23,8 @@ interface SelectedShipProps {
 export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRemoveUpgrade, disabledUpgrades, enabledUpgrades, filledSlots, hasCommander}: SelectedShipProps) {
   const [isToolbarVisible, setIsToolbarVisible] = useState(true);
   const [swipeOffset, setSwipeOffset] = useState(0);
-  const [upgradeSwipeOffset, setUpgradeSwipeOffset] = useState<Record<string, number>>({});
+  const [activeUpgrade, setActiveUpgrade] = useState<{ type: string, index: number } | null>(null);
+  const [upgradeSwipeOffset, setUpgradeSwipeOffset] = useState(0);
 
   const handleUpgradeClick = (upgrade: string, index: number) => {
     onUpgradeClick(ship.id, upgrade, index);
@@ -90,37 +91,41 @@ export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRem
     trackMouse: true
   });
 
-  const upgradeSwipeHandlers: SwipeableHandlers = useSwipeable({
+  const upgradeSwipeHandlers = useSwipeable({
+    onSwipeStart: (eventData) => {
+      const target = eventData.event.target as HTMLElement;
+      const upgradeElement = target.closest('[data-upgrade-type]');
+      if (upgradeElement instanceof HTMLElement) {
+        const type = upgradeElement.dataset.upgradeType;
+        const indexStr = upgradeElement.dataset.upgradeIndex;
+        if (type && indexStr) {
+          const index = parseInt(indexStr, 10);
+          setActiveUpgrade({ type, index });
+        }
+      }
+    },
     onSwiping: (eventData) => {
-      const target = eventData.event.target as HTMLElement;
-      const key = `${target.dataset.upgradeType}-${target.dataset.slotIndex}`;
-      setUpgradeSwipeOffset(prev => ({ ...prev, [key]: eventData.deltaX }));
-    },
-    onSwipedLeft: (eventData) => {
-      const target = eventData.event.target as HTMLElement;
-      const upgradeType = target.dataset.upgradeType;
-      const slotIndex = parseInt(target.dataset.slotIndex || '0');
-      if (upgradeType && Math.abs(upgradeSwipeOffset[`${upgradeType}-${slotIndex}`] || 0) > 50) {
-        handleRemoveUpgradeClick(upgradeType, slotIndex);
+      if (activeUpgrade) {
+        setUpgradeSwipeOffset(eventData.deltaX);
       }
-      setUpgradeSwipeOffset(prev => ({ ...prev, [`${upgradeType}-${slotIndex}`]: 0 }));
     },
-    onSwipedRight: (eventData) => {
-      const target = eventData.event.target as HTMLElement;
-      const upgradeType = target.dataset.upgradeType;
-      const slotIndex = parseInt(target.dataset.slotIndex || '0');
-      if (upgradeType && Math.abs(upgradeSwipeOffset[`${upgradeType}-${slotIndex}`] || 0) > 50) {
-        handleUpgradeClick(upgradeType, slotIndex);
+    onSwipedLeft: () => {
+      if (activeUpgrade && Math.abs(upgradeSwipeOffset) > 50) {
+        handleRemoveUpgradeClick(activeUpgrade.type, activeUpgrade.index);
       }
-      setUpgradeSwipeOffset(prev => ({ ...prev, [`${upgradeType}-${slotIndex}`]: 0 }));
+      setUpgradeSwipeOffset(0);
+      setActiveUpgrade(null);
     },
-    onSwiped: (eventData) => {
-      const target = eventData.event.target as HTMLElement;
-      const upgradeType = target.dataset.upgradeType;
-      const slotIndex = target.dataset.slotIndex;
-      if (upgradeType && slotIndex) {
-        setUpgradeSwipeOffset(prev => ({ ...prev, [`${upgradeType}-${slotIndex}`]: 0 }));
+    onSwipedRight: () => {
+      if (activeUpgrade && upgradeSwipeOffset > 50) {
+        handleUpgradeClick(activeUpgrade.type, activeUpgrade.index);
       }
+      setUpgradeSwipeOffset(0);
+      setActiveUpgrade(null);
+    },
+    onSwiped: () => {
+      setUpgradeSwipeOffset(0);
+      setActiveUpgrade(null);
     },
     trackMouse: true
   });
@@ -182,61 +187,66 @@ export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRem
             <div className="p-2 space-y-2">
               {Object.entries(groupedUpgrades).map(([upgradeType, upgrades]) => (
                 <div key={upgradeType}>
-                  {upgrades.map((upgrade, index) => (
-                    <div key={`${upgradeType}-${index}`} className="overflow-hidden">
+                  {upgrades.map((upgrade, index) => {
+                    const slotIndex = upgrade.slotIndex ?? index;
+                    const isActive = activeUpgrade?.type === upgradeType && activeUpgrade?.index === slotIndex;
+                    
+                    return (
                       <div 
-                        {...upgradeSwipeHandlers} 
+                        key={`${upgradeType}-${slotIndex.toString()}`} 
+                        className="overflow-hidden"
+                        {...upgradeSwipeHandlers}
                         data-upgrade-type={upgradeType}
-                        data-slot-index={upgrade.slotIndex ?? index}
-                        className="flex items-center justify-between bg-gray-100 dark:bg-gray-700 rounded p-2 mb-2"
-                        style={{ 
-                          transform: `translateX(${upgradeSwipeOffset[`${upgradeType}-${upgrade.slotIndex ?? index}`] || 0}px)`, 
-                          transition: 'transform 0.2s ease-out' 
-                        }}
+                        data-upgrade-index={slotIndex.toString()}
                       >
-                        <div className="flex items-center">
-                          <Image
-                            src={`/icons/${upgradeType}.svg`}
-                            alt={upgradeType}
-                            width={24}
-                            height={24}
-                            className="dark:invert mr-2"
-                          />
-                          <span className="font-medium">
-                            {upgrade.unique && <span className="mr-1 text-yellow-500">●</span>}
-                            {upgrade.name}
-                          </span>
-                        </div>
-                        <div className="flex items-center">
-                          <span className="mr-2">{upgrade.points} pts</span>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-6 w-6 mr-1"
-                            onClick={() => handleUpgradeClick(upgradeType, index)}
-                            disabled={disabledUpgrades.includes(upgradeType)}
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M8 3L4 7l4 4"/>
-                              <path d="M4 7h16"/>
-                              <path d="m16 21 4-4-4-4"/>
-                              <path d="M20 17H4"/>
-                            </svg>
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-6 w-6"
-                            onClick={() => handleRemoveUpgradeClick(upgradeType, upgrade.slotIndex ?? index)}
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
-                              <path d="M18 6L6 18M6 6l12 12" />
-                            </svg>
-                          </Button>
+                        <div 
+                          className="flex items-center justify-between bg-gray-100 dark:bg-gray-700 rounded p-2 mb-2"
+                          style={{ transform: `translateX(${isActive ? upgradeSwipeOffset : 0}px)`, transition: 'transform 0.2s ease-out' }}
+                        >
+                          <div className="flex items-center">
+                            <Image
+                              src={`/icons/${upgradeType}.svg`}
+                              alt={upgradeType}
+                              width={24}
+                              height={24}
+                              className="dark:invert mr-2"
+                            />
+                            <span className="font-medium">
+                              {upgrade.unique && <span className="mr-1 text-yellow-500">●</span>}
+                              {upgrade.name}
+                            </span>
+                          </div>
+                          <div className="flex items-center">
+                            <span className="mr-2">{upgrade.points} pts</span>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-6 w-6 mr-1"
+                              onClick={() => handleUpgradeClick(upgradeType, index)}
+                              disabled={disabledUpgrades.includes(upgradeType)}
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M8 3L4 7l4 4"/>
+                                <path d="M4 7h16"/>
+                                <path d="m16 21 4-4-4-4"/>
+                                <path d="M20 17H4"/>
+                              </svg>
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-6 w-6"
+                              onClick={() => handleRemoveUpgradeClick(upgradeType, upgrade.slotIndex ?? index)}
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                                <path d="M18 6L6 18M6 6l12 12" />
+                              </svg>
+                            </Button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ))}
             </div>
