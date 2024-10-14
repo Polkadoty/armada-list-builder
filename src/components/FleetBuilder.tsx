@@ -357,6 +357,7 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
       setHasCommander(false);
     }
   
+    console.log('Before removal:', selectedShips);
     setSelectedShips(prevShips => 
       prevShips.map(ship => {
         if (ship.id === shipId) {
@@ -436,14 +437,11 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
               });
             });
   
-            // Special condition for commander upgrade
-            const pointsToRemoveFromHeader = upgradeToRemove.type === 'commander' ? pointsToRemove / 2 : pointsToRemove;
-  
-            // Update points
+            // Update points only once
             setPreviousPoints(points);
             setPreviousShipPoints(totalShipPoints);
             setPoints(prevPoints => prevPoints - pointsToRemove);
-            setTotalShipPoints(prevTotal => prevTotal - pointsToRemoveFromHeader);
+            setTotalShipPoints(prevTotal => prevTotal - pointsToRemove);
   
             return {
               ...ship,
@@ -457,6 +455,7 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
         return ship;
       })
     );
+    console.log('After removal:', selectedShips);
   };
 
 
@@ -931,27 +930,29 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
 
 
       <div className="space-y-2 mb-4">
-        <SwipeableObjective
-          type="assault"
-          selectedObjective={selectedAssaultObjective}
-          onRemove={handleRemoveAssaultObjective}
-          onOpen={() => setShowAssaultObjectiveSelector(true)}
-          color="#EB3F3A"
-        />
-        <SwipeableObjective
-          type="defense"
-          selectedObjective={selectedDefenseObjective}
-          onRemove={handleRemoveDefenseObjective}
-          onOpen={() => setShowDefenseObjectiveSelector(true)}
-          color="#FAEE13"
-        />
-        <SwipeableObjective
-          type="navigation"
-          selectedObjective={selectedNavigationObjective}
-          onRemove={handleRemoveNavigationObjective}
-          onOpen={() => setShowNavigationObjectiveSelector(true)}
-          color="#C2E1F4"
-        />
+      <SwipeableObjective
+        type="assault"
+        selectedObjective={selectedAssaultObjective}
+        onRemove={handleRemoveAssaultObjective}
+        onOpen={() => setShowAssaultObjectiveSelector(true)}
+        color="#EB3F3A"
+      />
+
+      <SwipeableObjective
+        type="defense"
+        selectedObjective={selectedDefenseObjective}
+        onRemove={handleRemoveDefenseObjective}
+        onOpen={() => setShowDefenseObjectiveSelector(true)}
+        color="#FAEE13"
+      />
+
+      <SwipeableObjective
+        type="navigation"
+        selectedObjective={selectedNavigationObjective}
+        onRemove={handleRemoveNavigationObjective}
+        onOpen={() => setShowNavigationObjectiveSelector(true)}
+        color="#C2E1F4"
+      />
       </div>
 
       <div className="flex flex-wrap justify-between gap-2">
