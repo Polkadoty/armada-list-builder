@@ -1,8 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import Image from 'next/image';
 import { Card, CardContent } from "@/components/ui/card";
 import { useSpring, animated } from 'react-spring';
 import { Squadron } from './FleetBuilder';
+import { Plus, Minus, ArrowLeftRight, Trash2 } from 'lucide-react';
 
 interface SelectedSquadronProps {
   squadron: Squadron;
@@ -18,57 +19,50 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
   const isDragging = useRef(false);
   const startX = useRef(0);
 
+  const SWIPE_THRESHOLD = 50;
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    isDragging.current = true;
+    startX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging.current) return;
+    const currentX = e.touches[0].clientX;
+    const deltaX = currentX - startX.current;
+    api.start({ x: deltaX, immediate: true });
+  };
+
+  const handleTouchEnd = () => {
+    isDragging.current = false;
+    const currentX = x.get();
+    if (currentX < -SWIPE_THRESHOLD) {
+      if (squadron.count === 1) {
+        onRemove(squadron.id);
+      } else {
+        onDecrement(squadron.id);
+      }
+    } else if (currentX > SWIPE_THRESHOLD) {
+      if (squadron.unique) {
+        onSwapSquadron(squadron.id);
+      } else {
+        onIncrement(squadron.id);
+      }
+    }
+    api.start({ x: 0, immediate: false });
+  };
+
   const count = squadron.count || 1;
   const totalPoints = squadron.points * count;
 
-  const SWIPE_THRESHOLD = 50;
-
-  useEffect(() => {
-    const handleTouchStart = (e: TouchEvent) => {
-      isDragging.current = true;
-      startX.current = e.touches[0].clientX;
-    };
-
-    const handleTouchMove = (e: TouchEvent) => {
-      if (!isDragging.current) return;
-      const currentX = e.touches[0].clientX;
-      const deltaX = currentX - startX.current;
-      api.start({ x: deltaX, immediate: true });
-    };
-
-    const handleTouchEnd = () => {
-      isDragging.current = false;
-      const currentX = x.get();
-      if (currentX < -SWIPE_THRESHOLD) {
-        if (squadron.unique) {
-          onRemove(squadron.id);
-        } else {
-          onDecrement(squadron.id);
-        }
-      } else if (currentX > SWIPE_THRESHOLD) {
-        if (squadron.unique) {
-          onSwapSquadron(squadron.id);
-        } else {
-          onIncrement(squadron.id);
-        }
-      }
-      api.start({ x: 0, immediate: false });
-    };
-
-    window.addEventListener('touchstart', handleTouchStart);
-    window.addEventListener('touchmove', handleTouchMove);
-    window.addEventListener('touchend', handleTouchEnd);
-
-    return () => {
-      window.removeEventListener('touchstart', handleTouchStart);
-      window.removeEventListener('touchmove', handleTouchMove);
-      window.removeEventListener('touchend', handleTouchEnd);
-    };
-  }, [api, squadron, onRemove, onDecrement, onSwapSquadron, onIncrement, x]);
-
   return (
-    <div className="mb-2 overflow-hidden relative">
-      <animated.div style={{ x }} className="relative">
+    <div className="relative overflow-hidden mb-2">
+      <animated.div
+        style={{ x }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
         <Card>
           <CardContent className="flex items-center p-2">
             <div className="w-16 aspect-[3.75/2] mr-4 relative overflow-hidden">
@@ -90,91 +84,16 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
               </span>
               <div className="flex items-center">
                 <span className="mr-2">{totalPoints} points</span>
-                {squadron.unique ? (
-                  <button onClick={(e) => { e.stopPropagation(); onRemove(squadron.id); }} className="text-red-500 hover:text-red-700">
-                    ✕
-                  </button>
-                ) : (
-                  <>
-                    <button 
-                      onClick={(e) => { 
-                        e.stopPropagation(); 
-                        if (squadron.count === 1) {
-                          onRemove(squadron.id);
-                        } else {
-                          onDecrement(squadron.id);
-                        }
-                      }}
-                      onMouseEnter={() => setShowPointChange(true)}
-                      onMouseLeave={() => setShowPointChange(false)}
-                      className="text-blue-500 hover:text-blue-700 mr-2 relative"
-                    >
-                      -
-                      {showPointChange && (
-                        <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs rounded px-2 py-1">
-                          -{squadron.points}
-                        </span>
-                      )}
-                    </button>
-                    <span className="mr-2">{squadron.count}</span>
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); onIncrement(squadron.id); }}
-                      onMouseEnter={() => setShowPointChange(true)}
-                      onMouseLeave={() => setShowPointChange(false)}
-                      className="text-green-500 hover:text-green-700 mr-2 relative"
-                    >
-                      +
-                      {showPointChange && (
-                        <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs rounded px-2 py-1">
-                          +{squadron.points}
-                        </span>
-                      )}
-                    </button>
-                    <button onClick={(e) => { e.stopPropagation(); onRemove(squadron.id); }} className="text-red-500 hover:text-red-700">
-                      ✕
-                    </button>
-                  </>
-                )}
               </div>
             </div>
           </CardContent>
         </Card>
-      </animated.div>
-      <animated.div
-        style={{
-          position: 'absolute',
-          right: '100%',
-          top: 0,
-          bottom: 0,
-          display: 'flex',
-          alignItems: 'center',
-          paddingRight: '1rem',
-          opacity: x.to(value => value > 0 ? Math.min(value / SWIPE_THRESHOLD, 1) : 0),
-        }}
-      >
-        {squadron.unique ? (
-          <span className="text-blue-500">Swap</span>
-        ) : (
-          <span className="text-green-500">Add</span>
-        )}
-      </animated.div>
-      <animated.div
-        style={{
-          position: 'absolute',
-          left: '100%',
-          top: 0,
-          bottom: 0,
-          display: 'flex',
-          alignItems: 'center',
-          paddingLeft: '1rem',
-          opacity: x.to(value => value < 0 ? Math.min(-value / SWIPE_THRESHOLD, 1) : 0),
-        }}
-      >
-        {squadron.unique ? (
-          <span className="text-red-500">Remove</span>
-        ) : (
-          <span className="text-blue-500">Decrease</span>
-        )}
+        <div className="absolute left-0 top-0 bottom-0 flex items-center justify-center w-12 text-blue-500 bg-gray-800 bg-opacity-75" style={{ transform: 'translateX(-100%)' }}>
+          {squadron.unique ? <ArrowLeftRight size={20} /> : <Plus size={20} />}
+        </div>
+        <div className="absolute right-0 top-0 bottom-0 flex items-center justify-center w-12 text-red-500 bg-gray-800 bg-opacity-75" style={{ transform: 'translateX(100%)' }}>
+          {squadron.count === 1 ? <Trash2 size={20} /> : <Minus size={20} />}
+        </div>
       </animated.div>
     </div>
   );
