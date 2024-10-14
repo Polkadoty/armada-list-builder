@@ -436,7 +436,7 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
             });
   
             // Special condition for commander upgrade
-            const pointsToRemoveFromHeader = upgradeToRemove.type === 'commander' ? pointsToRemove / 2 : pointsToRemove;
+            const pointsToRemoveFromHeader = upgradeToRemove.type === 'commander' ? pointsToRemove : pointsToRemove;
   
             // Update points
             setPreviousPoints(points);
