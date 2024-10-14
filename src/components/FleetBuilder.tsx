@@ -437,7 +437,6 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
               });
             });
   
-            // Update points only once
             setPreviousPoints(points);
             setPreviousShipPoints(totalShipPoints);
             setPoints(prevPoints => prevPoints - pointsToRemove);
