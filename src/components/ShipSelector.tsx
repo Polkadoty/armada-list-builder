@@ -14,6 +14,8 @@ export interface ShipModel {
   upgrades?: string[];
   unique: boolean;
   chassis: string;
+  size?: string;
+  traits?: string[];
 }
 
 interface Ship {
@@ -39,22 +41,40 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
     const fetchShips = async () => {
       const cacheKey = `ships_${faction}`;
       const cachedShips = localStorage.getItem(cacheKey);
-
+    
       if (cachedShips) {
         setShips(JSON.parse(cachedShips));
       } else {
         try {
           const response = await axios.get(`https://api.swarmada.wiki/api/ships/search?faction=${faction}`);
           const shipData: Ship = response.data.ships;
-          const flattenedShips = Object.values(shipData).flatMap(chassis => 
-            Object.values(chassis.models).filter(model => 
+          const flattenedShips = await Promise.all(Object.entries(shipData).map(async ([chassisName, chassisData]) => {
+            const chassisResponse = await axios.get(`https://api.swarmada.wiki/api/ships/${chassisName}`);
+            const chassisInfo = chassisResponse.data.ships[chassisName];
+            return Object.values(chassisData.models).map(model => {
+              const filteredModel = Object.fromEntries(
+                Object.entries({
+                  ...model,
+                  size: chassisInfo.size,
+                  id: `${chassisName}-${model.name}`,
+                  traits: chassisInfo.traits || [], // Add this line
+                }).filter(([_, value]) => {
+                  if (Array.isArray(value)) {
+                    return value.length > 0 && value.some(item => item !== '');
+                  }
+                  return value !== '' && value !== null && value !== undefined;
+                })
+              ) as ShipModel;
+              return filteredModel;
+            }).filter(model => 
               model.faction === faction &&
               model.points >= filter.minPoints &&
               model.points <= filter.maxPoints
-            )
-          );
-          setShips(flattenedShips);
-          localStorage.setItem(cacheKey, JSON.stringify(flattenedShips));
+            );
+          }));
+          const allShips = flattenedShips.flat();
+          setShips(allShips);
+          localStorage.setItem(cacheKey, JSON.stringify(allShips));
         } catch (error) {
           console.error('Error fetching ships:', error);
         }
