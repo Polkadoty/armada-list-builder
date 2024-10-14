@@ -833,6 +833,7 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
             enabledUpgrades={enabledUpgrades[ship.id] || []}
             filledSlots={filledSlots[ship.id] || {}}
             hasCommander={hasCommander}
+            traits={ship.traits || []}
           />
         ))}
       </div>

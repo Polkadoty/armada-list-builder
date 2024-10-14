@@ -16,6 +16,7 @@ interface SelectedShipProps {
   enabledUpgrades: string[];
   filledSlots: Record<string, number[]>;
   hasCommander: boolean;
+  traits: string[];
 }
 
 export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRemoveUpgrade, disabledUpgrades, enabledUpgrades, filledSlots, hasCommander}: SelectedShipProps) {
@@ -115,6 +116,7 @@ export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRem
               enabledUpgrades={enabledUpgrades}
               filledSlots={filledSlots}
               hasCommander={hasCommander}
+              traits={ship.traits || []}
             />
             <div className="p-2 space-y-2">
               {Object.entries(groupedUpgrades).map(([upgradeType, upgrades]) => (

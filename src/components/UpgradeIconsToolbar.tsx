@@ -10,6 +10,7 @@ interface UpgradeIconsToolbarProps {
   enabledUpgrades: string[];
   filledSlots: Record<string, number[]>;
   hasCommander: boolean;
+  traits: string[];
 }
 
 export default function UpgradeIconsToolbar({ upgrades, onUpgradeClick, assignedUpgrades, disabledUpgrades, enabledUpgrades, filledSlots, hasCommander }: UpgradeIconsToolbarProps) {
