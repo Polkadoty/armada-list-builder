@@ -6,6 +6,9 @@ import { Squadron } from './FleetBuilder';
 import { Plus, Minus, ArrowLeftRight, Trash2 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 
+// Add this line at the top of the file
+/** @jsxImportSource react */
+
 interface SelectedSquadronProps {
   squadron: Squadron;
   onRemove: (id: string) => void;

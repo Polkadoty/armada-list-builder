@@ -1,23 +1,30 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useCallback } from 'react';
 
-interface UniqueClassContextType {
+const UniqueClassContext = createContext<{
   uniqueClassNames: string[];
   addUniqueClassName: (name: string) => void;
   removeUniqueClassName: (name: string) => void;
-}
+}>({
+  uniqueClassNames: [],
+  addUniqueClassName: () => {},
+  removeUniqueClassName: () => {},
+});
 
-const UniqueClassContext = createContext<UniqueClassContextType | undefined>(undefined);
-
-export const UniqueClassProvider = ({ children }: { children: ReactNode }) => {
+export const UniqueClassProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [uniqueClassNames, setUniqueClassNames] = useState<string[]>([]);
 
-  const addUniqueClassName = (name: string) => {
-    setUniqueClassNames(prev => Array.from(new Set([...prev, name])));
-  };
+  const addUniqueClassName = useCallback((name: string) => {
+    setUniqueClassNames(prev => {
+      if (!prev.includes(name)) {
+        return [...prev, name];
+      }
+      return prev;
+    });
+  }, []);
 
-  const removeUniqueClassName = (name: string) => {
+  const removeUniqueClassName = useCallback((name: string) => {
     setUniqueClassNames(prev => prev.filter(n => n !== name));
-  };
+  }, []);
 
   return (
     <UniqueClassContext.Provider value={{ uniqueClassNames, addUniqueClassName, removeUniqueClassName }}>
@@ -26,10 +33,4 @@ export const UniqueClassProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-export const useUniqueClassContext = () => {
-  const context = useContext(UniqueClassContext);
-  if (!context) {
-    throw new Error('useUniqueClassContext must be used within a UniqueClassProvider');
-  }
-  return context;
-};
+export const useUniqueClassContext = () => useContext(UniqueClassContext);

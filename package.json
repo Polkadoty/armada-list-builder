@@ -34,9 +34,11 @@
   },
   "devDependencies": {
     "@svgr/webpack": "^8.1.0",
+    "@types/istanbul-reports": "^3.0.4",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "@types/webxr": "^0.5.20",
     "eslint": "^8",
     "eslint-config-next": "14.2.14",
     "postcss": "^8",
