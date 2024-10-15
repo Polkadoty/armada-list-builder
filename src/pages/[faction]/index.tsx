@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { SettingsButton } from '../../components/SettingsButton';
 import StarryBackground from '../../components/StarryBackground';
 import { useEffect, useState } from 'react';
+import { LoadingScreen } from '../../components/LoadingScreen';
 
 export const factionLogos = {
   rebel: '/icons/rebel.svg',
@@ -26,6 +27,9 @@ export default function FactionPage() {
   const { faction } = router.query;
   const { theme, systemTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [loadingMessage, setLoadingMessage] = useState('');
 
   useEffect(() => {
     setMounted(true);
@@ -38,6 +42,7 @@ export default function FactionPage() {
   return (
     <div className="min-h-screen text-gray-900 dark:text-white relative bg-transparent">
       <StarryBackground show={currentTheme === 'dark'} />
+      {isLoading && <LoadingScreen progress={loadingProgress} message={loadingMessage} />}
       <div className="relative z-10 p-4">
         <div className="flex justify-between items-center mb-4">
           <div className="flex items-center">
@@ -53,7 +58,7 @@ export default function FactionPage() {
             <h1 className="text-2xl font-bold">Fleet Builder</h1>
           </div>
           <div className="flex items-center space-x-2">
-            <SettingsButton />
+            <SettingsButton setIsLoading={setIsLoading} setLoadingProgress={setLoadingProgress} setLoadingMessage={setLoadingMessage} />
             <ThemeToggle />
           </div>
         </div>

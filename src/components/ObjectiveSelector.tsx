@@ -25,15 +25,30 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose }: Objectiv
     const fetchObjectives = async () => {
       setLoading(true);
       try {
-        const response = await axios.get(`https://api.swarmada.wiki/api/objectives/search?type=${type}`);
-        const objectiveData = response.data.objectives;
-        const flattenedObjectives = Object.values(objectiveData).map((objective) => ({
-          id: (objective as { _id: string })._id,
-          name: (objective as { name: string }).name,
-          type: (objective as { type: string }).type,
-          cardimage: validateImageUrl((objective as { cardimage: string }).cardimage),
-        }));
-        setObjectives(flattenedObjectives);
+        const cachedObjectives = localStorage.getItem('objectives');
+        if (cachedObjectives) {
+          const objectiveData = JSON.parse(cachedObjectives).objectives;
+          const flattenedObjectives = Object.values(objectiveData)
+            .filter((objective: any) => objective.type === type)
+            .map((objective: any) => ({
+              id: objective._id,
+              name: objective.name,
+              type: objective.type,
+              cardimage: validateImageUrl(objective.cardimage),
+            }));
+          setObjectives(flattenedObjectives);
+        } else {
+          // Fallback to API call if cache is not available
+          const response = await axios.get(`https://api.swarmada.wiki/api/objectives/search?type=${type}`);
+          const objectiveData = response.data.objectives;
+          const flattenedObjectives = Object.values(objectiveData).map((objective) => ({
+            id: (objective as { _id: string })._id,
+            name: (objective as { name: string }).name,
+            type: (objective as { type: string }).type,
+            cardimage: validateImageUrl((objective as { cardimage: string }).cardimage),
+          }));
+          setObjectives(flattenedObjectives);
+        }
       } catch (error) {
         console.error('Error fetching objectives:', error);
       } finally {
