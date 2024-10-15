@@ -11,6 +11,7 @@ function MyApp({ Component, pageProps }: AppProps) {
       <TooltipProvider>
         <UniqueClassProvider> {/* Wrap your app with the UniqueClassProvider */}
           <Component {...pageProps} />
+          <Analytics />
         </UniqueClassProvider>
       </TooltipProvider>
     </ThemeProvider>
