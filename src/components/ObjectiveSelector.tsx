@@ -53,16 +53,16 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose }: Objectiv
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <Card className="w-full h-full sm:w-11/12 sm:h-5/6 lg:w-3/4 lg:h-3/4 overflow-auto relative">
-        <CardContent className="p-2 sm:p-4">
-          <div className="flex justify-between items-center mb-2 sm:mb-4">
-            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold">Select a {type.charAt(0).toUpperCase() + type.slice(1)} Objective</h2>
-            <Button variant="ghost" onClick={onClose} className="p-1">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </Button>
-          </div>
+      <Card className="w-full h-full sm:w-11/12 sm:h-5/6 lg:w-3/4 lg:h-3/4 flex flex-col">
+        <div className="p-2 sm:p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+          <h2 className="text-lg sm:text-xl lg:text-2xl font-bold">Select a {type.charAt(0).toUpperCase() + type.slice(1)} Objective</h2>
+          <Button variant="ghost" onClick={onClose} className="p-1">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </Button>
+        </div>
+        <CardContent className="p-2 sm:p-4 flex-grow overflow-auto">
           {loading ? (
             <p>Loading objectives...</p>
           ) : (
@@ -77,10 +77,9 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose }: Objectiv
                       <Image
                         src={objective.cardimage}
                         alt={objective.name}
-                        layout="fill"
-                        objectFit="cover"
-                        objectPosition="center"
-                        className="scale-[103%]"
+                        fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        className="object-cover object-center scale-[103%]"
                         onError={(e) => {
                           e.currentTarget.src = '/placeholder-objective.png';
                         }}

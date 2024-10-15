@@ -13,9 +13,12 @@ interface UpgradeSelectorProps {
   selectedUpgrades: Upgrade[];
   shipType?: string;
   chassis?: string;
+  shipSize?: string;
+  shipTraits?: string[];
   currentShipUpgrades: Upgrade[];
   disqualifiedUpgrades: string[];
   disabledUpgrades: string[];
+  hasCommander: boolean;
 }
 
 export default function UpgradeSelector({
@@ -26,9 +29,12 @@ export default function UpgradeSelector({
   selectedUpgrades,
   shipType,
   chassis,
+  shipSize,
+  shipTraits, 
   currentShipUpgrades,
   disqualifiedUpgrades,
-  disabledUpgrades
+  disabledUpgrades,
+  hasCommander
 }: UpgradeSelectorProps) {
   const [upgrades, setUpgrades] = useState<Upgrade[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,7 +67,17 @@ export default function UpgradeSelector({
   }, [upgradeType, faction, chassis]);
 
   const isUpgradeAvailable = (upgrade: Upgrade) => {
+    console.log(`Checking availability for ${upgrade.name}. Ship traits: ${shipTraits?.join(', ') || 'None'}`);
+
+    if (upgrade.type === 'commander' && hasCommander) {
+      return false;
+    }
+
     if (upgradeType === 'title') {
+      if (upgrade.bound_shiptype && upgrade.bound_shiptype !== chassis) {
+        return false;
+      }
+    } else if (upgrade.type === 'super-weapon') {
       if (upgrade.bound_shiptype && upgrade.bound_shiptype !== chassis) {
         return false;
       }
@@ -75,29 +91,42 @@ export default function UpgradeSelector({
       return false;
     }
 
-    // Check if the ship already has this specific upgrade
     if (currentShipUpgrades.some(su => su.name === upgrade.name)) {
       return false;
     }
 
-    // Check if the ship already has a modification
     if (upgrade.modification && currentShipUpgrades.some(su => su.modification)) {
       return false;
     }
 
-    // Check if the upgrade is disqualified or disabled
     if (disqualifiedUpgrades.includes(upgrade.type) || disabledUpgrades.includes(upgrade.type)) {
       return false;
     }
 
-    // Check if the upgrade disqualifies or disables any currently equipped upgrades
     if (upgrade.restrictions) {
       const disqualOrDisable = [...(upgrade.restrictions.disqual_upgrades || []), ...(upgrade.restrictions.disable_upgrades || [])];
       if (currentShipUpgrades.some(su => disqualOrDisable.includes(su.type))) {
         return false;
       }
-    }
 
+      if (upgrade.restrictions.size && upgrade.restrictions.size.length > 0 && shipSize) {
+        const validSizes = upgrade.restrictions.size.filter(size => size.trim() !== '');
+        if (validSizes.length > 0 && !validSizes.includes(shipSize)) {
+          return false;
+        }
+      }
+
+      if (upgrade.restrictions?.traits && upgrade.restrictions.traits.length > 0 && shipTraits) {
+        const validTraits = upgrade.restrictions.traits.filter(trait => trait.trim() !== '');
+        if (validTraits.length > 0) {
+          const hasRequiredTrait = validTraits.some(trait => shipTraits.includes(trait));
+          if (!hasRequiredTrait) {
+            return false;
+          }
+        }
+      }
+    }
+    
     return true;
   };
 
@@ -135,16 +164,16 @@ export default function UpgradeSelector({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <Card className="w-full h-full sm:w-11/12 sm:h-5/6 lg:w-3/4 lg:h-3/4 overflow-auto relative">
-        <CardContent className="p-2 sm:p-4">
-          <div className="flex justify-between items-center mb-2 sm:mb-4">
-            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold">Select {upgradeType}</h2>
-            <Button variant="ghost" onClick={onClose} className="p-1">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </Button>
-          </div>
+      <Card className="w-full h-full sm:w-11/12 sm:h-5/6 lg:w-3/4 lg:h-3/4 flex flex-col">
+        <div className="p-2 sm:p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+          <h2 className="text-lg sm:text-xl lg:text-2xl font-bold">Select {upgradeType}</h2>
+          <Button variant="ghost" onClick={onClose} className="p-1">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </Button>
+        </div>
+        <CardContent className="p-2 sm:p-4 flex-grow overflow-auto">
           {loading ? (
             <p>Loading upgrades...</p>
           ) : (
@@ -162,10 +191,9 @@ export default function UpgradeSelector({
                       <Image
                         src={validateImageUrl(upgrade.cardimage)}
                         alt={upgrade.name}
-                        layout="fill"
-                        objectFit="cover"
-                        objectPosition="center"
-                        className="scale-[103%]"
+                        fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        className="object-cover object-center scale-[103%]"
                         onError={(e) => {
                           e.currentTarget.src = '/placeholder-upgrade.png';
                         }}

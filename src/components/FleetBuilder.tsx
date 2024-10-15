@@ -20,6 +20,7 @@ import UpgradeSelector from './UpgradeSelector';
 import { ExportTextPopup } from './ExportTextPopup';
 import { factionLogos } from '../pages/[faction]';
 import { useUniqueClassContext } from '../contexts/UniqueClassContext';
+import { SwipeableObjective } from './SwipeableObjective';
 
 export interface Ship {
   id: string;
@@ -31,6 +32,8 @@ export interface Ship {
   assignedUpgrades: Upgrade[];
   unique: boolean;
   chassis: string;
+  size: string;
+  traits?: string[];
 }
 
 export interface Squadron {
@@ -64,6 +67,8 @@ export interface Upgrade {
     disable_upgrades?: string[];
     enable_upgrades?: string[];
     disqual_upgrades?: string[];
+    size?: string[];
+    traits?: string[];
   };
 }
 
@@ -73,18 +78,29 @@ export interface Ship extends ShipModel {
   assignedUpgrades: Upgrade[];
 }
 
-const SectionHeader = ({ title, points, previousPoints, show, onClearAll }: { title: string; points: number; previousPoints: number; show: boolean; onClearAll: () => void }) => (
+const SectionHeader = ({ title, points, previousPoints, show, onClearAll, onAdd }: { title: string; points: number; previousPoints: number; show: boolean; onClearAll: () => void; onAdd: () => void }) => (
   show ? (
-    <div className="flex justify-between items-center mb-2 mt-4 border-b border-gray-300 relative">
-      <div className="flex items-center">
-        <h3 className="text-lg font-semibold">{title}</h3>
+    <div className="mb-4">
+      <div className="flex justify-between items-center mb-2 mt-4 border-b border-gray-300 relative">
+        <div className="flex items-center">
+          <h3 className="text-lg font-semibold">{title}</h3>
+        </div>
+        <div className="flex items-center z-40">
+          <button onClick={onClearAll} className="mr-2 text-red-500 hover:text-red-700">
+            <Trash2 size={16} />
+          </button>
+          <PointsDisplay points={points} previousPoints={previousPoints} />
+        </div>
       </div>
-      <div className="flex items-center z-40">
-        <button onClick={onClearAll} className="mr-2 text-red-500 hover:text-red-700">
-          <Trash2 size={16} />
-        </button>
-        <PointsDisplay points={points} previousPoints={previousPoints} />
-      </div>
+      <Card className="mb-2">
+        <Button 
+          className="w-full justify-between bg-white dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+          variant="outline" 
+          onClick={onAdd}
+        >
+          ADD {title.toUpperCase().slice(0, -1)} <Filter size={16} />
+        </Button>
+      </Card>
     </div>
   ) : null
 );
@@ -124,6 +140,8 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
   const [disabledUpgrades, setDisabledUpgrades] = useState<Record<string, string[]>>({});
   const [enabledUpgrades, setEnabledUpgrades] = useState<Record<string, string[]>>({});
   const [filledSlots, setFilledSlots] = useState<Record<string, Record<string, number[]>>>({});
+  const [hasCommander, setHasCommander] = useState(false);
+  const [squadronToSwap, setSquadronToSwap] = useState<string | null>(null);
 
   const handleNameClick = () => {
     setIsEditingName(true);
@@ -147,7 +165,9 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
       id: Date.now().toString(),
       availableUpgrades: ship.upgrades || [],
       assignedUpgrades: [],
-      chassis: ship.chassis || ship.name
+      chassis: ship.chassis,
+      size: ship.size || '',
+      traits: ship.traits || []
     };
     setSelectedShips([...selectedShips, newShip]);
     setPreviousPoints(points);
@@ -162,6 +182,9 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
     const shipToRemove = selectedShips.find(ship => ship.id === id);
     if (shipToRemove) {
       const shipPoints = shipToRemove.points + shipToRemove.assignedUpgrades.reduce((total, upgrade) => total + upgrade.points, 0);
+      
+      // Check if the ship had a commander upgrade
+      const hadCommander = shipToRemove.assignedUpgrades.some(upgrade => upgrade.type === 'commander');
       
       // Remove unique class names for the ship and its upgrades
       if (shipToRemove.unique) {
@@ -194,6 +217,11 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
         delete newEnabled[id];
         return newEnabled;
       });
+  
+      // Set hasCommander to false if the removed ship had a commander
+      if (hadCommander) {
+        setHasCommander(false);
+      }
     }
   };
 
@@ -208,40 +236,39 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
   };
   
   const handleSelectUpgrade = (upgrade: Upgrade) => {
+    if (upgrade.type === 'commander' && hasCommander) {
+      alert("Only one commander is allowed per fleet.");
+      return;
+    }
+
     let totalPointDifference = 0;
-  
+
     setSelectedShips(prevShips => 
       prevShips.map(ship => {
         if (ship.id === currentShipId) {
           const newUpgrade = { ...upgrade, slotIndex: currentUpgradeIndex };
           const updatedAssignedUpgrades = [...ship.assignedUpgrades];
           const existingUpgradeIndex = updatedAssignedUpgrades.findIndex(u => u.type === currentUpgradeType && u.slotIndex === currentUpgradeIndex);
-  
+
           let pointDifference = upgrade.points;
-  
+
           // Remove old upgrade if it exists
           if (existingUpgradeIndex !== -1) {
             const oldUpgrade = updatedAssignedUpgrades[existingUpgradeIndex];
-            // Remove old unique class
             if (oldUpgrade.unique) {
               removeUniqueClassName(oldUpgrade.name);
             }
             if (oldUpgrade["unique-class"]) {
               oldUpgrade["unique-class"].forEach(uc => removeUniqueClassName(uc));
             }
-            // Calculate point difference
             pointDifference = upgrade.points - oldUpgrade.points;
-          }
-  
-          totalPointDifference += pointDifference;
-  
-          // Add new upgrade
-          if (existingUpgradeIndex !== -1) {
             updatedAssignedUpgrades[existingUpgradeIndex] = newUpgrade;
           } else {
             updatedAssignedUpgrades.push(newUpgrade);
           }
-  
+
+          totalPointDifference += pointDifference;
+
           // Add new unique class
           if (upgrade.unique) {
             addUniqueClassName(upgrade.name);
@@ -249,7 +276,7 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
           if (upgrade["unique-class"]) {
             upgrade["unique-class"].forEach(uc => addUniqueClassName(uc));
           }
-  
+
           // Handle disabled upgrades
           const newDisabledUpgrades = [...(disabledUpgrades[ship.id] || [])];
           if (upgrade.restrictions?.disable_upgrades) {
@@ -259,7 +286,7 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
             newDisabledUpgrades.push('title');
           }
           setDisabledUpgrades({...disabledUpgrades, [ship.id]: newDisabledUpgrades});
-  
+
           // Handle enabled upgrades
           const newEnabledUpgrades = [...(enabledUpgrades[ship.id] || [])];
           if (upgrade.restrictions?.enable_upgrades) {
@@ -272,7 +299,7 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
               });
           }
           setEnabledUpgrades({...enabledUpgrades, [ship.id]: newEnabledUpgrades});
-  
+
           // Update filledSlots
           setFilledSlots(prevFilledSlots => {
             const shipSlots = prevFilledSlots[ship.id] || {};
@@ -288,7 +315,7 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
               }
             };
           });
-  
+
           if (upgrade.type === 'weapons-team-offensive-retro') {
             const weaponsTeamIndex = ship.availableUpgrades.indexOf('weapons-team');
             const offensiveRetroIndex = ship.availableUpgrades.indexOf('offensive-retro');
@@ -302,21 +329,34 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
               }
             }));
           }
-  
+
           return { ...ship, assignedUpgrades: updatedAssignedUpgrades };
         }
         return ship;
       })
     );
-  
+
     setPreviousPoints(points);
     setPreviousShipPoints(totalShipPoints);
     setPoints(prevPoints => prevPoints + totalPointDifference);
     setTotalShipPoints(prevTotal => prevTotal + totalPointDifference);
+
+    if (upgrade.type === 'commander') {
+      setHasCommander(true);
+    }
+
     setShowUpgradeSelector(false);
   };
+
   
   const handleRemoveUpgrade = (shipId: string, upgradeType: string, upgradeIndex: number) => {
+    const shipToUpdate = selectedShips.find(ship => ship.id === shipId);
+    const upgradeToRemove = shipToUpdate?.assignedUpgrades.find(u => u.type === upgradeType && u.slotIndex === upgradeIndex);
+  
+    if (upgradeToRemove && upgradeToRemove.type === 'commander') {
+      setHasCommander(false);
+    }
+  
     console.log('Before removal:', selectedShips);
     setSelectedShips(prevShips => 
       prevShips.map(ship => {
@@ -397,7 +437,6 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
               });
             });
   
-            // Update points
             setPreviousPoints(points);
             setPreviousShipPoints(totalShipPoints);
             setPoints(prevPoints => prevPoints - pointsToRemove);
@@ -405,8 +444,9 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
   
             return {
               ...ship,
+              points: ship.points,  // Keep the ship's base points unchanged
               assignedUpgrades: ship.assignedUpgrades.filter(u => 
-                !(u.type === upgradeType && u.slotIndex === upgradeIndex)
+                !upgradesToRemove.includes(u)
               )
             };
           }
@@ -416,6 +456,7 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
     );
     console.log('After removal:', selectedShips);
   };
+
 
   const handleCopyShip = (shipToCopy: Ship) => {
     const newShip = { 
@@ -437,32 +478,62 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
   };
 
   const handleSelectSquadron = (squadron: Squadron) => {
-    console.log('Selecting squadron:', squadron);
-    const newSquadron: Squadron = { 
-      ...squadron, 
-      id: Date.now().toString(),
-      count: 1,
-    };
-    setSelectedSquadrons(prevSquadrons => {
-      console.log('Previous squadrons:', prevSquadrons);
-      return [...prevSquadrons, newSquadron];
-    });
-    setPreviousPoints(points);
-    setPreviousSquadronPoints(totalSquadronPoints);
-    const newPoints = points + squadron.points;
-    setPoints(newPoints);
-    setTotalSquadronPoints(totalSquadronPoints + squadron.points);
-    setUniqueClassNames(prevNames => {
-      const newNames = [
-        ...prevNames, 
-        ...(squadron['unique-class'] || []),
-        squadron.name
-      ];
-      console.log('Updated unique class names:', newNames);
-      return Array.from(new Set(newNames)); // Remove duplicates
-    });
+    if (squadronToSwap) {
+      setSelectedSquadrons(prevSquadrons => 
+        prevSquadrons.map(s => {
+          if (s.id === squadronToSwap) {
+            // Remove unique class names from the old squadron
+            if (s.unique) {
+              removeUniqueClassName(s.name);
+            }
+            if (s['unique-class']) {
+              s['unique-class'].forEach(uc => removeUniqueClassName(uc));
+            }
+
+            const pointDifference = squadron.points - s.points;
+            setPreviousPoints(points);
+            setPreviousSquadronPoints(totalSquadronPoints);
+            setPoints(prevPoints => prevPoints + pointDifference);
+            setTotalSquadronPoints(prevTotal => prevTotal + pointDifference);
+
+            // Add unique class names for the new squadron
+            if (squadron.unique) {
+              addUniqueClassName(squadron.name);
+            }
+            if (squadron['unique-class']) {
+              squadron['unique-class'].forEach(uc => addUniqueClassName(uc));
+            }
+
+            return { ...squadron, id: Date.now().toString(), count: 1 };
+          }
+          return s;
+        })
+      );
+      setSquadronToSwap(null);
+    } else {
+      const newSquadron: Squadron = { 
+        ...squadron, 
+        id: Date.now().toString(),
+        count: 1,
+      };
+      setSelectedSquadrons(prevSquadrons => [...prevSquadrons, newSquadron]);
+      setPreviousPoints(points);
+      setPreviousSquadronPoints(totalSquadronPoints);
+      const newPoints = points + squadron.points;
+      setPoints(newPoints);
+      setTotalSquadronPoints(totalSquadronPoints + squadron.points);
+
+      // Add unique class names for the new squadron
+      if (squadron.unique) {
+        addUniqueClassName(squadron.name);
+      }
+      if (squadron['unique-class']) {
+        squadron['unique-class'].forEach(uc => addUniqueClassName(uc));
+      }
+    }
     setShowSquadronSelector(false);
   };
+
 
   const handleRemoveSquadron = (id: string) => {
     const squadronToRemove = selectedSquadrons.find(squadron => squadron.id === id);
@@ -502,21 +573,45 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
   };
 
   const handleDecrementSquadron = (id: string) => {
-    setSelectedSquadrons(squadrons =>
-      squadrons.map(squadron =>
-        squadron.id === id && (squadron.count || 1) > 1
-          ? { ...squadron, count: (squadron.count || 1) - 1 }
-          : squadron
-      )
-    );
-    const squadron = selectedSquadrons.find(s => s.id === id);
-    if (squadron && (squadron.count || 1) > 1) {
-      setPreviousPoints(points);
-      setPreviousSquadronPoints(totalSquadronPoints);
-      const newPoints = points - squadron.points;
-      setPoints(newPoints);
-      setTotalSquadronPoints(totalSquadronPoints - squadron.points);
-    }
+    setSelectedSquadrons(prevSquadrons => {
+      return prevSquadrons.reduce((acc, squadron) => {
+        if (squadron.id === id) {
+          const newCount = (squadron.count || 1) - 1;
+          if (newCount === 0) {
+            // Squadron will be removed
+            setPreviousPoints(points);
+            setPreviousSquadronPoints(totalSquadronPoints);
+            const newPoints = points - squadron.points;
+            setPoints(newPoints);
+            setTotalSquadronPoints(totalSquadronPoints - squadron.points);
+  
+            // Remove unique class names if it's the last squadron
+            if (squadron.unique) {
+              removeUniqueClassName(squadron.name);
+            }
+            if (squadron['unique-class']) {
+              squadron['unique-class'].forEach(uc => removeUniqueClassName(uc));
+            }
+            // Don't add this squadron to the accumulator
+            return acc;
+          } else {
+            // Squadron count is decremented
+            setPreviousPoints(points);
+            setPreviousSquadronPoints(totalSquadronPoints);
+            const newPoints = points - squadron.points;
+            setPoints(newPoints);
+            setTotalSquadronPoints(totalSquadronPoints - squadron.points);
+            return [...acc, { ...squadron, count: newCount }];
+          }
+        }
+        return [...acc, squadron];
+      }, [] as Squadron[]);
+    });
+  };
+
+  const handleSwapSquadron = (id: string) => {
+    setShowSquadronSelector(true);
+    setSquadronToSwap(id);
   };
 
   const handleSelectAssaultObjective = (objective: ObjectiveModel) => {
@@ -567,6 +662,7 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
     const newPoints = points - totalShipPoints;
     setPoints(newPoints);
     setTotalShipPoints(0);
+    setHasCommander(false);  // Add this line
   };
   
   const clearAllSquadrons = () => {
@@ -831,14 +927,29 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
         
         <PointsDisplay points={points} previousPoints={previousPoints} />
       </div>
-
-      <SectionHeader 
-        title="Ships" 
-        points={totalShipPoints} 
-        previousPoints={previousShipPoints} 
-        show={selectedShips.length > 0}
-        onClearAll={clearAllShips}
-      />
+  
+      {selectedShips.length > 0 ? (
+        <SectionHeader 
+          title="Ships" 
+          points={totalShipPoints} 
+          previousPoints={previousShipPoints} 
+          show={true}
+          onClearAll={clearAllShips}
+          onAdd={handleAddShip}
+        />
+      ) : (
+        <Card className="mb-4 relative">
+          <Button 
+            className="w-full justify-between bg-white dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+            variant="outline" 
+            onClick={handleAddShip}
+          >
+            ADD SHIP <Filter size={16} onClick={(e) => { e.stopPropagation(); setShowFilter(!showFilter); }} />
+          </Button>
+          {showFilter && <ShipFilter onApplyFilter={setShipFilter} onClose={() => setShowFilter(false)} />}
+        </Card>
+      )}
+  
       <div className="mb-4">
         {selectedShips.map((ship) => (
           <SelectedShip
@@ -851,106 +962,72 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
             disabledUpgrades={disabledUpgrades[ship.id] || []}
             enabledUpgrades={enabledUpgrades[ship.id] || []}
             filledSlots={filledSlots[ship.id] || {}}
+            hasCommander={hasCommander}
+            traits={ship.traits || []}
           />
         ))}
       </div>
-
-      <SectionHeader 
-        title="Squadrons" 
-        points={totalSquadronPoints} 
-        previousPoints={previousSquadronPoints} 
-        show={selectedSquadrons.length > 0}
-        onClearAll={clearAllSquadrons}
-      />
+  
+      {selectedSquadrons.length > 0 ? (
+        <SectionHeader 
+          title="Squadrons" 
+          points={totalSquadronPoints} 
+          previousPoints={previousSquadronPoints} 
+          show={true}
+          onClearAll={clearAllSquadrons}
+          onAdd={handleAddSquadron}
+        />
+      ) : (
+        <Card className="mb-4 relative">
+          <Button 
+            className="w-full justify-between bg-white dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+            variant="outline" 
+            onClick={handleAddSquadron}
+          >
+            ADD SQUADRON <Filter size={16} onClick={(e) => { e.stopPropagation(); setShowFilter(!showFilter); }} />
+          </Button>
+          {showFilter && <SquadronFilter onApplyFilter={setSquadronFilter} onClose={() => setShowFilter(false)} />}
+        </Card>
+      )}
+  
       <div className="mb-4">
-        {selectedSquadrons.map((squadron) => (
-          <SelectedSquadron key={squadron.id} squadron={squadron} onRemove={handleRemoveSquadron} onIncrement={handleIncrementSquadron} onDecrement={handleDecrementSquadron} />
-        ))}
+      {selectedSquadrons.map((squadron) => (
+        <SelectedSquadron
+          key={squadron.id}
+          squadron={squadron}
+          onRemove={handleRemoveSquadron}
+          onIncrement={handleIncrementSquadron}
+          onDecrement={handleDecrementSquadron}
+          onSwapSquadron={handleSwapSquadron}
+        />
+      ))}
       </div>
 
-      <Card className="mb-4 relative">
-        <Button 
-          className="w-full justify-between bg-white dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
-          variant="outline" 
-          onClick={handleAddShip}
-        >
-          ADD SHIP <Filter size={16} onClick={(e) => { e.stopPropagation(); setShowFilter(!showFilter); }} />
-        </Button>
-        {showFilter && <ShipFilter onApplyFilter={setShipFilter} onClose={() => setShowFilter(false)} />}
-      </Card>
-
-      <Card className="mb-4 relative">
-        <Button 
-          className="w-full justify-between bg-white dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
-          variant="outline" 
-          onClick={handleAddSquadron}
-        >
-          ADD SQUADRON <Filter size={16} onClick={(e) => { e.stopPropagation(); setShowFilter(!showFilter); }} />
-        </Button>
-        {showFilter && <SquadronFilter onApplyFilter={setSquadronFilter} onClose={() => setShowFilter(false)} />}
-      </Card>
 
       <div className="space-y-2 mb-4">
-        <Button 
-          variant="outline" 
-          className="w-full justify-start hover:bg-[#EB3F3A] hover:text-white transition-colors"
-          onClick={() => setShowAssaultObjectiveSelector(true)}
-        >
-          {selectedAssaultObjective ? (
-            <div className="flex justify-between items-center w-full">
-              <div className="flex items-center">
-                <div className="w-4 h-4 bg-[#EB3F3A] mr-2"></div>
-                {selectedAssaultObjective.name}
-              </div>
-              <button 
-                onClick={(e) => { e.stopPropagation(); handleRemoveAssaultObjective(); }}
-                className="text-red-500 hover:text-red-700"
-              >
-                ✕
-              </button>
-            </div>
-          ) : "ADD ASSAULT"}
-        </Button>
-        <Button 
-          variant="outline" 
-          className="w-full justify-start hover:bg-[#FAEE13] hover:text-black transition-colors"
-          onClick={() => setShowDefenseObjectiveSelector(true)}
-        >
-          {selectedDefenseObjective ? (
-            <div className="flex justify-between items-center w-full">
-              <div className="flex items-center">
-                <div className="w-4 h-4 bg-[#FAEE13] mr-2"></div>
-                {selectedDefenseObjective.name}
-              </div>
-              <button 
-                onClick={(e) => { e.stopPropagation(); handleRemoveDefenseObjective(); }}
-                className="text-red-500 hover:text-red-700"
-              >
-                ✕
-              </button>
-            </div>
-          ) : "ADD DEFENSE"}
-        </Button>
-        <Button 
-          variant="outline" 
-          className="w-full justify-start hover:bg-[#C2E1F4] hover:text-black transition-colors"
-          onClick={() => setShowNavigationObjectiveSelector(true)}
-        >
-          {selectedNavigationObjective ? (
-            <div className="flex justify-between items-center w-full">
-              <div className="flex items-center">
-                <div className="w-4 h-4 bg-[#C2E1F4] mr-2"></div>
-                {selectedNavigationObjective.name}
-              </div>
-              <button 
-                onClick={(e) => { e.stopPropagation(); handleRemoveNavigationObjective(); }}
-                className="text-red-500 hover:text-red-700"
-              >
-                ✕
-              </button>
-            </div>
-          ) : "ADD NAVIGATION"}
-        </Button>
+      <SwipeableObjective
+        type="assault"
+        selectedObjective={selectedAssaultObjective}
+        onRemove={handleRemoveAssaultObjective}
+        onOpen={() => setShowAssaultObjectiveSelector(true)}
+        color="#EB3F3A"
+      />
+
+      <SwipeableObjective
+        type="defense"
+        selectedObjective={selectedDefenseObjective}
+        onRemove={handleRemoveDefenseObjective}
+        onOpen={() => setShowDefenseObjectiveSelector(true)}
+        color="#FAEE13"
+      />
+
+      <SwipeableObjective
+        type="navigation"
+        selectedObjective={selectedNavigationObjective}
+        onRemove={handleRemoveNavigationObjective}
+        onOpen={() => setShowNavigationObjectiveSelector(true)}
+        color="#C2E1F4"
+      />
       </div>
 
       <div className="flex flex-wrap justify-between gap-2">
@@ -1019,9 +1096,12 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
           selectedUpgrades={selectedShips.flatMap(ship => ship.assignedUpgrades)}
           shipType={selectedShips.find(ship => ship.id === currentShipId)?.name}
           chassis={selectedShips.find(ship => ship.id === currentShipId)?.chassis}
+          shipSize={selectedShips.find(ship => ship.id === currentShipId)?.size}
+          shipTraits={selectedShips.find(ship => ship.id === currentShipId)?.traits}
           currentShipUpgrades={selectedShips.find(ship => ship.id === currentShipId)?.assignedUpgrades || []}
           disqualifiedUpgrades={disabledUpgrades[currentShipId] || []}
           disabledUpgrades={disabledUpgrades[currentShipId] || []}
+          hasCommander={hasCommander}
         />
       )}
 

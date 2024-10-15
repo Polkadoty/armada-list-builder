@@ -14,6 +14,8 @@ export interface ShipModel {
   upgrades?: string[];
   unique: boolean;
   chassis: string;
+  size?: string;
+  traits?: string[];
 }
 
 interface Ship {
@@ -39,22 +41,40 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
     const fetchShips = async () => {
       const cacheKey = `ships_${faction}`;
       const cachedShips = localStorage.getItem(cacheKey);
-
+    
       if (cachedShips) {
         setShips(JSON.parse(cachedShips));
       } else {
         try {
           const response = await axios.get(`https://api.swarmada.wiki/api/ships/search?faction=${faction}`);
           const shipData: Ship = response.data.ships;
-          const flattenedShips = Object.values(shipData).flatMap(chassis => 
-            Object.values(chassis.models).filter(model => 
+          const flattenedShips = await Promise.all(Object.entries(shipData).map(async ([chassisName, chassisData]) => {
+            const chassisResponse = await axios.get(`https://api.swarmada.wiki/api/ships/${chassisName}`);
+            const chassisInfo = chassisResponse.data.ships[chassisName];
+            return Object.values(chassisData.models).map(model => {
+              const filteredModel = Object.fromEntries(
+                Object.entries({
+                  ...model,
+                  size: chassisInfo.size,
+                  id: `${chassisName}-${model.name}`,
+                  traits: model.traits || [],
+                }).map(([key, value]) => {
+                  if (Array.isArray(value)) {
+                    return [key, value.filter(item => item.trim() !== '')];
+                  }
+                  return [key, value];
+                }).filter(([, value]) => value !== '' && value !== null && value !== undefined)
+              ) as ShipModel;
+              return filteredModel;
+            }).filter(model => 
               model.faction === faction &&
               model.points >= filter.minPoints &&
               model.points <= filter.maxPoints
-            )
-          );
-          setShips(flattenedShips);
-          localStorage.setItem(cacheKey, JSON.stringify(flattenedShips));
+            );
+          }));
+          const allShips = flattenedShips.flat();
+          setShips(allShips);
+          localStorage.setItem(cacheKey, JSON.stringify(allShips));
         } catch (error) {
           console.error('Error fetching ships:', error);
         }
@@ -79,16 +99,16 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <Card className="w-full h-full sm:w-11/12 sm:h-5/6 lg:w-3/4 lg:h-3/4 overflow-auto relative">
-        <CardContent className="p-2 sm:p-4">
-          <div className="flex justify-between items-center mb-2 sm:mb-4">
-            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold">Select a Ship</h2>
-            <Button variant="ghost" onClick={onClose} className="p-1">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </Button>
-          </div>
+      <Card className="w-full h-full sm:w-11/12 sm:h-5/6 lg:w-3/4 lg:h-3/4 flex flex-col">
+        <div className="p-2 sm:p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+          <h2 className="text-lg sm:text-xl lg:text-2xl font-bold">Select a Ship</h2>
+          <Button variant="ghost" onClick={onClose} className="p-1">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </Button>
+        </div>
+        <CardContent className="p-2 sm:p-4 flex-grow overflow-auto">
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3 md:gap-4">
             {ships.map((ship) => (
               <div key={ship.id} className="w-full aspect-[8.75/15]">
@@ -103,10 +123,9 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
                     <Image
                       src={ship.cardimage}
                       alt={ship.name}
-                      layout="fill"
-                      objectFit="cover"
-                      objectPosition="center"
-                      className="scale-[103%]"
+                      fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      className="object-cover object-center scale-[103%]"
                       onError={(e) => {
                         e.currentTarget.src = '/placeholder-ship.png';
                       }}
