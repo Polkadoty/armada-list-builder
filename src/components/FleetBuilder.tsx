@@ -751,79 +751,152 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
     const factionLogo = factionLogos[faction as keyof typeof factionLogos];
     
     const content = `
-      <!DOCTYPE html>
-      <html lang="en">
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>${fleetName}</title>
-        <style>
-          @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
-          body { 
-            font-family: 'Roboto', sans-serif; 
-            line-height: 1.6; 
-            max-width: 800px; 
-            margin: 0 auto; 
-            padding: 20px;
-          }
-          .logo { width: 100px; height: 100px; }
-          h1 { margin-bottom: 0; font-size: 24px; }
-          h2 { margin-top: 0; color: #666; font-size: 18px; }
-          .two-columns { 
-            display: flex; 
-            justify-content: space-between; 
-          }
-          .column { width: 48%; }
-          .section { margin-top: 20px; }
-          .ship, .squadron { margin-bottom: 10px; }
-          .upgrade { margin-left: 20px; }
-          .total { font-weight: bold; margin-top: 20px; }
-          .objectives { margin-top: 30px; border-top: 1px solid #ccc; padding-top: 20px; }
-        </style>
-      </head>
-      <body>
-        <img src="${factionLogo}" alt="${faction} logo" class="logo">
-        <h1>${fleetName}</h1>
-        <h2>Faction: ${faction.charAt(0).toUpperCase() + faction.slice(1)}</h2>
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${fleetName}</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
         
-        <div class="two-columns">
-          <div class="column">
-            <div class="section">
-              <h3>Ships</h3>
-              ${selectedShips.map(ship => `
-                <div class="ship">
-                  ${ship.name} (${ship.points})
-                  ${ship.assignedUpgrades.map(upgrade => `
-                    <div class="upgrade">• ${upgrade.name} (${upgrade.points})</div>
-                  `).join('')}
-                  = ${ship.points + ship.assignedUpgrades.reduce((total, upgrade) => total + upgrade.points, 0)} Points
-                </div>
-              `).join('')}
+        body {
+        font-family: 'Roboto', sans-serif;
+        line-height: 1.5;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 40px 20px;
+        background-color: #f9f9f9;
+        }
+
+        .header {
+        display: grid;
+        grid-template-columns: 1fr 40px 1fr;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 1.25em;
+        }
+
+        .fleet-name {
+        font-size: 28px;
+        font-weight: bold;
+        text-align: right;
+        }
+
+        .total-points {
+        font-size: 28px;
+        font-weight: bold;
+        text-align: left;
+        }
+
+        .logo {
+        width: 40px;
+        height: 40px;
+        object-fit: contain;
+        }
+
+        .grid {
+        border-top: 1px solid #ddd;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1em;
+        padding-top: 1.5em;
+        margin-bottom: 1.5em;
+        }
+
+        .section {
+        background-color: #fff;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 1em;
+        }
+
+        .ship, .squadron {
+        margin-bottom: 12px;
+        }
+
+        .upgrade {
+        margin-left: 1em;
+        font-size: 14px;
+        color: #555;
+        }
+
+        .objectives {
+        display: flex;
+        justify-content: space-between;
+        gap: 1em;
+        margin-top: 1.5em;
+        border-top: 1px solid #ddd;
+        padding-top: 1.5em;
+        }
+
+        .objective-card {
+        flex: 1;
+        background-color: #fff;
+        border: 1px solid #ddd;
+        border-radius: .5em;
+        padding: .5em;
+        text-align: center;
+        }
+
+        .objective-card h4 {
+        margin: 0px;
+        font-size: 18px;
+        font-weight: bold;
+        }
+
+        .objective-card p {
+        margin: 0;
+        font-size: 1em;
+        color: #666;
+        }
+    </style>
+    </head>
+    <body>
+    <div class="header">
+        <div class="fleet-name">${fleetName}</div>
+        <img src="${factionLogo}" alt="Faction logo" class="logo">
+        <div class="total-points">${points} points</div>
+    </div>
+
+    <div class="grid">
+        ${selectedShips.map(ship => `
+        <div class="section">
+            <strong>${ship.name}</strong> (${ship.points} points)
+            ${ship.assignedUpgrades.map(upgrade => `
+            <div class="upgrade">
+                <div style="display: flex; align-items: center; gap: 0.25em;"><img src="/icons/${upgrade.type}.svg" style="width: 16px; height: 16px;"/> ${upgrade.name} (${upgrade.points} points)</div>
             </div>
-          </div>
-          
-          <div class="column">
-            <div class="section">
-              <h3>Squadrons</h3>
-              ${selectedSquadrons.map(squadron => `
-                <div class="squadron">• ${squadron.name} (${squadron.points})${squadron.count > 1 ? ` x${squadron.count}` : ''}</div>
-              `).join('')}
-              = ${totalSquadronPoints} Points
-            </div>
-          </div>
+            `).join('')}
+            <div><strong>Total:</strong> ${ship.points + ship.assignedUpgrades.reduce((total, upgrade) => total + upgrade.points, 0)} points</div>
         </div>
-        
-        <div class="total">Total Fleet Points: ${points}</div>
-        
-        <div class="objectives">
-          <h3>Objectives</h3>
-          <p>Assault: ${selectedAssaultObjective ? selectedAssaultObjective.name : 'None'}</p>
-          <p>Defense: ${selectedDefenseObjective ? selectedDefenseObjective.name : 'None'}</p>
-          <p>Navigation: ${selectedNavigationObjective ? selectedNavigationObjective.name : 'None'}</p>
+        `).join('')}
+    </div>
+
+    <div class="grid">
+        ${selectedSquadrons.map(squadron => `
+        <div class="section">
+            <strong>${squadron.name}</strong> (${squadron.points} points)${squadron.count > 1 ? ` x${squadron.count}` : ''}
         </div>
-      </body>
-      </html>
-    `;
+        `).join('')}
+    </div>
+
+    <div class="objectives">
+        <div class="objective-card">
+        <h4>Assault</h4>
+        <p>${selectedAssaultObjective ? selectedAssaultObjective.name : 'None'}</p>
+        </div>
+        <div class="objective-card">
+        <h4>Defense</h4>
+        <p>${selectedDefenseObjective ? selectedDefenseObjective.name : 'None'}</p>
+        </div>
+        <div class="objective-card">
+        <h4>Navigation</h4>
+        <p>${selectedNavigationObjective ? selectedNavigationObjective.name : 'None'}</p>
+        </div>
+    </div>
+    </body>
+    </html>`;
     
     return content;
   };
