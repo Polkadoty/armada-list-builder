@@ -19,7 +19,7 @@ export function SwipeableObjective({ type, selectedObjective, onRemove, onOpen, 
   const startY = useRef(0);
   const isHorizontalSwipe = useRef(false);
 
-  const SWIPE_THRESHOLD = 50;
+  const SWIPE_THRESHOLD = 100;
   const ANGLE_THRESHOLD = 30; // Degrees
 
   const handleTouchStart = (e: React.TouchEvent) => {

@@ -29,7 +29,7 @@ export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRem
   const startY = useRef(0);
   const isHorizontalSwipe = useRef(false);
 
-  const SWIPE_THRESHOLD = 50;
+  const SWIPE_THRESHOLD = 100;
   const ANGLE_THRESHOLD = 30; // Degrees
 
   const handleShipTouchStart = (e: React.TouchEvent) => {
@@ -188,7 +188,7 @@ function SwipeableUpgrade({ upgrade, onSwipe, onSwap, onRemove }: SwipeableUpgra
   const startY = useRef(0);
   const isHorizontalSwipe = useRef(false);
 
-  const SWIPE_THRESHOLD = 50;
+  const SWIPE_THRESHOLD = 100;
   const ANGLE_THRESHOLD = 30; // Degrees
 
   const handleTouchStart = (e: React.TouchEvent) => {
