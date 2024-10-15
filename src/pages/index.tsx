@@ -33,7 +33,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row relative">
-      <StarryBackground show={true} />
+      <StarryBackground show={true} lightDisabled={true}/>
       <div className={`bg-white dark:bg-transparent p-8 flex-grow lg:w-1/3 lg:min-w-[300px] relative z-10`}>
         <div className="flex justify-end space-x-2 mb-4">
           <SettingsButton />

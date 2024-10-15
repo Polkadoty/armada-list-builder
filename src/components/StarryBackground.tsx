@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 
-const StarryBackground: React.FC<{ show: boolean }> = ({ show }) => {
+const StarryBackground: React.FC<{ show: boolean, lightDisabled?: boolean }> = ({ show, lightDisabled }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const animationFrameIdRef = useRef<number>();
@@ -114,10 +114,14 @@ const StarryBackground: React.FC<{ show: boolean }> = ({ show }) => {
   }, [dimensions, stars, dust]);
 
   return (
-    <canvas 
-      ref={canvasRef} 
-      className={`fixed inset-0 z-[-1] transition-opacity duration-300 ${show ? 'opacity-100' : 'opacity-0'}`} 
-    />
+    <>
+        <img src='/images/background.jpg' className='w-full h-full z-[-1] fixed dark:hidden'/>
+
+        <canvas 
+        ref={canvasRef} 
+        className={`fixed inset-0 z-[-1] transition-opacity duration-300 ${show ? 'opacity-100' : 'opacity-0'} ${lightDisabled ? '' : 'hidden dark:block'}`} 
+        />
+    </>
   );
 };
 
