@@ -13,8 +13,6 @@ interface SquadronSelectorProps {
   selectedSquadrons: Squadron[];
 }
 
-const CACHE_VERSION = '1';
-
 export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, selectedSquadrons }: SquadronSelectorProps) {
   const [squadrons, setSquadrons] = useState<Squadron[]>([]);
   const [showPopup, setShowPopup] = useState(false);

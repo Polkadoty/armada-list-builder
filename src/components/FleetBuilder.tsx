@@ -144,13 +144,6 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
   const [filledSlots, setFilledSlots] = useState<Record<string, Record<string, number[]>>>({});
   const [hasCommander, setHasCommander] = useState(false);
   const [squadronToSwap, setSquadronToSwap] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [loadingProgress, setLoadingProgress] = useState(0);
-  const [loadingMessage, setLoadingMessage] = useState('');
-
-  useEffect(() => {
-    checkAndFetchData(setIsLoading, setLoadingProgress, setLoadingMessage);
-  }, []);
 
 
   const handleNameClick = () => {
