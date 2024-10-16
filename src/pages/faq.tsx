@@ -7,17 +7,12 @@ import Link from 'next/link';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { SettingsButton } from '../components/SettingsButton';
 import StarryBackground from '../components/StarryBackground';
-import { useState } from 'react';
 
 interface FAQProps {
   content: string;
 }
 
 export default function FAQ({ content }: FAQProps) {
-  const [isLoading, setIsLoading] = useState(false);
-  const [loadingProgress, setLoadingProgress] = useState(0);
-  const [loadingMessage, setLoadingMessage] = useState('');
-
   return (
     <div className="min-h-screen flex flex-col relative">
       <StarryBackground show={true} />
@@ -30,9 +25,9 @@ export default function FAQ({ content }: FAQProps) {
           </Link>
           <div className="flex space-x-2">
             <SettingsButton 
-              setIsLoading={setIsLoading}
-              setLoadingProgress={setLoadingProgress}
-              setLoadingMessage={setLoadingMessage}
+              setIsLoading={() => {}}
+              setLoadingProgress={() => {}}
+              setLoadingMessage={() => {}}
             />
             <ThemeToggle />
           </div>
