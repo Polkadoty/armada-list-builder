@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import Image from 'next/image';
 
 const StarryBackground: React.FC<{ show: boolean, lightDisabled?: boolean }> = ({ show, lightDisabled }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -126,7 +127,7 @@ const StarryBackground: React.FC<{ show: boolean, lightDisabled?: boolean }> = (
 
   return (
     <>
-      <img src='/images/background.jpg' className='w-full h-full z-[-1] fixed dark:hidden'/>
+      <Image src='/images/background.jpg' alt="Background" className='w-full h-full z-[-1] fixed dark:hidden'/>
 
       <canvas 
         ref={canvasRef} 

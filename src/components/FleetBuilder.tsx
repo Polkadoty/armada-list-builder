@@ -22,6 +22,7 @@ import { factionLogos } from '../pages/[faction]';
 import { useUniqueClassContext } from '../contexts/UniqueClassContext';
 import { SwipeableObjective } from './SwipeableObjective';
 
+
 export interface Ship {
   id: string;
   name: string;
@@ -142,6 +143,7 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
   const [filledSlots, setFilledSlots] = useState<Record<string, Record<string, number[]>>>({});
   const [hasCommander, setHasCommander] = useState(false);
   const [squadronToSwap, setSquadronToSwap] = useState<string | null>(null);
+
 
   const handleNameClick = () => {
     setIsEditingName(true);

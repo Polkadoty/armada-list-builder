@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { SettingsButton } from '../components/SettingsButton';
 import StarryBackground from '../components/StarryBackground';
 import Link from 'next/link';
+import { LoadingScreen } from '../components/LoadingScreen';
+import { checkAndFetchData } from '../utils/dataFetcher';
 
 // a
 
@@ -20,12 +22,16 @@ export default function Home() {
   const [isWideScreen, setIsWideScreen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [hoveredFaction, setHoveredFaction] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [loadingMessage, setLoadingMessage] = useState('');
 
   useEffect(() => {
     setMounted(true);
     const handleResize = () => setIsWideScreen(window.innerWidth >= 1024);
     handleResize();
     window.addEventListener('resize', handleResize);
+    checkAndFetchData(setIsLoading, setLoadingProgress, setLoadingMessage);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
@@ -34,9 +40,10 @@ export default function Home() {
   return (
     <div className="min-h-screen flex flex-col lg:flex-row relative">
       <StarryBackground show={true} lightDisabled={true}/>
+      {isLoading && <LoadingScreen progress={loadingProgress} message={loadingMessage} />}
       <div className={`bg-white dark:bg-transparent p-8 flex-grow lg:w-1/3 lg:min-w-[300px] relative z-10`}>
         <div className="flex justify-end space-x-2 mb-4">
-          <SettingsButton />
+          <SettingsButton setIsLoading={setIsLoading} setLoadingProgress={setLoadingProgress} setLoadingMessage={setLoadingMessage} />
           <ThemeToggle />
         </div>
         <h1 className="text-3xl font-bold mb-8 text-center text-gray-900 dark:text-white">Armada Fleet Builder</h1>

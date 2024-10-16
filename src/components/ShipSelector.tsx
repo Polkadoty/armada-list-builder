@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Image from 'next/image';
 import { useUniqueClassContext } from '../contexts/UniqueClassContext';
+import axios from 'axios';
 
 export interface ShipModel {
   id: string;
@@ -41,7 +41,7 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
     const fetchShips = async () => {
       const cacheKey = `ships_${faction}`;
       const cachedShips = localStorage.getItem(cacheKey);
-    
+
       if (cachedShips) {
         setShips(JSON.parse(cachedShips));
       } else {
@@ -58,6 +58,7 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
                   size: chassisInfo.size,
                   id: `${chassisName}-${model.name}`,
                   traits: model.traits || [],
+                  chassis: chassisName,
                 }).map(([key, value]) => {
                   if (Array.isArray(value)) {
                     return [key, value.filter(item => item.trim() !== '')];
@@ -82,7 +83,7 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
     };
 
     fetchShips();
-  }, [faction, filter]);
+  }, [faction, filter.minPoints, filter.maxPoints]);
 
   const isShipAvailable = (ship: ShipModel) => {
     return !ship.unique || !uniqueClassNames.includes(ship.name);
