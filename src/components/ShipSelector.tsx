@@ -44,10 +44,12 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
         const shipData: Ship = JSON.parse(cachedShips).ships;
         const flattenedShips = Object.entries(shipData).flatMap(([chassisName, chassisData]) => {
           return Object.values(chassisData.models).map(model => {
+            const firstModelKey = Object.keys(chassisData.models)[0];
+            const chassisSize = chassisData.models[firstModelKey].size;
             const filteredModel = Object.fromEntries(
               Object.entries({
                 ...model,
-                size: (chassisData as any).size, // Use type assertion here
+                size: chassisSize,
                 id: `${chassisName}-${model.name}`,
                 traits: model.traits || [],
                 chassis: chassisName,
