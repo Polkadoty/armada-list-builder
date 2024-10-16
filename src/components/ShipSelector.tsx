@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Image from 'next/image';
 import { useUniqueClassContext } from '../contexts/UniqueClassContext';
+import axios from 'axios';
 
 export interface ShipModel {
   id: string;
@@ -38,38 +39,46 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
 
   useEffect(() => {
     const fetchShips = async () => {
-      const cachedShips = localStorage.getItem('ships');
-      
+      const cacheKey = `ships_${faction}`;
+      const cachedShips = localStorage.getItem(cacheKey);
+
       if (cachedShips) {
-        const shipData: Ship = JSON.parse(cachedShips).ships;
-        const flattenedShips = Object.entries(shipData).flatMap(([chassisName, chassisData]) => {
-          return Object.values(chassisData.models).map(model => {
-            const firstModelKey = Object.keys(chassisData.models)[0];
-            const chassisSize = chassisData.models[firstModelKey].size;
-            const filteredModel = Object.fromEntries(
-              Object.entries({
-                ...model,
-                size: chassisSize,
-                id: `${chassisName}-${model.name}`,
-                traits: model.traits || [],
-                chassis: chassisName,
-              }).map(([key, value]) => {
-                if (Array.isArray(value)) {
-                  return [key, value.filter(item => item.trim() !== '')];
-                }
-                return [key, value];
-              }).filter(([, value]) => value !== '' && value !== null && value !== undefined)
-            ) as ShipModel;
-            return filteredModel;
-          }).filter(model => 
-            model.faction === faction &&
-            model.points >= filter.minPoints &&
-            model.points <= filter.maxPoints
-          );
-        });
-        setShips(flattenedShips);
+        setShips(JSON.parse(cachedShips));
       } else {
-        console.error('Ships data not found in localStorage');
+        try {
+          const response = await axios.get(`https://api.swarmada.wiki/api/ships/search?faction=${faction}`);
+          const shipData: Ship = response.data.ships;
+          const flattenedShips = await Promise.all(Object.entries(shipData).map(async ([chassisName, chassisData]) => {
+            const chassisResponse = await axios.get(`https://api.swarmada.wiki/api/ships/${chassisName}`);
+            const chassisInfo = chassisResponse.data.ships[chassisName];
+            return Object.values(chassisData.models).map(model => {
+              const filteredModel = Object.fromEntries(
+                Object.entries({
+                  ...model,
+                  size: chassisInfo.size,
+                  id: `${chassisName}-${model.name}`,
+                  traits: model.traits || [],
+                  chassis: chassisName,
+                }).map(([key, value]) => {
+                  if (Array.isArray(value)) {
+                    return [key, value.filter(item => item.trim() !== '')];
+                  }
+                  return [key, value];
+                }).filter(([, value]) => value !== '' && value !== null && value !== undefined)
+              ) as ShipModel;
+              return filteredModel;
+            }).filter(model => 
+              model.faction === faction &&
+              model.points >= filter.minPoints &&
+              model.points <= filter.maxPoints
+            );
+          }));
+          const allShips = flattenedShips.flat();
+          setShips(allShips);
+          localStorage.setItem(cacheKey, JSON.stringify(allShips));
+        } catch (error) {
+          console.error('Error fetching ships:', error);
+        }
       }
     };
 
