@@ -11,6 +11,13 @@ export interface ObjectiveModel {
   cardimage: string;
 }
 
+interface CachedObjective {
+  _id: string;
+  name: string;
+  type: string;
+  cardimage: string;
+}
+
 interface ObjectiveSelectorProps {
   type: 'assault' | 'defense' | 'navigation';
   onSelectObjective: (objective: ObjectiveModel) => void;
@@ -22,15 +29,15 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose }: Objectiv
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchObjectives = async () => {
+    const fetchObjectives = () => {
       setLoading(true);
       try {
         const cachedObjectives = localStorage.getItem('objectives');
         if (cachedObjectives) {
-          const objectiveData = JSON.parse(cachedObjectives).objectives;
+          const objectiveData = JSON.parse(cachedObjectives).objectives as Record<string, CachedObjective>;
           const flattenedObjectives = Object.values(objectiveData)
-            .filter((objective: any) => objective.type === type)
-            .map((objective: any) => ({
+            .filter((objective) => objective.type === type)
+            .map((objective) => ({
               id: objective._id,
               name: objective.name,
               type: objective.type,
@@ -38,16 +45,7 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose }: Objectiv
             }));
           setObjectives(flattenedObjectives);
         } else {
-          // Fallback to API call if cache is not available
-          const response = await axios.get(`https://api.swarmada.wiki/api/objectives/search?type=${type}`);
-          const objectiveData = response.data.objectives;
-          const flattenedObjectives = Object.values(objectiveData).map((objective) => ({
-            id: (objective as { _id: string })._id,
-            name: (objective as { name: string }).name,
-            type: (objective as { type: string }).type,
-            cardimage: validateImageUrl((objective as { cardimage: string }).cardimage),
-          }));
-          setObjectives(flattenedObjectives);
+          console.error('Objectives data not found in localStorage');
         }
       } catch (error) {
         console.error('Error fetching objectives:', error);
