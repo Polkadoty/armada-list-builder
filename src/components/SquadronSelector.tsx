@@ -41,7 +41,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
       const cachedLegacySquadrons = localStorage.getItem('legacySquadrons');
       const cachedLegendsSquadrons = localStorage.getItem('legendsSquadrons');
       
-      let squadronMap = new Map<string, Squadron>();
+      const squadronMap = new Map<string, Squadron>();
 
       const processSquadrons = (data: SquadronData, prefix: string = '') => {
         if (data && data.squadrons) {

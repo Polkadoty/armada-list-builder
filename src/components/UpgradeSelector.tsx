@@ -30,7 +30,6 @@ interface UpgradeData {
 }
 
 export default function UpgradeSelector({
-  id,
   upgradeType,
   faction,
   onSelectUpgrade,
@@ -45,7 +44,6 @@ export default function UpgradeSelector({
   disabledUpgrades,
   hasCommander
 }: UpgradeSelectorProps) {
-  const [upgrades, setUpgrades] = useState<Upgrade[]>([]);
   const [loading, setLoading] = useState(true);
   const { uniqueClassNames, addUniqueClassName } = useUniqueClassContext();
   const [allUpgrades, setAllUpgrades] = useState<Upgrade[]>([]);
@@ -114,16 +112,10 @@ export default function UpgradeSelector({
           ? upgrade.bound_shiptype === chassis
           : true;
 
-        // console.log('Upgrade:', upgrade.name, 'Type:', upgrade.type, 'Faction:', upgrade.faction, 'Bound shiptype:', upgrade.bound_shiptype);
-        // console.log('Faction match:', factionMatch, 'Chassis match:', chassisMatch);
-
         return upgrade.type === upgradeType &&
           factionMatch &&
           chassisMatch;
       });
-
-      // console.log('Filtered upgrades:', filteredUpgrades);
-      // console.log('Current upgradeType:', upgradeType, 'faction:', faction, 'chassis:', chassis);
 
       setAllUpgrades(filteredUpgrades);
       setDisplayedUpgrades(filteredUpgrades);
