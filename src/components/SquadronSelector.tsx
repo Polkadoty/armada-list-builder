@@ -4,6 +4,9 @@ import { Button } from "@/components/ui/button";
 import Image from 'next/image';
 import { Squadron } from './FleetBuilder';
 import { useUniqueClassContext } from '../contexts/UniqueClassContext';
+import { SortToggleGroup, SortOption } from '@/components/SortToggleGroup';
+import { Pencil, Search, X } from 'lucide-react';
+import { Input } from "@/components/ui/input";
 
 interface SquadronSelectorProps {
   faction: string;
@@ -18,10 +21,19 @@ interface SquadronData {
 }
 
 export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, selectedSquadrons }: SquadronSelectorProps) {
-  const [squadrons, setSquadrons] = useState<Squadron[]>([]);
+  const [allSquadrons, setAllSquadrons] = useState<Squadron[]>([]);
+  const [displayedSquadrons, setDisplayedSquadrons] = useState<Squadron[]>([]);
   const [showPopup, setShowPopup] = useState(false);
   const [popupMessage, setPopupMessage] = useState('');
   const { uniqueClassNames, addUniqueClassName } = useUniqueClassContext();
+  const [activeSorts, setActiveSorts] = useState<Record<SortOption, 'asc' | 'desc' | null>>({
+    alphabetical: null,
+    points: null,
+    unique: null,
+    custom: null
+  });
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const fetchSquadrons = () => {
@@ -29,40 +41,50 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
       const cachedLegacySquadrons = localStorage.getItem('legacySquadrons');
       const cachedLegendsSquadrons = localStorage.getItem('legendsSquadrons');
       
-      let allSquadrons: Squadron[] = [];
+      const squadronMap = new Map<string, Squadron>();
 
       const processSquadrons = (data: SquadronData, prefix: string = '') => {
         if (data && data.squadrons) {
-          return Object.values(data.squadrons).map((squadron: Squadron) => ({
-            id: prefix ? `${prefix}-${squadron.id}` : squadron.id,
-            name: squadron['ace-name'] && squadron['ace-name'] !== '' ? squadron['ace-name'] : squadron.name,
-            points: squadron.points,
-            cardimage: validateImageUrl(squadron.cardimage),
-            faction: squadron.faction,
-            hull: squadron.hull,
-            speed: squadron.speed,
-            unique: squadron.unique,
-            count: 1,
-            'unique-class': squadron['unique-class'] || [],
-          }));
+          Object.entries(data.squadrons).forEach(([squadronId, squadron]) => {
+            const aceName = squadron['ace-name'] && squadron['ace-name'] !== '' ? squadron['ace-name'] : '';
+            const uniqueKey = `${prefix}-${squadronId}-${squadron.name}-${aceName}`;
+            if (!squadronMap.has(uniqueKey)) {
+              squadronMap.set(uniqueKey, {
+                ...squadron,
+                id: squadronId,
+                name: squadron.name,
+                'ace-name': aceName,
+                points: squadron.points,
+                cardimage: validateImageUrl(squadron.cardimage),
+                faction: squadron.faction,
+                hull: squadron.hull,
+                speed: squadron.speed,
+                unique: squadron.unique,
+                count: 1,
+                'unique-class': squadron['unique-class'] || [],
+                type: (prefix || 'regular') as 'regular' | 'legacy' | 'legends'
+              });
+            }
+          });
         }
-        return [];
       };
 
       if (cachedSquadrons) {
         const squadronData = JSON.parse(cachedSquadrons);
-        allSquadrons = [...allSquadrons, ...processSquadrons(squadronData)];
+        processSquadrons(squadronData);
       }
 
       if (cachedLegacySquadrons) {
         const legacySquadronData = JSON.parse(cachedLegacySquadrons);
-        allSquadrons = [...allSquadrons, ...processSquadrons(legacySquadronData, 'legacy')];
+        processSquadrons(legacySquadronData, 'legacy');
       }
 
       if (cachedLegendsSquadrons) {
         const legendsSquadronData = JSON.parse(cachedLegendsSquadrons);
-        allSquadrons = [...allSquadrons, ...processSquadrons(legendsSquadronData, 'legends')];
+        processSquadrons(legendsSquadronData, 'legends');
       }
+
+      const allSquadrons = Array.from(squadronMap.values());
 
       const filteredSquadrons = allSquadrons.filter(squadron => 
         squadron.faction === faction &&
@@ -70,11 +92,66 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
         squadron.points <= filter.maxPoints
       );
 
-      setSquadrons(filteredSquadrons);
+      setAllSquadrons(filteredSquadrons);
+      setDisplayedSquadrons(filteredSquadrons);
     };
 
     fetchSquadrons();
   }, [faction, filter.minPoints, filter.maxPoints]);
+
+  useEffect(() => {
+    const sortAndFilterSquadrons = () => {
+      let sortedSquadrons = [...allSquadrons];
+
+      // Filter squadrons based on search query
+      if (searchQuery) {
+        sortedSquadrons = sortedSquadrons.filter(squadron => {
+          const aceName = squadron['ace-name'] || '';
+          const squadronName = squadron.name || '';
+          const searchLower = searchQuery.toLowerCase();
+          return aceName.toLowerCase().includes(searchLower) ||
+                 squadronName.toLowerCase().includes(searchLower);
+        });
+      }
+
+      const sortFunctions: Record<SortOption, (a: Squadron, b: Squadron) => number> = {
+        custom: (a, b) => {
+          if (a.type === b.type) return 0;
+          if (a.type !== 'regular' && b.type === 'regular') return -1;
+          if (a.type === 'regular' && b.type !== 'regular') return 1;
+          return 0;
+        },
+        unique: (a, b) => (a.unique === b.unique ? 0 : a.unique ? -1 : 1),
+        points: (a, b) => a.points - b.points,
+        alphabetical: (a, b) => a.name.localeCompare(b.name),
+      };
+
+      const sortPriority: SortOption[] = ['custom', 'unique', 'points', 'alphabetical'];
+
+      sortedSquadrons.sort((a, b) => {
+        for (const option of sortPriority) {
+          if (activeSorts[option] !== null) {
+            const result = sortFunctions[option](a, b);
+            if (result !== 0) {
+              return activeSorts[option] === 'asc' ? result : -result;
+            }
+          }
+        }
+        return 0;
+      });
+
+      setDisplayedSquadrons(sortedSquadrons);
+    };
+
+    sortAndFilterSquadrons();
+  }, [allSquadrons, activeSorts, searchQuery]);
+
+  const handleSortToggle = (option: SortOption) => {
+    setActiveSorts(prevSorts => ({
+      ...prevSorts,
+      [option]: prevSorts[option] === null ? 'asc' : prevSorts[option] === 'asc' ? 'desc' : null
+    }));
+  };
 
   const validateImageUrl = (url: string): string => {
     if (url.startsWith('http://') || url.startsWith('https://')) {
@@ -107,16 +184,39 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <Card className="w-full h-full sm:w-11/12 sm:h-5/6 lg:w-3/4 lg:h-3/4 flex flex-col">
         <div className="p-2 sm:p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-          <h2 className="text-lg sm:text-xl lg:text-2xl font-bold">Select a Squadron</h2>
-          <Button variant="ghost" onClick={onClose} className="p-1">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </Button>
+          {showSearch ? (
+            <div className="flex-grow mr-2 relative">
+              <Input
+                type="text"
+                placeholder="Search squadrons..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pr-10"
+                autoFocus
+              />
+              <Search size={20} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            </div>
+          ) : (
+            <Button variant="ghost" onClick={() => setShowSearch(true)} className="flex items-center">
+              <h2 className="text-lg sm:text-xl lg:text-2xl font-bold mr-2">Select a Squadron</h2>
+              <Pencil size={20} />
+            </Button>
+          )}
+          <div className="flex items-center">
+            {showSearch && (
+              <Button variant="ghost" onClick={() => { setShowSearch(false); setSearchQuery(''); }} className="mr-2">
+                <X size={20} />
+              </Button>
+            )}
+            <SortToggleGroup activeSorts={activeSorts} onToggle={handleSortToggle} />
+            <Button variant="ghost" onClick={onClose} className="p-1 ml-2">
+              <X size={20} />
+            </Button>
+          </div>
         </div>
         <CardContent className="p-2 sm:p-4 flex-grow overflow-auto">
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3 md:gap-4">
-            {squadrons.map((squadron) => (
+            {displayedSquadrons.map((squadron) => (
               <div key={squadron.id} className="w-full aspect-[2/3]">
                 <Button
                   onClick={() => handleSquadronClick(squadron)}
@@ -138,11 +238,16 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
                     />
                   </div>
                   <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-1 sm:p-2">
-                    <p className="text-xs sm:text-sm font-bold flex items-center justify-center">
-                      {squadron.unique && <span className="mr-1 text-yellow-500 text-xs sm:text-sm">●</span>}
-                      <span className="break-words line-clamp-2 text-center">{squadron.name}</span>
+                    {squadron['ace-name'] && (
+                      <p className="text-[10px] sm:text-xs font-bold flex items-center justify-center mb-0.5">
+                        {squadron.unique && <span className="mr-1 text-yellow-500 text-[10px] sm:text-xs">●</span>}
+                        <span className="break-words text-center">{squadron['ace-name']}</span>
+                      </p>
+                    )}
+                    <p className="text-[10px] sm:text-xs font-bold flex items-center justify-center mb-0.5">
+                      <span className="break-words text-center">{squadron.name}</span>
                     </p>
-                    <p className="text-xs sm:text-sm text-center">{squadron.points} points</p>
+                    <p className="text-[10px] sm:text-xs text-center">{squadron.points} points</p>
                   </div>
                 </Button>
               </div>
