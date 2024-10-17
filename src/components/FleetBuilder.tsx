@@ -49,6 +49,7 @@ export interface Squadron {
   unique: boolean;
   count: number;
   'unique-class': string[];
+  type: 'regular' | 'legacy' | 'legends';
 }
 
 export interface Upgrade {
