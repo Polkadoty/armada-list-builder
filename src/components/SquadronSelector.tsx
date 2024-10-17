@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Image from 'next/image';
@@ -14,7 +13,9 @@ interface SquadronSelectorProps {
   selectedSquadrons: Squadron[];
 }
 
-const CACHE_VERSION = '1';
+interface SquadronData {
+  squadrons: Record<string, Squadron>;
+}
 
 export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, selectedSquadrons }: SquadronSelectorProps) {
   const [squadrons, setSquadrons] = useState<Squadron[]>([]);
@@ -23,44 +24,57 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
   const { uniqueClassNames, addUniqueClassName } = useUniqueClassContext();
 
   useEffect(() => {
-    const fetchSquadrons = async () => {
-      const cacheKey = `squadrons_${faction}_v${CACHE_VERSION}`;
-      const cachedSquadrons = localStorage.getItem(cacheKey);
+    const fetchSquadrons = () => {
+      const cachedSquadrons = localStorage.getItem('squadrons');
+      const cachedLegacySquadrons = localStorage.getItem('legacySquadrons');
+      const cachedLegendsSquadrons = localStorage.getItem('legendsSquadrons');
+      
+      let allSquadrons: Squadron[] = [];
+
+      const processSquadrons = (data: SquadronData, prefix: string = '') => {
+        if (data && data.squadrons) {
+          return Object.values(data.squadrons).map((squadron: Squadron) => ({
+            id: prefix ? `${prefix}-${squadron.id}` : squadron.id,
+            name: squadron['ace-name'] && squadron['ace-name'] !== '' ? squadron['ace-name'] : squadron.name,
+            points: squadron.points,
+            cardimage: validateImageUrl(squadron.cardimage),
+            faction: squadron.faction,
+            hull: squadron.hull,
+            speed: squadron.speed,
+            unique: squadron.unique,
+            count: 1,
+            'unique-class': squadron['unique-class'] || [],
+          }));
+        }
+        return [];
+      };
 
       if (cachedSquadrons) {
-        setSquadrons(JSON.parse(cachedSquadrons));
-      } else {
-        try {
-          const response = await axios.get(`https://api.swarmada.wiki/api/squadrons/search?faction=${faction}`);
-          const squadronData = response.data;
-          const flattenedSquadrons = Object.values(squadronData.squadrons).map((squadron: unknown) => {
-            const typedSquadron = squadron as Squadron;
-            return {
-              id: typedSquadron.id,
-              name: typedSquadron['ace-name'] && typedSquadron['ace-name'] !== '' ? typedSquadron['ace-name'] : typedSquadron.name,
-              points: typedSquadron.points,
-              cardimage: validateImageUrl(typedSquadron.cardimage),
-              faction: typedSquadron.faction,
-              hull: typedSquadron.hull,
-              speed: typedSquadron.speed,
-              unique: typedSquadron.unique,
-              count: 1,
-              'unique-class': typedSquadron['unique-class'] || [],
-            };
-          }).filter((squadron): squadron is Squadron => 
-            squadron.points >= filter.minPoints &&
-            squadron.points <= filter.maxPoints
-          );
-          setSquadrons(flattenedSquadrons);
-          localStorage.setItem(cacheKey, JSON.stringify(flattenedSquadrons));
-        } catch (error) {
-          console.error('Error fetching squadrons:', error);
-        }
+        const squadronData = JSON.parse(cachedSquadrons);
+        allSquadrons = [...allSquadrons, ...processSquadrons(squadronData)];
       }
+
+      if (cachedLegacySquadrons) {
+        const legacySquadronData = JSON.parse(cachedLegacySquadrons);
+        allSquadrons = [...allSquadrons, ...processSquadrons(legacySquadronData, 'legacy')];
+      }
+
+      if (cachedLegendsSquadrons) {
+        const legendsSquadronData = JSON.parse(cachedLegendsSquadrons);
+        allSquadrons = [...allSquadrons, ...processSquadrons(legendsSquadronData, 'legends')];
+      }
+
+      const filteredSquadrons = allSquadrons.filter(squadron => 
+        squadron.faction === faction &&
+        squadron.points >= filter.minPoints &&
+        squadron.points <= filter.maxPoints
+      );
+
+      setSquadrons(filteredSquadrons);
     };
 
     fetchSquadrons();
-  }, [faction, filter]);
+  }, [faction, filter.minPoints, filter.maxPoints]);
 
   const validateImageUrl = (url: string): string => {
     if (url.startsWith('http://') || url.startsWith('https://')) {

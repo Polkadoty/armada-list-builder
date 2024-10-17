@@ -21,6 +21,10 @@ interface UpgradeSelectorProps {
   hasCommander: boolean;
 }
 
+interface UpgradeData {
+  upgrades: Record<string, Upgrade>;
+}
+
 export default function UpgradeSelector({
   upgradeType,
   faction,
@@ -41,33 +45,84 @@ export default function UpgradeSelector({
   const { uniqueClassNames, addUniqueClassName } = useUniqueClassContext();
 
   useEffect(() => {
-    const fetchUpgrades = async () => {
+    const fetchUpgrades = () => {
       setLoading(true);
-      try {
-        let url = `https://api.swarmada.wiki/api/upgrades/search?type=${upgradeType}&faction=${faction}&include_neutral=true`;
-        if (upgradeType === 'title' && chassis) {
-          url += `&bound_shiptype=${encodeURIComponent(chassis)}`;
+      const cachedUpgrades = localStorage.getItem('upgrades');
+      const cachedLegacyUpgrades = localStorage.getItem('legacyUpgrades');
+      const cachedLegendsUpgrades = localStorage.getItem('legendsUpgrades');
+      
+      // console.log('Cached upgrades:', cachedUpgrades);
+      // console.log('Cached legacy upgrades:', cachedLegacyUpgrades);
+      // console.log('Cached legends upgrades:', cachedLegendsUpgrades);
+      
+      let allUpgrades: Upgrade[] = [];
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const processUpgrades = (data: UpgradeData, prefix: string = ''): Upgrade[] => {
+        if (data && data.upgrades) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          return Object.values(data.upgrades).map((upgrade: any) => ({
+            ...upgrade,
+            id: prefix ? `${prefix}-${upgrade.id || upgrade.name}` : (upgrade.id || upgrade.name),
+            faction: Array.isArray(upgrade.faction) ? upgrade.faction : [upgrade.faction],
+            "unique-class": upgrade["unique-class"] || [],
+            restrictions: {
+              ...upgrade.restrictions,
+              traits: upgrade.restrictions?.traits || [],
+              size: upgrade.restrictions?.size || [],
+              disqual_upgrades: upgrade.restrictions?.disqual_upgrades || [],
+              disable_upgrades: upgrade.restrictions?.disable_upgrades || [],
+              enable_upgrades: upgrade.restrictions?.enable_upgrades || [],
+            },
+          }));
         }
-        const response = await fetch(url);
-        if (!response.ok) {
-          throw new Error('Failed to fetch upgrades');
-        }
-        const data = await response.json();
-        const upgradesArray = Object.values(data.upgrades || {}) as Upgrade[];
-        setUpgrades(upgradesArray);
-      } catch (error) {
-        console.error('Error fetching upgrades:', error);
-        setUpgrades([]);
-      } finally {
-        setLoading(false);
+        return [];
+      };
+
+      if (cachedUpgrades) {
+        const upgradeData = JSON.parse(cachedUpgrades);
+        allUpgrades = [...allUpgrades, ...processUpgrades(upgradeData)];
       }
+
+      if (cachedLegacyUpgrades) {
+        const legacyUpgradeData = JSON.parse(cachedLegacyUpgrades);
+        allUpgrades = [...allUpgrades, ...processUpgrades(legacyUpgradeData, 'legacy')];
+      }
+
+      if (cachedLegendsUpgrades) {
+        const legendsUpgradeData = JSON.parse(cachedLegendsUpgrades);
+        allUpgrades = [...allUpgrades, ...processUpgrades(legendsUpgradeData, 'legends')];
+      }
+
+      const filteredUpgrades = allUpgrades.filter(upgrade => {
+        const factionMatch = Array.isArray(upgrade.faction) 
+          ? upgrade.faction.includes(faction) || upgrade.faction.includes('')
+          : upgrade.faction === faction || upgrade.faction === '';
+
+        const chassisMatch = upgradeType === 'title' 
+          ? upgrade.bound_shiptype === chassis
+          : true;
+
+        // console.log('Upgrade:', upgrade.name, 'Type:', upgrade.type, 'Faction:', upgrade.faction, 'Bound shiptype:', upgrade.bound_shiptype);
+        // console.log('Faction match:', factionMatch, 'Chassis match:', chassisMatch);
+
+        return upgrade.type === upgradeType &&
+          factionMatch &&
+          chassisMatch;
+      });
+
+      // console.log('Filtered upgrades:', filteredUpgrades);
+      // console.log('Current upgradeType:', upgradeType, 'faction:', faction, 'chassis:', chassis);
+
+      setUpgrades(filteredUpgrades);
+      setLoading(false);
     };
 
     fetchUpgrades();
   }, [upgradeType, faction, chassis]);
 
   const isUpgradeAvailable = (upgrade: Upgrade) => {
-    console.log(`Checking availability for ${upgrade.name}. Ship traits: ${shipTraits?.join(', ') || 'None'}`);
+    // console.log(`Checking availability for ${upgrade.name}. Ship traits: ${shipTraits?.join(', ') || 'None'}`);
 
     if (upgrade.type === 'commander' && hasCommander) {
       return false;

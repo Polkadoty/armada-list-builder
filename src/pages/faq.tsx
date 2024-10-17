@@ -24,7 +24,11 @@ export default function FAQ({ content }: FAQProps) {
             </span>
           </Link>
           <div className="flex space-x-2">
-            <SettingsButton />
+            <SettingsButton 
+              setIsLoading={() => {}}
+              setLoadingProgress={() => {}}
+              setLoadingMessage={() => {}}
+            />
             <ThemeToggle />
           </div>
         </div>

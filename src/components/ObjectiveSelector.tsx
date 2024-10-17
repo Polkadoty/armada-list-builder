@@ -1,11 +1,17 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Image from 'next/image';
 
 export interface ObjectiveModel {
   id: string;
+  name: string;
+  type: string;
+  cardimage: string;
+}
+
+interface CachedObjective {
+  _id: string;
   name: string;
   type: string;
   cardimage: string;
@@ -22,18 +28,24 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose }: Objectiv
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchObjectives = async () => {
+    const fetchObjectives = () => {
       setLoading(true);
       try {
-        const response = await axios.get(`https://api.swarmada.wiki/api/objectives/search?type=${type}`);
-        const objectiveData = response.data.objectives;
-        const flattenedObjectives = Object.values(objectiveData).map((objective) => ({
-          id: (objective as { _id: string })._id,
-          name: (objective as { name: string }).name,
-          type: (objective as { type: string }).type,
-          cardimage: validateImageUrl((objective as { cardimage: string }).cardimage),
-        }));
-        setObjectives(flattenedObjectives);
+        const cachedObjectives = localStorage.getItem('objectives');
+        if (cachedObjectives) {
+          const objectiveData = JSON.parse(cachedObjectives).objectives as Record<string, CachedObjective>;
+          const flattenedObjectives = Object.values(objectiveData)
+            .filter((objective) => objective.type === type)
+            .map((objective) => ({
+              id: objective._id,
+              name: objective.name,
+              type: objective.type,
+              cardimage: validateImageUrl(objective.cardimage),
+            }));
+          setObjectives(flattenedObjectives);
+        } else {
+          console.error('Objectives data not found in localStorage');
+        }
       } catch (error) {
         console.error('Error fetching objectives:', error);
       } finally {
