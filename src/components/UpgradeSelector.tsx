@@ -298,8 +298,8 @@ export default function UpgradeSelector({
                 <Image
                   src={getIconPath(upgradeType)}
                   alt={upgradeType}
-                  width={24}
-                  height={24}
+                  width={36}
+                  height={36}
                   className="mr-2 dark:invert"
                   style={{ width: 'auto', height: '1em' }}
                 />
