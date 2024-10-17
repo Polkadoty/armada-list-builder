@@ -35,6 +35,7 @@ export interface Ship {
   chassis: string;
   size: string;
   traits?: string[];
+  type: 'regular' | 'legacy' | 'legends';
 }
 
 export interface Squadron {
@@ -49,9 +50,11 @@ export interface Squadron {
   unique: boolean;
   count: number;
   'unique-class': string[];
+  type: 'regular' | 'legacy' | 'legends';
 }
 
 export interface Upgrade {
+  id: string;
   name: string;
   points: number;
   ability: string;
@@ -1096,6 +1099,7 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
 
       {showUpgradeSelector && (
         <UpgradeSelector
+          id={currentShipId}
           upgradeType={currentUpgradeType}
           faction={faction}
           onSelectUpgrade={handleSelectUpgrade}
