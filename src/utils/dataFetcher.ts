@@ -20,12 +20,31 @@ export const checkAndFetchData = async (setIsLoading: (isLoading: boolean) => vo
 };
 
 const fetchAndSaveData = async (setLoadingProgress: (progress: number) => void, setLoadingMessage: (message: string) => void) => {
+  const enableLegacy = Cookies.get('enableLegacy') === 'true';
+  const enableLegends = Cookies.get('enableLegends') === 'true';
+
   const endpoints = [
     { name: 'ships', url: '/api/ships/' },
     { name: 'squadrons', url: '/api/squadrons/' },
     { name: 'objectives', url: '/api/objectives/' },
     { name: 'upgrades', url: '/api/upgrades/' },
   ];
+
+  if (enableLegacy) {
+    endpoints.push(
+      { name: 'legacyShips', url: '/legacy/ships/' },
+      { name: 'legacySquadrons', url: '/legacy/squadrons/' },
+      { name: 'legacyUpgrades', url: '/legacy/upgrades/' }
+    );
+  }
+
+  if (enableLegends) {
+    endpoints.push(
+      { name: 'legendsShips', url: '/legends/ships/' },
+      { name: 'legendsSquadrons', url: '/legends/squadrons/' },
+      { name: 'legendsUpgrades', url: '/legends/upgrades/' }
+    );
+  }
 
   for (let i = 0; i < endpoints.length; i++) {
     const { name, url } = endpoints[i];
@@ -51,5 +70,11 @@ export const flushCacheAndReload = async (setIsLoading: (isLoading: boolean) => 
   localStorage.removeItem('squadrons');
   localStorage.removeItem('objectives');
   localStorage.removeItem('upgrades');
+  localStorage.removeItem('legacyShips');
+  localStorage.removeItem('legacySquadrons');
+  localStorage.removeItem('legacyUpgrades');
+  localStorage.removeItem('legendsShips');
+  localStorage.removeItem('legendsSquadrons');
+  localStorage.removeItem('legendsUpgrades');
   await checkAndFetchData(setIsLoading, setLoadingProgress, setLoadingMessage);
 };
