@@ -12,12 +12,13 @@ interface SquadronSelectorProps {
   onSelectSquadron: (squadron: Squadron) => void;
   onClose: () => void;
   selectedSquadrons: Squadron[];
-  uniqueClassNames: string[];
 }
-// Add this constant at the top of your file
-const CACHE_VERSION = '1';
 
-export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, selectedSquadrons, uniqueClassNames }: SquadronSelectorProps) {
+interface SquadronData {
+  squadrons: Record<string, Squadron>;
+}
+
+export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, selectedSquadrons }: SquadronSelectorProps) {
   const [squadrons, setSquadrons] = useState<Squadron[]>([]);
   const [showPopup, setShowPopup] = useState(false);
   const [popupMessage, setPopupMessage] = useState('');
@@ -138,12 +139,6 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
         uniqueClassNames.includes(squadron.name) ||
         squadron['unique-class']?.some(uc => uniqueClassNames.includes(uc))
       ));
-    console.log(`Checking ${squadron.name}:`, {
-      isSelected,
-      squadronUniqueClass: squadron['unique-class'],
-      uniqueClassNames,
-      isUnique: squadron.unique
-    });
     return isSelected;
   };
 
@@ -199,36 +194,32 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
                     <Image
                       src={squadron.cardimage}
                       alt={squadron.name}
-                      layout="fill"
-                      objectFit="cover"
-                      objectPosition="center"
-                      className="scale-[102%]"
+                      fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      className="object-cover object-center scale-[103%]"
                       onError={(e) => {
-                        console.error(`Error loading image for ${squadron.name}:`, squadron.cardimage);
                         e.currentTarget.src = '/placeholder-squadron.png';
                       }}
                     />
                   </div>
-                  <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2">
-                    <p className="text-sm font-bold truncate flex items-center justify-center">
-                      {squadron.unique && <span className="mr-1 text-yellow-500">●</span>}
-                      {squadron.name}
+                  <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-1 sm:p-2">
+                    <p className="text-xs sm:text-sm font-bold flex items-center justify-center">
+                      {squadron.unique && <span className="mr-1 text-yellow-500 text-xs sm:text-sm">●</span>}
+                      <span className="break-words line-clamp-2 text-center">{squadron.name}</span>
                     </p>
-                    <p className="text-xs text-center">{squadron.points} points</p>
+                    <p className="text-xs sm:text-sm text-center">{squadron.points} points</p>
                   </div>
                 </Button>
               </div>
             ))}
           </div>
-          <Button onClick={onClose} className="mt-4">Close</Button>
         </CardContent>
-        {showPopup && (
-          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-red-500 text-white p-4 rounded-lg shadow-lg z-50 animate-shake">
-            {popupMessage}
-          </div>
-        )}
       </Card>
+      {showPopup && (
+        <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-red-500 text-white p-4 rounded-lg shadow-lg z-50 animate-shake">
+          {popupMessage}
+        </div>
+      )}
     </div>
   );
 }
-

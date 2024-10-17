@@ -58,6 +58,9 @@ const config: Config = {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',
   			sm: 'calc(var(--radius) - 4px)'
+  		},
+  		transitionProperty: {
+  			'transform': 'transform',
   		}
   	},
   	keyframes: {
@@ -71,6 +74,9 @@ const config: Config = {
   		shake: 'shake 0.5s cubic-bezier(.36,.07,.19,.97) both',
   	},
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    require("tailwindcss-animate"),
+    require('@tailwindcss/typography'),
+  ],
 };
 export default config;
