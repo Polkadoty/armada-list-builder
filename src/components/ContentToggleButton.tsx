@@ -10,8 +10,8 @@ import { flushCacheAndReload } from '../utils/dataFetcher';
 
 // Configuration flags
 const CONFIG = {
-  showLegacyToggle: true,
-  showLegendsToggle: false,
+  showLegacyToggle: false,
+  showLegendsToggle: true,
 };
 
 export function ContentToggleButton() {

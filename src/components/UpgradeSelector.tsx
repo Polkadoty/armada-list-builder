@@ -4,8 +4,12 @@ import { Button } from "@/components/ui/button";
 import Image from 'next/image';
 import { Upgrade } from './FleetBuilder';
 import { useUniqueClassContext } from '../contexts/UniqueClassContext';
+import { SortToggleGroup, SortOption } from '@/components/SortToggleGroup';
+import { Pencil, Search, X } from 'lucide-react';
+import { Input } from "@/components/ui/input";
 
 interface UpgradeSelectorProps {
+  id: string;
   upgradeType: string;
   faction: string;
   onSelectUpgrade: (upgrade: Upgrade) => void;
@@ -26,6 +30,7 @@ interface UpgradeData {
 }
 
 export default function UpgradeSelector({
+  id,
   upgradeType,
   faction,
   onSelectUpgrade,
@@ -43,6 +48,16 @@ export default function UpgradeSelector({
   const [upgrades, setUpgrades] = useState<Upgrade[]>([]);
   const [loading, setLoading] = useState(true);
   const { uniqueClassNames, addUniqueClassName } = useUniqueClassContext();
+  const [allUpgrades, setAllUpgrades] = useState<Upgrade[]>([]);
+  const [displayedUpgrades, setDisplayedUpgrades] = useState<Upgrade[]>([]);
+  const [activeSorts, setActiveSorts] = useState<Record<SortOption, 'asc' | 'desc' | null>>({
+    alphabetical: null,
+    points: null,
+    unique: null,
+    custom: null
+  });
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const fetchUpgrades = () => {
@@ -50,10 +65,6 @@ export default function UpgradeSelector({
       const cachedUpgrades = localStorage.getItem('upgrades');
       const cachedLegacyUpgrades = localStorage.getItem('legacyUpgrades');
       const cachedLegendsUpgrades = localStorage.getItem('legendsUpgrades');
-      
-      // console.log('Cached upgrades:', cachedUpgrades);
-      // console.log('Cached legacy upgrades:', cachedLegacyUpgrades);
-      // console.log('Cached legends upgrades:', cachedLegendsUpgrades);
       
       let allUpgrades: Upgrade[] = [];
 
@@ -114,12 +125,58 @@ export default function UpgradeSelector({
       // console.log('Filtered upgrades:', filteredUpgrades);
       // console.log('Current upgradeType:', upgradeType, 'faction:', faction, 'chassis:', chassis);
 
-      setUpgrades(filteredUpgrades);
+      setAllUpgrades(filteredUpgrades);
+      setDisplayedUpgrades(filteredUpgrades);
       setLoading(false);
     };
 
     fetchUpgrades();
   }, [upgradeType, faction, chassis]);
+
+  useEffect(() => {
+    const sortAndFilterUpgrades = () => {
+      let sortedUpgrades = [...allUpgrades];
+
+      // Filter upgrades based on search query
+      if (searchQuery) {
+        sortedUpgrades = sortedUpgrades.filter(upgrade => {
+          const upgradeName = upgrade.name || '';
+          const searchLower = searchQuery.toLowerCase();
+          return upgradeName.toLowerCase().includes(searchLower);
+        });
+      }
+
+      const sortFunctions: Record<SortOption, (a: Upgrade, b: Upgrade) => number> = {
+        custom: (a, b) => {
+          if (a.id.startsWith('legacy') === b.id.startsWith('legacy')) return 0;
+          if (a.id.startsWith('legacy')) return -1;
+          if (b.id.startsWith('legacy')) return 1;
+          return 0;
+        },
+        unique: (a, b) => (a.unique === b.unique ? 0 : a.unique ? -1 : 1),
+        points: (a, b) => a.points - b.points,
+        alphabetical: (a, b) => a.name.localeCompare(b.name),
+      };
+
+      const sortPriority: SortOption[] = ['custom', 'unique', 'points', 'alphabetical'];
+
+      sortedUpgrades.sort((a, b) => {
+        for (const option of sortPriority) {
+          if (activeSorts[option] !== null) {
+            const result = sortFunctions[option](a, b);
+            if (result !== 0) {
+              return activeSorts[option] === 'asc' ? result : -result;
+            }
+          }
+        }
+        return 0;
+      });
+
+      setDisplayedUpgrades(sortedUpgrades);
+    };
+
+    sortAndFilterUpgrades();
+  }, [allUpgrades, activeSorts, searchQuery]);
 
   const isUpgradeAvailable = (upgrade: Upgrade) => {
     // console.log(`Checking availability for ${upgrade.name}. Ship traits: ${shipTraits?.join(', ') || 'None'}`);
@@ -217,23 +274,66 @@ export default function UpgradeSelector({
     return `https://api.swarmada.wiki${url.startsWith('/') ? '' : '/'}${url}`;
   };
 
+  const handleSortToggle = (option: SortOption) => {
+    setActiveSorts(prevSorts => ({
+      ...prevSorts,
+      [option]: prevSorts[option] === null ? 'asc' : prevSorts[option] === 'asc' ? 'desc' : null
+    }));
+  };
+
+  const getIconPath = (upgradeType: string) => `/icons/${upgradeType}.svg`;
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <Card className="w-full h-full sm:w-11/12 sm:h-5/6 lg:w-3/4 lg:h-3/4 flex flex-col">
         <div className="p-2 sm:p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-          <h2 className="text-lg sm:text-xl lg:text-2xl font-bold">Select {upgradeType}</h2>
-          <Button variant="ghost" onClick={onClose} className="p-1">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </Button>
+          {showSearch ? (
+            <div className="flex-grow mr-2 relative">
+              <Input
+                type="text"
+                placeholder="Search upgrades..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pr-10"
+                autoFocus
+              />
+              <Search size={20} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            </div>
+          ) : (
+            <Button variant="ghost" onClick={() => setShowSearch(true)} className="flex items-center">
+              <div className="flex items-center">
+                <span className="text-lg sm:text-xl lg:text-2xl font-bold mr-2">Select</span>
+                <Image
+                  src={getIconPath(upgradeType)}
+                  alt={upgradeType}
+                  width={24}
+                  height={24}
+                  className="mr-2"
+                  style={{ width: 'auto', height: '1em' }}
+                />
+                <span className="hidden sm:inline text-lg font-bold capitalize">{upgradeType.replace(/-/g, ' ')}</span>
+              </div>
+              <Pencil size={20} className="ml-2" />
+            </Button>
+          )}
+          <div className="flex items-center">
+            {showSearch && (
+              <Button variant="ghost" onClick={() => { setShowSearch(false); setSearchQuery(''); }} className="mr-2">
+                <X size={20} />
+              </Button>
+            )}
+            <SortToggleGroup activeSorts={activeSorts} onToggle={handleSortToggle} />
+            <Button variant="ghost" onClick={onClose} className="p-1 ml-2">
+              <X size={20} />
+            </Button>
+          </div>
         </div>
         <CardContent className="p-2 sm:p-4 flex-grow overflow-auto">
           {loading ? (
             <p>Loading upgrades...</p>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3 md:gap-4">
-              {upgrades.map((upgrade) => (
+              {displayedUpgrades.map((upgrade) => (
                 <div key={upgrade.name} className="w-full aspect-[2/3]">
                   <Button
                     onClick={() => handleUpgradeClick(upgrade)}

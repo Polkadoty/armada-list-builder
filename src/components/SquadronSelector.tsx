@@ -5,6 +5,8 @@ import Image from 'next/image';
 import { Squadron } from './FleetBuilder';
 import { useUniqueClassContext } from '../contexts/UniqueClassContext';
 import { SortToggleGroup, SortOption } from '@/components/SortToggleGroup';
+import { Pencil, Search, X } from 'lucide-react';
+import { Input } from "@/components/ui/input";
 
 interface SquadronSelectorProps {
   faction: string;
@@ -30,6 +32,8 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
     unique: null,
     custom: null
   });
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const fetchSquadrons = () => {
@@ -48,7 +52,8 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
               squadronMap.set(uniqueKey, {
                 ...squadron,
                 id: squadronId,
-                name: aceName || squadron.name,
+                name: squadron.name,
+                'ace-name': aceName,
                 points: squadron.points,
                 cardimage: validateImageUrl(squadron.cardimage),
                 faction: squadron.faction,
@@ -95,8 +100,19 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
   }, [faction, filter.minPoints, filter.maxPoints]);
 
   useEffect(() => {
-    const sortSquadrons = () => {
+    const sortAndFilterSquadrons = () => {
       let sortedSquadrons = [...allSquadrons];
+
+      // Filter squadrons based on search query
+      if (searchQuery) {
+        sortedSquadrons = sortedSquadrons.filter(squadron => {
+          const aceName = squadron['ace-name'] || '';
+          const squadronName = squadron.name || '';
+          const searchLower = searchQuery.toLowerCase();
+          return aceName.toLowerCase().includes(searchLower) ||
+                 squadronName.toLowerCase().includes(searchLower);
+        });
+      }
 
       const sortFunctions: Record<SortOption, (a: Squadron, b: Squadron) => number> = {
         custom: (a, b) => {
@@ -127,8 +143,8 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
       setDisplayedSquadrons(sortedSquadrons);
     };
 
-    sortSquadrons();
-  }, [allSquadrons, activeSorts]);
+    sortAndFilterSquadrons();
+  }, [allSquadrons, activeSorts, searchQuery]);
 
   const handleSortToggle = (option: SortOption) => {
     setActiveSorts(prevSorts => ({
@@ -168,13 +184,33 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <Card className="w-full h-full sm:w-11/12 sm:h-5/6 lg:w-3/4 lg:h-3/4 flex flex-col">
         <div className="p-2 sm:p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-          <h2 className="text-lg sm:text-xl lg:text-2xl font-bold">Select a Squadron</h2>
+          {showSearch ? (
+            <div className="flex-grow mr-2 relative">
+              <Input
+                type="text"
+                placeholder="Search squadrons..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pr-10"
+                autoFocus
+              />
+              <Search size={20} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            </div>
+          ) : (
+            <Button variant="ghost" onClick={() => setShowSearch(true)} className="flex items-center">
+              <h2 className="text-lg sm:text-xl lg:text-2xl font-bold mr-2">Select a Squadron</h2>
+              <Pencil size={20} />
+            </Button>
+          )}
           <div className="flex items-center">
+            {showSearch && (
+              <Button variant="ghost" onClick={() => { setShowSearch(false); setSearchQuery(''); }} className="mr-2">
+                <X size={20} />
+              </Button>
+            )}
             <SortToggleGroup activeSorts={activeSorts} onToggle={handleSortToggle} />
             <Button variant="ghost" onClick={onClose} className="p-1 ml-2">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <X size={20} />
             </Button>
           </div>
         </div>
@@ -202,11 +238,16 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
                     />
                   </div>
                   <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-1 sm:p-2">
-                    <p className="text-xs sm:text-sm font-bold flex items-center justify-center">
-                      {squadron.unique && <span className="mr-1 text-yellow-500 text-xs sm:text-sm">●</span>}
-                      <span className="break-words line-clamp-2 text-center">{squadron.name}</span>
+                    {squadron['ace-name'] && (
+                      <p className="text-[10px] sm:text-xs font-bold flex items-center justify-center mb-0.5">
+                        {squadron.unique && <span className="mr-1 text-yellow-500 text-[10px] sm:text-xs">●</span>}
+                        <span className="break-words text-center">{squadron['ace-name']}</span>
+                      </p>
+                    )}
+                    <p className="text-[10px] sm:text-xs font-bold flex items-center justify-center mb-0.5">
+                      <span className="break-words text-center">{squadron.name}</span>
                     </p>
-                    <p className="text-xs sm:text-sm text-center">{squadron.points} points</p>
+                    <p className="text-[10px] sm:text-xs text-center">{squadron.points} points</p>
                   </div>
                 </Button>
               </div>
