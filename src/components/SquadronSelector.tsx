@@ -13,6 +13,10 @@ interface SquadronSelectorProps {
   selectedSquadrons: Squadron[];
 }
 
+interface SquadronData {
+  squadrons: Record<string, Squadron>;
+}
+
 export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, selectedSquadrons }: SquadronSelectorProps) {
   const [squadrons, setSquadrons] = useState<Squadron[]>([]);
   const [showPopup, setShowPopup] = useState(false);
@@ -27,9 +31,9 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
       
       let allSquadrons: Squadron[] = [];
 
-      const processSquadrons = (data: any, prefix: string = '') => {
+      const processSquadrons = (data: SquadronData, prefix: string = '') => {
         if (data && data.squadrons) {
-          return Object.values(data.squadrons).map((squadron: any) => ({
+          return Object.values(data.squadrons).map((squadron: Squadron) => ({
             id: prefix ? `${prefix}-${squadron.id}` : squadron.id,
             name: squadron['ace-name'] && squadron['ace-name'] !== '' ? squadron['ace-name'] : squadron.name,
             points: squadron.points,

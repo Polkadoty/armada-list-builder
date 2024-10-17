@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-empty-interface */
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -351,7 +351,7 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
   };
 
   
-  const handleRemoveUpgrade = (shipId: string, upgradeType: string, upgradeIndex: number) => {
+  const handleRemoveUpgrade = useCallback((shipId: string, upgradeType: string, upgradeIndex: number) => {
     const shipToUpdate = selectedShips.find(ship => ship.id === shipId);
     const upgradeToRemove = shipToUpdate?.assignedUpgrades.find(u => u.type === upgradeType && u.slotIndex === upgradeIndex);
   
@@ -381,12 +381,14 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
   
             // Process all upgrades to remove
             upgradesToRemove.forEach(upgrade => {
-              // Remove unique class
+              // Remove unique class with setTimeout
               if (upgrade.unique) {
-                removeUniqueClassName(upgrade.name);
+                setTimeout(() => removeUniqueClassName(upgrade.name), 0);
               }
               if (upgrade["unique-class"]) {
-                upgrade["unique-class"].forEach(uc => removeUniqueClassName(uc));
+                upgrade["unique-class"].forEach(uc => {
+                  setTimeout(() => removeUniqueClassName(uc), 0);
+                });
               }
   
               // Update disabled upgrades
@@ -457,7 +459,7 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
       })
     );
     console.log('After removal:', selectedShips);
-  };
+  }, [selectedShips]);
 
 
   const handleCopyShip = (shipToCopy: Ship) => {

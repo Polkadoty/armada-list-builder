@@ -101,3 +101,17 @@ body {
     transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
   }
 }
+
+@layer components {
+  .custom-switch {
+    @apply bg-gray-200 dark:bg-gray-700;
+  }
+
+  .custom-switch[data-state="checked"] {
+    @apply bg-blue-600 dark:bg-blue-400;
+  }
+
+  .custom-switch::before {
+    @apply bg-white dark:bg-gray-200;
+  }
+}

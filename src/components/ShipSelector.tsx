@@ -3,7 +3,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Image from 'next/image';
 import { useUniqueClassContext } from '../contexts/UniqueClassContext';
-import axios from 'axios';
 
 export interface ShipModel {
   id: string;
@@ -18,12 +17,13 @@ export interface ShipModel {
   traits?: string[];
 }
 
-interface Ship {
-  [key: string]: {
-    models: {
-      [key: string]: ShipModel;
-    };
-  };
+interface ShipData {
+  ships: Record<string, ChassisData>;
+}
+
+interface ChassisData {
+  models: Record<string, ShipModel>;
+  size: string;
 }
 
 interface ShipSelectorProps {
@@ -45,10 +45,10 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
       
       let allShips: ShipModel[] = [];
 
-      const processShips = (data: any, prefix: string = '') => {
+      const processShips = (data: ShipData, prefix: string = '') => {
         if (data && data.ships) {
-          return Object.entries(data.ships).flatMap(([chassisName, chassisData]: [string, any]) => 
-            Object.values(chassisData.models || {}).map((model: any) => ({
+          return Object.entries(data.ships).flatMap(([chassisName, chassisData]: [string, ChassisData]) => 
+            Object.values(chassisData.models || {}).map((model: ShipModel) => ({
               ...model,
               id: prefix ? `${prefix}-${chassisName}-${model.name}` : `${chassisName}-${model.name}`,
               chassis: chassisName,

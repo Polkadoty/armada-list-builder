@@ -21,6 +21,10 @@ interface UpgradeSelectorProps {
   hasCommander: boolean;
 }
 
+interface UpgradeData {
+  upgrades: Record<string, Upgrade>;
+}
+
 export default function UpgradeSelector({
   upgradeType,
   faction,
@@ -53,7 +57,8 @@ export default function UpgradeSelector({
       
       let allUpgrades: Upgrade[] = [];
 
-      const processUpgrades = (data: any, prefix: string = ''): Upgrade[] => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const processUpgrades = (data: UpgradeData, prefix: string = ''): Upgrade[] => {
         if (data && data.upgrades) {
           return Object.values(data.upgrades).map((upgrade: any) => ({
             ...upgrade,
