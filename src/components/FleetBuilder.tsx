@@ -463,6 +463,12 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
 
 
   const handleCopyShip = (shipToCopy: Ship) => {
+    if (shipToCopy.unique) {
+      // If the ship is unique, don't copy it and maybe show an alert
+      alert("Unique ships cannot be copied.");
+      return;
+    }
+  
     const newShip = { 
       ...shipToCopy, 
       id: Date.now().toString(),
