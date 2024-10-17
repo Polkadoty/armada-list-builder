@@ -38,48 +38,52 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
   const { uniqueClassNames, addUniqueClassName } = useUniqueClassContext();
 
   useEffect(() => {
-    const fetchShips = async () => {
-      const cacheKey = `ships_${faction}`;
-      const cachedShips = localStorage.getItem(cacheKey);
+    const fetchShips = () => {
+      const cachedShips = localStorage.getItem('ships');
+      const cachedLegacyShips = localStorage.getItem('legacyShips');
+      const cachedLegendsShips = localStorage.getItem('legendsShips');
+      
+      let allShips: ShipModel[] = [];
+
+      const processShips = (data: any, prefix: string = '') => {
+        if (data && data.ships) {
+          return Object.entries(data.ships).flatMap(([chassisName, chassisData]: [string, any]) => 
+            Object.values(chassisData.models || {}).map((model: any) => ({
+              ...model,
+              id: prefix ? `${prefix}-${chassisName}-${model.name}` : `${chassisName}-${model.name}`,
+              chassis: chassisName,
+              size: chassisData.size,
+              traits: model.traits || []
+            }))
+          );
+        }
+        return [];
+      };
 
       if (cachedShips) {
-        setShips(JSON.parse(cachedShips));
-      } else {
-        try {
-          const response = await axios.get(`https://api.swarmada.wiki/api/ships/search?faction=${faction}`);
-          const shipData: Ship = response.data.ships;
-          const flattenedShips = await Promise.all(Object.entries(shipData).map(async ([chassisName, chassisData]) => {
-            const chassisResponse = await axios.get(`https://api.swarmada.wiki/api/ships/${chassisName}`);
-            const chassisInfo = chassisResponse.data.ships[chassisName];
-            return Object.values(chassisData.models).map(model => {
-              const filteredModel = Object.fromEntries(
-                Object.entries({
-                  ...model,
-                  size: chassisInfo.size,
-                  id: `${chassisName}-${model.name}`,
-                  traits: model.traits || [],
-                  chassis: chassisName,
-                }).map(([key, value]) => {
-                  if (Array.isArray(value)) {
-                    return [key, value.filter(item => item.trim() !== '')];
-                  }
-                  return [key, value];
-                }).filter(([, value]) => value !== '' && value !== null && value !== undefined)
-              ) as ShipModel;
-              return filteredModel;
-            }).filter(model => 
-              model.faction === faction &&
-              model.points >= filter.minPoints &&
-              model.points <= filter.maxPoints
-            );
-          }));
-          const allShips = flattenedShips.flat();
-          setShips(allShips);
-          localStorage.setItem(cacheKey, JSON.stringify(allShips));
-        } catch (error) {
-          console.error('Error fetching ships:', error);
-        }
+        const shipData = JSON.parse(cachedShips);
+        allShips = [...allShips, ...processShips(shipData)];
       }
+
+      if (cachedLegacyShips) {
+        const legacyShipData = JSON.parse(cachedLegacyShips);
+        allShips = [...allShips, ...processShips(legacyShipData, 'legacy')];
+      }
+
+      if (cachedLegendsShips) {
+        const legendsShipData = JSON.parse(cachedLegendsShips);
+        allShips = [...allShips, ...processShips(legendsShipData, 'legends')];
+      }
+
+      const filteredShips = allShips.filter(ship => 
+        ship.faction === faction &&
+        ship.points >= filter.minPoints &&
+        ship.points <= filter.maxPoints
+      );
+
+      // console.log('Filtered ships:', filteredShips);
+
+      setShips(filteredShips);
     };
 
     fetchShips();

@@ -20,34 +20,53 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
   const { uniqueClassNames, addUniqueClassName } = useUniqueClassContext();
 
   useEffect(() => {
-    const fetchSquadrons = async () => {
+    const fetchSquadrons = () => {
       const cachedSquadrons = localStorage.getItem('squadrons');
+      const cachedLegacySquadrons = localStorage.getItem('legacySquadrons');
+      const cachedLegendsSquadrons = localStorage.getItem('legendsSquadrons');
+      
+      let allSquadrons: Squadron[] = [];
+
+      const processSquadrons = (data: any, prefix: string = '') => {
+        if (data && data.squadrons) {
+          return Object.values(data.squadrons).map((squadron: any) => ({
+            id: prefix ? `${prefix}-${squadron.id}` : squadron.id,
+            name: squadron['ace-name'] && squadron['ace-name'] !== '' ? squadron['ace-name'] : squadron.name,
+            points: squadron.points,
+            cardimage: validateImageUrl(squadron.cardimage),
+            faction: squadron.faction,
+            hull: squadron.hull,
+            speed: squadron.speed,
+            unique: squadron.unique,
+            count: 1,
+            'unique-class': squadron['unique-class'] || [],
+          }));
+        }
+        return [];
+      };
 
       if (cachedSquadrons) {
         const squadronData = JSON.parse(cachedSquadrons);
-        const flattenedSquadrons = Object.values(squadronData.squadrons).map((squadron: unknown) => {
-          const typedSquadron = squadron as Squadron;
-          return {
-            id: typedSquadron.id,
-            name: typedSquadron['ace-name'] && typedSquadron['ace-name'] !== '' ? typedSquadron['ace-name'] : typedSquadron.name,
-            points: typedSquadron.points,
-            cardimage: validateImageUrl(typedSquadron.cardimage),
-            faction: typedSquadron.faction,
-            hull: typedSquadron.hull,
-            speed: typedSquadron.speed,
-            unique: typedSquadron.unique,
-            count: 1,
-            'unique-class': typedSquadron['unique-class'] || [],
-          };
-        }).filter((squadron): squadron is Squadron => 
-          squadron.faction === faction &&
-          squadron.points >= filter.minPoints &&
-          squadron.points <= filter.maxPoints
-        );
-        setSquadrons(flattenedSquadrons);
-      } else {
-        console.error('Squadrons data not found in localStorage');
+        allSquadrons = [...allSquadrons, ...processSquadrons(squadronData)];
       }
+
+      if (cachedLegacySquadrons) {
+        const legacySquadronData = JSON.parse(cachedLegacySquadrons);
+        allSquadrons = [...allSquadrons, ...processSquadrons(legacySquadronData, 'legacy')];
+      }
+
+      if (cachedLegendsSquadrons) {
+        const legendsSquadronData = JSON.parse(cachedLegendsSquadrons);
+        allSquadrons = [...allSquadrons, ...processSquadrons(legendsSquadronData, 'legends')];
+      }
+
+      const filteredSquadrons = allSquadrons.filter(squadron => 
+        squadron.faction === faction &&
+        squadron.points >= filter.minPoints &&
+        squadron.points <= filter.maxPoints
+      );
+
+      setSquadrons(filteredSquadrons);
     };
 
     fetchSquadrons();

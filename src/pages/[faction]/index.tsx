@@ -7,6 +7,7 @@ import { SettingsButton } from '../../components/SettingsButton';
 import StarryBackground from '../../components/StarryBackground';
 import { useEffect, useState } from 'react';
 import { LoadingScreen } from '../../components/LoadingScreen';
+import { ContentToggleButton } from '../../components/ContentToggleButton';
 
 export const factionLogos = {
   rebel: '/icons/rebel.svg',
@@ -58,6 +59,7 @@ export default function FactionPage() {
             <h1 className="text-2xl font-bold">Fleet Builder</h1>
           </div>
           <div className="flex items-center space-x-2">
+            <ContentToggleButton />
             <SettingsButton setIsLoading={setIsLoading} setLoadingProgress={setLoadingProgress} setLoadingMessage={setLoadingMessage} />
             <ThemeToggle />
           </div>

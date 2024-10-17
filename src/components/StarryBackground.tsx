@@ -127,7 +127,7 @@ const StarryBackground: React.FC<{ show: boolean, lightDisabled?: boolean }> = (
 
   return (
     <>
-      <Image src='/images/background.jpg' alt="Background" className='w-full h-full z-[-1] fixed dark:hidden'/>
+      <Image src='/images/background.jpg' alt="Background" className='w-full h-full z-[-1] fixed dark:hidden' width={1920} height={1080} />
 
       <canvas 
         ref={canvasRef} 
