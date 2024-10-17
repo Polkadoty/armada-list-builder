@@ -186,7 +186,7 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
           ) : (
             <Button variant="ghost" onClick={() => setShowSearch(true)} className="flex items-center">
               <h2 className="text-lg sm:text-xl lg:text-2xl font-bold mr-2">Select a Ship</h2>
-              <Pencil size={20} />
+              <Search size={20} />
             </Button>
           )}
           <div className="flex items-center">
