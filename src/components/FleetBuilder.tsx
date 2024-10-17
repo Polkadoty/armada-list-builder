@@ -459,7 +459,7 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
       })
     );
     console.log('After removal:', selectedShips);
-  }, [selectedShips]);
+  }, [points, removeUniqueClassName, totalShipPoints, selectedShips, setSelectedShips, setPreviousPoints, setPoints, setTotalShipPoints, setHasCommander]);
 
 
   const handleCopyShip = (shipToCopy: Ship) => {

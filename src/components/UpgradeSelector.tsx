@@ -60,6 +60,7 @@ export default function UpgradeSelector({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const processUpgrades = (data: UpgradeData, prefix: string = ''): Upgrade[] => {
         if (data && data.upgrades) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           return Object.values(data.upgrades).map((upgrade: any) => ({
             ...upgrade,
             id: prefix ? `${prefix}-${upgrade.id || upgrade.name}` : (upgrade.id || upgrade.name),
