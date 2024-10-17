@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { Upgrade } from './FleetBuilder';
 import { useUniqueClassContext } from '../contexts/UniqueClassContext';
 import { SortToggleGroup, SortOption } from '@/components/SortToggleGroup';
-import { Pencil, Search, X } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 
 interface UpgradeSelectorProps {
@@ -300,12 +300,11 @@ export default function UpgradeSelector({
                   alt={upgradeType}
                   width={24}
                   height={24}
-                  className="mr-2"
+                  className="mr-2 dark:invert"
                   style={{ width: 'auto', height: '1em' }}
                 />
-                <span className="hidden sm:inline text-lg font-bold capitalize">{upgradeType.replace(/-/g, ' ')}</span>
               </div>
-              <Pencil size={20} className="ml-2" />
+              <Search size={20} className="ml-2" />
             </Button>
           )}
           <div className="flex items-center">
