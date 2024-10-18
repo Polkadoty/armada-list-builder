@@ -81,7 +81,7 @@ export interface Ship extends ShipModel {
   assignedUpgrades: Upgrade[];
 }
 
-const SectionHeader = ({ title, points, previousPoints, show, onClearAll, onAdd }: { title: string; points: number; previousPoints: number; show: boolean; onClearAll: () => void; onAdd: () => void }) => (
+const SectionHeader = ({ title, points, previousPoints, onClearAll, onAdd }: { title: string; points: number; previousPoints: number; show: boolean; onClearAll: () => void; onAdd: () => void }) => (
   <Card className="mb-4 relative">
     <Button 
       className="w-full justify-between bg-white dark:bg-gray-900 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md bg-opacity-30 dark:bg-opacity-30"
@@ -101,7 +101,7 @@ const SectionHeader = ({ title, points, previousPoints, show, onClearAll, onAdd 
   </Card>
 );
 
-export default function FleetBuilder({ faction, factionColor, fleetName, setFleetName }: { faction: string; factionColor: string; fleetName: string; setFleetName: React.Dispatch<React.SetStateAction<string>> }) {
+export default function FleetBuilder({ faction, fleetName, setFleetName }: { faction: string; factionColor: string; fleetName: string; setFleetName: React.Dispatch<React.SetStateAction<string>> }) {
   const [isEditingName, setIsEditingName] = useState(false);
   const [points, setPoints] = useState(0);
   const [previousPoints, setPreviousPoints] = useState(0);
