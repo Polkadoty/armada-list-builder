@@ -198,7 +198,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
             </div>
           ) : (
             <Button variant="ghost" onClick={() => setShowSearch(true)} className="flex items-center">
-              <h2 className="text-lg sm:text-xl lg:text-2xl font-bold mr-2">Select a Squadron</h2>
+              <h2 className="text-lg sm:text-xl lg:text-2xl font-bold mr-2">Squadron</h2>
               <Search size={20} />
             </Button>
           )}
