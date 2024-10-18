@@ -91,7 +91,7 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
             <div className="w-16 aspect-[3.75/2] mr-4 relative overflow-hidden">
               <Image 
                 src={squadron.cardimage} 
-                alt={squadron.name}
+                alt={squadron.unique && squadron['ace-name'] ? squadron['ace-name'] : squadron.name}
                 layout="fill"
                 objectFit="cover"
                 objectPosition="top"
@@ -103,7 +103,8 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
                 {squadron.unique && (
                   <span className="mr-1 text-yellow-500">●</span>
                 )}
-                {count > 1 ? `(${count}) ` : ''}{squadron.name}
+                {count > 1 ? `(${count}) ` : ''}
+                {squadron.unique && squadron['ace-name'] ? squadron['ace-name'] : squadron.name}
               </span>
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-1">

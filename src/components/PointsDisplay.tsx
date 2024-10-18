@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 
 interface PointsDisplayProps {
     points: number;
@@ -8,33 +7,36 @@ interface PointsDisplayProps {
   
   export function PointsDisplay({ points, previousPoints }: PointsDisplayProps) {
     const [displayPoints, setDisplayPoints] = useState(previousPoints);
-    const [showDifference, setShowDifference] = useState(false);
-    const difference = points - previousPoints;
     const counterRefs = useRef<(HTMLDivElement | null)[]>([]);
+    const [isIncreasing, setIsIncreasing] = useState(false);
+    const [isDecreasing, setIsDecreasing] = useState(false);
 
     useEffect(() => {
       if (points !== previousPoints) {
-        setShowDifference(true);
         const duration = 333; // Animation duration in milliseconds
         const startTime = Date.now();
+
+        setIsIncreasing(points > previousPoints);
+        setIsDecreasing(points < previousPoints);
 
         const animatePoints = () => {
           const elapsedTime = Date.now() - startTime;
           const progress = Math.min(elapsedTime / duration, 1);
-          const currentPoints = Math.round(previousPoints + difference * progress);
+          const currentPoints = Math.round(previousPoints + (points - previousPoints) * progress);
 
           setDisplayPoints(currentPoints);
 
           if (progress < 1) {
             requestAnimationFrame(animatePoints);
           } else {
-            setTimeout(() => setShowDifference(false), 333);
+            setIsIncreasing(false);
+            setIsDecreasing(false);
           }
         };
 
         requestAnimationFrame(animatePoints);
       }
-    }, [points, previousPoints, difference]);
+    }, [points, previousPoints]);
 
     useEffect(() => {
       counterRefs.current.forEach((ref, index) => {
@@ -61,7 +63,9 @@ interface PointsDisplayProps {
                 ref={(el: HTMLDivElement | null) => {
                   counterRefs.current[index] = el;
                 }}
-                className="absolute top-0 left-0 transition-transform duration-300 ease-in-out"
+                className={`absolute top-0 left-0 transition-transform duration-200 ease-in-out ${
+                  isIncreasing ? 'text-green-500' : isDecreasing ? 'text-red-500' : ''
+                }`}
                 style={{ height: '1000%' }}
               >
                 {Array.from({ length: 10 }, (_, i) => (
@@ -74,18 +78,6 @@ interface PointsDisplayProps {
           ))}
           <span className="ml-1">points</span>
         </div>
-        <AnimatePresence>
-          {showDifference && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className={`absolute top-full left-0 text-sm ${difference > 0 ? 'text-green-500' : 'text-red-500'} z-50`}
-            >
-              {difference > 0 ? '+' : ''}{difference}
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
     );
   }

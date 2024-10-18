@@ -2,9 +2,8 @@
 
 import { useState, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Pencil, Filter, Printer, ArrowLeft, FileText, Trash2 } from 'lucide-react';
+import { Printer, ArrowLeft, FileText, Trash2 } from 'lucide-react';
 import { ShipSelector } from './ShipSelector';
 import { SelectedShip } from './SelectedShip';
 import { ShipFilter } from './ShipFilter';
@@ -82,36 +81,27 @@ export interface Ship extends ShipModel {
   assignedUpgrades: Upgrade[];
 }
 
-const SectionHeader = ({ title, points, previousPoints, show, onClearAll, onAdd }: { title: string; points: number; previousPoints: number; show: boolean; onClearAll: () => void; onAdd: () => void }) => (
-  show ? (
-    <div className="mb-4">
-      <div className="flex justify-between items-center mb-2 mt-4 border-b border-gray-300 relative">
-        <div className="flex items-center">
-          <h3 className="text-lg font-semibold">{title}</h3>
-        </div>
-        <div className="flex items-center z-40">
-          <button onClick={onClearAll} className="mr-2 text-red-500 hover:text-red-700">
-            <Trash2 size={16} />
-          </button>
-          <PointsDisplay points={points} previousPoints={previousPoints} />
-        </div>
-      </div>
-      <Card className="mb-2">
-        <Button 
-          className="w-full justify-between bg-white dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
-          variant="outline" 
-          onClick={onAdd}
-        >
-          ADD {title.toUpperCase().slice(0, -1)} <Filter size={16} />
-        </Button>
-      </Card>
-    </div>
-  ) : null
+const SectionHeader = ({ title, points, previousPoints, onClearAll, onAdd }: { title: string; points: number; previousPoints: number; show: boolean; onClearAll: () => void; onAdd: () => void }) => (
+  <Card className="mb-4 relative">
+    <Button 
+      className="w-full justify-between bg-white dark:bg-gray-900 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md bg-opacity-30 dark:bg-opacity-30"
+      variant="outline" 
+      onClick={onAdd}
+    >
+      <span className="flex items-center">
+        ADD {title.toUpperCase()}
+      </span>
+      <span className="flex items-center">
+        <button onClick={(e) => { e.stopPropagation(); onClearAll(); }} className="mr-2 text-red-500 hover:text-red-700">
+          <Trash2 size={16} />
+        </button>
+        <PointsDisplay points={points} previousPoints={previousPoints} />
+      </span>
+    </Button>
+  </Card>
 );
 
-export default function FleetBuilder({ faction }: { faction: string; factionColor: string }) {
-  const [fleetName, setFleetName] = useState('Untitled Fleet');
-  const [isEditingName, setIsEditingName] = useState(false);
+export default function FleetBuilder({ faction, fleetName }: { faction: string; factionColor: string; fleetName: string; setFleetName: React.Dispatch<React.SetStateAction<string>> }) {
   const [points, setPoints] = useState(0);
   const [previousPoints, setPreviousPoints] = useState(0);
   const [showShipSelector, setShowShipSelector] = useState(false);
@@ -147,18 +137,6 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
   const [hasCommander, setHasCommander] = useState(false);
   const [squadronToSwap, setSquadronToSwap] = useState<string | null>(null);
 
-
-  const handleNameClick = () => {
-    setIsEditingName(true);
-  };
-
-  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFleetName(e.target.value);
-  };
-
-  const handleNameBlur = () => {
-    setIsEditingName(false);
-  };
 
   const handleAddShip = () => {
     setShowShipSelector(true);
@@ -919,25 +897,16 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
 
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
-        <div className="mb-2 sm:mb-0 flex items-center">
-          {isEditingName ? (
-            <Input
-              value={fleetName}
-              onChange={handleNameChange}
-              onBlur={handleNameBlur}
-              className="text-xl font-bold"
-              autoFocus
-            />
-          ) : (
-            <div className="flex items-center cursor-pointer" onClick={handleNameClick}>
-              <h2 className="text-xl font-bold mr-2">
-                {fleetName}
-              </h2>
-              <Pencil className="h-4 w-4 text-gray-500" />
-            </div>
-          )}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center mb-4">
+        <div className="mb-2 sm:mb-0 flex items-center justify-start space-x-2">
+          <Button variant="outline" onClick={handlePrint}>
+            <Printer className="mr-2 h-4 w-4" /> Print
+          </Button>
+          <Button variant="outline" onClick={() => setShowExportPopup(true)}>
+            <FileText className="mr-2 h-4 w-4" /> Export Text
+          </Button>
         </div>
+        <div className="flex-grow" />
         <PointsDisplay points={points} previousPoints={previousPoints} />
       </div>
   
@@ -953,11 +922,11 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
       ) : (
         <Card className="mb-4 relative">
           <Button 
-            className="w-full justify-between bg-white dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+            className="w-full justify-between bg-white dark:bg-gray-900 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md bg-opacity-30 dark:bg-opacity-30"
             variant="outline" 
             onClick={handleAddShip}
           >
-            ADD SHIP <Filter size={16} onClick={(e) => { e.stopPropagation(); setShowFilter(!showFilter); }} />
+            ADD SHIP
           </Button>
           {showFilter && <ShipFilter onApplyFilter={setShipFilter} onClose={() => setShowFilter(false)} />}
         </Card>
@@ -993,11 +962,11 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
       ) : (
         <Card className="mb-4 relative">
           <Button 
-            className="w-full justify-between bg-white dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+            className="w-full justify-between bg-white dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md bg-opacity-30 dark:bg-opacity-30"
             variant="outline" 
             onClick={handleAddSquadron}
           >
-            ADD SQUADRON <Filter size={16} onClick={(e) => { e.stopPropagation(); setShowFilter(!showFilter); }} />
+            ADD SQUADRON
           </Button>
           {showFilter && <SquadronFilter onApplyFilter={setSquadronFilter} onClose={() => setShowFilter(false)} />}
         </Card>
@@ -1044,17 +1013,11 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
       </div>
 
       <div className="flex flex-wrap justify-between gap-2">
-        <Button variant="outline" className="flex-grow" onClick={handlePrint}>
-          <Printer className="mr-2 h-4 w-4" /> PRINT
-        </Button>
         <Link href="/">
           <Button variant="outline" className="flex-grow">
             <ArrowLeft className="mr-2 h-4 w-4" /> BACK
           </Button>
         </Link>
-        <Button variant="outline" className="flex-grow" onClick={() => setShowExportPopup(true)}>
-          <FileText className="mr-2 h-4 w-4" /> EXPORT TEXT
-        </Button>
       </div>
 
       {showShipSelector && (

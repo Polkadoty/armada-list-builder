@@ -8,6 +8,8 @@ import StarryBackground from '../../components/StarryBackground';
 import { useEffect, useState } from 'react';
 import { LoadingScreen } from '../../components/LoadingScreen';
 import { ContentToggleButton } from '../../components/ContentToggleButton';
+import { Input } from '../../components/ui/input';
+import { Pencil } from 'lucide-react';
 
 export const factionLogos = {
   rebel: '/icons/rebel.svg',
@@ -31,6 +33,8 @@ export default function FactionPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [loadingMessage, setLoadingMessage] = useState('');
+  const [fleetName, setFleetName] = useState('Untitled Fleet');
+  const [isEditingName, setIsEditingName] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -39,6 +43,18 @@ export default function FactionPage() {
   if (!mounted) return null;
 
   const currentTheme = theme === 'system' ? systemTheme : theme;
+
+  const handleNameClick = () => {
+    setIsEditingName(true);
+  };
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFleetName(e.target.value);
+  };
+
+  const handleNameBlur = () => {
+    setIsEditingName(false);
+  };
 
   return (
     <div className="min-h-screen text-gray-900 dark:text-white relative bg-transparent">
@@ -56,7 +72,23 @@ export default function FactionPage() {
                 className={`mr-2 ${currentTheme === 'dark' ? 'invert' : ''}`}
               />
             )}
-            <h1 className="text-2xl font-bold">Fleet Builder</h1>
+            <h1 className="text-2xl font-bold mr-4"></h1>
+            {isEditingName ? (
+              <Input
+                value={fleetName}
+                onChange={handleNameChange}
+                onBlur={handleNameBlur}
+                className="text-xl font-bold"
+                autoFocus
+              />
+            ) : (
+              <div className="flex items-center cursor-pointer" onClick={handleNameClick}>
+                <h2 className="text-xl font-bold mr-2">
+                  {fleetName}
+                </h2>
+                <Pencil className="h-4 w-4 text-gray-500" />
+              </div>
+            )}
           </div>
           <div className="flex items-center space-x-2">
             <ContentToggleButton />
@@ -64,7 +96,12 @@ export default function FactionPage() {
             <ThemeToggle />
           </div>
         </div>
-        <FleetBuilder faction={faction as string} factionColor={factionColors[faction as keyof typeof factionColors]} />
+        <FleetBuilder 
+          faction={faction as string} 
+          factionColor={factionColors[faction as keyof typeof factionColors]}
+          fleetName={fleetName}
+          setFleetName={setFleetName}
+        />
       </div>
     </div>
   );
