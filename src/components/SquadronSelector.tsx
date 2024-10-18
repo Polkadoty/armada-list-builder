@@ -169,13 +169,18 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
 
     // Check if a conflicting unique squadron is already selected
     const hasConflictingUnique = squadron.unique && selectedSquadrons.some(s => 
-      s.unique && s['ace-name'] === squadron['ace-name']
+      s.unique && s['ace-name'] === squadron['ace-name'] && s['ace-name'] !== ''
     );
 
     // Check if any of the unique classes are already in use
     const hasConflictingUniqueClass = squadron['unique-class']?.some(uc => 
       uniqueClassNames.includes(uc)
     );
+
+    // For non-unique squadrons, don't consider them conflicting
+    if (!squadron.unique) {
+      return isExactMatch;
+    }
 
     return isExactMatch || hasConflictingUnique || hasConflictingUniqueClass;
   };
@@ -190,6 +195,8 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
       if (squadron.unique) {
         if (squadron['ace-name']) {
           addUniqueClassName(squadron['ace-name']);
+        } else {
+          addUniqueClassName(squadron.name);
         }
       }
       squadron['unique-class']?.forEach(addUniqueClassName);
