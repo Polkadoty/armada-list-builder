@@ -553,6 +553,9 @@ export default function FleetBuilder({ faction }: { faction: string; factionColo
     if (squadronToRemove) {
       if (squadronToRemove.unique) {
         removeUniqueClassName(squadronToRemove.name);
+        if (squadronToRemove['ace-name']) {
+          removeUniqueClassName(squadronToRemove['ace-name']);
+        }
       }
       if (squadronToRemove['unique-class']) {
         squadronToRemove['unique-class'].forEach(uc => removeUniqueClassName(uc));

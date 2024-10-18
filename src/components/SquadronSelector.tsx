@@ -161,21 +161,37 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
   };
 
   const isSquadronSelected = (squadron: Squadron) => {
-    const isSelected = selectedSquadrons.some(s => s.id === squadron.id) ||
-      (squadron.unique && (
-        uniqueClassNames.includes(squadron.name) ||
-        squadron['unique-class']?.some(uc => uniqueClassNames.includes(uc))
-      ));
-    return isSelected;
+    // Check if this exact squadron is already selected
+    const isExactMatch = selectedSquadrons.some(s => 
+      s.id === squadron.id || 
+      (s.name === squadron.name && s['ace-name'] === squadron['ace-name'])
+    );
+
+    // Check if a conflicting unique squadron is already selected
+    const hasConflictingUnique = squadron.unique && selectedSquadrons.some(s => 
+      s.unique && s['ace-name'] === squadron['ace-name']
+    );
+
+    // Check if any of the unique classes are already in use
+    const hasConflictingUniqueClass = squadron['unique-class']?.some(uc => 
+      uniqueClassNames.includes(uc)
+    );
+
+    return isExactMatch || hasConflictingUnique || hasConflictingUniqueClass;
   };
 
   const handleSquadronClick = (squadron: Squadron) => {
     if (isSquadronSelected(squadron)) {
-      setPopupMessage("You can't select multiple unique items.");
+      setPopupMessage("You can't select multiple unique items or conflicting squadrons.");
       setShowPopup(true);
       setTimeout(() => setShowPopup(false), 2000);
     } else {
       onSelectSquadron(squadron);
+      if (squadron.unique) {
+        if (squadron['ace-name']) {
+          addUniqueClassName(squadron['ace-name']);
+        }
+      }
       squadron['unique-class']?.forEach(addUniqueClassName);
     }
   };
