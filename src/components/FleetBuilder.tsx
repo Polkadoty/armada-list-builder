@@ -102,7 +102,6 @@ const SectionHeader = ({ title, points, previousPoints, onClearAll, onAdd }: { t
 );
 
 export default function FleetBuilder({ faction, fleetName, setFleetName }: { faction: string; factionColor: string; fleetName: string; setFleetName: React.Dispatch<React.SetStateAction<string>> }) {
-  const [isEditingName, setIsEditingName] = useState(false);
   const [points, setPoints] = useState(0);
   const [previousPoints, setPreviousPoints] = useState(0);
   const [showShipSelector, setShowShipSelector] = useState(false);
@@ -138,18 +137,6 @@ export default function FleetBuilder({ faction, fleetName, setFleetName }: { fac
   const [hasCommander, setHasCommander] = useState(false);
   const [squadronToSwap, setSquadronToSwap] = useState<string | null>(null);
 
-
-  const handleNameClick = () => {
-    setIsEditingName(true);
-  };
-
-  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFleetName(e.target.value);
-  };
-
-  const handleNameBlur = () => {
-    setIsEditingName(false);
-  };
 
   const handleAddShip = () => {
     setShowShipSelector(true);
