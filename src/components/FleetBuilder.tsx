@@ -101,7 +101,7 @@ const SectionHeader = ({ title, points, previousPoints, onClearAll, onAdd }: { t
   </Card>
 );
 
-export default function FleetBuilder({ faction, fleetName, setFleetName }: { faction: string; factionColor: string; fleetName: string; setFleetName: React.Dispatch<React.SetStateAction<string>> }) {
+export default function FleetBuilder({ faction, fleetName }: { faction: string; factionColor: string; fleetName: string; setFleetName: React.Dispatch<React.SetStateAction<string>> }) {
   const [points, setPoints] = useState(0);
   const [previousPoints, setPreviousPoints] = useState(0);
   const [showShipSelector, setShowShipSelector] = useState(false);
