@@ -195,8 +195,6 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
       if (squadron.unique) {
         if (squadron['ace-name']) {
           addUniqueClassName(squadron['ace-name']);
-        } else {
-          addUniqueClassName(squadron.name);
         }
       }
       squadron['unique-class']?.forEach(addUniqueClassName);

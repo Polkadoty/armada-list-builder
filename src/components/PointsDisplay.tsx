@@ -15,7 +15,7 @@ interface PointsDisplayProps {
     useEffect(() => {
       if (points !== previousPoints) {
         setShowDifference(true);
-        const duration = 1000; // Animation duration in milliseconds
+        const duration = 333; // Animation duration in milliseconds
         const startTime = Date.now();
 
         const animatePoints = () => {
@@ -28,7 +28,7 @@ interface PointsDisplayProps {
           if (progress < 1) {
             requestAnimationFrame(animatePoints);
           } else {
-            setTimeout(() => setShowDifference(false), 1000);
+            setTimeout(() => setShowDifference(false), 333);
           }
         };
 
