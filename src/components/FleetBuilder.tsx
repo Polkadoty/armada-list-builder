@@ -710,16 +710,22 @@ export default function FleetBuilder({ faction, fleetName }: { faction: string; 
     text += `Squadrons:\n`;
     if (selectedSquadrons.length > 0) {
       const groupedSquadrons = selectedSquadrons.reduce((acc, squadron) => {
-        const key = `${squadron.name} (${squadron.points})`;
+        const key = squadron.unique || squadron['ace-name'] 
+          ? `${squadron['ace-name'] || squadron.name} (${squadron.points})`
+          : `${squadron.name} (${squadron.points * (squadron.count || 1)})`; // Multiply points by count for non-unique
         if (!acc[key]) {
-          acc[key] = 0;
+          acc[key] = { count: 0, isUnique: squadron.unique || !!squadron['ace-name'], points: squadron.points };
         }
-        acc[key] += squadron.count || 1;
+        acc[key].count += squadron.count || 1;
         return acc;
-      }, {} as Record<string, number>);
+      }, {} as Record<string, { count: number, isUnique: boolean, points: number }>);
 
-      Object.entries(groupedSquadrons).forEach(([squadronKey, count]) => {
-        text += ` - ${count} x ${squadronKey}\n`;
+      Object.entries(groupedSquadrons).forEach(([squadronKey, { count, isUnique }]) => {
+        if (isUnique) {
+          text += `• ${squadronKey}\n`;
+        } else {
+          text += `• ${count} x ${squadronKey}\n`; // Points are already included in the key
+        }
       });
     }
     text += `= ${totalSquadronPoints} Points\n\n`;
@@ -870,7 +876,7 @@ export default function FleetBuilder({ faction, fleetName }: { faction: string; 
     <div class="grid">
         ${selectedSquadrons.map(squadron => `
         <div class="section">
-            <strong>${squadron.name}</strong> (${squadron.points} points)${squadron.count > 1 ? ` x${squadron.count}` : ''}
+            <strong>${squadron['ace-name'] || squadron.name}</strong> (${squadron.points} points)${squadron.count > 1 ? ` x${squadron.count}` : ''}
         </div>
         `).join('')}
     </div>
