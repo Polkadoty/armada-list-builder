@@ -4,17 +4,21 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { UniqueClassProvider } from '../contexts/UniqueClassContext'; // Import the provider
 import { Analytics } from "@vercel/analytics/react";
 import '../styles/globals.css';
+import { Auth0ProviderWithHistory } from '../auth0-config';
+
 
 function MyApp({ Component, pageProps }: AppProps) {
   return (
-    <ThemeProvider attribute="class">
-      <TooltipProvider>
-        <UniqueClassProvider> {/* Wrap your app with the UniqueClassProvider */}
-          <Component {...pageProps} />
-          <Analytics />
-        </UniqueClassProvider>
-      </TooltipProvider>
-    </ThemeProvider>
+    <Auth0ProviderWithHistory>
+      <ThemeProvider attribute="class">
+        <TooltipProvider>
+          <UniqueClassProvider> {/* Wrap your app with the UniqueClassProvider */}
+            <Component {...pageProps} />
+            <Analytics />
+          </UniqueClassProvider>
+        </TooltipProvider>
+      </ThemeProvider>
+    </Auth0ProviderWithHistory>
   );
 }
 
