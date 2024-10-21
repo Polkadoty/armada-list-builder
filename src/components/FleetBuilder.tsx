@@ -20,737 +20,737 @@ import { ExportTextPopup } from './ExportTextPopup';
 import { factionLogos } from '../pages/[faction]';
 import { useUniqueClassContext } from '../contexts/UniqueClassContext';
 import { SwipeableObjective } from './SwipeableObjective';
+import Image from 'next/image';
+import { Input } from './ui/input';
 
 
 export interface Ship {
-  id: string;
-  name: string;
-  points: number;
-  cardimage: string;
-  faction: string;
-  availableUpgrades: string[];
-  assignedUpgrades: Upgrade[];
-  unique: boolean;
-  chassis: string;
-  size: string;
-  traits?: string[];
-  type: 'regular' | 'legacy' | 'legends';
+    id: string;
+    name: string;
+    points: number;
+    cardimage: string;
+    faction: string;
+    availableUpgrades: string[];
+    assignedUpgrades: Upgrade[];
+    unique: boolean;
+    chassis: string;
+    size: string;
+    traits?: string[];
+    type: 'regular' | 'legacy' | 'legends';
 }
 
 export interface Squadron {
-  id: string;
-  name: string;
-  'ace-name'?: string;
-  points: number;
-  cardimage: string;
-  faction: string;
-  hull: number;
-  speed: number;
-  unique: boolean;
-  count: number;
-  'unique-class': string[];
-  type: 'regular' | 'legacy' | 'legends';
+    id: string;
+    name: string;
+    'ace-name'?: string;
+    points: number;
+    cardimage: string;
+    faction: string;
+    hull: number;
+    speed: number;
+    unique: boolean;
+    count: number;
+    'unique-class': string[];
+    type: 'regular' | 'legacy' | 'legends';
 }
 
 export interface Upgrade {
-  id: string;
-  name: string;
-  points: number;
-  ability: string;
-  unique: boolean;
-  artwork: string;
-  cardimage: string;
-  type: string;
-  faction: string[];
-  "unique-class": string[];
-  bound_shiptype: string;
-  modification?: boolean;
-  slotIndex?: number;
-  restrictions?: {
-    disable_upgrades?: string[];
-    enable_upgrades?: string[];
-    disqual_upgrades?: string[];
-    size?: string[];
-    traits?: string[];
-  };
+    id: string;
+    name: string;
+    points: number;
+    ability: string;
+    unique: boolean;
+    artwork: string;
+    cardimage: string;
+    type: string;
+    faction: string[];
+    "unique-class": string[];
+    bound_shiptype: string;
+    modification?: boolean;
+    slotIndex?: number;
+    restrictions?: {
+        disable_upgrades?: string[];
+        enable_upgrades?: string[];
+        disqual_upgrades?: string[];
+        size?: string[];
+        traits?: string[];
+    };
 }
 
 export interface Ship extends ShipModel {
-  id: string;
-  availableUpgrades: string[];
-  assignedUpgrades: Upgrade[];
+    id: string;
+    availableUpgrades: string[];
+    assignedUpgrades: Upgrade[];
 }
 
 const SectionHeader = ({ title, points, previousPoints, onClearAll, onAdd }: { title: string; points: number; previousPoints: number; show: boolean; onClearAll: () => void; onAdd: () => void }) => (
-  <Card className="mb-4 relative">
-    <Button 
-      className="w-full justify-between bg-white dark:bg-gray-900 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md bg-opacity-30 dark:bg-opacity-30"
-      variant="outline" 
-      onClick={onAdd}
+    <Button
+        className="w-full justify-between border-none bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-800 mb-8"
+        variant="outline"
+        onClick={onAdd}
     >
-      <span className="flex items-center">
-        ADD {title.toUpperCase()}
-      </span>
-      <span className="flex items-center">
-        <button onClick={(e) => { e.stopPropagation(); onClearAll(); }} className="mr-2 text-red-500 hover:text-red-700">
-          <Trash2 size={16} />
-        </button>
-        <PointsDisplay points={points} previousPoints={previousPoints} />
-      </span>
+        <span className="flex items-center font-bold">+ Add {title}</span>
+        <span className={`${points > 0 ? '' : 'hidden'} font-bold`}>{points} Points</span>
     </Button>
-  </Card>
 );
 
-export default function FleetBuilder({ faction, fleetName }: { faction: string; factionColor: string; fleetName: string; setFleetName: React.Dispatch<React.SetStateAction<string>> }) {
-  const [points, setPoints] = useState(0);
-  const [previousPoints, setPreviousPoints] = useState(0);
-  const [showShipSelector, setShowShipSelector] = useState(false);
-  const [showSquadronSelector, setShowSquadronSelector] = useState(false);
-  const [selectedShips, setSelectedShips] = useState<Ship[]>([]);
-  const [selectedSquadrons, setSelectedSquadrons] = useState<Squadron[]>([]);
-  const [showFilter, setShowFilter] = useState(false);
-  const [shipFilter, setShipFilter] = useState({ minPoints: 0, maxPoints: 1000 });
-  const [squadronFilter, setSquadronFilter] = useState({ minPoints: 0, maxPoints: 1000 });
-  const [totalShipPoints, setTotalShipPoints] = useState(0);
-  const [totalSquadronPoints, setTotalSquadronPoints] = useState(0);
-  const [previousShipPoints, setPreviousShipPoints] = useState(0);
-  const [previousSquadronPoints, setPreviousSquadronPoints] = useState(0);
-  const { } = useTheme();
-  const [showAssaultObjectiveSelector, setShowAssaultObjectiveSelector] = useState(false);
-  const [showDefenseObjectiveSelector, setShowDefenseObjectiveSelector] = useState(false);
-  const [showNavigationObjectiveSelector, setShowNavigationObjectiveSelector] = useState(false);
-  const [selectedAssaultObjective, setSelectedAssaultObjective] = useState<ObjectiveModel | null>(null);
-  const [selectedDefenseObjective, setSelectedDefenseObjective] = useState<ObjectiveModel | null>(null);
-  const [selectedNavigationObjective, setSelectedNavigationObjective] = useState<ObjectiveModel | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [uniqueClassNames, setUniqueClassNames] = useState<string[]>([]);
-  const [showUpgradeSelector, setShowUpgradeSelector] = useState(false);
-  const [currentUpgradeType, setCurrentUpgradeType] = useState('');
-  const [currentShipId, setCurrentShipId] = useState('');
-  const [showExportPopup, setShowExportPopup] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { addUniqueClassName, removeUniqueClassName } = useUniqueClassContext();
-  const [currentUpgradeIndex, setCurrentUpgradeIndex] = useState<number>(0);
-  const [disabledUpgrades, setDisabledUpgrades] = useState<Record<string, string[]>>({});
-  const [enabledUpgrades, setEnabledUpgrades] = useState<Record<string, string[]>>({});
-  const [filledSlots, setFilledSlots] = useState<Record<string, Record<string, number[]>>>({});
-  const [hasCommander, setHasCommander] = useState(false);
-  const [squadronToSwap, setSquadronToSwap] = useState<string | null>(null);
+export default function FleetBuilder({ faction }: { faction: string; factionColor: string; setFleetName: React.Dispatch<React.SetStateAction<string>> }) {
+    const [points, setPoints] = useState(0);
+    const [previousPoints, setPreviousPoints] = useState(0);
+    const [showShipSelector, setShowShipSelector] = useState(false);
+    const [showSquadronSelector, setShowSquadronSelector] = useState(false);
+    const [selectedShips, setSelectedShips] = useState<Ship[]>([]);
+    const [selectedSquadrons, setSelectedSquadrons] = useState<Squadron[]>([]);
+    const [showFilter, setShowFilter] = useState(false);
+    const [shipFilter, setShipFilter] = useState({ minPoints: 0, maxPoints: 1000 });
+    const [squadronFilter, setSquadronFilter] = useState({ minPoints: 0, maxPoints: 1000 });
+    const [totalShipPoints, setTotalShipPoints] = useState(0);
+    const [totalSquadronPoints, setTotalSquadronPoints] = useState(0);
+    const [previousShipPoints, setPreviousShipPoints] = useState(0);
+    const [previousSquadronPoints, setPreviousSquadronPoints] = useState(0);
+    const { } = useTheme();
+    const [showAssaultObjectiveSelector, setShowAssaultObjectiveSelector] = useState(false);
+    const [showDefenseObjectiveSelector, setShowDefenseObjectiveSelector] = useState(false);
+    const [showNavigationObjectiveSelector, setShowNavigationObjectiveSelector] = useState(false);
+    const [selectedAssaultObjective, setSelectedAssaultObjective] = useState<ObjectiveModel | null>(null);
+    const [selectedDefenseObjective, setSelectedDefenseObjective] = useState<ObjectiveModel | null>(null);
+    const [selectedNavigationObjective, setSelectedNavigationObjective] = useState<ObjectiveModel | null>(null);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const [uniqueClassNames, setUniqueClassNames] = useState<string[]>([]);
+    const [showUpgradeSelector, setShowUpgradeSelector] = useState(false);
+    const [currentUpgradeType, setCurrentUpgradeType] = useState('');
+    const [currentShipId, setCurrentShipId] = useState('');
+    const [showExportPopup, setShowExportPopup] = useState(false);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { addUniqueClassName, removeUniqueClassName } = useUniqueClassContext();
+    const [currentUpgradeIndex, setCurrentUpgradeIndex] = useState<number>(0);
+    const [disabledUpgrades, setDisabledUpgrades] = useState<Record<string, string[]>>({});
+    const [enabledUpgrades, setEnabledUpgrades] = useState<Record<string, string[]>>({});
+    const [filledSlots, setFilledSlots] = useState<Record<string, Record<string, number[]>>>({});
+    const [hasCommander, setHasCommander] = useState(false);
+    const [squadronToSwap, setSquadronToSwap] = useState<string | null>(null);
+    const { theme, systemTheme } = useTheme();
+    const currentTheme = theme === 'system' ? systemTheme : theme;
+    const [fleetName, setFleetName] = useState('Untitled Fleet');
 
-
-  const handleAddShip = () => {
-    setShowShipSelector(true);
-  };
-
-  const handleSelectShip = (ship: ShipModel) => {
-    const newShip: Ship = { 
-      ...ship, 
-      id: Date.now().toString(),
-      availableUpgrades: ship.upgrades || [],
-      assignedUpgrades: [],
-      chassis: ship.chassis,
-      size: ship.size || '',
-      traits: ship.traits || []
+    const handleAddShip = () => {
+        setShowShipSelector(true);
     };
-    setSelectedShips([...selectedShips, newShip]);
-    setPreviousPoints(points);
-    setPreviousShipPoints(totalShipPoints);
-    const newPoints = points + ship.points;
-    setPoints(newPoints);
-    setTotalShipPoints(totalShipPoints + ship.points);
-    setShowShipSelector(false);
-  };
 
-  const handleRemoveShip = (id: string) => {
-    const shipToRemove = selectedShips.find(ship => ship.id === id);
-    if (shipToRemove) {
-      const shipPoints = shipToRemove.points + shipToRemove.assignedUpgrades.reduce((total, upgrade) => total + upgrade.points, 0);
-      
-      // Check if the ship had a commander upgrade
-      const hadCommander = shipToRemove.assignedUpgrades.some(upgrade => upgrade.type === 'commander');
-      
-      // Remove unique class names for the ship and its upgrades
-      if (shipToRemove.unique) {
-        removeUniqueClassName(shipToRemove.name);
-      }
-      shipToRemove.assignedUpgrades.forEach(upgrade => {
-        if (upgrade.unique) {
-          removeUniqueClassName(upgrade.name);
-        }
-        if (upgrade["unique-class"]) {
-          upgrade["unique-class"].forEach(uc => removeUniqueClassName(uc));
-        }
-      });
-  
-      setSelectedShips(selectedShips.filter(ship => ship.id !== id));
-      setPreviousPoints(points);
-      setPreviousShipPoints(totalShipPoints);
-      const newPoints = points - shipPoints;
-      setPoints(newPoints);
-      setTotalShipPoints(totalShipPoints - shipPoints);
-  
-      // Clear disabled and enabled upgrades for the removed ship
-      setDisabledUpgrades(prev => {
-        const newDisabled = {...prev};
-        delete newDisabled[id];
-        return newDisabled;
-      });
-      setEnabledUpgrades(prev => {
-        const newEnabled = {...prev};
-        delete newEnabled[id];
-        return newEnabled;
-      });
-  
-      // Set hasCommander to false if the removed ship had a commander
-      if (hadCommander) {
-        setHasCommander(false);
-      }
-    }
-  };
+    const handleSelectShip = (ship: ShipModel) => {
+        const newShip: Ship = {
+            ...ship,
+            id: Date.now().toString(),
+            availableUpgrades: ship.upgrades || [],
+            assignedUpgrades: [],
+            chassis: ship.chassis,
+            size: ship.size || '',
+            traits: ship.traits || []
+        };
+        setSelectedShips([...selectedShips, newShip]);
+        setPreviousPoints(points);
+        setPreviousShipPoints(totalShipPoints);
+        const newPoints = points + ship.points;
+        setPoints(newPoints);
+        setTotalShipPoints(totalShipPoints + ship.points);
+        setShowShipSelector(false);
+    };
 
-  const handleUpgradeClick = (shipId: string, upgradeType: string, upgradeIndex: number) => {
-    const ship = selectedShips.find(s => s.id === shipId);
-    if (ship) {
-      setCurrentShipId(shipId);
-      setCurrentUpgradeType(upgradeType);
-      setCurrentUpgradeIndex(upgradeIndex);
-      setShowUpgradeSelector(true);
-    }
-  };
-  
-  const handleSelectUpgrade = (upgrade: Upgrade) => {
-    if (upgrade.type === 'commander' && hasCommander) {
-      alert("Only one commander is allowed per fleet.");
-      return;
-    }
+    const handleRemoveShip = (id: string) => {
+        const shipToRemove = selectedShips.find(ship => ship.id === id);
+        if (shipToRemove) {
+            const shipPoints = shipToRemove.points + shipToRemove.assignedUpgrades.reduce((total, upgrade) => total + upgrade.points, 0);
 
-    let totalPointDifference = 0;
+            // Check if the ship had a commander upgrade
+            const hadCommander = shipToRemove.assignedUpgrades.some(upgrade => upgrade.type === 'commander');
 
-    setSelectedShips(prevShips => 
-      prevShips.map(ship => {
-        if (ship.id === currentShipId) {
-          const newUpgrade = { ...upgrade, slotIndex: currentUpgradeIndex };
-          const updatedAssignedUpgrades = [...ship.assignedUpgrades];
-          const existingUpgradeIndex = updatedAssignedUpgrades.findIndex(u => u.type === currentUpgradeType && u.slotIndex === currentUpgradeIndex);
-
-          let pointDifference = upgrade.points;
-
-          // Remove old upgrade if it exists
-          if (existingUpgradeIndex !== -1) {
-            const oldUpgrade = updatedAssignedUpgrades[existingUpgradeIndex];
-            if (oldUpgrade.unique) {
-              removeUniqueClassName(oldUpgrade.name);
+            // Remove unique class names for the ship and its upgrades
+            if (shipToRemove.unique) {
+                removeUniqueClassName(shipToRemove.name);
             }
-            if (oldUpgrade["unique-class"]) {
-              oldUpgrade["unique-class"].forEach(uc => removeUniqueClassName(uc));
-            }
-            pointDifference = upgrade.points - oldUpgrade.points;
-            updatedAssignedUpgrades[existingUpgradeIndex] = newUpgrade;
-          } else {
-            updatedAssignedUpgrades.push(newUpgrade);
-          }
-
-          totalPointDifference += pointDifference;
-
-          // Add new unique class
-          if (upgrade.unique) {
-            addUniqueClassName(upgrade.name);
-          }
-          if (upgrade["unique-class"]) {
-            upgrade["unique-class"].forEach(uc => addUniqueClassName(uc));
-          }
-
-          // Handle disabled upgrades
-          const newDisabledUpgrades = [...(disabledUpgrades[ship.id] || [])];
-          if (upgrade.restrictions?.disable_upgrades) {
-            newDisabledUpgrades.push(...upgrade.restrictions.disable_upgrades);
-          }
-          if (upgrade.type === 'title') {
-            newDisabledUpgrades.push('title');
-          }
-          setDisabledUpgrades({...disabledUpgrades, [ship.id]: newDisabledUpgrades});
-
-          // Handle enabled upgrades
-          const newEnabledUpgrades = [...(enabledUpgrades[ship.id] || [])];
-          if (upgrade.restrictions?.enable_upgrades) {
-            upgrade.restrictions.enable_upgrades
-              .filter(enabledUpgrade => enabledUpgrade.trim() !== '')
-              .forEach(enabledUpgrade => {
-                if (!newEnabledUpgrades.includes(enabledUpgrade)) {
-                  newEnabledUpgrades.push(enabledUpgrade);
+            shipToRemove.assignedUpgrades.forEach(upgrade => {
+                if (upgrade.unique) {
+                    removeUniqueClassName(upgrade.name);
                 }
-              });
-          }
-          setEnabledUpgrades({...enabledUpgrades, [ship.id]: newEnabledUpgrades});
-
-          // Update filledSlots
-          setFilledSlots(prevFilledSlots => {
-            const shipSlots = prevFilledSlots[ship.id] || {};
-            const upgradeTypeSlots = shipSlots[currentUpgradeType] || [];
-            const updatedSlots = upgradeTypeSlots.includes(currentUpgradeIndex)
-              ? upgradeTypeSlots
-              : [...upgradeTypeSlots, currentUpgradeIndex];
-            return {
-              ...prevFilledSlots,
-              [ship.id]: {
-                ...shipSlots,
-                [currentUpgradeType]: updatedSlots
-              }
-            };
-          });
-
-          if (upgrade.type === 'weapons-team-offensive-retro') {
-            const weaponsTeamIndex = ship.availableUpgrades.indexOf('weapons-team');
-            const offensiveRetroIndex = ship.availableUpgrades.indexOf('offensive-retro');
-            setFilledSlots(prevFilledSlots => ({
-              ...prevFilledSlots,
-              [ship.id]: {
-                ...prevFilledSlots[ship.id],
-                'weapons-team': [...(prevFilledSlots[ship.id]?.['weapons-team'] || []), weaponsTeamIndex],
-                'offensive-retro': [...(prevFilledSlots[ship.id]?.['offensive-retro'] || []), offensiveRetroIndex],
-                'weapons-team-offensive-retro': [...(prevFilledSlots[ship.id]?.['weapons-team-offensive-retro'] || []), currentUpgradeIndex]
-              }
-            }));
-          }
-
-          return { ...ship, assignedUpgrades: updatedAssignedUpgrades };
-        }
-        return ship;
-      })
-    );
-
-    setPreviousPoints(points);
-    setPreviousShipPoints(totalShipPoints);
-    setPoints(prevPoints => prevPoints + totalPointDifference);
-    setTotalShipPoints(prevTotal => prevTotal + totalPointDifference);
-
-    if (upgrade.type === 'commander') {
-      setHasCommander(true);
-    }
-
-    setShowUpgradeSelector(false);
-  };
-
-  
-  const handleRemoveUpgrade = useCallback((shipId: string, upgradeType: string, upgradeIndex: number) => {
-    const shipToUpdate = selectedShips.find(ship => ship.id === shipId);
-    const upgradeToRemove = shipToUpdate?.assignedUpgrades.find(u => u.type === upgradeType && u.slotIndex === upgradeIndex);
-  
-    if (upgradeToRemove && upgradeToRemove.type === 'commander') {
-      setHasCommander(false);
-    }
-  
-    console.log('Before removal:', selectedShips);
-    setSelectedShips(prevShips => 
-      prevShips.map(ship => {
-        if (ship.id === shipId) {
-          const upgradeToRemove = ship.assignedUpgrades.find(u => u.type === upgradeType && u.slotIndex === upgradeIndex);
-          if (upgradeToRemove) {
-            console.log('Removing upgrade:', upgradeToRemove);
-            
-            let upgradesToRemove = [upgradeToRemove];
-            let pointsToRemove = upgradeToRemove.points;
-  
-            // Check for enabled upgrades
-            if (upgradeToRemove.restrictions?.enable_upgrades) {
-              const enabledUpgradesToRemove = ship.assignedUpgrades.filter(u => 
-                upgradeToRemove.restrictions?.enable_upgrades?.includes(u.type)
-              );
-              upgradesToRemove = [...enabledUpgradesToRemove, upgradeToRemove];
-              pointsToRemove += enabledUpgradesToRemove.reduce((sum, u) => sum + u.points, 0);
-            }
-  
-            // Process all upgrades to remove
-            upgradesToRemove.forEach(upgrade => {
-              // Remove unique class with setTimeout
-              if (upgrade.unique) {
-                setTimeout(() => removeUniqueClassName(upgrade.name), 0);
-              }
-              if (upgrade["unique-class"]) {
-                upgrade["unique-class"].forEach(uc => {
-                  setTimeout(() => removeUniqueClassName(uc), 0);
-                });
-              }
-  
-              // Update disabled upgrades
-              setDisabledUpgrades(prev => ({
-                ...prev,
-                [shipId]: (prev[shipId] || []).filter(u => !upgrade.restrictions?.disable_upgrades?.includes(u))
-              }));
-  
-              // Update enabled upgrades
-              setEnabledUpgrades(prev => ({
-                ...prev,
-                [shipId]: (prev[shipId] || []).filter(u => !upgrade.restrictions?.enable_upgrades?.includes(u))
-              }));
-  
-              // If it's a title, remove the 'title' from disabled upgrades
-              if (upgrade.type === 'title') {
-                setDisabledUpgrades(prev => ({
-                  ...prev,
-                  [shipId]: (prev[shipId] || []).filter(u => u !== 'title')
-                }));
-              }
-  
-              // Update filledSlots
-              setFilledSlots(prevFilledSlots => {
-                const shipSlots = prevFilledSlots[shipId] || {};
-                const upgradeTypeSlots = [...(shipSlots[upgrade.type] || [])];
-                const updatedSlots = upgradeTypeSlots.filter(slot => slot !== upgrade.slotIndex);
-                
-                if (upgrade.type === 'weapons-team-offensive-retro') {
-                  const weaponsTeamSlots = [...(shipSlots['weapons-team'] || [])];
-                  const offensiveRetroSlots = [...(shipSlots['offensive-retro'] || [])];
-                  return {
-                    ...prevFilledSlots,
-                    [shipId]: {
-                      ...shipSlots,
-                      'weapons-team': weaponsTeamSlots.filter(slot => slot !== upgrade.slotIndex),
-                      'offensive-retro': offensiveRetroSlots.filter(slot => slot !== upgrade.slotIndex),
-                      [upgrade.type]: updatedSlots
-                    }
-                  };
-                } else {
-                  return {
-                    ...prevFilledSlots,
-                    [shipId]: {
-                      ...shipSlots,
-                      [upgrade.type]: updatedSlots
-                    }
-                  };
+                if (upgrade["unique-class"]) {
+                    upgrade["unique-class"].forEach(uc => removeUniqueClassName(uc));
                 }
-              });
             });
-  
+
+            setSelectedShips(selectedShips.filter(ship => ship.id !== id));
             setPreviousPoints(points);
             setPreviousShipPoints(totalShipPoints);
-            setPoints(prevPoints => prevPoints - pointsToRemove);
-            setTotalShipPoints(prevTotal => prevTotal - pointsToRemove);
-  
-            return {
-              ...ship,
-              points: ship.points,  // Keep the ship's base points unchanged
-              assignedUpgrades: ship.assignedUpgrades.filter(u => 
-                !upgradesToRemove.includes(u)
-              )
-            };
-          }
+            const newPoints = points - shipPoints;
+            setPoints(newPoints);
+            setTotalShipPoints(totalShipPoints - shipPoints);
+
+            // Clear disabled and enabled upgrades for the removed ship
+            setDisabledUpgrades(prev => {
+                const newDisabled = { ...prev };
+                delete newDisabled[id];
+                return newDisabled;
+            });
+            setEnabledUpgrades(prev => {
+                const newEnabled = { ...prev };
+                delete newEnabled[id];
+                return newEnabled;
+            });
+
+            // Set hasCommander to false if the removed ship had a commander
+            if (hadCommander) {
+                setHasCommander(false);
+            }
         }
-        return ship;
-      })
-    );
-    console.log('After removal:', selectedShips);
-  }, [points, removeUniqueClassName, totalShipPoints, selectedShips, setSelectedShips, setPreviousPoints, setPoints, setTotalShipPoints, setHasCommander]);
-
-
-  const handleCopyShip = (shipToCopy: Ship) => {
-    if (shipToCopy.unique) {
-      // If the ship is unique, don't copy it and maybe show an alert
-      alert("Unique ships cannot be copied.");
-      return;
-    }
-  
-    const newShip = { 
-      ...shipToCopy, 
-      id: Date.now().toString(),
-      assignedUpgrades: shipToCopy.assignedUpgrades.filter(upgrade => !upgrade.unique)
     };
-    const newShipPoints = newShip.points + newShip.assignedUpgrades.reduce((total, upgrade) => total + upgrade.points, 0);
-    setSelectedShips([...selectedShips, newShip]);
-    setPreviousPoints(points);
-    setPreviousShipPoints(totalShipPoints);
-    const newPoints = points + newShipPoints;
-    setPoints(newPoints);
-    setTotalShipPoints(totalShipPoints + newShipPoints);
-  };
 
-  const handleAddSquadron = () => {
-    setShowSquadronSelector(true);
-  };
+    const handleUpgradeClick = (shipId: string, upgradeType: string, upgradeIndex: number) => {
+        const ship = selectedShips.find(s => s.id === shipId);
+        if (ship) {
+            setCurrentShipId(shipId);
+            setCurrentUpgradeType(upgradeType);
+            setCurrentUpgradeIndex(upgradeIndex);
+            setShowUpgradeSelector(true);
+        }
+    };
 
-  const handleSelectSquadron = (squadron: Squadron) => {
-    if (squadronToSwap) {
-      setSelectedSquadrons(prevSquadrons => 
-        prevSquadrons.map(s => {
-          if (s.id === squadronToSwap) {
-            // Remove unique class names from the old squadron
-            if (s.unique) {
-              removeUniqueClassName(s.name);
-            }
-            if (s['unique-class']) {
-              s['unique-class'].forEach(uc => removeUniqueClassName(uc));
-            }
+    const handleSelectUpgrade = (upgrade: Upgrade) => {
+        if (upgrade.type === 'commander' && hasCommander) {
+            alert("Only one commander is allowed per fleet.");
+            return;
+        }
 
-            const pointDifference = squadron.points - s.points;
+        let totalPointDifference = 0;
+
+        setSelectedShips(prevShips =>
+            prevShips.map(ship => {
+                if (ship.id === currentShipId) {
+                    const newUpgrade = { ...upgrade, slotIndex: currentUpgradeIndex };
+                    const updatedAssignedUpgrades = [...ship.assignedUpgrades];
+                    const existingUpgradeIndex = updatedAssignedUpgrades.findIndex(u => u.type === currentUpgradeType && u.slotIndex === currentUpgradeIndex);
+
+                    let pointDifference = upgrade.points;
+
+                    // Remove old upgrade if it exists
+                    if (existingUpgradeIndex !== -1) {
+                        const oldUpgrade = updatedAssignedUpgrades[existingUpgradeIndex];
+                        if (oldUpgrade.unique) {
+                            removeUniqueClassName(oldUpgrade.name);
+                        }
+                        if (oldUpgrade["unique-class"]) {
+                            oldUpgrade["unique-class"].forEach(uc => removeUniqueClassName(uc));
+                        }
+                        pointDifference = upgrade.points - oldUpgrade.points;
+                        updatedAssignedUpgrades[existingUpgradeIndex] = newUpgrade;
+                    } else {
+                        updatedAssignedUpgrades.push(newUpgrade);
+                    }
+
+                    totalPointDifference += pointDifference;
+
+                    // Add new unique class
+                    if (upgrade.unique) {
+                        addUniqueClassName(upgrade.name);
+                    }
+                    if (upgrade["unique-class"]) {
+                        upgrade["unique-class"].forEach(uc => addUniqueClassName(uc));
+                    }
+
+                    // Handle disabled upgrades
+                    const newDisabledUpgrades = [...(disabledUpgrades[ship.id] || [])];
+                    if (upgrade.restrictions?.disable_upgrades) {
+                        newDisabledUpgrades.push(...upgrade.restrictions.disable_upgrades);
+                    }
+                    if (upgrade.type === 'title') {
+                        newDisabledUpgrades.push('title');
+                    }
+                    setDisabledUpgrades({ ...disabledUpgrades, [ship.id]: newDisabledUpgrades });
+
+                    // Handle enabled upgrades
+                    const newEnabledUpgrades = [...(enabledUpgrades[ship.id] || [])];
+                    if (upgrade.restrictions?.enable_upgrades) {
+                        upgrade.restrictions.enable_upgrades
+                            .filter(enabledUpgrade => enabledUpgrade.trim() !== '')
+                            .forEach(enabledUpgrade => {
+                                if (!newEnabledUpgrades.includes(enabledUpgrade)) {
+                                    newEnabledUpgrades.push(enabledUpgrade);
+                                }
+                            });
+                    }
+                    setEnabledUpgrades({ ...enabledUpgrades, [ship.id]: newEnabledUpgrades });
+
+                    // Update filledSlots
+                    setFilledSlots(prevFilledSlots => {
+                        const shipSlots = prevFilledSlots[ship.id] || {};
+                        const upgradeTypeSlots = shipSlots[currentUpgradeType] || [];
+                        const updatedSlots = upgradeTypeSlots.includes(currentUpgradeIndex)
+                            ? upgradeTypeSlots
+                            : [...upgradeTypeSlots, currentUpgradeIndex];
+                        return {
+                            ...prevFilledSlots,
+                            [ship.id]: {
+                                ...shipSlots,
+                                [currentUpgradeType]: updatedSlots
+                            }
+                        };
+                    });
+
+                    if (upgrade.type === 'weapons-team-offensive-retro') {
+                        const weaponsTeamIndex = ship.availableUpgrades.indexOf('weapons-team');
+                        const offensiveRetroIndex = ship.availableUpgrades.indexOf('offensive-retro');
+                        setFilledSlots(prevFilledSlots => ({
+                            ...prevFilledSlots,
+                            [ship.id]: {
+                                ...prevFilledSlots[ship.id],
+                                'weapons-team': [...(prevFilledSlots[ship.id]?.['weapons-team'] || []), weaponsTeamIndex],
+                                'offensive-retro': [...(prevFilledSlots[ship.id]?.['offensive-retro'] || []), offensiveRetroIndex],
+                                'weapons-team-offensive-retro': [...(prevFilledSlots[ship.id]?.['weapons-team-offensive-retro'] || []), currentUpgradeIndex]
+                            }
+                        }));
+                    }
+
+                    return { ...ship, assignedUpgrades: updatedAssignedUpgrades };
+                }
+                return ship;
+            })
+        );
+
+        setPreviousPoints(points);
+        setPreviousShipPoints(totalShipPoints);
+        setPoints(prevPoints => prevPoints + totalPointDifference);
+        setTotalShipPoints(prevTotal => prevTotal + totalPointDifference);
+
+        if (upgrade.type === 'commander') {
+            setHasCommander(true);
+        }
+
+        setShowUpgradeSelector(false);
+    };
+
+
+    const handleRemoveUpgrade = useCallback((shipId: string, upgradeType: string, upgradeIndex: number) => {
+        const shipToUpdate = selectedShips.find(ship => ship.id === shipId);
+        const upgradeToRemove = shipToUpdate?.assignedUpgrades.find(u => u.type === upgradeType && u.slotIndex === upgradeIndex);
+
+        if (upgradeToRemove && upgradeToRemove.type === 'commander') {
+            setHasCommander(false);
+        }
+
+        console.log('Before removal:', selectedShips);
+        setSelectedShips(prevShips =>
+            prevShips.map(ship => {
+                if (ship.id === shipId) {
+                    const upgradeToRemove = ship.assignedUpgrades.find(u => u.type === upgradeType && u.slotIndex === upgradeIndex);
+                    if (upgradeToRemove) {
+                        console.log('Removing upgrade:', upgradeToRemove);
+
+                        let upgradesToRemove = [upgradeToRemove];
+                        let pointsToRemove = upgradeToRemove.points;
+
+                        // Check for enabled upgrades
+                        if (upgradeToRemove.restrictions?.enable_upgrades) {
+                            const enabledUpgradesToRemove = ship.assignedUpgrades.filter(u =>
+                                upgradeToRemove.restrictions?.enable_upgrades?.includes(u.type)
+                            );
+                            upgradesToRemove = [...enabledUpgradesToRemove, upgradeToRemove];
+                            pointsToRemove += enabledUpgradesToRemove.reduce((sum, u) => sum + u.points, 0);
+                        }
+
+                        // Process all upgrades to remove
+                        upgradesToRemove.forEach(upgrade => {
+                            // Remove unique class with setTimeout
+                            if (upgrade.unique) {
+                                setTimeout(() => removeUniqueClassName(upgrade.name), 0);
+                            }
+                            if (upgrade["unique-class"]) {
+                                upgrade["unique-class"].forEach(uc => {
+                                    setTimeout(() => removeUniqueClassName(uc), 0);
+                                });
+                            }
+
+                            // Update disabled upgrades
+                            setDisabledUpgrades(prev => ({
+                                ...prev,
+                                [shipId]: (prev[shipId] || []).filter(u => !upgrade.restrictions?.disable_upgrades?.includes(u))
+                            }));
+
+                            // Update enabled upgrades
+                            setEnabledUpgrades(prev => ({
+                                ...prev,
+                                [shipId]: (prev[shipId] || []).filter(u => !upgrade.restrictions?.enable_upgrades?.includes(u))
+                            }));
+
+                            // If it's a title, remove the 'title' from disabled upgrades
+                            if (upgrade.type === 'title') {
+                                setDisabledUpgrades(prev => ({
+                                    ...prev,
+                                    [shipId]: (prev[shipId] || []).filter(u => u !== 'title')
+                                }));
+                            }
+
+                            // Update filledSlots
+                            setFilledSlots(prevFilledSlots => {
+                                const shipSlots = prevFilledSlots[shipId] || {};
+                                const upgradeTypeSlots = [...(shipSlots[upgrade.type] || [])];
+                                const updatedSlots = upgradeTypeSlots.filter(slot => slot !== upgrade.slotIndex);
+
+                                if (upgrade.type === 'weapons-team-offensive-retro') {
+                                    const weaponsTeamSlots = [...(shipSlots['weapons-team'] || [])];
+                                    const offensiveRetroSlots = [...(shipSlots['offensive-retro'] || [])];
+                                    return {
+                                        ...prevFilledSlots,
+                                        [shipId]: {
+                                            ...shipSlots,
+                                            'weapons-team': weaponsTeamSlots.filter(slot => slot !== upgrade.slotIndex),
+                                            'offensive-retro': offensiveRetroSlots.filter(slot => slot !== upgrade.slotIndex),
+                                            [upgrade.type]: updatedSlots
+                                        }
+                                    };
+                                } else {
+                                    return {
+                                        ...prevFilledSlots,
+                                        [shipId]: {
+                                            ...shipSlots,
+                                            [upgrade.type]: updatedSlots
+                                        }
+                                    };
+                                }
+                            });
+                        });
+
+                        setPreviousPoints(points);
+                        setPreviousShipPoints(totalShipPoints);
+                        setPoints(prevPoints => prevPoints - pointsToRemove);
+                        setTotalShipPoints(prevTotal => prevTotal - pointsToRemove);
+
+                        return {
+                            ...ship,
+                            points: ship.points,  // Keep the ship's base points unchanged
+                            assignedUpgrades: ship.assignedUpgrades.filter(u =>
+                                !upgradesToRemove.includes(u)
+                            )
+                        };
+                    }
+                }
+                return ship;
+            })
+        );
+        console.log('After removal:', selectedShips);
+    }, [points, removeUniqueClassName, totalShipPoints, selectedShips, setSelectedShips, setPreviousPoints, setPoints, setTotalShipPoints, setHasCommander]);
+
+
+    const handleCopyShip = (shipToCopy: Ship) => {
+        if (shipToCopy.unique) {
+            // If the ship is unique, don't copy it and maybe show an alert
+            alert("Unique ships cannot be copied.");
+            return;
+        }
+
+        const newShip = {
+            ...shipToCopy,
+            id: Date.now().toString(),
+            assignedUpgrades: shipToCopy.assignedUpgrades.filter(upgrade => !upgrade.unique)
+        };
+        const newShipPoints = newShip.points + newShip.assignedUpgrades.reduce((total, upgrade) => total + upgrade.points, 0);
+        setSelectedShips([...selectedShips, newShip]);
+        setPreviousPoints(points);
+        setPreviousShipPoints(totalShipPoints);
+        const newPoints = points + newShipPoints;
+        setPoints(newPoints);
+        setTotalShipPoints(totalShipPoints + newShipPoints);
+    };
+
+    const handleAddSquadron = () => {
+        setShowSquadronSelector(true);
+    };
+
+    const handleSelectSquadron = (squadron: Squadron) => {
+        if (squadronToSwap) {
+            setSelectedSquadrons(prevSquadrons =>
+                prevSquadrons.map(s => {
+                    if (s.id === squadronToSwap) {
+                        // Remove unique class names from the old squadron
+                        if (s.unique) {
+                            removeUniqueClassName(s.name);
+                        }
+                        if (s['unique-class']) {
+                            s['unique-class'].forEach(uc => removeUniqueClassName(uc));
+                        }
+
+                        const pointDifference = squadron.points - s.points;
+                        setPreviousPoints(points);
+                        setPreviousSquadronPoints(totalSquadronPoints);
+                        setPoints(prevPoints => prevPoints + pointDifference);
+                        setTotalSquadronPoints(prevTotal => prevTotal + pointDifference);
+
+                        // Add unique class names for the new squadron
+                        if (squadron.unique) {
+                            addUniqueClassName(squadron.name);
+                        }
+                        if (squadron['unique-class']) {
+                            squadron['unique-class'].forEach(uc => addUniqueClassName(uc));
+                        }
+
+                        return { ...squadron, id: Date.now().toString(), count: 1 };
+                    }
+                    return s;
+                })
+            );
+            setSquadronToSwap(null);
+        } else {
+            const newSquadron: Squadron = {
+                ...squadron,
+                id: Date.now().toString(),
+                count: 1,
+            };
+            setSelectedSquadrons(prevSquadrons => [...prevSquadrons, newSquadron]);
             setPreviousPoints(points);
             setPreviousSquadronPoints(totalSquadronPoints);
-            setPoints(prevPoints => prevPoints + pointDifference);
-            setTotalSquadronPoints(prevTotal => prevTotal + pointDifference);
+            const newPoints = points + squadron.points;
+            setPoints(newPoints);
+            setTotalSquadronPoints(totalSquadronPoints + squadron.points);
 
             // Add unique class names for the new squadron
             if (squadron.unique) {
-              addUniqueClassName(squadron.name);
+                addUniqueClassName(squadron.name);
             }
             if (squadron['unique-class']) {
-              squadron['unique-class'].forEach(uc => addUniqueClassName(uc));
+                squadron['unique-class'].forEach(uc => addUniqueClassName(uc));
+            }
+        }
+        setShowSquadronSelector(false);
+    };
+
+
+    const handleRemoveSquadron = (id: string) => {
+        const squadronToRemove = selectedSquadrons.find(squadron => squadron.id === id);
+        if (squadronToRemove) {
+            if (squadronToRemove.unique) {
+                removeUniqueClassName(squadronToRemove.name);
+                if (squadronToRemove['ace-name']) {
+                    removeUniqueClassName(squadronToRemove['ace-name']);
+                }
+            }
+            if (squadronToRemove['unique-class']) {
+                squadronToRemove['unique-class'].forEach(uc => removeUniqueClassName(uc));
             }
 
-            return { ...squadron, id: Date.now().toString(), count: 1 };
-          }
-          return s;
-        })
-      );
-      setSquadronToSwap(null);
-    } else {
-      const newSquadron: Squadron = { 
-        ...squadron, 
-        id: Date.now().toString(),
-        count: 1,
-      };
-      setSelectedSquadrons(prevSquadrons => [...prevSquadrons, newSquadron]);
-      setPreviousPoints(points);
-      setPreviousSquadronPoints(totalSquadronPoints);
-      const newPoints = points + squadron.points;
-      setPoints(newPoints);
-      setTotalSquadronPoints(totalSquadronPoints + squadron.points);
-
-      // Add unique class names for the new squadron
-      if (squadron.unique) {
-        addUniqueClassName(squadron.name);
-      }
-      if (squadron['unique-class']) {
-        squadron['unique-class'].forEach(uc => addUniqueClassName(uc));
-      }
-    }
-    setShowSquadronSelector(false);
-  };
-
-
-  const handleRemoveSquadron = (id: string) => {
-    const squadronToRemove = selectedSquadrons.find(squadron => squadron.id === id);
-    if (squadronToRemove) {
-      if (squadronToRemove.unique) {
-        removeUniqueClassName(squadronToRemove.name);
-        if (squadronToRemove['ace-name']) {
-          removeUniqueClassName(squadronToRemove['ace-name']);
-        }
-      }
-      if (squadronToRemove['unique-class']) {
-        squadronToRemove['unique-class'].forEach(uc => removeUniqueClassName(uc));
-      }
-  
-      setSelectedSquadrons(selectedSquadrons.filter(squadron => squadron.id !== id));
-      setPreviousPoints(points);
-      setPreviousSquadronPoints(totalSquadronPoints);
-      const newPoints = points - squadronToRemove.points * squadronToRemove.count;
-      setPoints(newPoints);
-      setTotalSquadronPoints(totalSquadronPoints - squadronToRemove.points * squadronToRemove.count);
-    }
-  };
-
-  const handleIncrementSquadron = (id: string) => {
-    setSelectedSquadrons(squadrons =>
-      squadrons.map(squadron =>
-        squadron.id === id
-          ? { ...squadron, count: (squadron.count || 1) + 1 }
-          : squadron
-      )
-    );
-    const squadron = selectedSquadrons.find(s => s.id === id);
-    if (squadron) {
-      setPreviousPoints(points);
-      setPreviousSquadronPoints(totalSquadronPoints);
-      const newPoints = points + squadron.points;
-      setPoints(newPoints);
-      setTotalSquadronPoints(totalSquadronPoints + squadron.points);
-    }
-  };
-
-  const handleDecrementSquadron = (id: string) => {
-    setSelectedSquadrons(prevSquadrons => {
-      return prevSquadrons.reduce((acc, squadron) => {
-        if (squadron.id === id) {
-          const newCount = (squadron.count || 1) - 1;
-          if (newCount === 0) {
-            // Squadron will be removed
+            setSelectedSquadrons(selectedSquadrons.filter(squadron => squadron.id !== id));
             setPreviousPoints(points);
             setPreviousSquadronPoints(totalSquadronPoints);
-            const newPoints = points - squadron.points;
+            const newPoints = points - squadronToRemove.points * squadronToRemove.count;
             setPoints(newPoints);
-            setTotalSquadronPoints(totalSquadronPoints - squadron.points);
-  
-            // Remove unique class names if it's the last squadron
-            if (squadron.unique) {
-              removeUniqueClassName(squadron.name);
-            }
-            if (squadron['unique-class']) {
-              squadron['unique-class'].forEach(uc => removeUniqueClassName(uc));
-            }
-            // Don't add this squadron to the accumulator
-            return acc;
-          } else {
-            // Squadron count is decremented
+            setTotalSquadronPoints(totalSquadronPoints - squadronToRemove.points * squadronToRemove.count);
+        }
+    };
+
+    const handleIncrementSquadron = (id: string) => {
+        setSelectedSquadrons(squadrons =>
+            squadrons.map(squadron =>
+                squadron.id === id
+                    ? { ...squadron, count: (squadron.count || 1) + 1 }
+                    : squadron
+            )
+        );
+        const squadron = selectedSquadrons.find(s => s.id === id);
+        if (squadron) {
             setPreviousPoints(points);
             setPreviousSquadronPoints(totalSquadronPoints);
-            const newPoints = points - squadron.points;
+            const newPoints = points + squadron.points;
             setPoints(newPoints);
-            setTotalSquadronPoints(totalSquadronPoints - squadron.points);
-            return [...acc, { ...squadron, count: newCount }];
-          }
+            setTotalSquadronPoints(totalSquadronPoints + squadron.points);
         }
-        return [...acc, squadron];
-      }, [] as Squadron[]);
-    });
-  };
+    };
 
-  const handleSwapSquadron = (id: string) => {
-    setShowSquadronSelector(true);
-    setSquadronToSwap(id);
-  };
+    const handleDecrementSquadron = (id: string) => {
+        setSelectedSquadrons(prevSquadrons => {
+            return prevSquadrons.reduce((acc, squadron) => {
+                if (squadron.id === id) {
+                    const newCount = (squadron.count || 1) - 1;
+                    if (newCount === 0) {
+                        // Squadron will be removed
+                        setPreviousPoints(points);
+                        setPreviousSquadronPoints(totalSquadronPoints);
+                        const newPoints = points - squadron.points;
+                        setPoints(newPoints);
+                        setTotalSquadronPoints(totalSquadronPoints - squadron.points);
 
-  const handleSelectAssaultObjective = (objective: ObjectiveModel) => {
-    setSelectedAssaultObjective(objective);
-    setShowAssaultObjectiveSelector(false);
-  };
-
-  const handleSelectDefenseObjective = (objective: ObjectiveModel) => {
-    setSelectedDefenseObjective(objective);
-    setShowDefenseObjectiveSelector(false);
-  };
-
-  const handleSelectNavigationObjective = (objective: ObjectiveModel) => {
-    setSelectedNavigationObjective(objective);
-    setShowNavigationObjectiveSelector(false);
-  };
-
-  const handleRemoveAssaultObjective = () => {
-    setSelectedAssaultObjective(null);
-  };
-  
-  const handleRemoveDefenseObjective = () => {
-    setSelectedDefenseObjective(null);
-  };
-  
-  const handleRemoveNavigationObjective = () => {
-    setSelectedNavigationObjective(null);
-  };
-
-  const clearAllShips = () => {
-    selectedShips.forEach(ship => {
-      if (ship.unique) {
-        removeUniqueClassName(ship.name);
-      }
-      ship.assignedUpgrades.forEach(upgrade => {
-        if (upgrade.unique) {
-          removeUniqueClassName(upgrade.name);
-        }
-        if (upgrade["unique-class"]) {
-          upgrade["unique-class"].forEach(uc => removeUniqueClassName(uc));
-        }
-      });
-    });
-  
-    setSelectedShips([]);
-    setPreviousPoints(points);
-    setPreviousShipPoints(totalShipPoints);
-    const newPoints = points - totalShipPoints;
-    setPoints(newPoints);
-    setTotalShipPoints(0);
-    setHasCommander(false);  // Add this line
-  };
-  
-  const clearAllSquadrons = () => {
-    selectedSquadrons.forEach(squadron => {
-      if (squadron.unique) {
-        removeUniqueClassName(squadron.name);
-      }
-      if (squadron['unique-class']) {
-        squadron['unique-class'].forEach(uc => removeUniqueClassName(uc));
-      }
-    });
-  
-    setPreviousPoints(points);
-    setPreviousSquadronPoints(totalSquadronPoints);
-    setPoints(points - totalSquadronPoints);
-    setTotalSquadronPoints(0);
-    setSelectedSquadrons([]);
-  };
-
-  const generateExportText = () => {
-    let text = `Name: ${fleetName}\n`;
-    text += `Faction: ${faction.charAt(0).toUpperCase() + faction.slice(1)}\n`;
-    
-    const commander = selectedShips.flatMap(ship => ship.assignedUpgrades).find(upgrade => upgrade.type === 'commander');
-    if (commander) {
-      text += `Commander: ${commander.name}\n`;
-    }
-    
-    text += `\n`;
-    if (selectedAssaultObjective) {
-      text += `Assault: ${selectedAssaultObjective.name}\n`;
-    }
-    if (selectedDefenseObjective) {
-      text += `Defense: ${selectedDefenseObjective.name}\n`;
-    }
-    if (selectedNavigationObjective) {
-      text += `Navigation: ${selectedNavigationObjective.name}\n`;
-    }
-    
-    if (selectedShips.length > 0) {
-      text += `\n`;
-      selectedShips.forEach(ship => {
-        text += `${ship.name} (${ship.points})\n`;
-        ship.assignedUpgrades.forEach(upgrade => {
-          text += `• ${upgrade.name} (${upgrade.points})\n`;
+                        // Remove unique class names if it's the last squadron
+                        if (squadron.unique) {
+                            removeUniqueClassName(squadron.name);
+                        }
+                        if (squadron['unique-class']) {
+                            squadron['unique-class'].forEach(uc => removeUniqueClassName(uc));
+                        }
+                        // Don't add this squadron to the accumulator
+                        return acc;
+                    } else {
+                        // Squadron count is decremented
+                        setPreviousPoints(points);
+                        setPreviousSquadronPoints(totalSquadronPoints);
+                        const newPoints = points - squadron.points;
+                        setPoints(newPoints);
+                        setTotalSquadronPoints(totalSquadronPoints - squadron.points);
+                        return [...acc, { ...squadron, count: newCount }];
+                    }
+                }
+                return [...acc, squadron];
+            }, [] as Squadron[]);
         });
-        text += `= ${ship.points + ship.assignedUpgrades.reduce((total, upgrade) => total + upgrade.points, 0)} Points\n\n`;
-      });
-    }
-    
-    text += `Squadrons:\n`;
-    if (selectedSquadrons.length > 0) {
-      const groupedSquadrons = selectedSquadrons.reduce((acc, squadron) => {
-        const key = squadron.unique || squadron['ace-name'] 
-          ? `${squadron['ace-name'] || squadron.name} (${squadron.points})`
-          : `${squadron.name} (${squadron.points * (squadron.count || 1)})`; // Multiply points by count for non-unique
-        if (!acc[key]) {
-          acc[key] = { count: 0, isUnique: squadron.unique || !!squadron['ace-name'], points: squadron.points };
+    };
+
+    const handleSwapSquadron = (id: string) => {
+
+        setShowSquadronSelector(true);
+        setSquadronToSwap(id);
+    };
+
+    const handleSelectAssaultObjective = (objective: ObjectiveModel) => {
+        setSelectedAssaultObjective(objective);
+        setShowAssaultObjectiveSelector(false);
+    };
+
+    const handleSelectDefenseObjective = (objective: ObjectiveModel) => {
+        setSelectedDefenseObjective(objective);
+        setShowDefenseObjectiveSelector(false);
+    };
+
+    const handleSelectNavigationObjective = (objective: ObjectiveModel) => {
+        setSelectedNavigationObjective(objective);
+        setShowNavigationObjectiveSelector(false);
+    };
+
+    const handleRemoveAssaultObjective = () => {
+        setSelectedAssaultObjective(null);
+    };
+
+    const handleRemoveDefenseObjective = () => {
+        setSelectedDefenseObjective(null);
+    };
+
+    const handleRemoveNavigationObjective = () => {
+        setSelectedNavigationObjective(null);
+    };
+
+    const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setFleetName(e.target.value);
+    };
+
+    const clearAllShips = () => {
+        selectedShips.forEach(ship => {
+            if (ship.unique) {
+                removeUniqueClassName(ship.name);
+            }
+            ship.assignedUpgrades.forEach(upgrade => {
+                if (upgrade.unique) {
+                    removeUniqueClassName(upgrade.name);
+                }
+                if (upgrade["unique-class"]) {
+                    upgrade["unique-class"].forEach(uc => removeUniqueClassName(uc));
+                }
+            });
+        });
+
+        setSelectedShips([]);
+        setPreviousPoints(points);
+        setPreviousShipPoints(totalShipPoints);
+        const newPoints = points - totalShipPoints;
+        setPoints(newPoints);
+        setTotalShipPoints(0);
+        setHasCommander(false);  // Add this line
+    };
+
+    const clearAllSquadrons = () => {
+        selectedSquadrons.forEach(squadron => {
+            if (squadron.unique) {
+                removeUniqueClassName(squadron.name);
+            }
+            if (squadron['unique-class']) {
+                squadron['unique-class'].forEach(uc => removeUniqueClassName(uc));
+            }
+        });
+
+        setPreviousPoints(points);
+        setPreviousSquadronPoints(totalSquadronPoints);
+        setPoints(points - totalSquadronPoints);
+        setTotalSquadronPoints(0);
+        setSelectedSquadrons([]);
+    };
+
+    const generateExportText = () => {
+        let text = `Name: ${fleetName}\n`;
+        text += `Faction: ${faction.charAt(0).toUpperCase() + faction.slice(1)}\n`;
+
+        const commander = selectedShips.flatMap(ship => ship.assignedUpgrades).find(upgrade => upgrade.type === 'commander');
+        if (commander) {
+            text += `Commander: ${commander.name}\n`;
         }
-        acc[key].count += squadron.count || 1;
-        return acc;
-      }, {} as Record<string, { count: number, isUnique: boolean, points: number }>);
 
-      Object.entries(groupedSquadrons).forEach(([squadronKey, { count, isUnique }]) => {
-        if (isUnique) {
-          text += `• ${squadronKey}\n`;
-        } else {
-          text += `• ${count} x ${squadronKey}\n`; // Points are already included in the key
+        text += `\n`;
+        if (selectedAssaultObjective) {
+            text += `Assault: ${selectedAssaultObjective.name}\n`;
         }
-      });
-    }
-    text += `= ${totalSquadronPoints} Points\n\n`;
-    
-    text += `Total Points: ${points}`;
-    
-    return text;
-  };
+        if (selectedDefenseObjective) {
+            text += `Defense: ${selectedDefenseObjective.name}\n`;
+        }
+        if (selectedNavigationObjective) {
+            text += `Navigation: ${selectedNavigationObjective.name}\n`;
+        }
 
-  // Generate import text
+        if (selectedShips.length > 0) {
+            text += `\n`;
+            selectedShips.forEach(ship => {
+                text += `${ship.name} (${ship.points})\n`;
+                ship.assignedUpgrades.forEach(upgrade => {
+                    text += `• ${upgrade.name} (${upgrade.points})\n`;
+                });
+                text += `= ${ship.points + ship.assignedUpgrades.reduce((total, upgrade) => total + upgrade.points, 0)} Points\n\n`;
+            });
+        }
 
-  const handlePrint = () => {
-    const printContent = generatePrintContent();
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(printContent);
-      printWindow.document.close();
-      printWindow.print();
-    }
-  };
+        text += `Squadrons:\n`;
+        if (selectedSquadrons.length > 0) {
+            const groupedSquadrons = selectedSquadrons.reduce((acc, squadron) => {
+                const key = squadron.unique || squadron['ace-name']
+                    ? `${squadron['ace-name'] || squadron.name} (${squadron.points})`
+                    : `${squadron.name} (${squadron.points * (squadron.count || 1)})`; // Multiply points by count for non-unique
+                if (!acc[key]) {
+                    acc[key] = { count: 0, isUnique: squadron.unique || !!squadron['ace-name'], points: squadron.points };
+                }
+                acc[key].count += squadron.count || 1;
+                return acc;
+            }, {} as Record<string, { count: number, isUnique: boolean, points: number }>);
 
-  const generatePrintContent = () => {
-    const factionLogo = factionLogos[faction as keyof typeof factionLogos];
-    
-    const content = `
+            Object.entries(groupedSquadrons).forEach(([squadronKey, { count, isUnique }]) => {
+                if (isUnique) {
+                    text += `• ${squadronKey}\n`;
+                } else {
+                    text += `• ${count} x ${squadronKey}\n`; // Points are already included in the key
+                }
+            });
+        }
+        text += `= ${totalSquadronPoints} Points\n\n`;
+
+        text += `Total Points: ${points}`;
+
+        return text;
+    };
+
+    // Generate import text
+
+    const handlePrint = () => {
+        const printContent = generatePrintContent();
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+            printWindow.print();
+        }
+    };
+
+    const generatePrintContent = () => {
+        const factionLogo = factionLogos[faction as keyof typeof factionLogos];
+
+        const content = `
     <!DOCTYPE html>
     <html lang="en">
     <head>
@@ -897,204 +897,196 @@ export default function FleetBuilder({ faction, fleetName }: { faction: string; 
     </div>
     </body>
     </html>`;
-    
-    return content;
-  };
 
-  return (
-    <div className="max-w-4xl mx-auto">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center mb-4">
-        <div className="mb-2 sm:mb-0 flex items-center justify-start space-x-2">
-          <Button variant="outline" onClick={handlePrint}>
-            <Printer className="mr-2 h-4 w-4" /> Print
-          </Button>
-          <Button variant="outline" onClick={() => setShowExportPopup(true)}>
-            <FileText className="mr-2 h-4 w-4" /> Export Text
-          </Button>
+        return content;
+    };
+
+    return (
+        <div className="flex justify-center w-full mb-4">
+            <div className='max-w-[1024px] mx-auto p-4 md:mx-4 md:rounded-lg md:shadow bg-white dark:bg-gray-900 w-full'>
+                <div className="flex flex-col gap-2 mb-4">
+                    <div className='flex w-full border-b items-center p-1'>
+                        <Image
+                            src={factionLogos[faction as keyof typeof factionLogos]}
+                            alt={`${faction} logo`}
+                            width={26}
+                            height={26}
+                            className={`${currentTheme === 'dark' ? 'invert' : ''}`}
+                        />
+
+                        <Input
+                            value={fleetName}
+                            onChange={handleNameChange}
+                            className="text-2xl font-bold border-none focus-none ring-0 shadow-none focus-visible:ring-0"
+                            autoFocus
+                        />
+                    </div>
+
+                    <div className="flex items-center gap-2 w-full">
+                        <Link href="/">
+                            <Button variant="ghost">
+                                <ArrowLeft className="h-4 w-4" />
+                            </Button>
+                        </Link>
+
+                        <Button variant="ghost" onClick={handlePrint}>
+                            <Printer className="h-4 w-4" />
+                        </Button>
+
+                        <Button variant="ghost" onClick={() => setShowExportPopup(true)}>
+                            <FileText className="h-4 w-4" />
+                        </Button>
+
+                        <div className="flex-grow" />
+
+                        <PointsDisplay points={points} previousPoints={previousPoints} />
+                    </div>
+                </div>
+
+                <div className={`${selectedShips.length > 0 ? '' : 'hidden'} mb-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2`}>
+                    {selectedShips.map((ship) => (
+                        <SelectedShip
+                            key={ship.id}
+                            ship={ship}
+                            onRemove={handleRemoveShip}
+                            onUpgradeClick={handleUpgradeClick}
+                            onCopy={handleCopyShip}
+                            handleRemoveUpgrade={handleRemoveUpgrade}
+                            disabledUpgrades={disabledUpgrades[ship.id] || []}
+                            enabledUpgrades={enabledUpgrades[ship.id] || []}
+                            filledSlots={filledSlots[ship.id] || {}}
+                            hasCommander={hasCommander}
+                            traits={ship.traits || []}
+                        />
+                    ))}
+                </div>
+
+                <SectionHeader
+                    title="Ships"
+                    points={totalShipPoints}
+                    previousPoints={previousShipPoints}
+                    show={true}
+                    onClearAll={clearAllShips}
+                    onAdd={handleAddShip}
+                />
+
+                <div className={`${selectedSquadrons.length > 0 ? '' : 'hidden'} grid grid-cols-1 sm:grid-cols-2 gap-2`}>
+                    {selectedSquadrons.map((squadron) => (
+                        <SelectedSquadron
+                            key={squadron.id}
+                            squadron={squadron}
+                            onRemove={handleRemoveSquadron}
+                            onIncrement={handleIncrementSquadron}
+                            onDecrement={handleDecrementSquadron}
+                            onSwapSquadron={handleSwapSquadron}
+                        />
+                    ))}
+                </div>
+
+                <SectionHeader
+                    title="Squadrons"
+                    points={totalSquadronPoints}
+                    previousPoints={previousSquadronPoints}
+                    show={true}
+                    onClearAll={clearAllSquadrons}
+                    onAdd={handleAddSquadron}
+                />
+
+                <div className="flex gap-4 w-full flex-col lg:flex-row">
+                    <SwipeableObjective
+                        type="Assault"
+                        selectedObjective={selectedAssaultObjective}
+                        onRemove={handleRemoveAssaultObjective}
+                        onOpen={() => setShowAssaultObjectiveSelector(true)}
+                        color="#EB3F3A"
+                    />
+
+                    <SwipeableObjective
+                        type="Defense"
+                        selectedObjective={selectedDefenseObjective}
+                        onRemove={handleRemoveDefenseObjective}
+                        onOpen={() => setShowDefenseObjectiveSelector(true)}
+                        color="#FAEE13"
+                    />
+
+                    <SwipeableObjective
+                        type="Navigation"
+                        selectedObjective={selectedNavigationObjective}
+                        onRemove={handleRemoveNavigationObjective}
+                        onOpen={() => setShowNavigationObjectiveSelector(true)}
+                        color="#C2E1F4"
+                    />
+                </div>
+
+                {showShipSelector && (
+                    <ShipSelector
+                        faction={faction}
+                        filter={shipFilter}
+                        onSelectShip={handleSelectShip}
+                        onClose={() => setShowShipSelector(false)}
+                    />
+                )}
+
+                {showSquadronSelector && (
+                    <SquadronSelector
+                        faction={faction}
+                        filter={squadronFilter}
+                        onSelectSquadron={handleSelectSquadron}
+                        onClose={() => setShowSquadronSelector(false)}
+                        selectedSquadrons={selectedSquadrons}
+                    />
+                )}
+
+                {showAssaultObjectiveSelector && (
+                    <ObjectiveSelector
+                        type="assault"
+                        onSelectObjective={handleSelectAssaultObjective}
+                        onClose={() => setShowAssaultObjectiveSelector(false)}
+                    />
+                )}
+
+                {showDefenseObjectiveSelector && (
+                    <ObjectiveSelector
+                        type="defense"
+                        onSelectObjective={handleSelectDefenseObjective}
+                        onClose={() => setShowDefenseObjectiveSelector(false)}
+                    />
+                )}
+
+                {showNavigationObjectiveSelector && (
+                    <ObjectiveSelector
+                        type="navigation"
+                        onSelectObjective={handleSelectNavigationObjective}
+                        onClose={() => setShowNavigationObjectiveSelector(false)}
+                    />
+                )}
+
+                {showUpgradeSelector && (
+                    <UpgradeSelector
+                        id={currentShipId}
+                        upgradeType={currentUpgradeType}
+                        faction={faction}
+                        onSelectUpgrade={handleSelectUpgrade}
+                        onClose={() => setShowUpgradeSelector(false)}
+                        selectedUpgrades={selectedShips.flatMap(ship => ship.assignedUpgrades)}
+                        shipType={selectedShips.find(ship => ship.id === currentShipId)?.name}
+                        chassis={selectedShips.find(ship => ship.id === currentShipId)?.chassis}
+                        shipSize={selectedShips.find(ship => ship.id === currentShipId)?.size}
+                        shipTraits={selectedShips.find(ship => ship.id === currentShipId)?.traits}
+                        currentShipUpgrades={selectedShips.find(ship => ship.id === currentShipId)?.assignedUpgrades || []}
+                        disqualifiedUpgrades={disabledUpgrades[currentShipId] || []}
+                        disabledUpgrades={disabledUpgrades[currentShipId] || []}
+                        hasCommander={hasCommander}
+                    />
+                )}
+
+                {showExportPopup && (
+                    <ExportTextPopup
+                        text={generateExportText()}
+                        onClose={() => setShowExportPopup(false)}
+                    />
+                )}
+            </div>
         </div>
-        <div className="flex-grow" />
-        <PointsDisplay points={points} previousPoints={previousPoints} />
-      </div>
-  
-      {selectedShips.length > 0 ? (
-        <SectionHeader 
-          title="Ships" 
-          points={totalShipPoints} 
-          previousPoints={previousShipPoints} 
-          show={true}
-          onClearAll={clearAllShips}
-          onAdd={handleAddShip}
-        />
-      ) : (
-        <Card className="mb-4 relative">
-          <Button 
-            className="w-full justify-between bg-white dark:bg-gray-900 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md bg-opacity-30 dark:bg-opacity-30"
-            variant="outline" 
-            onClick={handleAddShip}
-          >
-            ADD SHIP
-          </Button>
-          {showFilter && <ShipFilter onApplyFilter={setShipFilter} onClose={() => setShowFilter(false)} />}
-        </Card>
-      )}
-  
-      <div className="mb-4">
-        {selectedShips.map((ship) => (
-          <SelectedShip
-            key={ship.id}
-            ship={ship}
-            onRemove={handleRemoveShip}
-            onUpgradeClick={handleUpgradeClick}
-            onCopy={handleCopyShip}
-            handleRemoveUpgrade={handleRemoveUpgrade}
-            disabledUpgrades={disabledUpgrades[ship.id] || []}
-            enabledUpgrades={enabledUpgrades[ship.id] || []}
-            filledSlots={filledSlots[ship.id] || {}}
-            hasCommander={hasCommander}
-            traits={ship.traits || []}
-          />
-        ))}
-      </div>
-  
-      {selectedSquadrons.length > 0 ? (
-        <SectionHeader 
-          title="Squadrons" 
-          points={totalSquadronPoints} 
-          previousPoints={previousSquadronPoints} 
-          show={true}
-          onClearAll={clearAllSquadrons}
-          onAdd={handleAddSquadron}
-        />
-      ) : (
-        <Card className="mb-4 relative">
-          <Button 
-            className="w-full justify-between bg-white dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md bg-opacity-30 dark:bg-opacity-30"
-            variant="outline" 
-            onClick={handleAddSquadron}
-          >
-            ADD SQUADRON
-          </Button>
-          {showFilter && <SquadronFilter onApplyFilter={setSquadronFilter} onClose={() => setShowFilter(false)} />}
-        </Card>
-      )}
-  
-      <div className="mb-4">
-      {selectedSquadrons.map((squadron) => (
-        <SelectedSquadron
-          key={squadron.id}
-          squadron={squadron}
-          onRemove={handleRemoveSquadron}
-          onIncrement={handleIncrementSquadron}
-          onDecrement={handleDecrementSquadron}
-          onSwapSquadron={handleSwapSquadron}
-        />
-      ))}
-      </div>
-
-
-      <div className="space-y-2 mb-4">
-      <SwipeableObjective
-        type="assault"
-        selectedObjective={selectedAssaultObjective}
-        onRemove={handleRemoveAssaultObjective}
-        onOpen={() => setShowAssaultObjectiveSelector(true)}
-        color="#EB3F3A"
-      />
-
-      <SwipeableObjective
-        type="defense"
-        selectedObjective={selectedDefenseObjective}
-        onRemove={handleRemoveDefenseObjective}
-        onOpen={() => setShowDefenseObjectiveSelector(true)}
-        color="#FAEE13"
-      />
-
-      <SwipeableObjective
-        type="navigation"
-        selectedObjective={selectedNavigationObjective}
-        onRemove={handleRemoveNavigationObjective}
-        onOpen={() => setShowNavigationObjectiveSelector(true)}
-        color="#C2E1F4"
-      />
-      </div>
-
-      <div className="flex flex-wrap justify-between gap-2">
-        <Link href="/">
-          <Button variant="outline" className="flex-grow">
-            <ArrowLeft className="mr-2 h-4 w-4" /> BACK
-          </Button>
-        </Link>
-      </div>
-
-      {showShipSelector && (
-        <ShipSelector
-          faction={faction}
-          filter={shipFilter}
-          onSelectShip={handleSelectShip}
-          onClose={() => setShowShipSelector(false)}
-        />
-      )}
-
-      {showSquadronSelector && (
-        <SquadronSelector
-          faction={faction}
-          filter={squadronFilter}
-          onSelectSquadron={handleSelectSquadron}
-          onClose={() => setShowSquadronSelector(false)}
-          selectedSquadrons={selectedSquadrons}
-        />
-      )}
-
-      {showAssaultObjectiveSelector && (
-        <ObjectiveSelector
-          type="assault"
-          onSelectObjective={handleSelectAssaultObjective}
-          onClose={() => setShowAssaultObjectiveSelector(false)}
-        />
-      )}
-
-      {showDefenseObjectiveSelector && (
-        <ObjectiveSelector
-          type="defense"
-          onSelectObjective={handleSelectDefenseObjective}
-          onClose={() => setShowDefenseObjectiveSelector(false)}
-        />
-      )}
-
-      {showNavigationObjectiveSelector && (
-        <ObjectiveSelector
-          type="navigation"
-          onSelectObjective={handleSelectNavigationObjective}
-          onClose={() => setShowNavigationObjectiveSelector(false)}
-        />
-      )}
-
-      {showUpgradeSelector && (
-        <UpgradeSelector
-          id={currentShipId}
-          upgradeType={currentUpgradeType}
-          faction={faction}
-          onSelectUpgrade={handleSelectUpgrade}
-          onClose={() => setShowUpgradeSelector(false)}
-          selectedUpgrades={selectedShips.flatMap(ship => ship.assignedUpgrades)}
-          shipType={selectedShips.find(ship => ship.id === currentShipId)?.name}
-          chassis={selectedShips.find(ship => ship.id === currentShipId)?.chassis}
-          shipSize={selectedShips.find(ship => ship.id === currentShipId)?.size}
-          shipTraits={selectedShips.find(ship => ship.id === currentShipId)?.traits}
-          currentShipUpgrades={selectedShips.find(ship => ship.id === currentShipId)?.assignedUpgrades || []}
-          disqualifiedUpgrades={disabledUpgrades[currentShipId] || []}
-          disabledUpgrades={disabledUpgrades[currentShipId] || []}
-          hasCommander={hasCommander}
-        />
-      )}
-
-      {showExportPopup && (
-        <ExportTextPopup
-          text={generateExportText()}
-          onClose={() => setShowExportPopup(false)}
-        />
-      )}
-
-    </div>
-  );
+    );
 }
