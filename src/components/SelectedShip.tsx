@@ -200,9 +200,9 @@ export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRem
             <Image
               src={ship.cardimage}
               alt={ship.name}
-              width={300}
-              height={420}
-              className="rounded-lg"
+              width={420}
+              height={630}
+              className="rounded-lg w-auto h-[420px] sm:h-[630px] lg:h-[840px]"
             />
             <button
               className="absolute top-2 right-2 bg-black bg-opacity-50 rounded-full p-1"
