@@ -1,9 +1,9 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import Image from 'next/image';
 import { Card, CardContent } from "@/components/ui/card";
 import { useSpring, animated } from 'react-spring';
 import { Squadron } from './FleetBuilder';
-import { Plus, Minus, ArrowLeftRight, Trash2 } from 'lucide-react';
+import { Plus, Minus, ArrowLeftRight, Trash2, Eye, X } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 
 // Add this line at the top of the file
@@ -23,6 +23,7 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
   const startX = useRef(0);
   const startY = useRef(0);
   const isHorizontalSwipe = useRef(false);
+  const [showImageModal, setShowImageModal] = useState(false);
 
   const SWIPE_THRESHOLD = 100;
   const ANGLE_THRESHOLD = 30; // Degrees
@@ -78,6 +79,11 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
   const count = squadron.count || 1;
   const totalPoints = squadron.points * count;
 
+  const handleImageTouch = (e: React.TouchEvent) => {
+    e.preventDefault();
+    setShowImageModal(true);
+  };
+
   return (
     <div className="relative overflow-hidden mb-2">
       <animated.div
@@ -88,7 +94,7 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
       >
         <Card>
           <CardContent className="flex items-center p-2">
-            <div className="w-16 aspect-[3.75/2] mr-4 relative overflow-hidden">
+            <div className="w-16 aspect-[3.75/2] mr-4 relative overflow-hidden group">
               <Image 
                 src={squadron.cardimage} 
                 alt={squadron.unique && squadron['ace-name'] ? squadron['ace-name'] : squadron.name}
@@ -96,7 +102,18 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
                 objectFit="cover"
                 objectPosition="top"
                 className="scale-[100%]"
+                onClick={() => setShowImageModal(true)}
               />
+              <button
+                className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowImageModal(true);
+                }}
+                onTouchEnd={handleImageTouch}
+              >
+                <Eye size={16} className="text-white cursor-pointer" />
+              </button>
             </div>
             <div className="flex-grow">
               <span className="font-bold flex items-center">
@@ -139,6 +156,25 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
           {squadron.count === 1 ? <Trash2 size={20} /> : <Minus size={20} />}
         </div>
       </animated.div>
+      {showImageModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowImageModal(false)}>
+          <div className="relative">
+            <Image
+              src={squadron.cardimage}
+              alt={squadron.unique && squadron['ace-name'] ? squadron['ace-name'] : squadron.name}
+              width={300}
+              height={420}
+              className="rounded-lg"
+            />
+            <button
+              className="absolute top-2 right-2 bg-black bg-opacity-50 rounded-full p-1"
+              onClick={() => setShowImageModal(false)}
+            >
+              <X size={20} className="text-white" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

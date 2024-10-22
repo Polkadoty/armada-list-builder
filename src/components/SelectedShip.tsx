@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useSpring, animated } from 'react-spring';
 import UpgradeIconsToolbar from './UpgradeIconsToolbar';
 import { Ship, Upgrade } from "./FleetBuilder";
-import { Copy, Trash2, ArrowLeftRight, X } from 'lucide-react';
+import { Copy, Trash2, ArrowLeftRight, X, Eye } from 'lucide-react';
 
 interface SelectedShipProps {
   ship: Ship;
@@ -82,6 +82,13 @@ export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRem
     handleRemoveUpgrade(ship.id, upgradeType, upgradeIndex);
   };
 
+  const handleImageTouch = (e: React.TouchEvent) => {
+    e.preventDefault();
+    setShowImageModal(true);
+  };
+
+  const [showImageModal, setShowImageModal] = useState(false);
+
   return (
     <div className="relative overflow-hidden mb-2">
       <animated.div style={{ x }}>
@@ -92,7 +99,7 @@ export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRem
             onTouchEnd={handleShipTouchEnd}
           >
             <CardContent className="flex items-center p-2">
-              <div className="w-16 aspect-[8/3] mr-4 relative overflow-hidden">
+              <div className="w-16 aspect-[8/3] mr-4 relative overflow-hidden group">
                 <Image 
                   src={ship.cardimage} 
                   alt={ship.name}
@@ -100,7 +107,18 @@ export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRem
                   objectFit="cover"
                   objectPosition="top"
                   className="scale-[100%]"
+                  onClick={() => setShowImageModal(true)}
                 />
+                <button
+                  className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowImageModal(true);
+                  }}
+                  onTouchEnd={handleImageTouch}
+                >
+                  <Eye size={16} className="text-white cursor-pointer" />
+                </button>
               </div>
               <div className="flex-grow">
                 <span className="font-bold flex items-center">
@@ -176,6 +194,25 @@ export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRem
           <Trash2 size={20} />
         </div>
       </animated.div>
+      {showImageModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowImageModal(false)}>
+          <div className="relative">
+            <Image
+              src={ship.cardimage}
+              alt={ship.name}
+              width={300}
+              height={420}
+              className="rounded-lg"
+            />
+            <button
+              className="absolute top-2 right-2 bg-black bg-opacity-50 rounded-full p-1"
+              onClick={() => setShowImageModal(false)}
+            >
+              <X size={20} className="text-white" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -235,6 +272,13 @@ function SwipeableUpgrade({ upgrade, onSwipe, onSwap, onRemove }: SwipeableUpgra
     isHorizontalSwipe.current = false;
   };
 
+  const [showImageModal, setShowImageModal] = useState(false);
+
+  const handleImageTouch = (e: React.TouchEvent) => {
+    e.preventDefault();
+    setShowImageModal(true);
+  };
+
   return (
     <div className="relative overflow-hidden mb-2">
       <animated.div
@@ -246,6 +290,30 @@ function SwipeableUpgrade({ upgrade, onSwipe, onSwap, onRemove }: SwipeableUpgra
       >
         <div className="flex items-center justify-between bg-gray-100 dark:bg-gray-700 rounded p-2">
           <div className="flex items-center flex-grow">
+            <div className="w-16 aspect-[3.75/2] mr-2 relative overflow-hidden group">
+              <Image
+                src={upgrade.cardimage}
+                alt={upgrade.name}
+                fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                className="object-cover object-center rounded"
+                objectPosition="top"
+                onError={(e) => {
+                  e.currentTarget.src = '/placeholder-upgrade.png';
+                }}
+                onClick={() => setShowImageModal(true)}
+                onTouchEnd={handleImageTouch}
+              />
+              <button
+                className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowImageModal(true);
+                }}
+              >
+                <Eye size={12} className="text-white cursor-pointer" />
+              </button>
+            </div>
             <Image
               src={`/icons/${upgrade.type}.svg`}
               alt={upgrade.type}
@@ -275,6 +343,25 @@ function SwipeableUpgrade({ upgrade, onSwipe, onSwap, onRemove }: SwipeableUpgra
           <X size={20} />
         </div>
       </animated.div>
+      {showImageModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowImageModal(false)}>
+          <div className="relative">
+            <Image
+              src={upgrade.cardimage}
+              alt={upgrade.name}
+              width={300}
+              height={420}
+              className="rounded-lg"
+            />
+            <button
+              className="absolute top-2 right-2 bg-black bg-opacity-50 rounded-full p-1"
+              onClick={() => setShowImageModal(false)}
+            >
+              <X size={20} className="text-white" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
