@@ -361,6 +361,14 @@ export default function UpgradeSelector({
                       </p>
                       <p className="text-xs sm:text-sm text-center">{upgrade.points} points</p>
                     </div>
+                    <div className="sr-only">
+                      <p>
+                        {upgrade.unique && "Unique "}
+                        {upgrade.name}
+                      </p>
+                      <p>{upgrade.points} points</p>
+                      {JSON.stringify(upgrade)}
+                    </div>
                   </Button>
                 </div>
               ))}

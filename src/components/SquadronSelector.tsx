@@ -276,6 +276,9 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
                     </p>
                     <p className="text-[10px] sm:text-xs text-center">{squadron.points} points</p>
                   </div>
+                  <div className="sr-only">
+                    {JSON.stringify(squadron)}
+                  </div>
                 </Button>
               </div>
             ))}

@@ -237,6 +237,9 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
                     </p>
                     <p className="text-xs sm:text-sm text-center">{ship.points} points</p>
                   </div>
+                  <div className="sr-only">
+                    {JSON.stringify(ship)}
+                  </div>
                 </Button>
               </div>
             ))}
