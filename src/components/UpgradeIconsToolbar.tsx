@@ -37,7 +37,6 @@ export default function UpgradeIconsToolbar({ upgrades, onUpgradeClick, assigned
   const usedOffensiveRetroSlots = (assignedUpgradeCounts['offensive-retro'] || 0) + (assignedUpgradeCounts['weapons-team-offensive-retro'] || 0);
 
   const iconSize = 32; // Minimum size for each icon button
-  const gapSize = 8; // Gap between icons
 
   return (
     <div 
