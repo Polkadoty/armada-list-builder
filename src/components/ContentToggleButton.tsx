@@ -23,10 +23,11 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
   const [enableLegacy, setEnableLegacy] = useState(false);
   const [enableLegends, setEnableLegends] = useState(false);
   const [enableOldLegacy, setEnableOldLegacy] = useState(false);
-  const { theme } = useTheme();
-  const isDarkTheme = theme === 'dark';
+  const { theme, resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     const legacyCookie = Cookies.get('enableLegacy');
     const legendsCookie = Cookies.get('enableLegends');
     const oldLegacyCookie = Cookies.get('enableOldLegacy');
@@ -34,6 +35,12 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
     setEnableLegends(CONFIG.showLegendsToggle && legendsCookie === 'true');
     setEnableOldLegacy(CONFIG.showOldLegacyToggle && oldLegacyCookie === 'true');
   }, []);
+
+  if (!mounted) {
+    return null;
+  }
+
+  const isDarkTheme = theme === 'dark' || resolvedTheme === 'dark';
 
   const handleLegacyToggle = (checked: boolean) => {
     if (CONFIG.showLegacyToggle) {
