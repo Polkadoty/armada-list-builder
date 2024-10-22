@@ -22,7 +22,6 @@ interface UpgradeSelectorProps {
   currentShipUpgrades: Upgrade[];
   disqualifiedUpgrades: string[];
   disabledUpgrades: string[];
-  hasCommander: boolean;
 }
 
 interface UpgradeData {
@@ -42,7 +41,6 @@ export default function UpgradeSelector({
   currentShipUpgrades,
   disqualifiedUpgrades,
   disabledUpgrades,
-  hasCommander
 }: UpgradeSelectorProps) {
   const [loading, setLoading] = useState(true);
   const { uniqueClassNames, addUniqueClassName } = useUniqueClassContext();
