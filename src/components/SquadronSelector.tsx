@@ -51,6 +51,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
             const uniqueKey = `${prefix}-${squadronId}-${squadron.name}-${aceName}`;
             if (!squadronMap.has(uniqueKey)) {
               const abilityText = Object.entries(squadron.abilities || {})
+              // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 .filter(([_, value]) => value !== 0 && value !== false)
                 .map(([key, value]) => typeof value === 'boolean' ? key : `${key} ${value}`)
                 .join(' ');
@@ -79,6 +80,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
                   abilities: abilityText,
                   armament: armamentText,
                   tokens: Object.entries(squadron.tokens || {})
+                  // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     .filter(([_, value]) => value > 0)
                     .reduce((acc, [key, value]) => ({ ...acc, [key.replace('def_', '')]: value }), {})
                 }).toLowerCase()

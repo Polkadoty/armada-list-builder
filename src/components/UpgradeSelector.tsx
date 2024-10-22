@@ -147,7 +147,7 @@ export default function UpgradeSelector({
     };
 
     fetchUpgrades();
-  }, [upgradeType, faction, chassis]);
+  }, [upgradeType, faction, shipType, chassis, shipSize, shipTraits, currentShipUpgrades, disqualifiedUpgrades, disabledUpgrades]);
 
   useEffect(() => {
     const sortAndFilterUpgrades = () => {
