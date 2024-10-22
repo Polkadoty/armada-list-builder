@@ -45,8 +45,7 @@ export default function Home() {
       {isLoading && <LoadingScreen progress={loadingProgress} message={loadingMessage} />}
       <div className={`bg-white dark:bg-transparent p-8 flex-grow lg:w-1/3 lg:min-w-[300px] relative z-10`}>
         <div className="flex justify-end space-x-2 mb-4">
-          <ContentToggleButton />
-          <SettingsButton setIsLoading={setIsLoading} setLoadingProgress={setLoadingProgress} setLoadingMessage={setLoadingMessage} />
+          <ContentToggleButton setIsLoading={setIsLoading} setLoadingProgress={setLoadingProgress} setLoadingMessage={setLoadingMessage} />
           <ThemeToggle />
         </div>
         <div className="flex justify-center mb-8">

@@ -91,8 +91,7 @@ export default function FactionPage() {
             )}
           </div>
           <div className="flex items-center space-x-2">
-            <ContentToggleButton />
-            <SettingsButton setIsLoading={setIsLoading} setLoadingProgress={setLoadingProgress} setLoadingMessage={setLoadingMessage} />
+            <ContentToggleButton setIsLoading={setIsLoading} setLoadingProgress={setLoadingProgress} setLoadingMessage={setLoadingMessage} />
             <ThemeToggle />
           </div>
         </div>

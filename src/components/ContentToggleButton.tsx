@@ -15,12 +15,17 @@ const CONFIG = {
   showOldLegacyToggle: true,
 };
 
-export function ContentToggleButton() {
+export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadingMessage }: {
+  setIsLoading: (isLoading: boolean) => void;
+  setLoadingProgress: (progress: number) => void;
+  setLoadingMessage: (message: string) => void;
+}) {
   const [enableLegacy, setEnableLegacy] = useState(false);
   const [enableLegends, setEnableLegends] = useState(false);
   const [enableOldLegacy, setEnableOldLegacy] = useState(false);
-  const { theme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const { theme } = useTheme();
+  const isDarkTheme = theme === 'dark';
 
   useEffect(() => {
     setMounted(true);
@@ -31,12 +36,6 @@ export function ContentToggleButton() {
     setEnableLegends(CONFIG.showLegendsToggle && legendsCookie === 'true');
     setEnableOldLegacy(CONFIG.showOldLegacyToggle && oldLegacyCookie === 'true');
   }, []);
-
-  if (!mounted) {
-    return null;
-  }
-
-  const isDarkTheme = theme === 'dark' || resolvedTheme === 'dark';
 
   const handleLegacyToggle = (checked: boolean) => {
     if (CONFIG.showLegacyToggle) {
@@ -60,6 +59,10 @@ export function ContentToggleButton() {
       Cookies.set('enableOldLegacy', checked.toString(), { expires: 365 });
       flushCacheAndReload(() => {}, () => {}, () => {});
     }
+  };
+
+  const handleFlushCache = async () => {
+    await flushCacheAndReload(setIsLoading, setLoadingProgress, setLoadingMessage);
   };
 
   return (
@@ -110,7 +113,7 @@ export function ContentToggleButton() {
               {CONFIG.showOldLegacyToggle && (
                 <div className="flex items-center justify-between">
                   <label htmlFor="old-legacy-toggle" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                    Experimental: Enable old Legacy content
+                    Enable Old Legacy content
                   </label>
                   <Switch
                     id="old-legacy-toggle"
@@ -120,18 +123,16 @@ export function ContentToggleButton() {
                   />
                 </div>
               )}
+              <Button onClick={handleFlushCache} variant="outline" size="sm" className="mt-2">
+                Flush Cache and Reload
+              </Button>
             </div>
-            {enableOldLegacy && (
-              <p className="text-sm text-yellow-500">
-                Warning: Old Legacy content has not undergone a balance patch.
-              </p>
-            )}
           </div>
         </PopoverContent>
-        <TooltipContent>
-          <p>Toggle Content</p>
-        </TooltipContent>
       </Popover>
+      <TooltipContent>
+        <p>Toggle additional content</p>
+      </TooltipContent>
     </Tooltip>
   );
 }
