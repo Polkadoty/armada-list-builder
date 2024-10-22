@@ -7,14 +7,16 @@ import '../styles/globals.css';
 
 function MyApp({ Component, pageProps }: AppProps) {
   return (
-    <ThemeProvider attribute="class">
-      <TooltipProvider>
-        <UniqueClassProvider> {/* Wrap your app with the UniqueClassProvider */}
-          <Component {...pageProps} />
-          <Analytics />
-        </UniqueClassProvider>
-      </TooltipProvider>
-    </ThemeProvider>
+    <>
+      <ThemeProvider attribute="class">
+        <TooltipProvider>
+          <UniqueClassProvider>
+            <Component {...pageProps} />
+            <Analytics />
+          </UniqueClassProvider>
+        </TooltipProvider>
+      </ThemeProvider>
+    </>
   );
 }
 

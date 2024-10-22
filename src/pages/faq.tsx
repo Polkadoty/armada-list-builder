@@ -5,7 +5,6 @@ import ReactMarkdown from 'react-markdown';
 import { GetStaticProps } from 'next';
 import Link from 'next/link';
 import { ThemeToggle } from '../components/ThemeToggle';
-import { SettingsButton } from '../components/SettingsButton';
 import StarryBackground from '../components/StarryBackground';
 
 interface FAQProps {
@@ -16,27 +15,26 @@ export default function FAQ({ content }: FAQProps) {
   return (
     <div className="min-h-screen flex flex-col relative">
       <StarryBackground show={true} />
-      <div className="bg-white dark:bg-transparent p-8 flex-grow relative z-10">
-        <div className="flex justify-between items-center mb-4">
-          <Link href="/">
-            <span className="text-gray-900 dark:text-white hover:underline cursor-pointer">
-              ← Back to Home
-            </span>
-          </Link>
-          <div className="flex space-x-2">
-            <SettingsButton 
-              setIsLoading={() => {}}
-              setLoadingProgress={() => {}}
-              setLoadingMessage={() => {}}
-            />
-            <ThemeToggle />
+      <div className="flex-grow flex flex-col relative z-10 overflow-auto">
+        <div className="bg-white dark:bg-transparent p-8">
+          <div className="flex justify-between items-center mb-4">
+            <Link href="/">
+              <span className="text-gray-900 dark:text-white hover:underline cursor-pointer">
+                ← Back to Home
+              </span>
+            </Link>
+            <div className="flex space-x-2">
+              <ThemeToggle />
+            </div>
           </div>
+          <h1 className="text-3xl font-bold mb-8 text-center text-gray-900 dark:text-white">
+            Frequently Asked Questions
+          </h1>
         </div>
-        <h1 className="text-3xl font-bold mb-8 text-center text-gray-900 dark:text-white">
-          Frequently Asked Questions
-        </h1>
-        <div className="prose dark:prose-invert max-w-none">
-          <ReactMarkdown>{content}</ReactMarkdown>
+        <div className="flex-grow bg-white dark:bg-transparent faq-content">
+          <div className="prose dark:prose-invert max-w-none p-8">
+            <ReactMarkdown>{content}</ReactMarkdown>
+          </div>
         </div>
       </div>
     </div>

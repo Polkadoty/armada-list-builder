@@ -1,5 +1,3 @@
-# Frequently Asked Questions
-
 ## What is the Armada Legacy Fleet Builder?
 
 The Legacy Fleet Builder is a web application designed to help players of Star Wars: Armada create and manage their fleets.
@@ -17,11 +15,11 @@ No, this is a fan-made project and is not officially associated with Star Wars: 
 
 ## How often is the data updated?
 
-We strive to keep our data up-to-date with the latest releases and errata. Current content is being uploaded into the api, and we plan to have functionality for future user-generated content.
+I strive to keep the data up-to-date with the latest releases and errata. Current content is being uploaded into the API, and I have functionality for user-generated content.
 
 ## I found a bug or have a suggestion. How can I report it?
 
-Please visit our GitHub repository and open an issue. We appreciate your feedback!
+Please visit our GitHub repository [here](https://github.com/Polkadoty/armada-list-builder) and open an issue. I appreciate your feedback!
 
 ## Is my fleet data saved?
 
