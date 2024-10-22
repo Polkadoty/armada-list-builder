@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { LoadingScreen } from '../components/LoadingScreen';
 import { checkAndFetchData } from '../utils/dataFetcher';
 import { ContentToggleButton } from '../components/ContentToggleButton';
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 // a
 
@@ -48,10 +49,25 @@ export default function Home() {
           <SettingsButton setIsLoading={setIsLoading} setLoadingProgress={setLoadingProgress} setLoadingMessage={setLoadingMessage} />
           <ThemeToggle />
         </div>
-        <h1 className="text-3xl font-bold mb-8 text-center text-gray-900 dark:text-white">Armada Fleet Builder</h1>
+        <div className="flex justify-center mb-8">
+          <Image
+            src="legacy-logo.svg"
+            alt="Armada Legacy Fleet Builder"
+            width={300}
+            height={100}
+            className="dark:invert"
+          />
+        </div>
         <FactionSelection onHover={setHoveredFaction} />
         <div className="mt-8 flex justify-center space-x-4">
-          <Button variant="outline" size="sm" className="text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20">SIGN IN</Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="outline" size="sm" className="text-gray-400 dark:text-gray-600 hover:bg-gray-200 dark:hover:bg-white/20 cursor-not-allowed" disabled>SIGN IN (WIP)</Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>WIP, will be added soon</p>
+            </TooltipContent>
+          </Tooltip>
           <Link href="/faq">
             <Button variant="outline" size="sm" className="text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20">FAQ</Button>
           </Link>

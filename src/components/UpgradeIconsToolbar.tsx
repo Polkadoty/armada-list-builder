@@ -36,9 +36,12 @@ export default function UpgradeIconsToolbar({ upgrades, onUpgradeClick, assigned
   const usedWeaponsTeamSlots = (assignedUpgradeCounts['weapons-team'] || 0) + (assignedUpgradeCounts['weapons-team-offensive-retro'] || 0);
   const usedOffensiveRetroSlots = (assignedUpgradeCounts['offensive-retro'] || 0) + (assignedUpgradeCounts['weapons-team-offensive-retro'] || 0);
 
+  const iconSize = 32; // Minimum size for each icon button
+  const gapSize = 8; // Gap between icons
+
   return (
     <div 
-      className="bg-white dark:bg-gray-900 p-2 flex justify-left space-x-2 backdrop-blur-md bg-opacity-30 dark:bg-opacity-30"
+      className="bg-white dark:bg-gray-900 p-2 flex flex-wrap justify-left backdrop-blur-md bg-opacity-30 dark:bg-opacity-30"
       onClick={(e) => e.stopPropagation()}
     >
       {Object.entries(upgradeCounts).flatMap(([upgrade, count]) => 
@@ -66,7 +69,15 @@ export default function UpgradeIconsToolbar({ upgrades, onUpgradeClick, assigned
               key={`${upgrade}-${index}`}
               variant="ghost"
               size="icon"
-              className={`h-8 p-1 ${upgrade === 'weapons-team-offensive-retro' ? 'w-16' : 'w-8'} ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`m-1 ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+              style={{
+                width: `${upgrade === 'weapons-team-offensive-retro' ? iconSize * 2 : iconSize}px`,
+                height: `${iconSize}px`,
+                padding: '4px',
+                minWidth: `${upgrade === 'weapons-team-offensive-retro' ? iconSize * 2 : iconSize}px`,
+                flexGrow: 0,
+                flexShrink: 0,
+              }}
               onClick={() => !isDisabled && onUpgradeClick(upgrade, index)}
             >
               <Image
