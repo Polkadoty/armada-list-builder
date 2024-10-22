@@ -1,6 +1,7 @@
 import React from 'react';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { ArrowUpAZ, ArrowDownAZ, ArrowUpNarrowWide, ArrowDownWideNarrow, FlaskRound, MoveUp, MoveDown } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 export type SortOption = 'alphabetical' | 'points' | 'unique' | 'custom';
 
@@ -52,19 +53,38 @@ export function SortToggleGroup({ activeSorts, onToggle }: SortToggleGroupProps)
     }
   };
 
+  const getSortTooltip = (option: SortOption) => {
+    switch (option) {
+      case 'alphabetical':
+        return 'Sort alphabetically';
+      case 'points':
+        return 'Sort by points';
+      case 'unique':
+        return 'Sort by unique status';
+      case 'custom':
+        return 'Custom sort';
+    }
+  };
+
   return (
     <ToggleGroup type="multiple" className="justify-end" style={{ width: 'fit-content' }}>
       {(['alphabetical', 'points', 'unique', 'custom'] as SortOption[]).map((option) => (
-        <ToggleGroupItem
-          key={option}
-          value={option}
-          aria-label={`Toggle ${option} sort`}
-          data-state={activeSorts[option] ? 'up' : 'down'}
-          onClick={() => onToggle(option)}
-          className={`w-10 h-10 ${activeSorts[option] !== null ? 'bg-gray-500' : 'bg-transparent'}`} // Changed to grey overlay for selected state
-        >
-          {getIcon(option)}
-        </ToggleGroupItem>
+        <Tooltip key={option}>
+          <TooltipTrigger asChild>
+            <ToggleGroupItem
+              value={option}
+              aria-label={`Toggle ${option} sort`}
+              data-state={activeSorts[option] ? 'up' : 'down'}
+              onClick={() => onToggle(option)}
+              className={`w-10 h-10 ${activeSorts[option] !== null ? 'bg-gray-500' : 'bg-transparent'}`}
+            >
+              {getIcon(option)}
+            </ToggleGroupItem>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{getSortTooltip(option)}</p>
+          </TooltipContent>
+        </Tooltip>
       ))}
     </ToggleGroup>
   );
