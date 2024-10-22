@@ -3,7 +3,6 @@ import Image from 'next/image';
 import FactionSelection from '../components/FactionSelection';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { Button } from "@/components/ui/button";
-import { SettingsButton } from '../components/SettingsButton';
 import StarryBackground from '../components/StarryBackground';
 import Link from 'next/link';
 import { LoadingScreen } from '../components/LoadingScreen';

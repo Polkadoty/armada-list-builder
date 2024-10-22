@@ -23,12 +23,10 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
   const [enableLegacy, setEnableLegacy] = useState(false);
   const [enableLegends, setEnableLegends] = useState(false);
   const [enableOldLegacy, setEnableOldLegacy] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const { theme } = useTheme();
   const isDarkTheme = theme === 'dark';
 
   useEffect(() => {
-    setMounted(true);
     const legacyCookie = Cookies.get('enableLegacy');
     const legendsCookie = Cookies.get('enableLegends');
     const oldLegacyCookie = Cookies.get('enableOldLegacy');

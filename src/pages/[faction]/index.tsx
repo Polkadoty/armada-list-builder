@@ -3,7 +3,6 @@ import { useTheme } from 'next-themes';
 import FleetBuilder from '../../components/FleetBuilder';
 import { ThemeToggle } from '../../components/ThemeToggle';
 import Image from 'next/image';
-import { SettingsButton } from '../../components/SettingsButton';
 import StarryBackground from '../../components/StarryBackground';
 import { useEffect, useState } from 'react';
 import { LoadingScreen } from '../../components/LoadingScreen';
