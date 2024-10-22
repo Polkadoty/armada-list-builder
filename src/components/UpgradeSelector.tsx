@@ -120,6 +120,8 @@ export default function UpgradeSelector({
             chassisMatch = upgrade.bound_shiptype === chassis;
           } else if (upgrade.restrictions?.traits?.includes('star-dreadnought')) {
             chassisMatch = shipTraits?.includes('star-dreadnought') || false;
+          } else if (upgrade.restrictions?.traits?.includes('MC')) {
+            chassisMatch = shipTraits?.includes('MC') || false;
           } else {
             chassisMatch = upgrade.bound_shiptype === '' || upgrade.bound_shiptype === chassis;
           }
@@ -184,46 +186,34 @@ export default function UpgradeSelector({
   }, [allUpgrades, activeSorts, searchQuery]);
 
   const isUpgradeAvailable = (upgrade: Upgrade) => {
-    if (upgrade.type === 'commander' && hasCommander) {
-      return false;
-    }
-
-    if (upgradeType === 'title') {
-      if (upgrade.bound_shiptype && upgrade.bound_shiptype !== chassis) {
+    if (upgradeType === 'title' || upgradeType === 'super-weapon') {
+      // For titles and super-weapons, we'll only check for uniqueness and current ship conflicts
+      if (upgrade.unique && selectedUpgrades.some(su => su.name === upgrade.name)) {
         return false;
       }
-      // Handle titles without bound_shiptype but with trait restrictions
-      if (!upgrade.bound_shiptype && upgrade.restrictions?.traits && upgrade.restrictions.traits.length > 0) {
-        if (!shipTraits || !upgrade.restrictions.traits.some(trait => shipTraits.includes(trait))) {
-          return false;
-        }
-      }
-    } else if (upgrade.type === 'super-weapon') {
-      if (upgrade.bound_shiptype && upgrade.bound_shiptype !== chassis) {
+      if (currentShipUpgrades.some(su => su.name === upgrade.name)) {
         return false;
       }
     } else {
+      // For other upgrade types, keep the existing checks
       if (upgrade.bound_shiptype && upgrade.bound_shiptype !== shipType) {
+        return false;
+      }
+      if (upgrade.unique && selectedUpgrades.some(su => su.name === upgrade.name)) {
+        return false;
+      }
+      if (currentShipUpgrades.some(su => su.name === upgrade.name)) {
+        return false;
+      }
+      if (upgrade.modification && currentShipUpgrades.some(su => su.modification)) {
+        return false;
+      }
+      if (disqualifiedUpgrades.includes(upgrade.type) || disabledUpgrades.includes(upgrade.type)) {
         return false;
       }
     }
 
-    if (upgrade.unique && selectedUpgrades.some(su => su.name === upgrade.name)) {
-      return false;
-    }
-
-    if (currentShipUpgrades.some(su => su.name === upgrade.name)) {
-      return false;
-    }
-
-    if (upgrade.modification && currentShipUpgrades.some(su => su.modification)) {
-      return false;
-    }
-
-    if (disqualifiedUpgrades.includes(upgrade.type) || disabledUpgrades.includes(upgrade.type)) {
-      return false;
-    }
-
+    // Common checks for all upgrade types
     if (upgrade.restrictions) {
       const disqualOrDisable = [...(upgrade.restrictions.disqual_upgrades || []), ...(upgrade.restrictions.disable_upgrades || [])];
       if (currentShipUpgrades.some(su => disqualOrDisable.includes(su.type))) {

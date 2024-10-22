@@ -219,10 +219,10 @@ export default function FleetBuilder({ faction, fleetName }: { faction: string; 
   };
   
   const handleSelectUpgrade = (upgrade: Upgrade) => {
-    if (upgrade.type === 'commander' && hasCommander) {
-      alert("Only one commander is allowed per fleet.");
-      return;
-    }
+    // if (upgrade.type === 'commander' && hasCommander) {
+    //   alert("Only one commander is allowed per fleet.");
+    //   return;
+    // }
 
     let totalPointDifference = 0;
 
@@ -906,10 +906,10 @@ export default function FleetBuilder({ faction, fleetName }: { faction: string; 
       <div className="flex flex-col sm:flex-row items-start sm:items-center mb-4">
         <div className="mb-2 sm:mb-0 flex items-center justify-start space-x-2">
           <Button variant="outline" onClick={handlePrint}>
-            <Printer className="mr-2 h-4 w-4" /> Print
+            <Printer className=" h-4 w-4" />
           </Button>
           <Button variant="outline" onClick={() => setShowExportPopup(true)}>
-            <FileText className="mr-2 h-4 w-4" /> Export Text
+            <FileText className="h-4 w-4" />
           </Button>
         </div>
         <div className="flex-grow" />
