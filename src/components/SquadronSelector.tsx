@@ -40,6 +40,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
       const cachedSquadrons = localStorage.getItem('squadrons');
       const cachedLegacySquadrons = localStorage.getItem('legacySquadrons');
       const cachedLegendsSquadrons = localStorage.getItem('legendsSquadrons');
+      const cachedOldLegacySquadrons = localStorage.getItem('oldLegacySquadrons');
       
       const squadronMap = new Map<string, Squadron>();
 
@@ -82,6 +83,11 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
       if (cachedLegendsSquadrons) {
         const legendsSquadronData = JSON.parse(cachedLegendsSquadrons);
         processSquadrons(legendsSquadronData, 'legends');
+      }
+
+      if (cachedOldLegacySquadrons) {
+        const oldLegacySquadronData = JSON.parse(cachedOldLegacySquadrons);
+        processSquadrons(oldLegacySquadronData, 'oldLegacy');
       }
 
       const allSquadrons = Array.from(squadronMap.values());

@@ -63,6 +63,7 @@ export default function UpgradeSelector({
       const cachedUpgrades = localStorage.getItem('upgrades');
       const cachedLegacyUpgrades = localStorage.getItem('legacyUpgrades');
       const cachedLegendsUpgrades = localStorage.getItem('legendsUpgrades');
+      const cachedOldLegacyUpgrades = localStorage.getItem('oldLegacyUpgrades');
       
       let allUpgrades: Upgrade[] = [];
 
@@ -103,14 +104,26 @@ export default function UpgradeSelector({
         allUpgrades = [...allUpgrades, ...processUpgrades(legendsUpgradeData, 'legends')];
       }
 
+      if (cachedOldLegacyUpgrades) {
+        const oldLegacyUpgradeData = JSON.parse(cachedOldLegacyUpgrades);
+        allUpgrades = [...allUpgrades, ...processUpgrades(oldLegacyUpgradeData, 'oldLegacy')];
+      }
+
       const filteredUpgrades = allUpgrades.filter(upgrade => {
         const factionMatch = Array.isArray(upgrade.faction) 
           ? upgrade.faction.includes(faction) || upgrade.faction.includes('')
           : upgrade.faction === faction || upgrade.faction === '';
 
-        const chassisMatch = upgradeType === 'title' 
-          ? upgrade.bound_shiptype === chassis
-          : true;
+        let chassisMatch = true;
+        if (upgradeType === 'title') {
+          if (upgrade.bound_shiptype) {
+            chassisMatch = upgrade.bound_shiptype === chassis;
+          } else if (upgrade.restrictions?.traits?.includes('star-dreadnought')) {
+            chassisMatch = shipTraits?.includes('star-dreadnought') || false;
+          } else {
+            chassisMatch = upgrade.bound_shiptype === '' || upgrade.bound_shiptype === chassis;
+          }
+        }
 
         return upgrade.type === upgradeType &&
           factionMatch &&
@@ -171,8 +184,6 @@ export default function UpgradeSelector({
   }, [allUpgrades, activeSorts, searchQuery]);
 
   const isUpgradeAvailable = (upgrade: Upgrade) => {
-    // console.log(`Checking availability for ${upgrade.name}. Ship traits: ${shipTraits?.join(', ') || 'None'}`);
-
     if (upgrade.type === 'commander' && hasCommander) {
       return false;
     }
@@ -180,6 +191,12 @@ export default function UpgradeSelector({
     if (upgradeType === 'title') {
       if (upgrade.bound_shiptype && upgrade.bound_shiptype !== chassis) {
         return false;
+      }
+      // Handle titles without bound_shiptype but with trait restrictions
+      if (!upgrade.bound_shiptype && upgrade.restrictions?.traits && upgrade.restrictions.traits.length > 0) {
+        if (!shipTraits || !upgrade.restrictions.traits.some(trait => shipTraits.includes(trait))) {
+          return false;
+        }
       }
     } else if (upgrade.type === 'super-weapon') {
       if (upgrade.bound_shiptype && upgrade.bound_shiptype !== chassis) {
@@ -241,6 +258,10 @@ export default function UpgradeSelector({
         uniqueClassNames.includes(uc) && 
         !selectedUpgrades.some(su => su["unique-class"]?.includes(uc))
       );
+    }
+    // Don't grey out title upgrades without bound_shiptype
+    if (upgradeType === 'title' && !upgrade.bound_shiptype) {
+      return false;
     }
     return false; // Non-unique upgrades or upgrades without a unique class are not greyed out
   };

@@ -12,11 +12,13 @@ import { flushCacheAndReload } from '../utils/dataFetcher';
 const CONFIG = {
   showLegacyToggle: false,
   showLegendsToggle: true,
+  showOldLegacyToggle: true,
 };
 
 export function ContentToggleButton() {
   const [enableLegacy, setEnableLegacy] = useState(false);
   const [enableLegends, setEnableLegends] = useState(false);
+  const [enableOldLegacy, setEnableOldLegacy] = useState(false);
   const { theme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -24,8 +26,10 @@ export function ContentToggleButton() {
     setMounted(true);
     const legacyCookie = Cookies.get('enableLegacy');
     const legendsCookie = Cookies.get('enableLegends');
+    const oldLegacyCookie = Cookies.get('enableOldLegacy');
     setEnableLegacy(CONFIG.showLegacyToggle && legacyCookie === 'true');
     setEnableLegends(CONFIG.showLegendsToggle && legendsCookie === 'true');
+    setEnableOldLegacy(CONFIG.showOldLegacyToggle && oldLegacyCookie === 'true');
   }, []);
 
   if (!mounted) {
@@ -46,6 +50,14 @@ export function ContentToggleButton() {
     if (CONFIG.showLegendsToggle) {
       setEnableLegends(checked);
       Cookies.set('enableLegends', checked.toString(), { expires: 365 });
+      flushCacheAndReload(() => {}, () => {}, () => {});
+    }
+  };
+
+  const handleOldLegacyToggle = (checked: boolean) => {
+    if (CONFIG.showOldLegacyToggle) {
+      setEnableOldLegacy(checked);
+      Cookies.set('enableOldLegacy', checked.toString(), { expires: 365 });
       flushCacheAndReload(() => {}, () => {}, () => {});
     }
   };
@@ -95,7 +107,25 @@ export function ContentToggleButton() {
                   />
                 </div>
               )}
+              {CONFIG.showOldLegacyToggle && (
+                <div className="flex items-center justify-between">
+                  <label htmlFor="old-legacy-toggle" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    Experimental: Enable old Legacy content
+                  </label>
+                  <Switch
+                    id="old-legacy-toggle"
+                    checked={enableOldLegacy}
+                    onCheckedChange={handleOldLegacyToggle}
+                    className="custom-switch"
+                  />
+                </div>
+              )}
             </div>
+            {enableOldLegacy && (
+              <p className="text-sm text-yellow-500">
+                Warning: Old Legacy content has not undergone a balance patch.
+              </p>
+            )}
           </div>
         </PopoverContent>
         <TooltipContent>

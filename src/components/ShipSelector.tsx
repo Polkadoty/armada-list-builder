@@ -55,6 +55,7 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
       const cachedShips = localStorage.getItem('ships');
       const cachedLegacyShips = localStorage.getItem('legacyShips');
       const cachedLegendsShips = localStorage.getItem('legendsShips');
+      const cachedOldLegacyShips = localStorage.getItem('oldLegacyShips');
       
       let allShips: ShipModel[] = [];
 
@@ -87,6 +88,11 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
       if (cachedLegendsShips) {
         const legendsShipData = JSON.parse(cachedLegendsShips);
         allShips = [...allShips, ...processShips(legendsShipData, 'legends')];
+      }
+
+      if (cachedOldLegacyShips) {
+        const oldLegacyShipData = JSON.parse(cachedOldLegacyShips);
+        allShips = [...allShips, ...processShips(oldLegacyShipData, 'oldLegacy')];
       }
 
       const filteredShips = allShips.filter(ship => 
