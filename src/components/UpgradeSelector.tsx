@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { Upgrade } from './FleetBuilder';
 import { useUniqueClassContext } from '../contexts/UniqueClassContext';
 import { SortToggleGroup, SortOption } from '@/components/SortToggleGroup';
-import { Pencil, Search, X } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 
 interface UpgradeSelectorProps {
@@ -22,7 +22,6 @@ interface UpgradeSelectorProps {
   currentShipUpgrades: Upgrade[];
   disqualifiedUpgrades: string[];
   disabledUpgrades: string[];
-  hasCommander: boolean;
 }
 
 interface UpgradeData {
@@ -42,7 +41,6 @@ export default function UpgradeSelector({
   currentShipUpgrades,
   disqualifiedUpgrades,
   disabledUpgrades,
-  hasCommander
 }: UpgradeSelectorProps) {
   const [loading, setLoading] = useState(true);
   const { uniqueClassNames, addUniqueClassName } = useUniqueClassContext();
@@ -63,6 +61,7 @@ export default function UpgradeSelector({
       const cachedUpgrades = localStorage.getItem('upgrades');
       const cachedLegacyUpgrades = localStorage.getItem('legacyUpgrades');
       const cachedLegendsUpgrades = localStorage.getItem('legendsUpgrades');
+      const cachedOldLegacyUpgrades = localStorage.getItem('oldLegacyUpgrades');
       
       let allUpgrades: Upgrade[] = [];
 
@@ -103,14 +102,28 @@ export default function UpgradeSelector({
         allUpgrades = [...allUpgrades, ...processUpgrades(legendsUpgradeData, 'legends')];
       }
 
+      if (cachedOldLegacyUpgrades) {
+        const oldLegacyUpgradeData = JSON.parse(cachedOldLegacyUpgrades);
+        allUpgrades = [...allUpgrades, ...processUpgrades(oldLegacyUpgradeData, 'oldLegacy')];
+      }
+
       const filteredUpgrades = allUpgrades.filter(upgrade => {
         const factionMatch = Array.isArray(upgrade.faction) 
           ? upgrade.faction.includes(faction) || upgrade.faction.includes('')
           : upgrade.faction === faction || upgrade.faction === '';
 
-        const chassisMatch = upgradeType === 'title' 
-          ? upgrade.bound_shiptype === chassis
-          : true;
+        let chassisMatch = true;
+        if (upgradeType === 'title') {
+          if (upgrade.bound_shiptype) {
+            chassisMatch = upgrade.bound_shiptype === chassis;
+          } else if (upgrade.restrictions?.traits?.includes('star-dreadnought')) {
+            chassisMatch = shipTraits?.includes('star-dreadnought') || false;
+          } else if (upgrade.restrictions?.traits?.includes('MC')) {
+            chassisMatch = shipTraits?.includes('MC') || false;
+          } else {
+            chassisMatch = upgrade.bound_shiptype === '' || upgrade.bound_shiptype === chassis;
+          }
+        }
 
         return upgrade.type === upgradeType &&
           factionMatch &&
@@ -171,42 +184,34 @@ export default function UpgradeSelector({
   }, [allUpgrades, activeSorts, searchQuery]);
 
   const isUpgradeAvailable = (upgrade: Upgrade) => {
-    // console.log(`Checking availability for ${upgrade.name}. Ship traits: ${shipTraits?.join(', ') || 'None'}`);
-
-    if (upgrade.type === 'commander' && hasCommander) {
-      return false;
-    }
-
-    if (upgradeType === 'title') {
-      if (upgrade.bound_shiptype && upgrade.bound_shiptype !== chassis) {
+    if (upgradeType === 'title' || upgradeType === 'super-weapon') {
+      // For titles and super-weapons, we'll only check for uniqueness and current ship conflicts
+      if (upgrade.unique && selectedUpgrades.some(su => su.name === upgrade.name)) {
         return false;
       }
-    } else if (upgrade.type === 'super-weapon') {
-      if (upgrade.bound_shiptype && upgrade.bound_shiptype !== chassis) {
+      if (currentShipUpgrades.some(su => su.name === upgrade.name)) {
         return false;
       }
     } else {
+      // For other upgrade types, keep the existing checks
       if (upgrade.bound_shiptype && upgrade.bound_shiptype !== shipType) {
+        return false;
+      }
+      if (upgrade.unique && selectedUpgrades.some(su => su.name === upgrade.name)) {
+        return false;
+      }
+      if (currentShipUpgrades.some(su => su.name === upgrade.name)) {
+        return false;
+      }
+      if (upgrade.modification && currentShipUpgrades.some(su => su.modification)) {
+        return false;
+      }
+      if (disqualifiedUpgrades.includes(upgrade.type) || disabledUpgrades.includes(upgrade.type)) {
         return false;
       }
     }
 
-    if (upgrade.unique && selectedUpgrades.some(su => su.name === upgrade.name)) {
-      return false;
-    }
-
-    if (currentShipUpgrades.some(su => su.name === upgrade.name)) {
-      return false;
-    }
-
-    if (upgrade.modification && currentShipUpgrades.some(su => su.modification)) {
-      return false;
-    }
-
-    if (disqualifiedUpgrades.includes(upgrade.type) || disabledUpgrades.includes(upgrade.type)) {
-      return false;
-    }
-
+    // Common checks for all upgrade types
     if (upgrade.restrictions) {
       const disqualOrDisable = [...(upgrade.restrictions.disqual_upgrades || []), ...(upgrade.restrictions.disable_upgrades || [])];
       if (currentShipUpgrades.some(su => disqualOrDisable.includes(su.type))) {
@@ -242,6 +247,10 @@ export default function UpgradeSelector({
         !selectedUpgrades.some(su => su["unique-class"]?.includes(uc))
       );
     }
+    // Don't grey out title upgrades without bound_shiptype
+    if (upgradeType === 'title' && !upgrade.bound_shiptype) {
+      return false;
+    }
     return false; // Non-unique upgrades or upgrades without a unique class are not greyed out
   };
 
@@ -276,7 +285,7 @@ export default function UpgradeSelector({
   const getIconPath = (upgradeType: string) => `/icons/${upgradeType}.svg`;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-md bg-opacity-30 dark:bg-opacity-30">
       <Card className="w-full h-full sm:w-11/12 sm:h-5/6 lg:w-3/4 lg:h-3/4 flex flex-col">
         <div className="p-2 sm:p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
           {showSearch ? (
@@ -298,14 +307,13 @@ export default function UpgradeSelector({
                 <Image
                   src={getIconPath(upgradeType)}
                   alt={upgradeType}
-                  width={24}
-                  height={24}
-                  className="mr-2"
+                  width={36}
+                  height={36}
+                  className="mr-2 dark:invert"
                   style={{ width: 'auto', height: '1em' }}
                 />
-                <span className="hidden sm:inline text-lg font-bold capitalize">{upgradeType.replace(/-/g, ' ')}</span>
               </div>
-              <Pencil size={20} className="ml-2" />
+              <Search size={20} className="ml-2" />
             </Button>
           )}
           <div className="flex items-center">

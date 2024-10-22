@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import Image from 'next/image';
 import { useUniqueClassContext } from '../contexts/UniqueClassContext';
 import { SortToggleGroup, SortOption } from '@/components/SortToggleGroup';
-import { Pencil, Search, X } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 
 export interface ShipModel {
@@ -55,6 +55,7 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
       const cachedShips = localStorage.getItem('ships');
       const cachedLegacyShips = localStorage.getItem('legacyShips');
       const cachedLegendsShips = localStorage.getItem('legendsShips');
+      const cachedOldLegacyShips = localStorage.getItem('oldLegacyShips');
       
       let allShips: ShipModel[] = [];
 
@@ -87,6 +88,11 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
       if (cachedLegendsShips) {
         const legendsShipData = JSON.parse(cachedLegendsShips);
         allShips = [...allShips, ...processShips(legendsShipData, 'legends')];
+      }
+
+      if (cachedOldLegacyShips) {
+        const oldLegacyShipData = JSON.parse(cachedOldLegacyShips);
+        allShips = [...allShips, ...processShips(oldLegacyShipData, 'oldLegacy')];
       }
 
       const filteredShips = allShips.filter(ship => 
@@ -168,7 +174,7 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-md bg-opacity-30 dark:bg-opacity-30">
       <Card className="w-full h-full sm:w-11/12 sm:h-5/6 lg:w-3/4 lg:h-3/4 flex flex-col">
         <div className="p-2 sm:p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
           {showSearch ? (
@@ -185,8 +191,8 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
             </div>
           ) : (
             <Button variant="ghost" onClick={() => setShowSearch(true)} className="flex items-center">
-              <h2 className="text-lg sm:text-xl lg:text-2xl font-bold mr-2">Select a Ship</h2>
-              <Pencil size={20} />
+              <h2 className="text-lg sm:text-xl lg:text-2xl font-bold mr-2">Ship</h2>
+              <Search size={20} />
             </Button>
           )}
           <div className="flex items-center">

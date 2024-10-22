@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { Squadron } from './FleetBuilder';
 import { useUniqueClassContext } from '../contexts/UniqueClassContext';
 import { SortToggleGroup, SortOption } from '@/components/SortToggleGroup';
-import { Pencil, Search, X } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 
 interface SquadronSelectorProps {
@@ -40,6 +40,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
       const cachedSquadrons = localStorage.getItem('squadrons');
       const cachedLegacySquadrons = localStorage.getItem('legacySquadrons');
       const cachedLegendsSquadrons = localStorage.getItem('legendsSquadrons');
+      const cachedOldLegacySquadrons = localStorage.getItem('oldLegacySquadrons');
       
       const squadronMap = new Map<string, Squadron>();
 
@@ -82,6 +83,11 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
       if (cachedLegendsSquadrons) {
         const legendsSquadronData = JSON.parse(cachedLegendsSquadrons);
         processSquadrons(legendsSquadronData, 'legends');
+      }
+
+      if (cachedOldLegacySquadrons) {
+        const oldLegacySquadronData = JSON.parse(cachedOldLegacySquadrons);
+        processSquadrons(oldLegacySquadronData, 'oldLegacy');
       }
 
       const allSquadrons = Array.from(squadronMap.values());
@@ -161,27 +167,48 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
   };
 
   const isSquadronSelected = (squadron: Squadron) => {
-    const isSelected = selectedSquadrons.some(s => s.id === squadron.id) ||
-      (squadron.unique && (
-        uniqueClassNames.includes(squadron.name) ||
-        squadron['unique-class']?.some(uc => uniqueClassNames.includes(uc))
-      ));
-    return isSelected;
+    // Check if this exact squadron is already selected
+    const isExactMatch = selectedSquadrons.some(s => 
+      s.id === squadron.id || 
+      (s.name === squadron.name && s['ace-name'] === squadron['ace-name'])
+    );
+
+    // Check if a conflicting unique squadron is already selected
+    const hasConflictingUnique = squadron.unique && selectedSquadrons.some(s => 
+      s.unique && s['ace-name'] === squadron['ace-name'] && s['ace-name'] !== ''
+    );
+
+    // Check if any of the unique classes are already in use
+    const hasConflictingUniqueClass = squadron['unique-class']?.some(uc => 
+      uniqueClassNames.includes(uc)
+    );
+
+    // For non-unique squadrons, don't consider them conflicting
+    if (!squadron.unique) {
+      return isExactMatch;
+    }
+
+    return isExactMatch || hasConflictingUnique || hasConflictingUniqueClass;
   };
 
   const handleSquadronClick = (squadron: Squadron) => {
     if (isSquadronSelected(squadron)) {
-      setPopupMessage("You can't select multiple unique items.");
+      setPopupMessage("You can't select multiple unique items or conflicting squadrons.");
       setShowPopup(true);
       setTimeout(() => setShowPopup(false), 2000);
     } else {
       onSelectSquadron(squadron);
+      if (squadron.unique) {
+        if (squadron['ace-name']) {
+          addUniqueClassName(squadron['ace-name']);
+        }
+      }
       squadron['unique-class']?.forEach(addUniqueClassName);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-md bg-opacity-30 dark:bg-opacity-30">
       <Card className="w-full h-full sm:w-11/12 sm:h-5/6 lg:w-3/4 lg:h-3/4 flex flex-col">
         <div className="p-2 sm:p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
           {showSearch ? (
@@ -198,8 +225,8 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
             </div>
           ) : (
             <Button variant="ghost" onClick={() => setShowSearch(true)} className="flex items-center">
-              <h2 className="text-lg sm:text-xl lg:text-2xl font-bold mr-2">Select a Squadron</h2>
-              <Pencil size={20} />
+              <h2 className="text-lg sm:text-xl lg:text-2xl font-bold mr-2">Squadron</h2>
+              <Search size={20} />
             </Button>
           )}
           <div className="flex items-center">

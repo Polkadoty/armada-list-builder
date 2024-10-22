@@ -64,7 +64,7 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose }: Objectiv
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 backdrop-blur-md bg-opacity-30 dark:bg-opacity-30 flex items-center justify-center z-50">
       <Card className="w-full h-full sm:w-11/12 sm:h-5/6 lg:w-3/4 lg:h-3/4 flex flex-col">
         <div className="p-2 sm:p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
           <h2 className="text-lg sm:text-xl lg:text-2xl font-bold">Select a {type.charAt(0).toUpperCase() + type.slice(1)} Objective</h2>

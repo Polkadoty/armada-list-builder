@@ -110,7 +110,13 @@ export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRem
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
                     <span>{totalShipPoints} points</span>
-                    <Button variant="ghost" size="sm" onClick={() => onCopy(ship)} className="text-blue-500 p-1 ml-1">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => onCopy(ship)} 
+                      className={`text-blue-500 p-1 ml-1 ${ship.unique ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      disabled={ship.unique}
+                    >
                       <Copy size={16} />
                     </Button>
                   </div>
