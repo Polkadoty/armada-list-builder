@@ -128,10 +128,12 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
         ship.points <= filter.maxPoints
       );
 
-      // Sort huge ships to the end
+      // Sort ships: non-unique, unique, then huge
       const sortedShips = filteredShips.sort((a, b) => {
         if (a.size === 'huge' && b.size !== 'huge') return 1;
         if (a.size !== 'huge' && b.size === 'huge') return -1;
+        if (a.unique && !b.unique) return 1;
+        if (!a.unique && b.unique) return -1;
         return 0;
       });
 
@@ -169,6 +171,10 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
       const sortPriority: SortOption[] = ['custom', 'unique', 'points', 'alphabetical'];
 
       sortedShips.sort((a, b) => {
+        // Always keep huge ships at the end
+        if (a.size === 'huge' && b.size !== 'huge') return 1;
+        if (a.size !== 'huge' && b.size === 'huge') return -1;
+
         for (const option of sortPriority) {
           if (activeSorts[option] !== null) {
             const result = sortFunctions[option](a, b);
