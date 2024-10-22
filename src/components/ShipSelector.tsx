@@ -128,8 +128,15 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
         ship.points <= filter.maxPoints
       );
 
-      setAllShips(filteredShips);
-      setDisplayedShips(filteredShips);
+      // Sort huge ships to the end
+      const sortedShips = filteredShips.sort((a, b) => {
+        if (a.size === 'huge' && b.size !== 'huge') return 1;
+        if (a.size !== 'huge' && b.size === 'huge') return -1;
+        return 0;
+      });
+
+      setAllShips(sortedShips);
+      setDisplayedShips(sortedShips);
     };
 
     fetchShips();
@@ -199,6 +206,8 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
     }
   };
 
+  const isHugeShip = (ship: ShipModel) => ship.size === 'huge';
+
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-md bg-opacity-30 dark:bg-opacity-30">
       <Card className="w-full h-full sm:w-11/12 sm:h-5/6 lg:w-3/4 lg:h-3/4 flex flex-col">
@@ -236,7 +245,7 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
         <CardContent className="p-2 sm:p-4 flex-grow overflow-auto">
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3 md:gap-4">
             {displayedShips.map((ship) => (
-              <div key={ship.id} className="w-full aspect-[8.75/15]">
+              <div key={ship.id} className={`w-full ${isHugeShip(ship) ? 'col-span-2 aspect-[5/4]' : 'aspect-[8.75/15]'}`}>
                 <Button
                   onClick={() => handleShipClick(ship)}
                   className={`p-0 overflow-hidden relative w-full h-full rounded-lg ${
