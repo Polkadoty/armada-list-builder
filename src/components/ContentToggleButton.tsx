@@ -10,7 +10,7 @@ import { flushCacheAndReload } from '../utils/dataFetcher';
 
 // Configuration flags
 const CONFIG = {
-  showLegacyToggle: true,
+  showLegacyToggle: false,
   showLegendsToggle: true,
   showOldLegacyToggle: true,
 };
