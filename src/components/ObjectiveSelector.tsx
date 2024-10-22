@@ -97,7 +97,7 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose }: Objectiv
                         }}
                       />
                     </div>
-                    <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-1 sm:p-2">
+                    <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-1 sm:p-2 visually-hidden">
                       <p className="text-xs sm:text-sm font-bold flex items-center justify-center">
                         <span className="break-words line-clamp-2 text-center">{objective.name}</span>
                       </p>

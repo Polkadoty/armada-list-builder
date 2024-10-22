@@ -230,7 +230,7 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
                       }}
                     />
                   </div>
-                  <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-1 sm:p-2">
+                  <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-1 sm:p-2 visually-hidden">
                     <p className="text-xs sm:text-xs font-bold flex items-center justify-center mb-0.5">
                       {ship.unique && <span className="mr-1 text-yellow-500 text-[10px] sm:text-xs">●</span>}
                       <span className="break-words text-center">{ship.name}</span>

@@ -354,7 +354,7 @@ export default function UpgradeSelector({
                         }}
                       />
                     </div>
-                    <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-1 sm:p-2">
+                    <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-1 sm:p-2 visually-hidden">
                       <p className="text-xs sm:text-sm font-bold flex items-center justify-center">
                         {upgrade.unique && <span className="mr-1 text-yellow-500 text-xs sm:text-sm">●</span>}
                         <span className="break-words line-clamp-2 text-center">{upgrade.name}</span>

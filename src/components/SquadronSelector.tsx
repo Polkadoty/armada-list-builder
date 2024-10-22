@@ -264,7 +264,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
                       }}
                     />
                   </div>
-                  <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-1 sm:p-2">
+                  <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-1 sm:p-2 visually-hidden">
                     {squadron['ace-name'] && (
                       <p className="text-[10px] sm:text-xs font-bold flex items-center justify-center mb-0.5">
                         {squadron.unique && <span className="mr-1 text-yellow-500 text-[10px] sm:text-xs">●</span>}
