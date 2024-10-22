@@ -19,6 +19,10 @@ export interface ShipModel {
   size?: string;
   traits?: string[];
   type: 'regular' | 'legacy' | 'legends';
+  speed: Record<string, number[]>;
+  tokens: Record<string, number>;
+  armament: Record<string, number[]>;
+  searchableText: string;
 }
 
 interface ShipData {
@@ -62,14 +66,36 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
       const processShips = (data: ShipData, prefix: string = '') => {
         if (data && data.ships) {
           return Object.entries(data.ships).flatMap(([chassisName, chassisData]: [string, ChassisData]) => 
-            Object.values(chassisData.models || {}).map((model: ShipModel) => ({
-              ...model,
-              id: prefix ? `${prefix}-${chassisName}-${model.name}` : `${chassisName}-${model.name}`,
-              chassis: chassisName,
-              size: chassisData.size,
-              traits: model.traits || [],
-              type: (prefix || 'regular') as 'regular' | 'legacy' | 'legends'
-            }))
+            Object.values(chassisData.models || {}).map((model: ShipModel) => {
+              const speedText = Object.entries(model.speed || {})
+                .map(([speed, yaw]) => `speed ${speed} yaw ${yaw.join(' ')}`)
+                .join(' ');
+              const armamentText = Object.entries(model.armament || {}).map(([zone, dice]) => {
+                const diceColors = ['red', 'blue', 'black'];
+                return dice.map((count, index) => count > 0 ? `${zone} ${diceColors[index]} ${count}` : '').filter(Boolean);
+              }).flat().join(' ');
+              const upgradesText = model.upgrades?.join(' ') || '';
+
+              return {
+                ...model,
+                id: prefix ? `${prefix}-${chassisName}-${model.name}` : `${chassisName}-${model.name}`,
+                chassis: chassisName,
+                size: chassisData.size,
+                traits: model.traits || [],
+                type: (prefix || 'regular') as 'regular' | 'legacy' | 'legends',
+                searchableText: JSON.stringify({
+                  ...model,
+                  name: model.name.toLowerCase(),
+                  speed: speedText,
+                  armament: armamentText,
+                  upgrades: upgradesText,
+                  traits: model.traits?.map(trait => ` ${trait} `).join(' ') || '',
+                  tokens: Object.entries(model.tokens || {})
+                    .filter(([_, value]) => value > 0)
+                    .reduce((acc, [key, value]) => ({ ...acc, [key.replace('def_', '')]: value }), {})
+                }).toLowerCase()
+              };
+            })
           );
         }
         return [];
@@ -115,9 +141,8 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
       // Filter ships based on search query
       if (searchQuery) {
         sortedShips = sortedShips.filter(ship => {
-          const shipName = ship.name || '';
           const searchLower = searchQuery.toLowerCase();
-          return shipName.toLowerCase().includes(searchLower);
+          return ship.searchableText.includes(searchLower);
         });
       }
 

@@ -35,6 +35,7 @@ export interface Ship {
   size: string;
   traits?: string[];
   type: 'regular' | 'legacy' | 'legends';
+  searchableText: string;
 }
 
 export interface Squadron {
@@ -48,8 +49,19 @@ export interface Squadron {
   speed: number;
   unique: boolean;
   count: number;
+  abilities: Record<string, boolean | number>;
+  tokens: {
+    def_scatter?: number;
+    def_evade?: number;
+    def_brace?: number;
+  };
+  armament: {
+    'anti-squadron': [number, number, number],
+    'anti-ship': [number, number, number]
+  };
   'unique-class': string[];
   type: 'regular' | 'legacy' | 'legends';
+  searchableText: string;
 }
 
 export interface Upgrade {
@@ -73,12 +85,19 @@ export interface Upgrade {
     size?: string[];
     traits?: string[];
   };
+  exhaust?: {
+    type: 'blank' | 'recur' | 'nonrecur';
+    ready_token?: string[];
+    ready_amount?: number;
+  };
+  searchableText: string;
 }
 
 export interface Ship extends ShipModel {
   id: string;
   availableUpgrades: string[];
   assignedUpgrades: Upgrade[];
+  searchableText: string;
 }
 
 const SectionHeader = ({ title, points, previousPoints, onClearAll, onAdd }: { title: string; points: number; previousPoints: number; show: boolean; onClearAll: () => void; onAdd: () => void }) => (
@@ -150,7 +169,7 @@ export default function FleetBuilder({ faction, fleetName }: { faction: string; 
       assignedUpgrades: [],
       chassis: ship.chassis,
       size: ship.size || '',
-      traits: ship.traits || []
+      traits: ship.traits || [],
     };
     setSelectedShips([...selectedShips, newShip]);
     setPreviousPoints(points);

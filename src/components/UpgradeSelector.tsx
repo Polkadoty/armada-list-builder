@@ -69,20 +69,31 @@ export default function UpgradeSelector({
       const processUpgrades = (data: UpgradeData, prefix: string = ''): Upgrade[] => {
         if (data && data.upgrades) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          return Object.values(data.upgrades).map((upgrade: any) => ({
-            ...upgrade,
-            id: prefix ? `${prefix}-${upgrade.id || upgrade.name}` : (upgrade.id || upgrade.name),
-            faction: Array.isArray(upgrade.faction) ? upgrade.faction : [upgrade.faction],
-            "unique-class": upgrade["unique-class"] || [],
-            restrictions: {
-              ...upgrade.restrictions,
-              traits: upgrade.restrictions?.traits || [],
-              size: upgrade.restrictions?.size || [],
-              disqual_upgrades: upgrade.restrictions?.disqual_upgrades || [],
-              disable_upgrades: upgrade.restrictions?.disable_upgrades || [],
-              enable_upgrades: upgrade.restrictions?.enable_upgrades || [],
-            },
-          }));
+          return Object.values(data.upgrades).map((upgrade: any) => {
+            const exhaustType = upgrade.exhaust?.type || '';
+            const isModification = upgrade.modification ? 'modification' : '';
+            return {
+              ...upgrade,
+              id: prefix ? `${prefix}-${upgrade.id || upgrade.name}` : (upgrade.id || upgrade.name),
+              faction: Array.isArray(upgrade.faction) ? upgrade.faction : [upgrade.faction],
+              "unique-class": upgrade["unique-class"] || [],
+              restrictions: {
+                ...upgrade.restrictions,
+                traits: upgrade.restrictions?.traits || [],
+                size: upgrade.restrictions?.size || [],
+                disqual_upgrades: upgrade.restrictions?.disqual_upgrades || [],
+                disable_upgrades: upgrade.restrictions?.disable_upgrades || [],
+                enable_upgrades: upgrade.restrictions?.enable_upgrades || [],
+              },
+              searchableText: JSON.stringify({
+                ...upgrade,
+                name: upgrade.name,
+                ability: upgrade.ability,
+                exhaustType: exhaustType,
+                isModification: isModification
+              }).toLowerCase()
+            };
+          });
         }
         return [];
       };
@@ -144,10 +155,9 @@ export default function UpgradeSelector({
 
       // Filter upgrades based on search query
       if (searchQuery) {
+        const searchLower = searchQuery.toLowerCase();
         sortedUpgrades = sortedUpgrades.filter(upgrade => {
-          const upgradeName = upgrade.name || '';
-          const searchLower = searchQuery.toLowerCase();
-          return upgradeName.toLowerCase().includes(searchLower);
+          return upgrade.searchableText.includes(searchLower);
         });
       }
 

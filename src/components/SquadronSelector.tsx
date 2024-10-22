@@ -50,6 +50,16 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
             const aceName = squadron['ace-name'] && squadron['ace-name'] !== '' ? squadron['ace-name'] : '';
             const uniqueKey = `${prefix}-${squadronId}-${squadron.name}-${aceName}`;
             if (!squadronMap.has(uniqueKey)) {
+              const abilityText = Object.entries(squadron.abilities || {})
+                .filter(([_, value]) => value !== 0 && value !== false)
+                .map(([key, value]) => typeof value === 'boolean' ? key : `${key} ${value}`)
+                .join(' ');
+      
+              const armamentText = Object.entries(squadron.armament || {}).map(([key, value]) => {
+                const diceColors = ['red', 'blue', 'black'];
+                return value.map((dice, index) => dice > 0 ? `${key} ${diceColors[index]}` : '').filter(Boolean);
+              }).flat().join(' ');
+      
               squadronMap.set(uniqueKey, {
                 ...squadron,
                 id: squadronId,
@@ -63,7 +73,15 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
                 unique: squadron.unique,
                 count: 1,
                 'unique-class': squadron['unique-class'] || [],
-                type: (prefix || 'regular') as 'regular' | 'legacy' | 'legends'
+                type: (prefix || 'regular') as 'regular' | 'legacy' | 'legends',
+                searchableText: JSON.stringify({
+                  ...squadron,
+                  abilities: abilityText,
+                  armament: armamentText,
+                  tokens: Object.entries(squadron.tokens || {})
+                    .filter(([_, value]) => value > 0)
+                    .reduce((acc, [key, value]) => ({ ...acc, [key.replace('def_', '')]: value }), {})
+                }).toLowerCase()
               });
             }
           });
@@ -111,12 +129,9 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
 
       // Filter squadrons based on search query
       if (searchQuery) {
+        const searchLower = searchQuery.toLowerCase();
         sortedSquadrons = sortedSquadrons.filter(squadron => {
-          const aceName = squadron['ace-name'] || '';
-          const squadronName = squadron.name || '';
-          const searchLower = searchQuery.toLowerCase();
-          return aceName.toLowerCase().includes(searchLower) ||
-                 squadronName.toLowerCase().includes(searchLower);
+          return squadron.searchableText.includes(searchLower);
         });
       }
 
