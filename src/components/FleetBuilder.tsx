@@ -273,21 +273,17 @@ export default function FleetBuilder({ faction, fleetName, tournamentMode }: { f
   };
   
   const handleSelectUpgrade = (upgrade: Upgrade) => {
-    // if (upgrade.type === 'commander' && hasCommander) {
-    //   alert("Only one commander is allowed per fleet.");
-    //   return;
-    // }
-
     let totalPointDifference = 0;
 
     setSelectedShips(prevShips => 
       prevShips.map(ship => {
         if (ship.id === currentShipId) {
           const newUpgrade = { ...upgrade, slotIndex: currentUpgradeIndex };
-          const updatedAssignedUpgrades = [...ship.assignedUpgrades];
+          let updatedAssignedUpgrades = [...ship.assignedUpgrades];
           const existingUpgradeIndex = updatedAssignedUpgrades.findIndex(u => u.type === currentUpgradeType && u.slotIndex === currentUpgradeIndex);
 
           let pointDifference = upgrade.points;
+          let updatedAvailableUpgrades = [...ship.availableUpgrades];
 
           // Remove old upgrade if it exists
           if (existingUpgradeIndex !== -1) {
@@ -299,6 +295,18 @@ export default function FleetBuilder({ faction, fleetName, tournamentMode }: { f
               oldUpgrade["unique-class"].forEach(uc => removeUniqueClassName(uc));
             }
             pointDifference = upgrade.points - oldUpgrade.points;
+
+            // Remove enabled upgrade slots from the old upgrade
+            if (oldUpgrade.restrictions?.enable_upgrades) {
+              updatedAvailableUpgrades = updatedAvailableUpgrades.filter(
+                slot => !oldUpgrade.restrictions?.enable_upgrades?.includes(slot)
+              );
+              // Remove upgrades that were enabled by the old upgrade
+              updatedAssignedUpgrades = updatedAssignedUpgrades.filter(u => 
+                !oldUpgrade.restrictions?.enable_upgrades?.includes(u.type)
+              );
+            }
+
             updatedAssignedUpgrades[existingUpgradeIndex] = newUpgrade;
           } else {
             updatedAssignedUpgrades.push(newUpgrade);
@@ -327,13 +335,13 @@ export default function FleetBuilder({ faction, fleetName, tournamentMode }: { f
           // Handle enabled upgrades
           const newEnabledUpgrades = [...(enabledUpgrades[ship.id] || [])];
           if (upgrade.restrictions?.enable_upgrades) {
-            upgrade.restrictions.enable_upgrades
-              .filter(enabledUpgrade => enabledUpgrade.trim() !== '')
-              .forEach(enabledUpgrade => {
-                if (!newEnabledUpgrades.includes(enabledUpgrade)) {
-                  newEnabledUpgrades.push(enabledUpgrade);
-                }
-              });
+            const validEnabledUpgrades = upgrade.restrictions.enable_upgrades.filter(enabledUpgrade => enabledUpgrade.trim() !== '');
+            validEnabledUpgrades.forEach(enabledUpgrade => {
+              if (!newEnabledUpgrades.includes(enabledUpgrade) && !updatedAvailableUpgrades.includes(enabledUpgrade)) {
+                newEnabledUpgrades.push(enabledUpgrade);
+                updatedAvailableUpgrades.push(enabledUpgrade);
+              }
+            });
           }
           setEnabledUpgrades({...enabledUpgrades, [ship.id]: newEnabledUpgrades});
 
@@ -344,6 +352,22 @@ export default function FleetBuilder({ faction, fleetName, tournamentMode }: { f
             const updatedSlots = upgradeTypeSlots.includes(currentUpgradeIndex)
               ? upgradeTypeSlots
               : [...upgradeTypeSlots, currentUpgradeIndex];
+            
+            // Handle special case for weapons-team-offensive-retro
+            if (upgrade.type === 'weapons-team-offensive-retro') {
+              const weaponsTeamIndex = updatedAvailableUpgrades.indexOf('weapons-team');
+              const offensiveRetroIndex = updatedAvailableUpgrades.indexOf('offensive-retro');
+              return {
+                ...prevFilledSlots,
+                [ship.id]: {
+                  ...shipSlots,
+                  'weapons-team': Array.from(new Set([...(shipSlots['weapons-team'] || []), weaponsTeamIndex])),
+                  'offensive-retro': Array.from(new Set([...(shipSlots['offensive-retro'] || []), offensiveRetroIndex])),
+                  'weapons-team-offensive-retro': Array.from(new Set([...(shipSlots['weapons-team-offensive-retro'] || []), currentUpgradeIndex])),
+                }
+              };
+            }
+
             return {
               ...prevFilledSlots,
               [ship.id]: {
@@ -353,21 +377,7 @@ export default function FleetBuilder({ faction, fleetName, tournamentMode }: { f
             };
           });
 
-          if (upgrade.type === 'weapons-team-offensive-retro') {
-            const weaponsTeamIndex = ship.availableUpgrades.indexOf('weapons-team');
-            const offensiveRetroIndex = ship.availableUpgrades.indexOf('offensive-retro');
-            setFilledSlots(prevFilledSlots => ({
-              ...prevFilledSlots,
-              [ship.id]: {
-                ...prevFilledSlots[ship.id],
-                'weapons-team': [...(prevFilledSlots[ship.id]?.['weapons-team'] || []), weaponsTeamIndex],
-                'offensive-retro': [...(prevFilledSlots[ship.id]?.['offensive-retro'] || []), offensiveRetroIndex],
-                'weapons-team-offensive-retro': [...(prevFilledSlots[ship.id]?.['weapons-team-offensive-retro'] || []), currentUpgradeIndex]
-              }
-            }));
-          }
-
-          return { ...ship, assignedUpgrades: updatedAssignedUpgrades };
+          return { ...ship, assignedUpgrades: updatedAssignedUpgrades, availableUpgrades: updatedAvailableUpgrades };
         }
         return ship;
       })
@@ -499,23 +509,39 @@ export default function FleetBuilder({ faction, fleetName, tournamentMode }: { f
 
   const handleCopyShip = (shipToCopy: Ship) => {
     if (shipToCopy.unique) {
-      // If the ship is unique, don't copy it and maybe show an alert
       alert("Unique ships cannot be copied.");
       return;
     }
-  
-    const newShip = { 
+
+    const newShip: Ship = { 
       ...shipToCopy, 
       id: Date.now().toString(),
-      assignedUpgrades: shipToCopy.assignedUpgrades.filter(upgrade => !upgrade.unique)
+      assignedUpgrades: [],
+      availableUpgrades: [...shipToCopy.availableUpgrades]
     };
-    const newShipPoints = newShip.points + newShip.assignedUpgrades.reduce((total, upgrade) => total + upgrade.points, 0);
-    setSelectedShips([...selectedShips, newShip]);
+
+    let pointsToAdd = shipToCopy.points;
+
+    // Filter out unique upgrades and upgrades that add slots
+    shipToCopy.assignedUpgrades.forEach(upgrade => {
+      if (!upgrade.unique && !upgrade.restrictions?.enable_upgrades) {
+        newShip.assignedUpgrades.push({ ...upgrade });
+        pointsToAdd += upgrade.points;
+      } else if (upgrade.restrictions?.enable_upgrades) {
+        // Remove the enabled upgrade slots from availableUpgrades
+        newShip.availableUpgrades = newShip.availableUpgrades.filter(
+          slot => !upgrade.restrictions?.enable_upgrades?.includes(slot)
+        );
+        // Use handleRemoveUpgrade for the upgrades we're filtering out
+        handleRemoveUpgrade(newShip.id, upgrade.type, upgrade.slotIndex || 0);
+      }
+    });
+
+    setSelectedShips(prevShips => [...prevShips, newShip]);
     setPreviousPoints(points);
     setPreviousShipPoints(totalShipPoints);
-    const newPoints = points + newShipPoints;
-    setPoints(newPoints);
-    setTotalShipPoints(totalShipPoints + newShipPoints);
+    setPoints(prevPoints => prevPoints + pointsToAdd);
+    setTotalShipPoints(prevTotal => prevTotal + pointsToAdd);
   };
 
   const handleAddSquadron = () => {
@@ -1188,3 +1214,4 @@ export default function FleetBuilder({ faction, fleetName, tournamentMode }: { f
     </div>
   );
 }
+
