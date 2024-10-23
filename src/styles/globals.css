@@ -128,11 +128,6 @@ body {
   border: 0;
 }
 
-html, body {
-  height: 100%;
-  overflow: hidden;
-}
-
 .faq-content {
   height: calc(100vh - 200px); /* Adjust 200px based on your header height */
   overflow-y: auto;

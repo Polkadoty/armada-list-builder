@@ -6,7 +6,6 @@ import { useSpring, animated } from 'react-spring';
 import UpgradeIconsToolbar from './UpgradeIconsToolbar';
 import { Ship, Upgrade } from "./FleetBuilder";
 import { Copy, Trash2, ArrowLeftRight, X, Eye } from 'lucide-react';
-import { useGlobalSwipe } from '@/hooks/useGlobalSwipe';
 
 interface SelectedShipProps {
   ship: Ship;
@@ -33,7 +32,6 @@ export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRem
   const SWIPE_THRESHOLD = 100;
   const ANGLE_THRESHOLD = 30; // Degrees
   const [showImageModal, setShowImageModal] = useState(false);
-  const { setIsSwipeInProgress } = useGlobalSwipe();
 
   const handleShipTouchStart = (e: React.TouchEvent) => {
     isDragging.current = true;
@@ -53,9 +51,6 @@ export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRem
     if (!isHorizontalSwipe.current) {
       const angle = Math.abs(Math.atan2(deltaY, deltaX) * 180 / Math.PI);
       isHorizontalSwipe.current = angle < ANGLE_THRESHOLD || angle > (180 - ANGLE_THRESHOLD);
-      if (isHorizontalSwipe.current) {
-        setIsSwipeInProgress(true);
-      }
     }
 
     if (isHorizontalSwipe.current) {
@@ -65,7 +60,6 @@ export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRem
     } else if (Math.abs(deltaY) > 10) {
       isDragging.current = false;
       api.start({ x: 0, immediate: false });
-      setIsSwipeInProgress(false);
     }
   };
 
@@ -82,7 +76,6 @@ export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRem
     }
     api.start({ x: 0, immediate: false });
     isHorizontalSwipe.current = false;
-    setIsSwipeInProgress(false);
   };
 
   const toggleToolbar = () => {
@@ -246,7 +239,6 @@ function SwipeableUpgrade({ upgrade, onSwipe, onSwap, onRemove }: SwipeableUpgra
 
   const SWIPE_THRESHOLD = 100;
   const ANGLE_THRESHOLD = 30; // Degrees
-  const { setIsSwipeInProgress } = useGlobalSwipe();
   const [showImageModal, setShowImageModal] = useState(false);
 
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -290,7 +282,6 @@ function SwipeableUpgrade({ upgrade, onSwipe, onSwap, onRemove }: SwipeableUpgra
     }
     api.start({ x: 0, immediate: false });
     isHorizontalSwipe.current = false;
-    setIsSwipeInProgress(false);
   };
 
   
