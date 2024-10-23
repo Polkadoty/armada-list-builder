@@ -34,6 +34,7 @@ export default function FactionPage() {
   const [loadingMessage, setLoadingMessage] = useState('');
   const [fleetName, setFleetName] = useState('Untitled Fleet');
   const [isEditingName, setIsEditingName] = useState(false);
+  const [tournamentMode, setTournamentMode] = useState(true);
 
   useEffect(() => {
     setMounted(true);
@@ -90,7 +91,13 @@ export default function FactionPage() {
             )}
           </div>
           <div className="flex items-center space-x-2">
-            <ContentToggleButton setIsLoading={setIsLoading} setLoadingProgress={setLoadingProgress} setLoadingMessage={setLoadingMessage} />
+            <ContentToggleButton
+              setIsLoading={setIsLoading}
+              setLoadingProgress={setLoadingProgress}
+              setLoadingMessage={setLoadingMessage}
+              tournamentMode={tournamentMode}
+              setTournamentMode={setTournamentMode}
+            />
             <ThemeToggle />
           </div>
         </div>
@@ -99,6 +106,8 @@ export default function FactionPage() {
           factionColor={factionColors[faction as keyof typeof factionColors]}
           fleetName={fleetName}
           setFleetName={setFleetName}
+          tournamentMode={tournamentMode}
+          setTournamentMode={setTournamentMode}
         />
       </div>
     </div>

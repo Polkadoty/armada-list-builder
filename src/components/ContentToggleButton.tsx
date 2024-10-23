@@ -7,6 +7,7 @@ import { useTheme } from 'next-themes';
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import Cookies from 'js-cookie';
 import { flushCacheAndReload } from '../utils/dataFetcher';
+import { Label } from "@/components/ui/label";
 
 // Configuration flags
 const CONFIG = {
@@ -15,10 +16,12 @@ const CONFIG = {
   showOldLegacyToggle: true,
 };
 
-export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadingMessage }: {
+export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadingMessage, tournamentMode, setTournamentMode }: {
   setIsLoading: (isLoading: boolean) => void;
   setLoadingProgress: (progress: number) => void;
   setLoadingMessage: (message: string) => void;
+  tournamentMode: boolean;
+  setTournamentMode: (mode: boolean) => void;
 }) {
   const [enableLegacy, setEnableLegacy] = useState(false);
   const [enableLegends, setEnableLegends] = useState(false);
@@ -128,6 +131,14 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
                   />
                 </div>
               )}
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="tournament-mode"
+                  checked={tournamentMode}
+                  onCheckedChange={setTournamentMode}
+                />
+                <Label htmlFor="tournament-mode">Tournament Mode</Label>
+              </div>
               <Button onClick={handleFlushCache} variant="outline" size="sm" className="mt-2">
                 Flush Cache and Reload
               </Button>

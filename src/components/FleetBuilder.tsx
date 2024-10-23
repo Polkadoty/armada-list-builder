@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-empty-interface */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Printer, ArrowLeft, FileText, Trash2 } from 'lucide-react';
+import { Printer, ArrowLeft, FileText, Trash2, TriangleAlert } from 'lucide-react';
 import { ShipSelector } from './ShipSelector';
 import { SelectedShip } from './SelectedShip';
 import { ShipFilter } from './ShipFilter';
@@ -20,6 +20,9 @@ import { ExportTextPopup } from './ExportTextPopup';
 import { factionLogos } from '../pages/[faction]';
 import { useUniqueClassContext } from '../contexts/UniqueClassContext';
 import { SwipeableObjective } from './SwipeableObjective';
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 
 export interface Ship {
@@ -120,7 +123,21 @@ const SectionHeader = ({ title, points, previousPoints, onClearAll, onAdd }: { t
   </Card>
 );
 
-export default function FleetBuilder({ faction, fleetName }: { faction: string; factionColor: string; fleetName: string; setFleetName: React.Dispatch<React.SetStateAction<string>> }) {
+export default function FleetBuilder({ 
+  faction, 
+  factionColor, 
+  fleetName, 
+  setFleetName,
+  tournamentMode,
+  setTournamentMode
+}: {
+  faction: string;
+  factionColor: string;
+  fleetName: string;
+  setFleetName: React.Dispatch<React.SetStateAction<string>>;
+  tournamentMode: boolean;
+  setTournamentMode: React.Dispatch<React.SetStateAction<boolean>>;
+}) {
   const [points, setPoints] = useState(0);
   const [previousPoints, setPreviousPoints] = useState(0);
   const [showShipSelector, setShowShipSelector] = useState(false);
@@ -155,7 +172,41 @@ export default function FleetBuilder({ faction, fleetName }: { faction: string; 
   const [filledSlots, setFilledSlots] = useState<Record<string, Record<string, number[]>>>({});
   const [hasCommander, setHasCommander] = useState(false);
   const [squadronToSwap, setSquadronToSwap] = useState<string | null>(null);
+  const [tournamentViolations, setTournamentViolations] = useState<string[]>([]);
 
+  const checkTournamentViolations = useCallback(() => {
+    const violations: string[] = [];
+
+    if (points > 400) {
+      violations.push("Fleet exceeds 400 point limit");
+    }
+
+    if (totalSquadronPoints > 134) {
+      violations.push("Squadrons exceed 134 point limit");
+    }
+
+    const flotillaCount = selectedShips.filter(ship => ship.traits?.includes("flotilla")).length;
+    if (flotillaCount > 2) {
+      violations.push("More than two ships with 'flotilla' trait");
+    }
+
+    if (!selectedAssaultObjective || !selectedDefenseObjective || !selectedNavigationObjective) {
+      violations.push("Missing objective card(s)");
+    }
+
+    const commanderCount = selectedShips.flatMap(ship => ship.assignedUpgrades).filter(upgrade => upgrade.type === "commander").length;
+    if (commanderCount !== 1) {
+      violations.push("Exactly one commander upgrade is required");
+    }
+
+    setTournamentViolations(violations);
+  }, [points, totalSquadronPoints, selectedShips, selectedAssaultObjective, selectedDefenseObjective, selectedNavigationObjective]);
+
+  useEffect(() => {
+    if (tournamentMode) {
+      checkTournamentViolations();
+    }
+  }, [tournamentMode, checkTournamentViolations]);
 
   const handleAddShip = () => {
     setShowShipSelector(true);
@@ -914,6 +965,22 @@ export default function FleetBuilder({ faction, fleetName }: { faction: string; 
         <p>${selectedNavigationObjective ? selectedNavigationObjective.name : 'None'}</p>
         </div>
     </div>
+
+    ${tournamentMode ? `
+      <div class="tournament-info">
+        <h3>Tournament Restrictions:</h3>
+        ${tournamentViolations.length === 0 
+          ? '<p>This list complies with tournament restrictions.</p>'
+          : `
+            <p>This list does not comply with tournament restrictions:</p>
+            <ul>
+              ${tournamentViolations.map(violation => `<li>${violation}</li>`).join('')}
+            </ul>
+          `
+        }
+      </div>
+    ` : ''}
+
     </body>
     </html>`;
     
@@ -925,11 +992,30 @@ export default function FleetBuilder({ faction, fleetName }: { faction: string; 
       <div className="flex flex-col sm:flex-row items-start sm:items-center mb-4">
         <div className="mb-2 sm:mb-0 flex items-center justify-start space-x-2">
           <Button variant="outline" onClick={handlePrint}>
-            <Printer className=" h-4 w-4" />
+            <Printer className="h-4 w-4" />
           </Button>
           <Button variant="outline" onClick={() => setShowExportPopup(true)}>
             <FileText className="h-4 w-4" />
           </Button>
+          {tournamentMode && tournamentViolations.length > 0 && (
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="ghost" size="icon" className="text-yellow-500">
+                  <TriangleAlert className="h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80">
+                <div className="space-y-2">
+                  <h4 className="font-medium">Tournament Violations:</h4>
+                  <ul className="list-disc pl-4 space-y-1">
+                    {tournamentViolations.map((violation, index) => (
+                      <li key={index}>{violation}</li>
+                    ))}
+                  </ul>
+                </div>
+              </PopoverContent>
+            </Popover>
+          )}
         </div>
         <div className="flex-grow" />
         <PointsDisplay points={points} previousPoints={previousPoints} />
@@ -1112,6 +1198,8 @@ export default function FleetBuilder({ faction, fleetName }: { faction: string; 
           onClose={() => setShowExportPopup(false)}
         />
       )}
+
+
 
     </div>
   );
