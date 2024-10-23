@@ -9,6 +9,7 @@ import { LoadingScreen } from '../../components/LoadingScreen';
 import { ContentToggleButton } from '../../components/ContentToggleButton';
 import { Input } from '../../components/ui/input';
 import { Pencil } from 'lucide-react';
+import { checkAndFetchData } from '../../utils/dataFetcher';
 
 export const factionLogos = {
   rebel: '/icons/rebel.svg',
@@ -28,25 +29,34 @@ export default function FactionPage() {
   const router = useRouter();
   const { faction } = router.query;
   const { theme, systemTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+
   const [isLoading, setIsLoading] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [loadingMessage, setLoadingMessage] = useState('');
   const [fleetName, setFleetName] = useState('Untitled Fleet');
-  const [isEditingName, setIsEditingName] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const [tournamentMode, setTournamentMode] = useState(true);
   const maxFleetNameLength = 64;
 
   useEffect(() => {
-    setMounted(true);
+    const fetchData = async () => {
+      await checkAndFetchData(setIsLoading, setLoadingProgress, setLoadingMessage);
+    };
+    fetchData();
   }, []);
 
-  if (!mounted) return null;
+  if (isLoading) {
+    return <LoadingScreen progress={loadingProgress} message={loadingMessage} />;
+  }
+
+  if (!faction || typeof faction !== 'string' || !Object.keys(factionLogos).includes(faction)) {
+    return <div>Invalid faction</div>;
+  }
 
   const currentTheme = theme === 'system' ? systemTheme : theme;
 
   const handleNameClick = () => {
-    setIsEditingName(true);
+    setIsEditing(true);
   };
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -55,7 +65,7 @@ export default function FactionPage() {
   };
 
   const handleNameBlur = () => {
-    setIsEditingName(false);
+    setIsEditing(false);
   };
 
   return (
@@ -75,7 +85,7 @@ export default function FactionPage() {
               />
             )}
             <h1 className="text-2xl font-bold mr-4"></h1>
-            {isEditingName ? (
+            {isEditing ? (
               <Input
                 value={fleetName}
                 onChange={handleNameChange}
