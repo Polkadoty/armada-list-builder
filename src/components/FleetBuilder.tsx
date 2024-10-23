@@ -442,6 +442,14 @@ export default function FleetBuilder({ faction, fleetName, tournamentMode }: { f
               );
               upgradesToRemove = [...enabledUpgradesToRemove, upgradeToRemove];
               pointsToRemove += enabledUpgradesToRemove.reduce((sum, u) => sum + u.points, 0);
+
+              // Remove the enabled upgrade slots from availableUpgrades
+              upgradeToRemove.restrictions.enable_upgrades.forEach(enabledType => {
+                const slotIndex = ship.availableUpgrades.lastIndexOf(enabledType);
+                if (slotIndex !== -1) {
+                  ship.availableUpgrades.splice(slotIndex, 1);
+                }
+              });
             }
   
             // Process all upgrades to remove
@@ -516,7 +524,8 @@ export default function FleetBuilder({ faction, fleetName, tournamentMode }: { f
               points: ship.points,  // Keep the ship's base points unchanged
               assignedUpgrades: ship.assignedUpgrades.filter(u => 
                 !upgradesToRemove.includes(u)
-              )
+              ),
+              availableUpgrades: ship.availableUpgrades
             };
           }
         }
