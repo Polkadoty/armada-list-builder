@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Image from 'next/image';
-import { Upgrade } from './FleetBuilder';
+import { Ship, Upgrade } from './FleetBuilder';
 import { useUniqueClassContext } from '../contexts/UniqueClassContext';
 import { SortToggleGroup, SortOption } from '@/components/SortToggleGroup';
 import { Search, X } from 'lucide-react';
@@ -22,6 +22,8 @@ interface UpgradeSelectorProps {
   currentShipUpgrades: Upgrade[];
   disqualifiedUpgrades: string[];
   disabledUpgrades: string[];
+  ship: Ship
+  
 }
 
 interface UpgradeData {
@@ -41,6 +43,7 @@ export default function UpgradeSelector({
   currentShipUpgrades,
   disqualifiedUpgrades,
   disabledUpgrades,
+  ship,
 }: UpgradeSelectorProps) {
   const [loading, setLoading] = useState(true);
   const { uniqueClassNames, addUniqueClassName } = useUniqueClassContext();
@@ -84,6 +87,7 @@ export default function UpgradeSelector({
                 disqual_upgrades: upgrade.restrictions?.disqual_upgrades || [],
                 disable_upgrades: upgrade.restrictions?.disable_upgrades || [],
                 enable_upgrades: upgrade.restrictions?.enable_upgrades || [],
+                disqualify_if: upgrade.restrictions?.disqualify_if || {}
               },
               searchableText: JSON.stringify({
                 ...upgrade,
@@ -241,6 +245,21 @@ export default function UpgradeSelector({
           const hasRequiredTrait = validTraits.some(trait => shipTraits.includes(trait));
           if (!hasRequiredTrait) {
             return false;
+          }
+        }
+      }
+
+      if (upgrade.restrictions.disqualify_if) {
+        const disqualify = upgrade.restrictions.disqualify_if;
+        if (shipSize && disqualify.size && disqualify.size.includes(shipSize)) {
+          if (disqualify.has_upgrade_type) {
+            const hasDisqualifyingUpgrade = disqualify.has_upgrade_type.some(type => 
+              currentShipUpgrades.some(u => u.type === type) || 
+              ship.availableUpgrades.includes(type)
+            );
+            if (hasDisqualifyingUpgrade) {
+              return false;
+            }
           }
         }
       }

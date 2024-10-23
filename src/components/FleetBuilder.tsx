@@ -86,6 +86,10 @@ export interface Upgrade {
     disqual_upgrades?: string[];
     size?: string[];
     traits?: string[];
+    disqualify_if?: {
+      size?: string[];
+      has_upgrade_type?: string[];
+    };
   };
   exhaust?: {
     type: 'blank' | 'recur' | 'nonrecur';
@@ -1195,6 +1199,7 @@ export default function FleetBuilder({ faction, fleetName, tournamentMode }: { f
           currentShipUpgrades={selectedShips.find(ship => ship.id === currentShipId)?.assignedUpgrades || []}
           disqualifiedUpgrades={disabledUpgrades[currentShipId] || []}
           disabledUpgrades={disabledUpgrades[currentShipId] || []}
+          ship={selectedShips.find(ship => ship.id === currentShipId)!}
         />
       )}
 
