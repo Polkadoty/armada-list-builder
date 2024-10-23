@@ -134,7 +134,7 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
         if (a.size !== 'huge' && b.size === 'huge') return -1;
         if (a.unique && !b.unique) return 1;
         if (!a.unique && b.unique) return -1;
-        return 0;
+        return a.name.localeCompare(b.name);
       });
 
       setAllShips(sortedShips);
@@ -175,6 +175,14 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
         if (a.size === 'huge' && b.size !== 'huge') return 1;
         if (a.size !== 'huge' && b.size === 'huge') return -1;
 
+        // If no active sorts, use default sorting (alphabetical with unique at bottom)
+        if (Object.values(activeSorts).every(sort => sort === null)) {
+          if (a.unique && !b.unique) return 1;
+          if (!a.unique && b.unique) return -1;
+          return a.name.localeCompare(b.name);
+        }
+
+        // Apply active sorts
         for (const option of sortPriority) {
           if (activeSorts[option] !== null) {
             const result = sortFunctions[option](a, b);

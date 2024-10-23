@@ -55,6 +55,7 @@ export default function Home() {
             width={300}
             height={100}
             className="dark:invert"
+            priority
           />
         </div>
         <FactionSelection onHover={setHoveredFaction} />

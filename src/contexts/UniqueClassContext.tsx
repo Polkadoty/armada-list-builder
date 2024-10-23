@@ -13,17 +13,12 @@ const UniqueClassContext = createContext<{
 export const UniqueClassProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [uniqueClassNames, setUniqueClassNames] = useState<string[]>([]);
 
-  const addUniqueClassName = useCallback((name: string) => {
-    setUniqueClassNames(prev => {
-      if (!prev.includes(name)) {
-        return [...prev, name];
-      }
-      return prev;
-    });
+  const addUniqueClassName = useCallback((className: string) => {
+    setUniqueClassNames(prev => prev.includes(className) ? prev : [...prev, className]);
   }, []);
 
-  const removeUniqueClassName = useCallback((name: string) => {
-    setUniqueClassNames(prev => prev.filter(n => n !== name));
+  const removeUniqueClassName = useCallback((className: string) => {
+    setUniqueClassNames(prev => prev.filter(name => name !== className));
   }, []);
 
   return (

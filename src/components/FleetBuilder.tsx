@@ -43,6 +43,7 @@ export interface Squadron {
   id: string;
   name: string;
   'ace-name'?: string;
+  squadron_type: string;
   points: number;
   cardimage: string;
   faction: string;
@@ -996,6 +997,29 @@ export default function FleetBuilder({ faction, fleetName, tournamentMode }: { f
     
     return content;
   };
+
+  useEffect(() => {
+    return () => {
+      // Reset all state when component unmounts
+      setSelectedShips([]);
+      setSelectedSquadrons([]);
+      setPoints(0);
+      setTotalShipPoints(0);
+      setTotalSquadronPoints(0);
+      setPreviousPoints(0);
+      setPreviousShipPoints(0);
+      setPreviousSquadronPoints(0);
+      setHasCommander(false);
+      setDisabledUpgrades({});
+      setEnabledUpgrades({});
+      setFilledSlots({});
+      setSelectedAssaultObjective(null);
+      setSelectedDefenseObjective(null);
+      setSelectedNavigationObjective(null);
+      setUniqueClassNames([]);
+    console.log("clearing state");
+    };
+  }, []);
 
   return (
     <div className="max-w-4xl mx-auto">

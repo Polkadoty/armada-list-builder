@@ -66,6 +66,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
                 id: squadronId,
                 name: squadron.name,
                 'ace-name': aceName,
+                squadron_type: squadron.squadron_type,
                 points: squadron.points,
                 cardimage: validateImageUrl(squadron.cardimage),
                 faction: squadron.faction,
@@ -119,8 +120,15 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
         squadron.points <= filter.maxPoints
       );
 
-      setAllSquadrons(filteredSquadrons);
-      setDisplayedSquadrons(filteredSquadrons);
+      const sortedSquadrons = filteredSquadrons.sort((a, b) => {
+        if (a.squadron_type !== b.squadron_type) {
+          return a.squadron_type.localeCompare(b.squadron_type);
+        }
+        return a.name.localeCompare(b.name);
+      });
+
+      setAllSquadrons(sortedSquadrons);
+      setDisplayedSquadrons(sortedSquadrons);
     };
 
     fetchSquadrons();
@@ -147,12 +155,31 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
         },
         unique: (a, b) => (a.unique === b.unique ? 0 : a.unique ? -1 : 1),
         points: (a, b) => a.points - b.points,
-        alphabetical: (a, b) => a.name.localeCompare(b.name),
+        alphabetical: (a, b) => {
+          if (a['ace-name'] && b['ace-name']) {
+            return a['ace-name'].localeCompare(b['ace-name']);
+          } else if (a['ace-name']) {
+            return a['ace-name'].localeCompare(b.name);
+          } else if (b['ace-name']) {
+            return a.name.localeCompare(b['ace-name']);
+          } else {
+            return a.name.localeCompare(b.name);
+          }
+        },
       };
 
       const sortPriority: SortOption[] = ['custom', 'unique', 'points', 'alphabetical'];
 
       sortedSquadrons.sort((a, b) => {
+        // If no active sorts, use default sorting (by squadron_type, then alphabetical by name)
+        if (Object.values(activeSorts).every(sort => sort === null)) {
+          if (a.squadron_type !== b.squadron_type) {
+            return a.squadron_type.localeCompare(b.squadron_type);
+          }
+          return a.name.localeCompare(b.name);
+        }
+
+        // Apply active sorts
         for (const option of sortPriority) {
           if (activeSorts[option] !== null) {
             const result = sortFunctions[option](a, b);
