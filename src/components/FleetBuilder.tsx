@@ -284,11 +284,6 @@ export default function FleetBuilder({ faction, fleetName, tournamentMode }: { f
   };
   
   const handleSelectUpgrade = (upgrade: Upgrade) => {
-    // if (upgrade.type === 'commander' && hasCommander) {
-    //   alert("Only one commander is allowed per fleet.");
-    //   return;
-    // }
-
     let totalPointDifference = 0;
 
     setSelectedShips(prevShips => 
@@ -303,6 +298,30 @@ export default function FleetBuilder({ faction, fleetName, tournamentMode }: { f
           // Remove old upgrade if it exists
           if (existingUpgradeIndex !== -1) {
             const oldUpgrade = updatedAssignedUpgrades[existingUpgradeIndex];
+            
+            // Remove enabled upgrades and slots
+            if (oldUpgrade.restrictions?.enable_upgrades) {
+              oldUpgrade.restrictions.enable_upgrades.forEach(enabledType => {
+                const enabledUpgradeIndices = updatedAssignedUpgrades
+                  .map((u, index) => u.type === enabledType ? index : -1)
+                  .filter(index => index !== -1);
+
+                if (enabledUpgradeIndices.length > 0) {
+                  const lastEnabledUpgradeIndex = Math.max(...enabledUpgradeIndices);
+                  const enabledUpgrade = updatedAssignedUpgrades[lastEnabledUpgradeIndex];
+                  pointDifference -= enabledUpgrade.points;
+                  handleRemoveUpgrade(ship.id, enabledUpgrade.type, enabledUpgrade.slotIndex || 0);
+                  updatedAssignedUpgrades.splice(lastEnabledUpgradeIndex, 1);
+
+                  // Remove the slot from availableUpgrades
+                  const slotIndex = ship.availableUpgrades.lastIndexOf(enabledType);
+                  if (slotIndex !== -1) {
+                    ship.availableUpgrades.splice(slotIndex, 1);
+                  }
+                }
+              });
+            }
+
             if (oldUpgrade.unique) {
               removeUniqueClassName(oldUpgrade.name);
             }
@@ -342,7 +361,7 @@ export default function FleetBuilder({ faction, fleetName, tournamentMode }: { f
               .filter(enabledUpgrade => enabledUpgrade.trim() !== '')
               .forEach(enabledUpgrade => {
                 if (!newEnabledUpgrades.includes(enabledUpgrade)) {
-                  newEnabledUpgrades.push(enabledUpgrade);
+                  ship.availableUpgrades.push(enabledUpgrade);
                 }
               });
           }
@@ -378,7 +397,7 @@ export default function FleetBuilder({ faction, fleetName, tournamentMode }: { f
             }));
           }
 
-          return { ...ship, assignedUpgrades: updatedAssignedUpgrades };
+          return { ...ship, assignedUpgrades: updatedAssignedUpgrades, availableUpgrades: ship.availableUpgrades };
         }
         return ship;
       })
