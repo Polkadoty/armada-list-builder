@@ -21,8 +21,6 @@ import { factionLogos } from '../pages/[faction]';
 import { useUniqueClassContext } from '../contexts/UniqueClassContext';
 import { SwipeableObjective } from './SwipeableObjective';
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 
 
 export interface Ship {
@@ -123,21 +121,7 @@ const SectionHeader = ({ title, points, previousPoints, onClearAll, onAdd }: { t
   </Card>
 );
 
-export default function FleetBuilder({ 
-  faction, 
-  factionColor, 
-  fleetName, 
-  setFleetName,
-  tournamentMode,
-  setTournamentMode
-}: {
-  faction: string;
-  factionColor: string;
-  fleetName: string;
-  setFleetName: React.Dispatch<React.SetStateAction<string>>;
-  tournamentMode: boolean;
-  setTournamentMode: React.Dispatch<React.SetStateAction<boolean>>;
-}) {
+export default function FleetBuilder({ faction, fleetName, tournamentMode, setTournamentMode }: { faction: string; factionColor: string; fleetName: string; setFleetName: React.Dispatch<React.SetStateAction<string>>; tournamentMode: boolean; setTournamentMode: React.Dispatch<React.SetStateAction<boolean>> }) {
   const [points, setPoints] = useState(0);
   const [previousPoints, setPreviousPoints] = useState(0);
   const [showShipSelector, setShowShipSelector] = useState(false);

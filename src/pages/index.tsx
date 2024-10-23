@@ -26,6 +26,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [loadingMessage, setLoadingMessage] = useState('');
+  const [tournamentMode, setTournamentMode] = useState(true);
 
   useEffect(() => {
     setMounted(true);
@@ -44,7 +45,7 @@ export default function Home() {
       {isLoading && <LoadingScreen progress={loadingProgress} message={loadingMessage} />}
       <div className={`bg-white dark:bg-transparent p-8 flex-grow lg:w-1/3 lg:min-w-[300px] relative z-10`}>
         <div className="flex justify-end space-x-2 mb-4">
-          <ContentToggleButton setIsLoading={setIsLoading} setLoadingProgress={setLoadingProgress} setLoadingMessage={setLoadingMessage} />
+          <ContentToggleButton setIsLoading={setIsLoading} setLoadingProgress={setLoadingProgress} setLoadingMessage={setLoadingMessage} tournamentMode={tournamentMode} setTournamentMode={setTournamentMode} />
           <ThemeToggle />
         </div>
         <div className="flex justify-center mb-8">
