@@ -73,6 +73,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
                 speed: squadron.speed,
                 unique: squadron.unique,
                 count: 1,
+                ace: squadron.ace || false,
                 'unique-class': squadron['unique-class'] || [],
                 type: (prefix || 'regular') as 'regular' | 'legacy' | 'legends',
                 searchableText: JSON.stringify({

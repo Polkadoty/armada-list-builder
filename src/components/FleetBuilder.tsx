@@ -60,6 +60,7 @@ export interface Squadron {
     'anti-squadron': [number, number, number],
     'anti-ship': [number, number, number]
   };
+  ace: boolean;
   'unique-class': string[];
   type: 'regular' | 'legacy' | 'legends';
   searchableText: string;
@@ -171,7 +172,12 @@ export default function FleetBuilder({ faction, fleetName, tournamentMode }: { f
 
     const flotillaCount = selectedShips.filter(ship => ship.traits?.includes("flotilla")).length;
     if (flotillaCount > 2) {
-      violations.push("More than two ships with 'flotilla' trait");
+      violations.push("More than two flotillas in fleet");
+    }
+
+    const aceSquadronCount = selectedSquadrons.filter(squadron => squadron.ace === true).length;
+    if (aceSquadronCount > 4) {
+      violations.push("More than four aces in fleet");
     }
 
     if (!selectedAssaultObjective || !selectedDefenseObjective || !selectedNavigationObjective) {
@@ -180,11 +186,11 @@ export default function FleetBuilder({ faction, fleetName, tournamentMode }: { f
 
     const commanderCount = selectedShips.flatMap(ship => ship.assignedUpgrades).filter(upgrade => upgrade.type === "commander").length;
     if (commanderCount !== 1) {
-      violations.push("Exactly one commander upgrade is required");
+      violations.push("One commander upgrade is required");
     }
 
     setTournamentViolations(violations);
-  }, [points, totalSquadronPoints, selectedShips, selectedAssaultObjective, selectedDefenseObjective, selectedNavigationObjective]);
+  }, [points, totalSquadronPoints, selectedShips, selectedSquadrons, selectedAssaultObjective, selectedDefenseObjective, selectedNavigationObjective]);
 
   useEffect(() => {
     if (tournamentMode) {
