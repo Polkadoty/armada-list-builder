@@ -35,6 +35,7 @@ export default function FactionPage() {
   const [fleetName, setFleetName] = useState('Untitled Fleet');
   const [isEditingName, setIsEditingName] = useState(false);
   const [tournamentMode, setTournamentMode] = useState(true);
+  const maxFleetNameLength = 64;
 
   useEffect(() => {
     setMounted(true);
@@ -49,7 +50,8 @@ export default function FactionPage() {
   };
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFleetName(e.target.value);
+    const newName = e.target.value.slice(0, maxFleetNameLength);
+    setFleetName(newName);
   };
 
   const handleNameBlur = () => {
@@ -80,6 +82,7 @@ export default function FactionPage() {
                 onBlur={handleNameBlur}
                 className="text-xl font-bold"
                 autoFocus
+                maxLength={maxFleetNameLength}
               />
             ) : (
               <div className="flex items-center cursor-pointer" onClick={handleNameClick}>
