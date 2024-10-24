@@ -269,10 +269,9 @@ export default function UpgradeSelector({
   };
 
   const isUpgradeGreyedOut = (upgrade: Upgrade) => {
-    // Only check for unique class conflicts if the upgrade has a unique class
     if (upgrade["unique-class"] && upgrade["unique-class"].length > 0) {
       return upgrade["unique-class"].some(uc => 
-        uniqueClassNames.includes(uc) && 
+        uc !== "" && uniqueClassNames.includes(uc) && 
         !selectedUpgrades.some(su => su["unique-class"]?.includes(uc))
       );
     }
@@ -287,12 +286,11 @@ export default function UpgradeSelector({
     if (isUpgradeAvailable(upgrade) && !isUpgradeGreyedOut(upgrade)) {
       onSelectUpgrade(upgrade);
       // Only add unique class names if the upgrade has them and they're not already in the context
-      if (upgrade["unique-class"] && upgrade["unique-class"].length > 0) {
-        upgrade["unique-class"].forEach(uc => {
-          if (!uniqueClassNames.includes(uc)) {
-            addUniqueClassName(uc);
-          }
-        });
+      if (upgrade.unique) {
+        addUniqueClassName(upgrade.name);
+      }
+      if (upgrade["unique-class"]) {
+        upgrade["unique-class"].filter(uc => uc !== "").forEach(uc => addUniqueClassName(uc));
       }
     }
   };
