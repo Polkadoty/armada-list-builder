@@ -79,7 +79,8 @@ export default function UpgradeSelector({
               ...upgrade,
               id: prefix ? `${prefix}-${upgrade.id || upgrade.name}` : (upgrade.id || upgrade.name),
               faction: Array.isArray(upgrade.faction) ? upgrade.faction : [upgrade.faction],
-              "unique-class": upgrade["unique-class"] || [],
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              "unique-class": (upgrade["unique-class"] || []).filter((uc: any) => uc.trim() !== ''),
               restrictions: {
                 ...upgrade.restrictions,
                 traits: upgrade.restrictions?.traits || [],
@@ -198,8 +199,16 @@ export default function UpgradeSelector({
   }, [allUpgrades, activeSorts, searchQuery]);
 
   const isUpgradeAvailable = (upgrade: Upgrade) => {
+    // First check if the upgrade is faction-compatible
+    const factionMatch = Array.isArray(upgrade.faction) 
+      ? upgrade.faction.includes(faction) || upgrade.faction.includes('')
+      : upgrade.faction === faction || upgrade.faction === '';
+
+    if (!factionMatch) {
+      return false;
+    }
+
     if (upgradeType === 'title' || upgradeType === 'super-weapon') {
-      // For titles and super-weapons, we'll only check for uniqueness and current ship conflicts
       if (upgrade.unique && selectedUpgrades.some(su => su.name === upgrade.name)) {
         return false;
       }
@@ -207,7 +216,6 @@ export default function UpgradeSelector({
         return false;
       }
     } else {
-      // For other upgrade types, keep the existing checks
       if (upgrade.bound_shiptype && upgrade.bound_shiptype !== shipType) {
         return false;
       }
@@ -271,16 +279,23 @@ export default function UpgradeSelector({
   const isUpgradeGreyedOut = (upgrade: Upgrade) => {
     // Only check for unique class conflicts if the upgrade has a unique class
     if (upgrade["unique-class"] && upgrade["unique-class"].length > 0) {
-      return upgrade["unique-class"].some(uc => 
-        uniqueClassNames.includes(uc) && 
-        !selectedUpgrades.some(su => su["unique-class"]?.includes(uc))
-      );
+      const hasConflict = upgrade["unique-class"].some(uc => {
+        const isInUse = uniqueClassNames.includes(uc);
+        const isUsedByThisUpgrade = selectedUpgrades.some(su => 
+          su.name === upgrade.name && su["unique-class"]?.includes(uc)
+        );
+        return isInUse && !isUsedByThisUpgrade;
+      });
+      
+      return hasConflict;
     }
+
     // Don't grey out title upgrades without bound_shiptype
     if (upgradeType === 'title' && !upgrade.bound_shiptype) {
       return false;
     }
-    return false; // Non-unique upgrades or upgrades without a unique class are not greyed out
+
+    return false;
   };
 
   const handleUpgradeClick = (upgrade: Upgrade) => {
