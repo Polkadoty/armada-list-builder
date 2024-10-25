@@ -88,5 +88,11 @@ export const flushCacheAndReload = async (setIsLoading: (isLoading: boolean) => 
   localStorage.removeItem('oldLegacyShips');
   localStorage.removeItem('oldLegacySquadrons');
   localStorage.removeItem('oldLegacyUpgrades');
+
+  // Reset sorting state cookies
+  Cookies.remove('sortState_ships');
+  Cookies.remove('sortState_squadrons');
+  Cookies.remove('sortState_upgrades');
+
   await checkAndFetchData(setIsLoading, setLoadingProgress, setLoadingMessage);
 };

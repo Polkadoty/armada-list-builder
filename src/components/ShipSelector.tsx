@@ -6,6 +6,7 @@ import { useUniqueClassContext } from '../contexts/UniqueClassContext';
 import { SortToggleGroup, SortOption } from '@/components/SortToggleGroup';
 import { Search, X } from 'lucide-react';
 import { Input } from "@/components/ui/input";
+import Cookies from 'js-cookie';
 
 export interface ShipModel {
   id: string;
@@ -45,11 +46,17 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
   const [allShips, setAllShips] = useState<ShipModel[]>([]);
   const [displayedShips, setDisplayedShips] = useState<ShipModel[]>([]);
   const { uniqueClassNames, addUniqueClassName } = useUniqueClassContext();
-  const [activeSorts, setActiveSorts] = useState<Record<SortOption, 'asc' | 'desc' | null>>({
-    alphabetical: null,
-    points: null,
-    unique: null,
-    custom: null
+  const [activeSorts, setActiveSorts] = useState<Record<SortOption, 'asc' | 'desc' | null>>(() => {
+    const savedSorts = Cookies.get(`sortState_ships`);
+    if (savedSorts) {
+      return JSON.parse(savedSorts);
+    }
+    return {
+      alphabetical: null,
+      points: null,
+      unique: null,
+      custom: null
+    };
   });
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -201,10 +208,14 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
   }, [allShips, activeSorts, searchQuery]);
 
   const handleSortToggle = (option: SortOption) => {
-    setActiveSorts(prevSorts => ({
-      ...prevSorts,
-      [option]: prevSorts[option] === null ? 'asc' : prevSorts[option] === 'asc' ? 'desc' : null
-    }));
+    setActiveSorts(prevSorts => {
+      const newSorts = {
+        ...prevSorts,
+        [option]: prevSorts[option] === null ? 'asc' : prevSorts[option] === 'asc' ? 'desc' : null
+      };
+      Cookies.set(`sortState_ships`, JSON.stringify(newSorts), { expires: 365 });
+      return newSorts;
+    });
   };
 
   const isShipAvailable = (ship: ShipModel) => {
@@ -250,7 +261,7 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
                 <X size={20} />
               </Button>
             )}
-            <SortToggleGroup activeSorts={activeSorts} onToggle={handleSortToggle} />
+            <SortToggleGroup activeSorts={activeSorts} onToggle={handleSortToggle} selectorType="ships" />
             <Button variant="ghost" onClick={onClose} className="p-1 ml-2">
               <X size={20} />
             </Button>
