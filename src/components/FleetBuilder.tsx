@@ -71,6 +71,7 @@ export interface Squadron {
 
 export interface Upgrade {
   id: string;
+  alias?: string;
   name: string;
   points: number;
   ability: string;
@@ -440,7 +441,34 @@ export default function FleetBuilder({ faction, fleetName, setFleetName, tournam
     setSelectedShips(prevShips => 
       prevShips.map(ship => {
         if (ship.id === shipId) {
-          const newUpgrade = { ...upgrade, slotIndex: ship.assignedUpgrades.length };
+          const exhaustType = upgrade.exhaust?.type || '';
+          const isModification = upgrade.modification ? 'modification' : '';
+          
+          // Determine the source based on the alias
+          let source: 'regular' | 'legacy' | 'legends' | 'oldLegacy' = 'regular';
+          if (upgrade.alias) {
+            if (upgrade.alias.includes('OldLegacy')) {
+              source = 'oldLegacy';
+            } else if (upgrade.alias.includes('Legacy')) {
+              source = 'legacy';
+            } else if (upgrade.alias.includes('Legends')) {
+              source = 'legends';
+            }
+          }
+
+          const newUpgrade: Upgrade = { 
+            ...upgrade,
+            slotIndex: ship.assignedUpgrades.length,
+            source: source,
+            searchableText: JSON.stringify({
+              ...upgrade,
+              name: upgrade.name,
+              ability: upgrade.ability,
+              exhaustType: exhaustType,
+              isModification: isModification
+            }).toLowerCase()
+          };
+  
           const updatedAssignedUpgrades = [...ship.assignedUpgrades];
           const existingUpgradeIndex = updatedAssignedUpgrades.findIndex(u => u.type === upgrade.type);
   
@@ -951,7 +979,8 @@ export default function FleetBuilder({ faction, fleetName, setFleetName, tournam
     return text;
   };
 
-  const capitalizeFirstLetter = (string: string) => {
+  const capitalizeFirstLetter = (string: string | undefined) => {
+    if (!string) return '';
     return string.charAt(0).toUpperCase() + string.slice(1);
   };
 
@@ -994,6 +1023,15 @@ export default function FleetBuilder({ faction, fleetName, setFleetName, tournam
     let squadronPoints = 0;
     const shipsToAdd: Ship[] = [];
     const upgradesToAdd: {shipId: string, upgrade: Upgrade}[] = [];
+    let currentShipId: string | null = null;
+
+    let shipIdCounter = 0;
+
+    const generateUniqueShipId = (): string => {
+      shipIdCounter++;
+      const randomPart = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+      return `ship_${shipIdCounter}_${randomPart}`;
+    };
 
     const addShipToFleet = (shipName: string, shipPoints: string): Ship | null => {
       const shipKey = getAliasKey(aliases, `${shipName} (${shipPoints})`);
@@ -1001,13 +1039,22 @@ export default function FleetBuilder({ faction, fleetName, setFleetName, tournam
         const shipModel = fetchShip(shipKey);
         if (shipModel) {
           console.log(`Adding ship to fleet:`, shipModel);
+          let source: 'regular' | 'legacy' | 'legends' | 'oldLegacy' = 'regular';
+          if (shipName.includes('[OldLegacy]')) {
+            source = 'oldLegacy';
+          } else if (shipName.includes('[Legacy]')) {
+            source = 'legacy';
+          } else if (shipName.includes('[Legends]')) {
+            source = 'legends';
+          }
           const newShip: Ship = {
             ...shipModel,
-            id: Date.now().toString(),
+            id: generateUniqueShipId(),
             assignedUpgrades: [],
             availableUpgrades: shipModel.upgrades || [],
             size: shipModel.size || 'unknown',
-            searchableText: shipModel.searchableText || ''
+            searchableText: shipModel.searchableText || '',
+            source: source
           };
           return newShip;
         } else {
@@ -1020,8 +1067,6 @@ export default function FleetBuilder({ faction, fleetName, setFleetName, tournam
       }
       return null;
     };
-
-    let currentShipId: string | null = null;
 
     for (const line of lines) {
       console.log("Processing line:", line);
@@ -1103,7 +1148,15 @@ export default function FleetBuilder({ faction, fleetName, setFleetName, tournam
           if (upgradeKey) {
             const upgrade = fetchUpgrade(upgradeKey);
             if (upgrade) {
-              upgradesToAdd.push({ shipId: currentShipId, upgrade });
+              let source: 'regular' | 'legacy' | 'legends' | 'oldLegacy' = 'regular';
+              if (upgradeName.includes('[OldLegacy]')) {
+                source = 'oldLegacy';
+              } else if (upgradeName.includes('[Legacy]')) {
+                source = 'legacy';
+              } else if (upgradeName.includes('[Legends]')) {
+                source = 'legends';
+              }
+              upgradesToAdd.push({ shipId: currentShipId, upgrade: { ...upgrade, source } });
             } else {
               console.log(`Upgrade not found: ${upgradeName}`);
               skippedItems.push(upgradeName);
@@ -1127,7 +1180,15 @@ export default function FleetBuilder({ faction, fleetName, setFleetName, tournam
             console.log(`Fetched squadron for key: ${squadronKey}`, squadron);
             if (squadron) {
               console.log(`Selecting squadron:`, squadron);
-              const selectedSquadron = { ...squadron, id: Date.now().toString(), count: 1 };
+              let source: 'regular' | 'legacy' | 'legends' | 'oldLegacy' = 'regular';
+              if (squadronName.includes('[OldLegacy]')) {
+                source = 'oldLegacy';
+              } else if (squadronName.includes('[Legacy]')) {
+                source = 'legacy';
+              } else if (squadronName.includes('[Legends]')) {
+                source = 'legends';
+              }
+              const selectedSquadron = { ...squadron, id: Date.now().toString(), count: 1, source };
               handleSelectSquadron(selectedSquadron);
               
               // Increment the count for the remaining squadrons
@@ -1199,21 +1260,28 @@ export default function FleetBuilder({ faction, fleetName, setFleetName, tournam
     console.log(`Objective not found for key: ${key}`);
     return null;
   };
-
-  const fetchShip = (key: string): ShipModel | null => {
-    console.log(`Fetching ship for key: ${key}`);
+  const fetchFromLocalStorage = (key: string, type: 'ships' | 'upgrades' | 'squadrons'): any | null => {
+    console.log(`Fetching ${type} for key: ${key}`);
     for (let i = 0; i < localStorage.length; i++) {
       const storageKey = localStorage.key(i);
-      if (storageKey && storageKey.includes('ships')) {
+      if (storageKey && storageKey.toLowerCase().includes(type)) {
         try {
           const data = JSON.parse(localStorage.getItem(storageKey) || '{}');
-          console.log(`Parsed ships data for ${storageKey}:`, data);
-          const shipsData = data.ships || data;
-          for (const chassisKey in shipsData) {
-            const models = shipsData[chassisKey].models;
-            if (models && models[key]) {
-              console.log(`Found ship in storage:`, models[key]);
-              return models[key] as ShipModel;
+          console.log(`Parsed ${type} data for ${storageKey}:`, data);
+          const itemsData = data[type] || data;
+          
+          if (type === 'ships') {
+            for (const chassisKey in itemsData) {
+              const models = itemsData[chassisKey].models;
+              if (models && models[key]) {
+                console.log(`Found ${type} in storage:`, models[key]);
+                return models[key];
+              }
+            }
+          } else {
+            if (itemsData[key]) {
+              console.log(`Found ${type} in storage:`, itemsData[key]);
+              return itemsData[key];
             }
           }
         } catch (error) {
@@ -1221,55 +1289,22 @@ export default function FleetBuilder({ faction, fleetName, setFleetName, tournam
         }
       }
     }
-    console.log(`Ship not found for key: ${key}`);
+    console.log(`${type.charAt(0).toUpperCase() + type.slice(1)} not found for key: ${key}`);
     return null;
   };
-
+  
+  const fetchShip = (key: string): ShipModel | null => {
+    return fetchFromLocalStorage(key, 'ships') as ShipModel | null;
+  };
+  
   const fetchUpgrade = (key: string): Upgrade | null => {
-    console.log(`Fetching upgrade for key: ${key}`);
-    for (let i = 0; i < localStorage.length; i++) {
-      const storageKey = localStorage.key(i);
-      if (storageKey && storageKey.includes('upgrades')) {
-        try {
-          const data = JSON.parse(localStorage.getItem(storageKey) || '{}');
-          console.log(`Parsed upgrades data for ${storageKey}:`, data);
-          const upgradesData = data.upgrades || data;
-          if (upgradesData[key]) {
-            console.log(`Found upgrade in storage:`, upgradesData[key]);
-            return upgradesData[key] as Upgrade;
-          }
-        } catch (error) {
-          console.error(`Error parsing JSON for key ${storageKey}:`, error);
-        }
-      }
-    }
-    console.log(`Upgrade not found for key: ${key}`);
-    return null;
+    return fetchFromLocalStorage(key, 'upgrades') as Upgrade | null;
   };
-
+  
   const fetchSquadron = (key: string): Squadron | null => {
-    console.log(`Fetching squadron for key: ${key}`);
-    for (let i = 0; i < localStorage.length; i++) {
-      const storageKey = localStorage.key(i);
-      // console.log(`Checking localStorage key: ${storageKey}`);
-      if (storageKey && storageKey.includes('squadrons')) {
-        try {
-          const data = JSON.parse(localStorage.getItem(storageKey) || '{}');
-          console.log(`Parsed squadrons data for ${storageKey}:`, data);
-          const squadronsData = data.squadrons || data; // Check both nested and non-nested structures
-          if (squadronsData[key]) {
-            console.log(`Found squadron in storage:`, squadronsData[key]);
-            return squadronsData[key] as Squadron;
-          }
-        } catch (error) {
-          console.error(`Error parsing JSON for key ${storageKey}:`, error);
-        }
-      }
-    }
-    console.log(`Squadron not found for key: ${key}`);
-    return null;
+    return fetchFromLocalStorage(key, 'squadrons') as Squadron | null;
   };
-
+  
   const handlePrint = () => {
     const printContent = generatePrintContent();
     const printWindow = window.open('', '_blank');

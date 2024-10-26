@@ -84,6 +84,7 @@ export default function UpgradeSelector({
             return {
               ...upgrade,
               id: prefix ? `${prefix}-${upgrade.id || upgrade.name}` : (upgrade.id || upgrade.name),
+              alias: upgrade.alias || '',
               faction: Array.isArray(upgrade.faction) ? upgrade.faction : [upgrade.faction],
               "unique-class": upgrade["unique-class"] || [],
               restrictions: {
