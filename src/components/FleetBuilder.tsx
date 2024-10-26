@@ -22,6 +22,7 @@ import { useUniqueClassContext } from '../contexts/UniqueClassContext';
 import { SwipeableObjective } from './SwipeableObjective';
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { TextImportWindow } from './TextImportWindow';
+import { NotificationWindow } from './NotificationWindow';
 
 
 export interface Ship {
@@ -168,6 +169,8 @@ export default function FleetBuilder({ faction, fleetName, setFleetName, tournam
   const [squadronToSwap, setSquadronToSwap] = useState<string | null>(null);
   const [tournamentViolations, setTournamentViolations] = useState<string[]>([]);
   const [showImportWindow, setShowImportWindow] = useState(false);
+  const [showNotification, setShowNotification] = useState(false);
+  const [notificationMessage, setNotificationMessage] = useState('');
 
   const checkTournamentViolations = useCallback(() => {
     const violations: string[] = [];
@@ -955,6 +958,22 @@ export default function FleetBuilder({ faction, fleetName, setFleetName, tournam
   const handleImportFleet = (importText: string) => {
     console.log("Starting fleet import...");
     const lines = importText.split('\n');
+    
+    // Check faction first
+    const factionLine = lines.find(line => line.startsWith('Faction:'));
+    if (factionLine) {
+      const importedFaction = factionLine.split(':')[1].trim().toLowerCase();
+      if (importedFaction !== faction.toLowerCase()) {
+        setNotificationMessage(`The imported fleet faction (${importedFaction}) does not match the current faction (${faction}). Import cancelled.`);
+        setShowNotification(true);
+        return;
+      }
+    } else {
+      setNotificationMessage("No faction found in the imported fleet. Import cancelled.");
+      setShowNotification(true);
+      return;
+    }
+  
     const skippedItems: string[] = [];
     
     // Reset the fleet
@@ -1679,6 +1698,13 @@ export default function FleetBuilder({ faction, fleetName, setFleetName, tournam
         />
       )}
 
+      {showNotification && (
+        <NotificationWindow
+          message={notificationMessage}
+          onClose={() => setShowNotification(false)}
+        />
+      )}
+      
     </div>
   );
 }
