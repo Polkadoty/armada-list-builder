@@ -131,7 +131,7 @@ const SectionHeader = ({ title, points, previousPoints, onClearAll, onAdd }: { t
   </Card>
 );
 
-export default function FleetBuilder({ faction, fleetName, tournamentMode }: { faction: string; factionColor: string; fleetName: string; setFleetName: React.Dispatch<React.SetStateAction<string>>; tournamentMode: boolean; setTournamentMode: React.Dispatch<React.SetStateAction<boolean>> }) {
+export default function FleetBuilder({ faction, factionColor, fleetName, setFleetName, tournamentMode, setTournamentMode }: { faction: string; factionColor: string; fleetName: string; setFleetName: React.Dispatch<React.SetStateAction<string>>; tournamentMode: boolean; setTournamentMode: React.Dispatch<React.SetStateAction<boolean>> }) {
   const [points, setPoints] = useState(0);
   const [previousPoints, setPreviousPoints] = useState(0);
   const [showShipSelector, setShowShipSelector] = useState(false);
@@ -430,6 +430,96 @@ export default function FleetBuilder({ faction, fleetName, tournamentMode }: { f
     }
 
     setShowUpgradeSelector(false);
+  };
+
+
+  const handleAddUpgrade = (shipId: string, upgrade: Upgrade) => {
+    setSelectedShips(prevShips => 
+      prevShips.map(ship => {
+        if (ship.id === shipId) {
+          const newUpgrade = { ...upgrade, slotIndex: ship.assignedUpgrades.length };
+          const updatedAssignedUpgrades = [...ship.assignedUpgrades];
+          const existingUpgradeIndex = updatedAssignedUpgrades.findIndex(u => u.type === upgrade.type);
+  
+          let pointDifference = upgrade.points;
+  
+          if (existingUpgradeIndex !== -1) {
+            const oldUpgrade = updatedAssignedUpgrades[existingUpgradeIndex];
+            pointDifference = upgrade.points - oldUpgrade.points;
+            updatedAssignedUpgrades[existingUpgradeIndex] = newUpgrade;
+          } else {
+            updatedAssignedUpgrades.push(newUpgrade);
+          }
+  
+          // Add new unique class
+          if (upgrade.unique) {
+            addUniqueClassName(upgrade.name);
+          }
+          if (upgrade["unique-class"]) {
+            upgrade["unique-class"].forEach(uc => addUniqueClassName(uc));
+          }
+  
+          // Handle disabled upgrades
+          const newDisabledUpgrades = [...(disabledUpgrades[ship.id] || [])];
+          if (upgrade.restrictions?.disable_upgrades) {
+            newDisabledUpgrades.push(...upgrade.restrictions.disable_upgrades);
+          }
+          if (upgrade.type === 'title') {
+            newDisabledUpgrades.push('title');
+          }
+          setDisabledUpgrades({...disabledUpgrades, [ship.id]: newDisabledUpgrades});
+  
+          // Handle enabled upgrades
+          const newEnabledUpgrades = [...(enabledUpgrades[ship.id] || [])];
+          if (upgrade.restrictions?.enable_upgrades) {
+            upgrade.restrictions.enable_upgrades
+              .filter(enabledUpgrade => enabledUpgrade.trim() !== '')
+              .forEach(enabledUpgrade => {
+                if (!newEnabledUpgrades.includes(enabledUpgrade)) {
+                  ship.availableUpgrades.push(enabledUpgrade);
+                }
+              });
+          }
+          setEnabledUpgrades({...enabledUpgrades, [ship.id]: newEnabledUpgrades});
+  
+          // Update filledSlots
+          setFilledSlots(prevFilledSlots => {
+            const shipSlots = prevFilledSlots[ship.id] || {};
+            const upgradeTypeSlots = shipSlots[upgrade.type] || [];
+            const updatedSlots = [...upgradeTypeSlots, ship.assignedUpgrades.length];
+            return {
+              ...prevFilledSlots,
+              [ship.id]: {
+                ...shipSlots,
+                [upgrade.type]: updatedSlots
+              }
+            };
+          });
+  
+          // Sort the upgrades based on the order of availableUpgrades
+          const sortedUpgrades = [...updatedAssignedUpgrades].sort((a, b) => {
+            const aIndex = ship.availableUpgrades.indexOf(a.type);
+            const bIndex = ship.availableUpgrades.indexOf(b.type);
+            return aIndex - bIndex;
+          });
+  
+          if (upgrade.type === 'commander') {
+            setHasCommander(true);
+          }
+  
+          return {
+            ...ship,
+            assignedUpgrades: sortedUpgrades,
+            availableUpgrades: ship.availableUpgrades
+          };
+        }
+        return ship;
+      })
+    );
+  
+    // Update points separately to avoid double-counting
+    setPoints(prevPoints => prevPoints + upgrade.points);
+    setTotalShipPoints(prevTotal => prevTotal + upgrade.points);
   };
 
   
@@ -865,7 +955,7 @@ export default function FleetBuilder({ faction, fleetName, tournamentMode }: { f
     return string.charAt(0).toUpperCase() + string.slice(1);
   };
 
-  const handleImportFleet = async (importText: string) => {
+  const handleImportFleet = (importText: string) => {
     console.log("Starting fleet import...");
     const lines = importText.split('\n');
     const skippedItems: string[] = [];
@@ -883,18 +973,54 @@ export default function FleetBuilder({ faction, fleetName, tournamentMode }: { f
     const aliases = JSON.parse(localStorage.getItem('aliases') || '{}');
     console.log("Aliases loaded:", aliases);
 
-    let currentShip: Ship | null = null;
     let processingSquadrons = false;
     let totalPoints = 0;
     let squadronPoints = 0;
+    let shipsToAdd: Ship[] = [];
+    let upgradesToAdd: {shipId: string, upgrade: Upgrade}[] = [];
+
+    const addShipToFleet = (shipName: string, shipPoints: string): Ship | null => {
+      const shipKey = getAliasKey(aliases, `${shipName} (${shipPoints})`);
+      if (shipKey) {
+        const shipModel = fetchShip(shipKey);
+        if (shipModel) {
+          console.log(`Adding ship to fleet:`, shipModel);
+          const newShip: Ship = {
+            ...shipModel,
+            id: Date.now().toString(),
+            assignedUpgrades: [],
+            availableUpgrades: shipModel.upgrades || [],
+            size: shipModel.size || 'unknown',
+            searchableText: shipModel.searchableText || ''
+          };
+          return newShip;
+        } else {
+          console.log(`Ship model not found: ${shipName}`);
+          skippedItems.push(shipName);
+        }
+      } else {
+        console.log(`Ship key not found in aliases: ${shipName}`);
+        skippedItems.push(shipName);
+      }
+      return null;
+    };
+
+    let currentShipId: string | null = null;
 
     for (const line of lines) {
       console.log("Processing line:", line);
-      if (line.trim() === '') continue; // Skip empty lines
+      if (line.trim() === '') continue;
       
-      if (line.startsWith('Name:') || line.startsWith('Faction:') || line.startsWith('Commander:')) {
+      if (line.startsWith('Faction:') || line.startsWith('Commander:')) {
         console.log("Skipping line:", line);
         continue;
+      } else if (line.startsWith('Name:')) {
+        const fleetNameMatch = line.match(/Name:\s*(.+)/);
+        if (fleetNameMatch) {
+          const newFleetName = fleetNameMatch[1].trim();
+          setFleetName(newFleetName);
+        }
+        continue; 
       } else if (line.startsWith('Total Points:')) {
         const pointsMatch = line.match(/Total Points:\s*(\d+)/);
         if (pointsMatch) {
@@ -918,7 +1044,7 @@ export default function FleetBuilder({ faction, fleetName, tournamentMode }: { f
         const objectiveKey = getAliasKey(aliases, name.trim());
         console.log(`Found objective: ${type} - ${name.trim()}`);
         if (objectiveKey) {
-          const objective = await fetchObjective(objectiveKey);
+          const objective = fetchObjective(objectiveKey);
           console.log(`Fetched objective for key: ${objectiveKey}`, objective);
           if (objective) {
             console.log(`Setting selected objective: ${type}`);
@@ -946,40 +1072,22 @@ export default function FleetBuilder({ faction, fleetName, tournamentMode }: { f
         const shipMatch = line.match(/^(.+?)\s*\((\d+)\)/);
         if (shipMatch) {
           const [, shipName, shipPoints] = shipMatch;
-          const shipKey = getAliasKey(aliases, `${shipName} (${shipPoints})`);
-          console.log(`Found ship: ${shipName} (${shipPoints})`);
-          if (shipKey) {
-            const shipModel = await fetchShip(shipKey);
-            console.log(`Fetched ship for key: ${shipKey}`, shipModel);
-            if (shipModel) {
-              console.log(`Adding ship to fleet:`, shipModel);
-              handleSelectShip(shipModel);
-              currentShip = selectedShips[selectedShips.length - 1]; // Get the last added ship
-            } else {
-              console.log(`Ship model not found: ${shipName}`);
-              skippedItems.push(shipName);
-            }
-          } else {
-            console.log(`Ship key not found in aliases: ${shipName}`);
-            skippedItems.push(shipName);
+          const newShip = addShipToFleet(shipName, shipPoints);
+          if (newShip) {
+            shipsToAdd.push(newShip);
+            currentShipId = newShip.id;
           }
         }
-      } else if (!processingSquadrons && line.startsWith('•') && currentShip) {
+      } else if (!processingSquadrons && line.startsWith('•') && currentShipId) {
         // Handle upgrades
         const upgradeMatch = line.match(/^•\s*(.+?)\s*\((\d+)\)/);
         if (upgradeMatch) {
           const [, upgradeName, upgradePoints] = upgradeMatch;
           const upgradeKey = getAliasKey(aliases, `${upgradeName} (${upgradePoints})`);
-          console.log(`Found upgrade: ${upgradeName} (${upgradePoints}) for ship: ${currentShip.name}`);
           if (upgradeKey) {
-            const upgrade = await fetchUpgrade(upgradeKey);
-            console.log(`Fetched upgrade for key: ${upgradeKey}`, upgrade);
+            const upgrade = fetchUpgrade(upgradeKey);
             if (upgrade) {
-              console.log(`Adding upgrade to ship:`, upgrade);
-              setCurrentShipId(currentShip.id);
-              setCurrentUpgradeType(upgrade.type);
-              setCurrentUpgradeIndex(currentShip.assignedUpgrades.length);
-              handleSelectUpgrade(upgrade);
+              upgradesToAdd.push({ shipId: currentShipId, upgrade });
             } else {
               console.log(`Upgrade not found: ${upgradeName}`);
               skippedItems.push(upgradeName);
@@ -999,7 +1107,7 @@ export default function FleetBuilder({ faction, fleetName, tournamentMode }: { f
           const squadronKey = getAliasKey(aliases, `${squadronName} (${pointsPerSquadron})`);
           console.log(`Found squadron: ${squadronName} (${pointsPerSquadron}) (count: ${count})`);
           if (squadronKey) {
-            const squadron = await fetchSquadron(squadronKey);
+            const squadron = fetchSquadron(squadronKey);
             console.log(`Fetched squadron for key: ${squadronKey}`, squadron);
             if (squadron) {
               console.log(`Selecting squadron:`, squadron);
@@ -1023,10 +1131,23 @@ export default function FleetBuilder({ faction, fleetName, tournamentMode }: { f
       }
     }
 
+    // Add all ships to the fleet
+    setSelectedShips(shipsToAdd);
+
+    // Add upgrades to ships
+    upgradesToAdd.forEach(({ shipId, upgrade }) => {
+      handleAddUpgrade(shipId, upgrade);
+    });
+
     // Set the final points
     setPoints(totalPoints);
     setTotalSquadronPoints(squadronPoints);
-    console.log(`Final total points: ${totalPoints}, Squadron points: ${squadronPoints}`);
+    setTotalShipPoints(prevShipPoints => {
+      const shipPointsWithoutUpgrades = shipsToAdd.reduce((total, ship) => total + ship.points, 0);
+      const upgradePoints = upgradesToAdd.reduce((total, { upgrade }) => total + upgrade.points, 0);
+      return shipPointsWithoutUpgrades + upgradePoints;
+    });
+    console.log(`Final total points: ${totalPoints}, Squadron points: ${squadronPoints}, Ship points: ${totalPoints - squadronPoints}`);
 
     if (skippedItems.length > 0) {
       alert(`The following items were skipped because they couldn't be found: ${skippedItems.join(', ')}`);
@@ -1042,7 +1163,7 @@ export default function FleetBuilder({ faction, fleetName, tournamentMode }: { f
     return result;
   };
 
-  const fetchObjective = async (key: string): Promise<ObjectiveModel | null> => {
+  const fetchObjective = (key: string): ObjectiveModel | null => {
     console.log(`Fetching objective for key: ${key}`);
     for (let i = 0; i < localStorage.length; i++) {
       const storageKey = localStorage.key(i);
@@ -1065,18 +1186,16 @@ export default function FleetBuilder({ faction, fleetName, tournamentMode }: { f
     return null;
   };
 
-  const fetchShip = async (key: string): Promise<ShipModel | null> => {
+  const fetchShip = (key: string): ShipModel | null => {
     console.log(`Fetching ship for key: ${key}`);
     for (let i = 0; i < localStorage.length; i++) {
       const storageKey = localStorage.key(i);
-      // console.log(`Checking localStorage key: ${storageKey}`);
       if (storageKey && storageKey.includes('ships')) {
         try {
           const data = JSON.parse(localStorage.getItem(storageKey) || '{}');
           console.log(`Parsed ships data for ${storageKey}:`, data);
           const shipsData = data.ships || data;
           for (const chassisKey in shipsData) {
-            // console.log(`Checking chassis: ${chassisKey}`);
             const models = shipsData[chassisKey].models;
             if (models && models[key]) {
               console.log(`Found ship in storage:`, models[key]);
@@ -1092,11 +1211,10 @@ export default function FleetBuilder({ faction, fleetName, tournamentMode }: { f
     return null;
   };
 
-  const fetchUpgrade = async (key: string): Promise<Upgrade | null> => {
+  const fetchUpgrade = (key: string): Upgrade | null => {
     console.log(`Fetching upgrade for key: ${key}`);
     for (let i = 0; i < localStorage.length; i++) {
       const storageKey = localStorage.key(i);
-      // console.log(`Checking localStorage key: ${storageKey}`);
       if (storageKey && storageKey.includes('upgrades')) {
         try {
           const data = JSON.parse(localStorage.getItem(storageKey) || '{}');
@@ -1115,7 +1233,7 @@ export default function FleetBuilder({ faction, fleetName, tournamentMode }: { f
     return null;
   };
 
-  const fetchSquadron = async (key: string): Promise<Squadron | null> => {
+  const fetchSquadron = (key: string): Squadron | null => {
     console.log(`Fetching squadron for key: ${key}`);
     for (let i = 0; i < localStorage.length; i++) {
       const storageKey = localStorage.key(i);
