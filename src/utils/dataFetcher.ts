@@ -29,6 +29,7 @@ const fetchAndSaveData = async (setLoadingProgress: (progress: number) => void, 
     { name: 'squadrons', url: '/api/squadrons/' },
     { name: 'objectives', url: '/api/objectives/' },
     { name: 'upgrades', url: '/api/upgrades/' },
+    { name: 'aliases', url: '/aliases/' },
   ];
 
   if (enableLegacy) {
@@ -88,5 +89,12 @@ export const flushCacheAndReload = async (setIsLoading: (isLoading: boolean) => 
   localStorage.removeItem('oldLegacyShips');
   localStorage.removeItem('oldLegacySquadrons');
   localStorage.removeItem('oldLegacyUpgrades');
+  localStorage.removeItem('aliases');
+
+  // Reset sorting state cookies
+  Cookies.remove('sortState_ships');
+  Cookies.remove('sortState_squadrons');
+  Cookies.remove('sortState_upgrades');
+
   await checkAndFetchData(setIsLoading, setLoadingProgress, setLoadingMessage);
 };

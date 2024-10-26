@@ -7,6 +7,7 @@ import { useUniqueClassContext } from '../contexts/UniqueClassContext';
 import { SortToggleGroup, SortOption } from '@/components/SortToggleGroup';
 import { Search, X } from 'lucide-react';
 import { Input } from "@/components/ui/input";
+import Cookies from 'js-cookie';
 
 interface SquadronSelectorProps {
   faction: string;
@@ -26,11 +27,17 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
   const [showPopup, setShowPopup] = useState(false);
   const [popupMessage, setPopupMessage] = useState('');
   const { uniqueClassNames, addUniqueClassName } = useUniqueClassContext();
-  const [activeSorts, setActiveSorts] = useState<Record<SortOption, 'asc' | 'desc' | null>>({
-    alphabetical: null,
-    points: null,
-    unique: null,
-    custom: null
+  const [activeSorts, setActiveSorts] = useState<Record<SortOption, 'asc' | 'desc' | null>>(() => {
+    const savedSorts = Cookies.get(`sortState_squadrons`);
+    if (savedSorts) {
+      return JSON.parse(savedSorts);
+    }
+    return {
+      alphabetical: null,
+      points: null,
+      unique: null,
+      custom: null
+    };
   });
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -76,7 +83,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
                 count: 1,
                 ace: squadron.ace || false,
                 'unique-class': squadron['unique-class'] || [],
-                type: (prefix || 'regular') as 'regular' | 'legacy' | 'legends',
+                source: (prefix || 'regular') as 'regular' | 'legacy' | 'legends' | 'oldLegacy',
                 searchableText: JSON.stringify({
                   ...squadron,
                   abilities: abilityText,
@@ -148,9 +155,9 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
 
       const sortFunctions: Record<SortOption, (a: Squadron, b: Squadron) => number> = {
         custom: (a, b) => {
-          if (a.type === b.type) return 0;
-          if (a.type !== 'regular' && b.type === 'regular') return -1;
-          if (a.type === 'regular' && b.type !== 'regular') return 1;
+          if (a.source === b.source) return 0;
+          if (a.source !== 'regular' && b.source === 'regular') return -1;
+          if (a.source === 'regular' && b.source !== 'regular') return 1;
           return 0;
         },
         unique: (a, b) => (a.unique === b.unique ? 0 : a.unique ? -1 : 1),
@@ -198,10 +205,14 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
   }, [allSquadrons, activeSorts, searchQuery]);
 
   const handleSortToggle = (option: SortOption) => {
-    setActiveSorts(prevSorts => ({
-      ...prevSorts,
-      [option]: prevSorts[option] === null ? 'asc' : prevSorts[option] === 'asc' ? 'desc' : null
-    }));
+    setActiveSorts(prevSorts => {
+      const newSorts = {
+        ...prevSorts,
+        [option]: prevSorts[option] === null ? 'asc' : prevSorts[option] === 'asc' ? 'desc' : null
+      };
+      Cookies.set(`sortState_squadrons`, JSON.stringify(newSorts), { expires: 365 });
+      return newSorts;
+    });
   };
 
   const validateImageUrl = (url: string): string => {
@@ -280,7 +291,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
                 <X size={20} />
               </Button>
             )}
-            <SortToggleGroup activeSorts={activeSorts} onToggle={handleSortToggle} />
+            <SortToggleGroup activeSorts={activeSorts} onToggle={handleSortToggle} selectorType="squadrons" />
             <Button variant="ghost" onClick={onClose} className="p-1 ml-2">
               <X size={20} />
             </Button>

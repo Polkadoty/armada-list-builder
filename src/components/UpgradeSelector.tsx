@@ -7,6 +7,7 @@ import { useUniqueClassContext } from '../contexts/UniqueClassContext';
 import { SortToggleGroup, SortOption } from '@/components/SortToggleGroup';
 import { Search, X } from 'lucide-react';
 import { Input } from "@/components/ui/input";
+import Cookies from 'js-cookie';
 
 interface UpgradeSelectorProps {
   id: string;
@@ -23,7 +24,6 @@ interface UpgradeSelectorProps {
   disqualifiedUpgrades: string[];
   disabledUpgrades: string[];
   ship: Ship
-  
 }
 
 interface UpgradeData {
@@ -49,11 +49,17 @@ export default function UpgradeSelector({
   const { uniqueClassNames, addUniqueClassName } = useUniqueClassContext();
   const [allUpgrades, setAllUpgrades] = useState<Upgrade[]>([]);
   const [displayedUpgrades, setDisplayedUpgrades] = useState<Upgrade[]>([]);
-  const [activeSorts, setActiveSorts] = useState<Record<SortOption, 'asc' | 'desc' | null>>({
-    alphabetical: null,
-    points: null,
-    unique: null,
-    custom: null
+  const [activeSorts, setActiveSorts] = useState<Record<SortOption, 'asc' | 'desc' | null>>(() => {
+    const savedSorts = Cookies.get(`sortState_upgrades`);
+    if (savedSorts) {
+      return JSON.parse(savedSorts);
+    }
+    return {
+      alphabetical: null,
+      points: null,
+      unique: null,
+      custom: null
+    };
   });
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -89,6 +95,7 @@ export default function UpgradeSelector({
                 enable_upgrades: upgrade.restrictions?.enable_upgrades || [],
                 disqualify_if: upgrade.restrictions?.disqualify_if || {}
               },
+              source: prefix || 'regular',
               searchableText: JSON.stringify({
                 ...upgrade,
                 name: upgrade.name,
@@ -249,6 +256,13 @@ export default function UpgradeSelector({
         }
       }
 
+      if (upgrade.restrictions.flagship === true) {
+        const hasCommander = currentShipUpgrades.some(u => u.type === 'commander');
+        if (!hasCommander) {
+          return false;
+        }
+      }
+
       if (upgrade.restrictions.disqualify_if) {
         const disqualify = upgrade.restrictions.disqualify_if;
         if (shipSize && disqualify.size && disqualify.size.includes(shipSize)) {
@@ -303,10 +317,14 @@ export default function UpgradeSelector({
   };
 
   const handleSortToggle = (option: SortOption) => {
-    setActiveSorts(prevSorts => ({
-      ...prevSorts,
-      [option]: prevSorts[option] === null ? 'asc' : prevSorts[option] === 'asc' ? 'desc' : null
-    }));
+    setActiveSorts(prevSorts => {
+      const newSorts = {
+        ...prevSorts,
+        [option]: prevSorts[option] === null ? 'asc' : prevSorts[option] === 'asc' ? 'desc' : null
+      };
+      Cookies.set(`sortState_upgrades`, JSON.stringify(newSorts), { expires: 365 });
+      return newSorts;
+    });
   };
 
   const getIconPath = (upgradeType: string) => `/icons/${upgradeType}.svg`;
@@ -349,7 +367,7 @@ export default function UpgradeSelector({
                 <X size={20} />
               </Button>
             )}
-            <SortToggleGroup activeSorts={activeSorts} onToggle={handleSortToggle} />
+            <SortToggleGroup activeSorts={activeSorts} onToggle={handleSortToggle} selectorType="upgrades" />
             <Button variant="ghost" onClick={onClose} className="p-1 ml-2">
               <X size={20} />
             </Button>

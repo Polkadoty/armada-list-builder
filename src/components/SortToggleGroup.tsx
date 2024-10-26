@@ -1,16 +1,39 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { ArrowUpAZ, ArrowDownAZ, ArrowUpNarrowWide, ArrowDownWideNarrow, FlaskRound, MoveUp, MoveDown } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import Cookies from 'js-cookie';
 
 export type SortOption = 'alphabetical' | 'points' | 'unique' | 'custom';
+export type SelectorType = 'ships' | 'squadrons' | 'upgrades';
 
 interface SortToggleGroupProps {
   activeSorts: Record<SortOption, 'asc' | 'desc' | null>;
   onToggle: (option: SortOption) => void;
+  selectorType: SelectorType;
 }
 
-export function SortToggleGroup({ activeSorts, onToggle }: SortToggleGroupProps) {
+export function SortToggleGroup({ activeSorts, onToggle, selectorType }: SortToggleGroupProps) {
+  // Load saved sort state from cookie when component mounts
+  useEffect(() => {
+    const savedSorts = Cookies.get(`sortState_${selectorType}`);
+    if (savedSorts) {
+      const parsedSorts = JSON.parse(savedSorts);
+      Object.entries(parsedSorts).forEach(([option, value]) => {
+        if (value !== activeSorts[option as SortOption]) {
+          onToggle(option as SortOption);
+        }
+      });
+    }
+  }, []);
+
+  // Save sort state to cookie whenever it changes
+  useEffect(() => {
+    Cookies.set(`sortState_${selectorType}`, JSON.stringify(activeSorts), { expires: 365 });
+  }, [activeSorts, selectorType]);
+
+  // ... rest of the component
+
   const getIcon = (option: SortOption) => {
     const iconStyle = "flex items-center justify-center w-full h-full relative";
     const arrowStyle = "absolute right-[-8px]";
