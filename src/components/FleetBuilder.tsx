@@ -91,6 +91,8 @@ export interface Upgrade {
       size?: string[];
       has_upgrade_type?: string[];
     };
+    flagship: boolean;
+    
   };
   exhaust?: {
     type: 'blank' | 'recur' | 'nonrecur';
@@ -321,7 +323,6 @@ export default function FleetBuilder({ faction, fleetName, tournamentMode }: { f
                 }
               });
             }
-
             if (oldUpgrade.unique) {
               removeUniqueClassName(oldUpgrade.name);
             }
@@ -397,7 +398,19 @@ export default function FleetBuilder({ faction, fleetName, tournamentMode }: { f
             }));
           }
 
-          return { ...ship, assignedUpgrades: updatedAssignedUpgrades, availableUpgrades: ship.availableUpgrades };
+          // Sort the upgrades based on the order of availableUpgrades
+          const sortedUpgrades = [...updatedAssignedUpgrades].sort((a, b) => {
+            const aIndex = ship.availableUpgrades.indexOf(a.type);
+            const bIndex = ship.availableUpgrades.indexOf(b.type);
+            return aIndex - bIndex;
+          });
+
+          return {
+            ...ship,
+            points: ship.points,
+            assignedUpgrades: sortedUpgrades,
+            availableUpgrades: ship.availableUpgrades
+          };
         }
         return ship;
       })

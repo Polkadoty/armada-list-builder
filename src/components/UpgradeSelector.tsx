@@ -256,6 +256,13 @@ export default function UpgradeSelector({
         }
       }
 
+      if (upgrade.restrictions.flagship === true) {
+        const hasCommander = currentShipUpgrades.some(u => u.type === 'commander');
+        if (!hasCommander) {
+          return false;
+        }
+      }
+
       if (upgrade.restrictions.disqualify_if) {
         const disqualify = upgrade.restrictions.disqualify_if;
         if (shipSize && disqualify.size && disqualify.size.includes(shipSize)) {
