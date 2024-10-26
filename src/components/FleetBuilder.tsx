@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Printer, ArrowLeft, FileText, Trash2, TriangleAlert } from 'lucide-react';
+import { Printer, ArrowLeft, FileText, Trash2, TriangleAlert, Import } from 'lucide-react';
 import { ShipSelector } from './ShipSelector';
 import { SelectedShip } from './SelectedShip';
 import { ShipFilter } from './ShipFilter';
@@ -21,6 +21,7 @@ import { factionLogos } from '../pages/[faction]';
 import { useUniqueClassContext } from '../contexts/UniqueClassContext';
 import { SwipeableObjective } from './SwipeableObjective';
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { TextImportWindow } from './TextImportWindow';
 
 
 export interface Ship {
@@ -130,7 +131,7 @@ const SectionHeader = ({ title, points, previousPoints, onClearAll, onAdd }: { t
   </Card>
 );
 
-export default function FleetBuilder({ faction, fleetName, tournamentMode }: { faction: string; factionColor: string; fleetName: string; setFleetName: React.Dispatch<React.SetStateAction<string>>; tournamentMode: boolean; setTournamentMode: React.Dispatch<React.SetStateAction<boolean>> }) {
+export default function FleetBuilder({ faction, factionColor, fleetName, setFleetName, tournamentMode, setTournamentMode }: { faction: string; factionColor: string; fleetName: string; setFleetName: React.Dispatch<React.SetStateAction<string>>; tournamentMode: boolean; setTournamentMode: React.Dispatch<React.SetStateAction<boolean>> }) {
   const [points, setPoints] = useState(0);
   const [previousPoints, setPreviousPoints] = useState(0);
   const [showShipSelector, setShowShipSelector] = useState(false);
@@ -166,6 +167,7 @@ export default function FleetBuilder({ faction, fleetName, tournamentMode }: { f
   const [hasCommander, setHasCommander] = useState(false);
   const [squadronToSwap, setSquadronToSwap] = useState<string | null>(null);
   const [tournamentViolations, setTournamentViolations] = useState<string[]>([]);
+  const [showImportWindow, setShowImportWindow] = useState(false);
 
   const checkTournamentViolations = useCallback(() => {
     const violations: string[] = [];
@@ -428,6 +430,96 @@ export default function FleetBuilder({ faction, fleetName, tournamentMode }: { f
     }
 
     setShowUpgradeSelector(false);
+  };
+
+
+  const handleAddUpgrade = (shipId: string, upgrade: Upgrade) => {
+    setSelectedShips(prevShips => 
+      prevShips.map(ship => {
+        if (ship.id === shipId) {
+          const newUpgrade = { ...upgrade, slotIndex: ship.assignedUpgrades.length };
+          const updatedAssignedUpgrades = [...ship.assignedUpgrades];
+          const existingUpgradeIndex = updatedAssignedUpgrades.findIndex(u => u.type === upgrade.type);
+  
+          let pointDifference = upgrade.points;
+  
+          if (existingUpgradeIndex !== -1) {
+            const oldUpgrade = updatedAssignedUpgrades[existingUpgradeIndex];
+            pointDifference = upgrade.points - oldUpgrade.points;
+            updatedAssignedUpgrades[existingUpgradeIndex] = newUpgrade;
+          } else {
+            updatedAssignedUpgrades.push(newUpgrade);
+          }
+  
+          // Add new unique class
+          if (upgrade.unique) {
+            addUniqueClassName(upgrade.name);
+          }
+          if (upgrade["unique-class"]) {
+            upgrade["unique-class"].forEach(uc => addUniqueClassName(uc));
+          }
+  
+          // Handle disabled upgrades
+          const newDisabledUpgrades = [...(disabledUpgrades[ship.id] || [])];
+          if (upgrade.restrictions?.disable_upgrades) {
+            newDisabledUpgrades.push(...upgrade.restrictions.disable_upgrades);
+          }
+          if (upgrade.type === 'title') {
+            newDisabledUpgrades.push('title');
+          }
+          setDisabledUpgrades({...disabledUpgrades, [ship.id]: newDisabledUpgrades});
+  
+          // Handle enabled upgrades
+          const newEnabledUpgrades = [...(enabledUpgrades[ship.id] || [])];
+          if (upgrade.restrictions?.enable_upgrades) {
+            upgrade.restrictions.enable_upgrades
+              .filter(enabledUpgrade => enabledUpgrade.trim() !== '')
+              .forEach(enabledUpgrade => {
+                if (!newEnabledUpgrades.includes(enabledUpgrade)) {
+                  ship.availableUpgrades.push(enabledUpgrade);
+                }
+              });
+          }
+          setEnabledUpgrades({...enabledUpgrades, [ship.id]: newEnabledUpgrades});
+  
+          // Update filledSlots
+          setFilledSlots(prevFilledSlots => {
+            const shipSlots = prevFilledSlots[ship.id] || {};
+            const upgradeTypeSlots = shipSlots[upgrade.type] || [];
+            const updatedSlots = [...upgradeTypeSlots, ship.assignedUpgrades.length];
+            return {
+              ...prevFilledSlots,
+              [ship.id]: {
+                ...shipSlots,
+                [upgrade.type]: updatedSlots
+              }
+            };
+          });
+  
+          // Sort the upgrades based on the order of availableUpgrades
+          const sortedUpgrades = [...updatedAssignedUpgrades].sort((a, b) => {
+            const aIndex = ship.availableUpgrades.indexOf(a.type);
+            const bIndex = ship.availableUpgrades.indexOf(b.type);
+            return aIndex - bIndex;
+          });
+  
+          if (upgrade.type === 'commander') {
+            setHasCommander(true);
+          }
+  
+          return {
+            ...ship,
+            assignedUpgrades: sortedUpgrades,
+            availableUpgrades: ship.availableUpgrades
+          };
+        }
+        return ship;
+      })
+    );
+  
+    // Update points separately to avoid double-counting
+    setPoints(prevPoints => prevPoints + upgrade.points);
+    setTotalShipPoints(prevTotal => prevTotal + upgrade.points);
   };
 
   
@@ -863,7 +955,306 @@ export default function FleetBuilder({ faction, fleetName, tournamentMode }: { f
     return string.charAt(0).toUpperCase() + string.slice(1);
   };
 
-  // Generate import text
+  const handleImportFleet = (importText: string) => {
+    console.log("Starting fleet import...");
+    const lines = importText.split('\n');
+    const skippedItems: string[] = [];
+    
+    // Reset the fleet
+    console.log("Resetting fleet...");
+    clearAllShips();
+    clearAllSquadrons();
+    setSelectedAssaultObjective(null);
+    setSelectedDefenseObjective(null);
+    setSelectedNavigationObjective(null);
+
+    // Load aliases
+    console.log("Loading aliases from localStorage...");
+    const aliases = JSON.parse(localStorage.getItem('aliases') || '{}');
+    console.log("Aliases loaded:", aliases);
+
+    let processingSquadrons = false;
+    let totalPoints = 0;
+    let squadronPoints = 0;
+    let shipsToAdd: Ship[] = [];
+    let upgradesToAdd: {shipId: string, upgrade: Upgrade}[] = [];
+
+    const addShipToFleet = (shipName: string, shipPoints: string): Ship | null => {
+      const shipKey = getAliasKey(aliases, `${shipName} (${shipPoints})`);
+      if (shipKey) {
+        const shipModel = fetchShip(shipKey);
+        if (shipModel) {
+          console.log(`Adding ship to fleet:`, shipModel);
+          const newShip: Ship = {
+            ...shipModel,
+            id: Date.now().toString(),
+            assignedUpgrades: [],
+            availableUpgrades: shipModel.upgrades || [],
+            size: shipModel.size || 'unknown',
+            searchableText: shipModel.searchableText || ''
+          };
+          return newShip;
+        } else {
+          console.log(`Ship model not found: ${shipName}`);
+          skippedItems.push(shipName);
+        }
+      } else {
+        console.log(`Ship key not found in aliases: ${shipName}`);
+        skippedItems.push(shipName);
+      }
+      return null;
+    };
+
+    let currentShipId: string | null = null;
+
+    for (const line of lines) {
+      console.log("Processing line:", line);
+      if (line.trim() === '') continue;
+      
+      if (line.startsWith('Faction:') || line.startsWith('Commander:')) {
+        console.log("Skipping line:", line);
+        continue;
+      } else if (line.startsWith('Name:')) {
+        const fleetNameMatch = line.match(/Name:\s*(.+)/);
+        if (fleetNameMatch) {
+          const newFleetName = fleetNameMatch[1].trim();
+          setFleetName(newFleetName);
+        }
+        continue; 
+      } else if (line.startsWith('Total Points:')) {
+        const pointsMatch = line.match(/Total Points:\s*(\d+)/);
+        if (pointsMatch) {
+          totalPoints = parseInt(pointsMatch[1]);
+          console.log(`Setting total points to: ${totalPoints}`);
+        }
+        continue;
+      } else if (line.startsWith('Squadrons:')) {
+        processingSquadrons = true;
+        continue;
+      } else if (line.startsWith('= ') && processingSquadrons) {
+        const squadronPointsMatch = line.match(/=\s*(\d+)\s*Points/);
+        if (squadronPointsMatch) {
+          squadronPoints = parseInt(squadronPointsMatch[1]);
+          console.log(`Setting squadron points to: ${squadronPoints}`);
+        }
+        continue;
+      } else if (line.startsWith('Assault:') || line.startsWith('Defense:') || line.startsWith('Navigation:')) {
+        // Handle objectives
+        const [type, name] = line.split(':');
+        const objectiveKey = getAliasKey(aliases, name.trim());
+        console.log(`Found objective: ${type} - ${name.trim()}`);
+        if (objectiveKey) {
+          const objective = fetchObjective(objectiveKey);
+          console.log(`Fetched objective for key: ${objectiveKey}`, objective);
+          if (objective) {
+            console.log(`Setting selected objective: ${type}`);
+            switch (type.toLowerCase()) {
+              case 'assault':
+                setSelectedAssaultObjective(objective);
+                break;
+              case 'defense':
+                setSelectedDefenseObjective(objective);
+                break;
+              case 'navigation':
+                setSelectedNavigationObjective(objective);
+                break;
+            }
+          } else {
+            console.log(`Objective not found: ${name.trim()}`);
+            skippedItems.push(name.trim());
+          }
+        } else {
+          console.log(`Objective key not found in aliases: ${name.trim()}`);
+          skippedItems.push(name.trim());
+        }
+      } else if (!processingSquadrons && !line.startsWith('•')) {
+        // Handle ships
+        const shipMatch = line.match(/^(.+?)\s*\((\d+)\)/);
+        if (shipMatch) {
+          const [, shipName, shipPoints] = shipMatch;
+          const newShip = addShipToFleet(shipName, shipPoints);
+          if (newShip) {
+            shipsToAdd.push(newShip);
+            currentShipId = newShip.id;
+          }
+        }
+      } else if (!processingSquadrons && line.startsWith('•') && currentShipId) {
+        // Handle upgrades
+        const upgradeMatch = line.match(/^•\s*(.+?)\s*\((\d+)\)/);
+        if (upgradeMatch) {
+          const [, upgradeName, upgradePoints] = upgradeMatch;
+          const upgradeKey = getAliasKey(aliases, `${upgradeName} (${upgradePoints})`);
+          if (upgradeKey) {
+            const upgrade = fetchUpgrade(upgradeKey);
+            if (upgrade) {
+              upgradesToAdd.push({ shipId: currentShipId, upgrade });
+            } else {
+              console.log(`Upgrade not found: ${upgradeName}`);
+              skippedItems.push(upgradeName);
+            }
+          } else {
+            console.log(`Upgrade key not found in aliases: ${upgradeName}`);
+            skippedItems.push(upgradeName);
+          }
+        }
+      } else if (processingSquadrons && !line.startsWith('=')) {
+        // Handle squadrons
+        const squadronMatch = line.match(/^•?\s*(?:(\d+)\s*x\s*)?(.+?)\s*\((\d+)\)/);
+        if (squadronMatch) {
+          const [, countStr, squadronName, totalPoints] = squadronMatch;
+          const count = countStr ? parseInt(countStr) : 1;
+          const pointsPerSquadron = Math.round(parseInt(totalPoints) / count);
+          const squadronKey = getAliasKey(aliases, `${squadronName} (${pointsPerSquadron})`);
+          console.log(`Found squadron: ${squadronName} (${pointsPerSquadron}) (count: ${count})`);
+          if (squadronKey) {
+            const squadron = fetchSquadron(squadronKey);
+            console.log(`Fetched squadron for key: ${squadronKey}`, squadron);
+            if (squadron) {
+              console.log(`Selecting squadron:`, squadron);
+              const selectedSquadron = { ...squadron, id: Date.now().toString(), count: 1 };
+              handleSelectSquadron(selectedSquadron);
+              
+              // Increment the count for the remaining squadrons
+              for (let i = 1; i < count; i++) {
+                console.log(`Incrementing squadron count:`, selectedSquadron);
+                handleIncrementSquadron(selectedSquadron.id);
+              }
+            } else {
+              console.log(`Squadron not found: ${squadronName}`);
+              skippedItems.push(squadronName);
+            }
+          } else {
+            console.log(`Squadron key not found in aliases: ${squadronName} (${pointsPerSquadron})`);
+            skippedItems.push(`${squadronName} (${pointsPerSquadron})`);
+          }
+        }
+      }
+    }
+
+    // Add all ships to the fleet
+    setSelectedShips(shipsToAdd);
+
+    // Add upgrades to ships
+    upgradesToAdd.forEach(({ shipId, upgrade }) => {
+      handleAddUpgrade(shipId, upgrade);
+    });
+
+    // Set the final points
+    setPoints(totalPoints);
+    setTotalSquadronPoints(squadronPoints);
+    setTotalShipPoints(prevShipPoints => {
+      const shipPointsWithoutUpgrades = shipsToAdd.reduce((total, ship) => total + ship.points, 0);
+      const upgradePoints = upgradesToAdd.reduce((total, { upgrade }) => total + upgrade.points, 0);
+      return shipPointsWithoutUpgrades + upgradePoints;
+    });
+    console.log(`Final total points: ${totalPoints}, Squadron points: ${squadronPoints}, Ship points: ${totalPoints - squadronPoints}`);
+
+    if (skippedItems.length > 0) {
+      alert(`The following items were skipped because they couldn't be found: ${skippedItems.join(', ')}`);
+      console.log("Skipped items:", skippedItems);
+    }
+  };
+
+  const getAliasKey = (aliases: Record<string, string>, name: string): string | undefined => {
+    console.log(`Getting alias key for: ${name}`);
+    console.log(`Aliases:`, aliases);
+    const result = aliases[name];
+    console.log(`Alias key result:`, result);
+    return result;
+  };
+
+  const fetchObjective = (key: string): ObjectiveModel | null => {
+    console.log(`Fetching objective for key: ${key}`);
+    for (let i = 0; i < localStorage.length; i++) {
+      const storageKey = localStorage.key(i);
+      // console.log(`Checking localStorage key: ${storageKey}`);
+      if (storageKey && storageKey.includes('objectives')) {
+        try {
+          const data = JSON.parse(localStorage.getItem(storageKey) || '{}');
+          console.log(`Parsed objectives data for ${storageKey}:`, data);
+          const objectivesData = data.objectives || data;
+          if (objectivesData[key]) {
+            console.log(`Found objective in storage:`, objectivesData[key]);
+            return objectivesData[key] as ObjectiveModel;
+          }
+        } catch (error) {
+          console.error(`Error parsing JSON for key ${storageKey}:`, error);
+        }
+      }
+    }
+    console.log(`Objective not found for key: ${key}`);
+    return null;
+  };
+
+  const fetchShip = (key: string): ShipModel | null => {
+    console.log(`Fetching ship for key: ${key}`);
+    for (let i = 0; i < localStorage.length; i++) {
+      const storageKey = localStorage.key(i);
+      if (storageKey && storageKey.includes('ships')) {
+        try {
+          const data = JSON.parse(localStorage.getItem(storageKey) || '{}');
+          console.log(`Parsed ships data for ${storageKey}:`, data);
+          const shipsData = data.ships || data;
+          for (const chassisKey in shipsData) {
+            const models = shipsData[chassisKey].models;
+            if (models && models[key]) {
+              console.log(`Found ship in storage:`, models[key]);
+              return models[key] as ShipModel;
+            }
+          }
+        } catch (error) {
+          console.error(`Error parsing JSON for key ${storageKey}:`, error);
+        }
+      }
+    }
+    console.log(`Ship not found for key: ${key}`);
+    return null;
+  };
+
+  const fetchUpgrade = (key: string): Upgrade | null => {
+    console.log(`Fetching upgrade for key: ${key}`);
+    for (let i = 0; i < localStorage.length; i++) {
+      const storageKey = localStorage.key(i);
+      if (storageKey && storageKey.includes('upgrades')) {
+        try {
+          const data = JSON.parse(localStorage.getItem(storageKey) || '{}');
+          console.log(`Parsed upgrades data for ${storageKey}:`, data);
+          const upgradesData = data.upgrades || data;
+          if (upgradesData[key]) {
+            console.log(`Found upgrade in storage:`, upgradesData[key]);
+            return upgradesData[key] as Upgrade;
+          }
+        } catch (error) {
+          console.error(`Error parsing JSON for key ${storageKey}:`, error);
+        }
+      }
+    }
+    console.log(`Upgrade not found for key: ${key}`);
+    return null;
+  };
+
+  const fetchSquadron = (key: string): Squadron | null => {
+    console.log(`Fetching squadron for key: ${key}`);
+    for (let i = 0; i < localStorage.length; i++) {
+      const storageKey = localStorage.key(i);
+      // console.log(`Checking localStorage key: ${storageKey}`);
+      if (storageKey && storageKey.includes('squadrons')) {
+        try {
+          const data = JSON.parse(localStorage.getItem(storageKey) || '{}');
+          console.log(`Parsed squadrons data for ${storageKey}:`, data);
+          const squadronsData = data.squadrons || data; // Check both nested and non-nested structures
+          if (squadronsData[key]) {
+            console.log(`Found squadron in storage:`, squadronsData[key]);
+            return squadronsData[key] as Squadron;
+          }
+        } catch (error) {
+          console.error(`Error parsing JSON for key ${storageKey}:`, error);
+        }
+      }
+    }
+    console.log(`Squadron not found for key: ${key}`);
+    return null;
+  };
 
   const handlePrint = () => {
     const printContent = generatePrintContent();
@@ -1068,6 +1459,8 @@ export default function FleetBuilder({ faction, fleetName, tournamentMode }: { f
     };
   }, []);
 
+
+
   return (
     <div className="max-w-4xl mx-auto">
       <div className="flex flex-col sm:flex-row items-start sm:items-center mb-4">
@@ -1077,6 +1470,9 @@ export default function FleetBuilder({ faction, fleetName, tournamentMode }: { f
           </Button>
           <Button variant="outline" onClick={() => setShowExportPopup(true)}>
             <FileText className="h-4 w-4" />
+          </Button>
+          <Button variant="outline" onClick={() => setShowImportWindow(true)}>
+            <Import className="h-4 w-4" />
           </Button>
           {tournamentMode && tournamentViolations.length > 0 && (
             <Popover>
@@ -1281,7 +1677,12 @@ export default function FleetBuilder({ faction, fleetName, tournamentMode }: { f
         />
       )}
 
-
+      {showImportWindow && (
+        <TextImportWindow
+          onImport={handleImportFleet}
+          onClose={() => setShowImportWindow(false)}
+        />
+      )}
 
     </div>
   );
