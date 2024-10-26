@@ -24,7 +24,6 @@ interface UpgradeSelectorProps {
   disqualifiedUpgrades: string[];
   disabledUpgrades: string[];
   ship: Ship
-  
 }
 
 interface UpgradeData {
@@ -96,6 +95,7 @@ export default function UpgradeSelector({
                 enable_upgrades: upgrade.restrictions?.enable_upgrades || [],
                 disqualify_if: upgrade.restrictions?.disqualify_if || {}
               },
+              source: prefix || 'regular',
               searchableText: JSON.stringify({
                 ...upgrade,
                 name: upgrade.name,

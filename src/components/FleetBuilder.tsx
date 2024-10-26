@@ -35,7 +35,7 @@ export interface Ship {
   chassis: string;
   size: string;
   traits?: string[];
-  type: 'regular' | 'legacy' | 'legends';
+  source: 'regular' | 'legacy' | 'legends' | 'oldLegacy';
   searchableText: string;
 }
 
@@ -63,7 +63,7 @@ export interface Squadron {
   };
   ace: boolean;
   'unique-class': string[];
-  type: 'regular' | 'legacy' | 'legends';
+  source: 'regular' | 'legacy' | 'legends' | 'oldLegacy';
   searchableText: string;
 }
 
@@ -100,6 +100,7 @@ export interface Upgrade {
     ready_amount?: number;
   };
   searchableText: string;
+  source: 'regular' | 'legacy' | 'legends' | 'oldLegacy';
 }
 
 export interface Ship extends ShipModel {
@@ -218,6 +219,7 @@ export default function FleetBuilder({ faction, fleetName, tournamentMode }: { f
       chassis: ship.chassis,
       size: ship.size || '',
       traits: ship.traits || [],
+      source: ship.source || 'regular'
     };
     setSelectedShips([...selectedShips, newShip]);
     setPreviousPoints(points);
@@ -804,7 +806,7 @@ export default function FleetBuilder({ faction, fleetName, tournamentMode }: { f
     
     const commander = selectedShips.flatMap(ship => ship.assignedUpgrades).find(upgrade => upgrade.type === 'commander');
     if (commander) {
-      text += `Commander: ${commander.name}\n`;
+      text += `Commander: ${commander.name}${commander.type !== 'regular' ? ` [${capitalizeFirstLetter(commander.source)}]` : ''} (${commander.points})\n`;
     }
     
     text += `\n`;
@@ -821,9 +823,9 @@ export default function FleetBuilder({ faction, fleetName, tournamentMode }: { f
     if (selectedShips.length > 0) {
       text += `\n`;
       selectedShips.forEach(ship => {
-        text += `${ship.name} (${ship.points})\n`;
+        text += `${ship.name}${ship.source !== 'regular' ? ` [${capitalizeFirstLetter(ship.source)}]` : ''} (${ship.points})\n`;
         ship.assignedUpgrades.forEach(upgrade => {
-          text += `• ${upgrade.name} (${upgrade.points})\n`;
+          text += `• ${upgrade.name}${upgrade.source !== 'regular' ? ` [${capitalizeFirstLetter(upgrade.source)}]` : ''} (${upgrade.points})\n`;
         });
         text += `= ${ship.points + ship.assignedUpgrades.reduce((total, upgrade) => total + upgrade.points, 0)} Points\n\n`;
       });
@@ -833,8 +835,8 @@ export default function FleetBuilder({ faction, fleetName, tournamentMode }: { f
     if (selectedSquadrons.length > 0) {
       const groupedSquadrons = selectedSquadrons.reduce((acc, squadron) => {
         const key = squadron.unique || squadron['ace-name'] 
-          ? `${squadron['ace-name'] || squadron.name} (${squadron.points})`
-          : `${squadron.name} (${squadron.points * (squadron.count || 1)})`; // Multiply points by count for non-unique
+          ? `${squadron['ace-name'] || squadron.name}${squadron['ace-name'] ? ` - ${squadron.name}` : ''}${squadron.source !== 'regular' ? ` [${capitalizeFirstLetter(squadron.source)}]` : ''} (${squadron.points})`
+          : `${squadron.name}${squadron.source !== 'regular' ? ` [${capitalizeFirstLetter(squadron.source)}]` : ''} (${squadron.points * (squadron.count || 1)})`;
         if (!acc[key]) {
           acc[key] = { count: 0, isUnique: squadron.unique || !!squadron['ace-name'], points: squadron.points };
         }
@@ -846,7 +848,7 @@ export default function FleetBuilder({ faction, fleetName, tournamentMode }: { f
         if (isUnique) {
           text += `• ${squadronKey}\n`;
         } else {
-          text += `• ${count} x ${squadronKey}\n`; // Points are already included in the key
+          text += `• ${count} x ${squadronKey}\n`;
         }
       });
     }
@@ -855,6 +857,10 @@ export default function FleetBuilder({ faction, fleetName, tournamentMode }: { f
     text += `Total Points: ${points}`;
     
     return text;
+  };
+
+  const capitalizeFirstLetter = (string: string) => {
+    return string.charAt(0).toUpperCase() + string.slice(1);
   };
 
   // Generate import text

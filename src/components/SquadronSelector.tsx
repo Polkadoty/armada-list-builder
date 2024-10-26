@@ -83,7 +83,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
                 count: 1,
                 ace: squadron.ace || false,
                 'unique-class': squadron['unique-class'] || [],
-                type: (prefix || 'regular') as 'regular' | 'legacy' | 'legends',
+                source: (prefix || 'regular') as 'regular' | 'legacy' | 'legends' | 'oldLegacy',
                 searchableText: JSON.stringify({
                   ...squadron,
                   abilities: abilityText,
@@ -155,9 +155,9 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
 
       const sortFunctions: Record<SortOption, (a: Squadron, b: Squadron) => number> = {
         custom: (a, b) => {
-          if (a.type === b.type) return 0;
-          if (a.type !== 'regular' && b.type === 'regular') return -1;
-          if (a.type === 'regular' && b.type !== 'regular') return 1;
+          if (a.source === b.source) return 0;
+          if (a.source !== 'regular' && b.source === 'regular') return -1;
+          if (a.source === 'regular' && b.source !== 'regular') return 1;
           return 0;
         },
         unique: (a, b) => (a.unique === b.unique ? 0 : a.unique ? -1 : 1),

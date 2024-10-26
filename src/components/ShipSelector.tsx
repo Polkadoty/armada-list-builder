@@ -19,7 +19,7 @@ export interface ShipModel {
   chassis: string;
   size?: string;
   traits?: string[];
-  type: 'regular' | 'legacy' | 'legends';
+  source: 'regular' | 'legacy' | 'legends' | 'oldLegacy';
   speed: Record<string, number[]>;
   tokens: Record<string, number>;
   armament: Record<string, number[]>;
@@ -89,7 +89,7 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
                 chassis: chassisName,
                 size: chassisData.size,
                 traits: model.traits || [],
-                type: (prefix || 'regular') as 'regular' | 'legacy' | 'legends',
+                source: (prefix || 'regular') as 'regular' | 'legacy' | 'legends' | 'oldLegacy',
                 searchableText: JSON.stringify({
                   ...model,
                   name: model.name.toLowerCase(),
@@ -165,9 +165,9 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
 
       const sortFunctions: Record<SortOption, (a: ShipModel, b: ShipModel) => number> = {
         custom: (a, b) => {
-          if (a.type === b.type) return 0;
-          if (a.type !== 'regular' && b.type === 'regular') return -1;
-          if (a.type === 'regular' && b.type !== 'regular') return 1;
+          if (a.source === b.source) return 0;
+          if (a.source !== 'regular' && b.source === 'regular') return -1;
+          if (a.source === 'regular' && b.source !== 'regular') return 1;
           return 0;
         },
         unique: (a, b) => (a.unique === b.unique ? 0 : a.unique ? -1 : 1),
