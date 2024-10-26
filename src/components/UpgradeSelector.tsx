@@ -9,7 +9,7 @@ import { Search, X } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import Cookies from 'js-cookie';
 
-interface UpgradeSelectorProps {
+export interface UpgradeSelectorProps {
   id: string;
   upgradeType: string;
   faction: string;
