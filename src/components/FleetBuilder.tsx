@@ -443,7 +443,6 @@ export default function FleetBuilder({ faction, fleetName, setFleetName, tournam
   
   
           if (existingUpgradeIndex !== -1) {
-            const oldUpgrade = updatedAssignedUpgrades[existingUpgradeIndex];
             updatedAssignedUpgrades[existingUpgradeIndex] = newUpgrade;
           } else {
             updatedAssignedUpgrades.push(newUpgrade);
@@ -1140,11 +1139,9 @@ export default function FleetBuilder({ faction, fleetName, setFleetName, tournam
     // Set the final points
     setPoints(totalPoints);
     setTotalSquadronPoints(squadronPoints);
-    setTotalShipPoints(prevShipPoints => {
-      const shipPointsWithoutUpgrades = shipsToAdd.reduce((total, ship) => total + ship.points, 0);
-      const upgradePoints = upgradesToAdd.reduce((total, { upgrade }) => total + upgrade.points, 0);
-      return shipPointsWithoutUpgrades + upgradePoints;
-    });
+    const totalShipPoints = shipsToAdd.reduce((total, ship) => total + ship.points, 0) + 
+                            upgradesToAdd.reduce((total, { upgrade }) => total + upgrade.points, 0);
+    setTotalShipPoints(totalShipPoints);
     console.log(`Final total points: ${totalPoints}, Squadron points: ${squadronPoints}, Ship points: ${totalPoints - squadronPoints}`);
 
     if (skippedItems.length > 0) {

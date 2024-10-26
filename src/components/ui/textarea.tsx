@@ -2,10 +2,8 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
-// This interface is intentionally left empty for future extensibility
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface TextareaProps
-  extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {}
+export interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {}
 
 const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
   ({ className, ...props }, ref) => {
