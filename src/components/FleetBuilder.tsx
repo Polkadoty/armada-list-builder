@@ -131,7 +131,7 @@ const SectionHeader = ({ title, points, previousPoints, onClearAll, onAdd }: { t
   </Card>
 );
 
-export default function FleetBuilder({ faction, factionColor, fleetName, setFleetName, tournamentMode, setTournamentMode }: { faction: string; factionColor: string; fleetName: string; setFleetName: React.Dispatch<React.SetStateAction<string>>; tournamentMode: boolean; setTournamentMode: React.Dispatch<React.SetStateAction<boolean>> }) {
+export default function FleetBuilder({ faction, fleetName, setFleetName, tournamentMode }: { faction: string; factionColor: string; fleetName: string; setFleetName: React.Dispatch<React.SetStateAction<string>>; tournamentMode: boolean; setTournamentMode: React.Dispatch<React.SetStateAction<boolean>> }) {
   const [points, setPoints] = useState(0);
   const [previousPoints, setPreviousPoints] = useState(0);
   const [showShipSelector, setShowShipSelector] = useState(false);
@@ -441,11 +441,9 @@ export default function FleetBuilder({ faction, factionColor, fleetName, setFlee
           const updatedAssignedUpgrades = [...ship.assignedUpgrades];
           const existingUpgradeIndex = updatedAssignedUpgrades.findIndex(u => u.type === upgrade.type);
   
-          let pointDifference = upgrade.points;
   
           if (existingUpgradeIndex !== -1) {
             const oldUpgrade = updatedAssignedUpgrades[existingUpgradeIndex];
-            pointDifference = upgrade.points - oldUpgrade.points;
             updatedAssignedUpgrades[existingUpgradeIndex] = newUpgrade;
           } else {
             updatedAssignedUpgrades.push(newUpgrade);
@@ -976,8 +974,8 @@ export default function FleetBuilder({ faction, factionColor, fleetName, setFlee
     let processingSquadrons = false;
     let totalPoints = 0;
     let squadronPoints = 0;
-    let shipsToAdd: Ship[] = [];
-    let upgradesToAdd: {shipId: string, upgrade: Upgrade}[] = [];
+    const shipsToAdd: Ship[] = [];
+    const upgradesToAdd: {shipId: string, upgrade: Upgrade}[] = [];
 
     const addShipToFleet = (shipName: string, shipPoints: string): Ship | null => {
       const shipKey = getAliasKey(aliases, `${shipName} (${shipPoints})`);

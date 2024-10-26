@@ -30,9 +30,7 @@ export function SortToggleGroup({ activeSorts, onToggle, selectorType }: SortTog
   // Save sort state to cookie whenever it changes
   useEffect(() => {
     Cookies.set(`sortState_${selectorType}`, JSON.stringify(activeSorts), { expires: 365 });
-  }, [activeSorts, selectorType]);
-
-  // ... rest of the component
+  }, [activeSorts, onToggle, selectorType]);
 
   const getIcon = (option: SortOption) => {
     const iconStyle = "flex items-center justify-center w-full h-full relative";
