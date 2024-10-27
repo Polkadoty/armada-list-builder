@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { UniqueClassProvider } from '../contexts/UniqueClassContext';
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { UserProvider } from '@auth0/nextjs-auth0/client';
 import '../styles/globals.css';
 
 function MyApp({ Component, pageProps }: AppProps) {
@@ -12,7 +13,9 @@ function MyApp({ Component, pageProps }: AppProps) {
       <ThemeProvider attribute="class">
         <TooltipProvider>
           <UniqueClassProvider>
-            <Component {...pageProps} />
+            <UserProvider>
+              <Component {...pageProps} />
+            </UserProvider>
             <Analytics />
             <SpeedInsights />
           </UniqueClassProvider>
