@@ -22,13 +22,6 @@ export function NotificationWindow({
       <DialogContent>
         <DialogHeader className="flex flex-row items-center justify-between">
           <DialogTitle>{title}</DialogTitle>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6 p-0"
-            onClick={onClose}
-          >
-          </Button>
         </DialogHeader>
         <div className="py-4">{message}</div>
         {showConfirmButton && onConfirm && (

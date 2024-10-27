@@ -587,7 +587,7 @@ export default function FleetBuilder({
 
           const newUpgrade: Upgrade = {
             ...upgrade,
-            slotIndex: upgrade.slotIndex || ship.assignedUpgrades.length,
+            slotIndex: upgrade.slotIndex !== undefined ? upgrade.slotIndex : ship.assignedUpgrades.length,
             source: source,
             searchableText: JSON.stringify({
               ...upgrade,
@@ -1463,18 +1463,8 @@ export default function FleetBuilder({
               );
               const usedSlots = existingUpgradesOfType.map(u => u.upgrade.slotIndex || 0);
               let nextSlot = 0;
-
-              // For officer upgrades specifically, we need to check if there's already an officer
-              // in the first slot and if so, use the second slot
-              if (upgrade.type === "officer") {
-                if (usedSlots.includes(0)) {
-                  nextSlot = 1;
-                }
-              } else {
-                // For other upgrade types, find the next available slot
-                while (usedSlots.includes(nextSlot)) {
-                  nextSlot++;
-                }
+              while (usedSlots.includes(nextSlot)) {
+                nextSlot++;
               }
       
               upgradesToAdd.push({
