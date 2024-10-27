@@ -42,6 +42,7 @@ import {
 } from "@/components/ui/tooltip";
 import { FleetRecoveryPopup } from "./FleetRecoveryPopup";
 import { SaveFleetButton } from './SaveFleetButton';
+import { useRouter } from 'next/router';
 
 export interface Ship {
   id: string;
@@ -241,6 +242,7 @@ export default function FleetBuilder({
   const [squadronIdCounter, setSquadronIdCounter] = useState(0);
   const [showRecoveryPopup, setShowRecoveryPopup] = useState(false);
   const [hasLoadedPage, setHasLoadedPage] = useState(false);
+  const router = useRouter();
 
   const checkTournamentViolations = useCallback(() => {
     const violations: string[] = [];
@@ -1259,10 +1261,16 @@ export default function FleetBuilder({
       const normalizedCurrentFaction = faction.toLowerCase();
 
       if (normalizedImportedFaction !== normalizedCurrentFaction) {
-        setNotificationMessage(
-          `The imported fleet faction (${importedFaction}) does not match the current faction (${faction}). Import cancelled.`
-        );
-        setShowNotification(true);
+        // Instead of showing error, save fleet and redirect
+        localStorage.setItem(`savedFleet_${normalizedImportedFaction}`, importText);
+        document.cookie = "retrieved-from-list=true; path=/";
+        
+        // Navigate home first, then to the correct faction
+        router.push('/').then(() => {
+          setTimeout(() => {
+            router.push(`/${normalizedImportedFaction}`);
+          }, 250);
+        });
         return;
       }
     } else {
