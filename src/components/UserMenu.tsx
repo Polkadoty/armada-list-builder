@@ -31,13 +31,12 @@ export function UserMenu() {
           </AvatarFallback>
         </Avatar>
       </PopoverTrigger>
-      <PopoverContent className="w-80">
+      <PopoverContent className="w-80 bg-white dark:bg-gray-800 backdrop-blur-md bg-opacity-90 dark:bg-opacity-90 border border-gray-200 dark:border-gray-700 shadow-lg">
         {user ? (
           <div className="space-y-4">
             <div>
-              <h4 className="font-medium">User Information</h4>
-              <p>Name: {user.name}</p>
-              <p>Email: {user.email}</p>
+              <h4 className="font-medium text-gray-900 dark:text-white">User Information</h4>
+              <p className="text-gray-600 dark:text-gray-300">Name: {user.name}</p>
             </div>
             <FleetList />
             <Button 
