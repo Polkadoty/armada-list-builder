@@ -19,7 +19,7 @@ export function NotificationWindow({
 }: NotificationWindowProps) {
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full">
+      <DialogContent className="bg-white bg-opacity-30 backdrop-blur-md dark:bg-gray-800 dark:bg-opacity-30 p-6 rounded-lg shadow-lg max-w-md w-full">
         {title && (
           <DialogHeader>
             <DialogTitle className="text-xl font-semibold mb-4">{title}</DialogTitle>

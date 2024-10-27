@@ -1199,7 +1199,8 @@ export default function FleetBuilder({
 
     text += "Total Points: " + points;
 
-    return text;
+    // Ensure the text is not URL encoded
+    return decodeURIComponent(encodeURIComponent(text));
   };
 
   const capitalizeFirstLetter = (string: string | undefined) => {
@@ -1241,7 +1242,8 @@ export default function FleetBuilder({
 
   const handleImportFleet = (importText: string) => {
     console.log("Starting fleet import...");
-    const lines = importText.split("\n");
+    const decodedText = decodeURIComponent(encodeURIComponent(importText));
+    const lines = decodedText.split("\n");
 
     // Check faction first
     const factionLine = lines.find((line) => line.startsWith("Faction:"));

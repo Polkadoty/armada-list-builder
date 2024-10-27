@@ -90,7 +90,10 @@ export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRem
 
   const handleImageTouch = (e: React.TouchEvent) => {
     e.preventDefault();
-    setShowImageModal(true);
+    // Only open modal if not swiping
+    if (!isDragging.current) {
+      setShowImageModal(true);
+    }
   };
 
 
@@ -119,7 +122,10 @@ export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRem
                   className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
                   onClick={(e) => {
                     e.stopPropagation();
-                    setShowImageModal(true);
+                    // Only open modal if not swiping
+                    if (!isDragging.current) {
+                      setShowImageModal(true);
+                    }
                   }}
                   onTouchEnd={handleImageTouch}
                 >
@@ -361,4 +367,5 @@ function SwipeableUpgrade({ upgrade, onSwipe, onSwap, onRemove }: SwipeableUpgra
     </div>
   );
 }
+
 
