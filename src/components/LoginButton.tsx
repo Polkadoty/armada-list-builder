@@ -1,6 +1,6 @@
 import { useUser } from '@auth0/nextjs-auth0/client';
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import Link from 'next/link';
 
 export function LoginButton() {
   const { user, error, isLoading } = useUser();
@@ -31,7 +31,7 @@ export function LoginButton() {
         size="sm" 
         asChild
       >
-        <a href="/api/auth/logout">Sign Out</a>
+        <Link href="/api/auth/logout">Sign Out</Link>
       </Button>
     );
   }
@@ -42,7 +42,7 @@ export function LoginButton() {
       size="sm" 
       asChild
     >
-      <a href="/api/auth/login">Sign In</a>
+      <Link href="/api/auth/login">Sign In</Link>
     </Button>
   );
 }
