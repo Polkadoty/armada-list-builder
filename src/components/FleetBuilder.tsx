@@ -300,11 +300,16 @@ export default function FleetBuilder({
 
   const handleSaveFleet = () => {
     const exportText = generateExportText();
+    const commander = selectedShips
+      .flatMap(ship => ship.assignedUpgrades)
+      .find(upgrade => upgrade.type === 'commander')?.name || 'No Commander';
     return (
       <SaveFleetButton
         fleetData={exportText}
         faction={faction}
         fleetName={fleetName}
+        commander={commander}
+        points={points}
       />
     );
   };
@@ -1239,17 +1244,26 @@ export default function FleetBuilder({
 
   useEffect(() => {
     const savedFleet = localStorage.getItem(`savedFleet_${faction}`);
-    if (savedFleet && selectedShips.length === 0 && selectedSquadrons.length === 0) {
-      setShowRecoveryPopup(true);
+    const retrievedFromList = document.cookie.includes('retrieved-from-list=true');
+  
+    if (savedFleet && (selectedShips.length === 0 && selectedSquadrons.length === 0)) {
+      if (retrievedFromList) {
+        handleImportFleet(savedFleet);
+        document.cookie = "retrieved-from-list=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      } else {
+        setShowRecoveryPopup(true);
+      }
     }
   }, [faction]);
 
-  const handleRecoverFleet = () => {
+  const handleRecoverFleet = (skipPopup = false) => {
     const savedFleet = localStorage.getItem(`savedFleet_${faction}`);
     if (savedFleet) {
       handleImportFleet(savedFleet);
     }
-    setShowRecoveryPopup(false);
+    if (!skipPopup) {
+      setShowRecoveryPopup(false);
+    }
   };
   
   const handleDeclineRecovery = () => {

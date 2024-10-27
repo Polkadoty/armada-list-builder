@@ -5,12 +5,14 @@ import { supabase } from '../lib/supabase';
 import { Save } from 'lucide-react';
 
 interface SaveFleetButtonProps {
-  fleetData: string;
-  faction: string;
-  fleetName: string;
+    fleetData: string;
+    faction: string;
+    fleetName: string;
+    commander: string;
+    points: number;
 }
 
-export function SaveFleetButton({ fleetData, faction, fleetName }: SaveFleetButtonProps) {
+export function SaveFleetButton({ fleetData, faction, fleetName, commander, points }: SaveFleetButtonProps) {
   const { user } = useUser();
   const [isSaving, setIsSaving] = useState(false);
 
@@ -23,7 +25,7 @@ export function SaveFleetButton({ fleetData, faction, fleetName }: SaveFleetButt
     setIsSaving(true);
 
     try {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('fleets')
         .select('id')
         .eq('user_id', user.sub)
@@ -34,14 +36,21 @@ export function SaveFleetButton({ fleetData, faction, fleetName }: SaveFleetButt
         // Update existing fleet
         const { error } = await supabase
           .from('fleets')
-          .update({ fleet_data: fleetData, faction })
+          .update({ fleet_data: fleetData, faction, commander, points })
           .eq('id', data.id);
         if (error) throw error;
       } else {
         // Insert new fleet
         const { error } = await supabase
           .from('fleets')
-          .insert({ user_id: user.sub, fleet_name: fleetName, fleet_data: fleetData, faction });
+          .insert({ 
+            user_id: user.sub, 
+            fleet_name: fleetName, 
+            fleet_data: fleetData, 
+            faction, 
+            commander, 
+            points 
+          });
         if (error) throw error;
       }
 

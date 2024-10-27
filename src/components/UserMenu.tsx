@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/popover";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User } from 'lucide-react';
+import { FleetList } from './FleetList';
 
 export function UserMenu() {
   const { user, error, isLoading } = useUser();
@@ -38,6 +39,7 @@ export function UserMenu() {
               <p>Name: {user.name}</p>
               <p>Email: {user.email}</p>
             </div>
+            <FleetList />
             <Button 
               variant="outline" 
               size="sm" 
