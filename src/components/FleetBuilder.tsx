@@ -1540,6 +1540,7 @@ export default function FleetBuilder({
   const fetchFromLocalStorage = (
     key: string,
     type: "ships" | "upgrades" | "squadrons"
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ): any | null => {
     console.log(`Fetching ${type} for key: ${key}`);
     for (let i = 0; i < localStorage.length; i++) {
