@@ -1,30 +1,48 @@
 import React from 'react';
-import { X } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface NotificationWindowProps {
   message: string;
   onClose: () => void;
+  showConfirmButton?: boolean;
+  onConfirm?: () => void;
+  title?: string;
 }
 
-export const NotificationWindow: React.FC<NotificationWindowProps> = ({ message, onClose }) => {
+export function NotificationWindow({
+  title,
+  message,
+  onClose,
+  showConfirmButton = false,
+  onConfirm
+}: NotificationWindowProps) {
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50">
-      <div className="absolute inset-0 bg-black opacity-50"></div>
-      <div className="relative bg-white dark:bg-gray-800 rounded-lg p-6 max-w-sm w-full mx-4 backdrop-blur-md bg-opacity-80 dark:bg-opacity-80">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute top-2 right-2"
-          onClick={onClose}
-        >
-          <X className="h-4 w-4" />
-        </Button>
-        <p className="text-center text-gray-800 dark:text-gray-200">{message}</p>
-        <div className="mt-4 flex justify-center">
-          <Button onClick={onClose}>OK</Button>
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="bg-white bg-opacity-30 backdrop-blur-md dark:bg-gray-800 dark:bg-opacity-30 p-6 rounded-lg shadow-lg max-w-md w-full">
+        {title && (
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold mb-4">{title}</DialogTitle>
+          </DialogHeader>
+        )}
+        <p className="text-gray-700 dark:text-gray-300 mb-4">{message}</p>
+        <div className="flex justify-end gap-2">
+          {showConfirmButton && (
+            <Button
+              onClick={onConfirm}
+              variant="destructive"
+            >
+              Yes
+            </Button>
+          )}
+          <Button
+            onClick={onClose}
+            variant="outline"
+          >
+            {showConfirmButton ? 'No' : 'Close'}
+          </Button>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
-};
+}

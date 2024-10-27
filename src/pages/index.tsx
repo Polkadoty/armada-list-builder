@@ -8,9 +8,8 @@ import Link from 'next/link';
 import { LoadingScreen } from '../components/LoadingScreen';
 import { checkAndFetchData } from '../utils/dataFetcher';
 import { ContentToggleButton } from '../components/ContentToggleButton';
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-
-// a
+import { LoginButton } from '../components/LoginButton';
+import { UserAvatar } from '../components/UserAvatar';
 
 const factionShips = {
   rebel: '/images/cr90.webp',
@@ -44,7 +43,8 @@ export default function Home() {
       <StarryBackground show={true} lightDisabled={true}/>
       {isLoading && <LoadingScreen progress={loadingProgress} message={loadingMessage} />}
       <div className={`bg-white dark:bg-transparent p-8 flex-grow lg:w-1/3 lg:min-w-[300px] relative z-10`}>
-        <div className="flex justify-end space-x-2 mb-4">
+        <div className="flex justify-end space-x-2 mb-4 items-center">
+          <UserAvatar />
           <ContentToggleButton setIsLoading={setIsLoading} setLoadingProgress={setLoadingProgress} setLoadingMessage={setLoadingMessage} tournamentMode={tournamentMode} setTournamentMode={setTournamentMode} />
           <ThemeToggle />
         </div>
@@ -60,14 +60,7 @@ export default function Home() {
         </div>
         <FactionSelection onHover={setHoveredFaction} />
         <div className="mt-8 flex justify-center space-x-4">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="outline" size="sm" className="text-gray-400 dark:text-gray-600 hover:bg-gray-200 dark:hover:bg-white/20 cursor-not-allowed" disabled>SIGN IN (WIP)</Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>WIP, will be added soon</p>
-            </TooltipContent>
-          </Tooltip>
+          <LoginButton />
           <Link href="/faq">
             <Button variant="outline" size="sm" className="text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20">FAQ</Button>
           </Link>

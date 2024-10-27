@@ -9,7 +9,7 @@ import {
   FileText,
   Trash2,
   TriangleAlert,
-  Import,
+  Import
 } from "lucide-react";
 import { ShipSelector } from "./ShipSelector";
 import { SelectedShip } from "./SelectedShip";
@@ -41,6 +41,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { FleetRecoveryPopup } from "./FleetRecoveryPopup";
+import { SaveFleetButton } from './SaveFleetButton';
+import { useRouter } from 'next/router';
 
 export interface Ship {
   id: string;
@@ -239,6 +241,8 @@ export default function FleetBuilder({
   const [notificationMessage, setNotificationMessage] = useState("");
   const [squadronIdCounter, setSquadronIdCounter] = useState(0);
   const [showRecoveryPopup, setShowRecoveryPopup] = useState(false);
+  const [hasLoadedPage, setHasLoadedPage] = useState(false);
+  const router = useRouter();
 
   const checkTournamentViolations = useCallback(() => {
     const violations: string[] = [];
@@ -586,7 +590,7 @@ export default function FleetBuilder({
 
           const newUpgrade: Upgrade = {
             ...upgrade,
-            slotIndex: upgrade.slotIndex || ship.assignedUpgrades.length,
+            slotIndex: upgrade.slotIndex !== undefined ? upgrade.slotIndex : ship.assignedUpgrades.length,
             source: source,
             searchableText: JSON.stringify({
               ...upgrade,
@@ -1120,73 +1124,59 @@ export default function FleetBuilder({
   };
 
   const generateExportText = () => {
-    let text = `Name: ${fleetName}\n`;
-    text += `Faction: ${faction.charAt(0).toUpperCase() + faction.slice(1)}\n`;
+    let text = "Name: " + fleetName + "\n";
+    text += "Faction: " + faction.charAt(0).toUpperCase() + faction.slice(1) + "\n";
 
     const commander = selectedShips
       .flatMap((ship) => ship.assignedUpgrades)
       .find((upgrade) => upgrade.type === "commander");
     if (commander) {
-      text += `Commander: ${commander.name}${
-        commander.type !== "regular"
-          ? ` [${capitalizeFirstLetter(commander.source)}]`
-          : ""
-      } (${commander.points})\n`;
+      text += "Commander: " + commander.name + 
+        (commander.source !== "regular" ? " [" + capitalizeFirstLetter(commander.source) + "]" : "") + 
+        " (" + commander.points + ")\n";
     }
 
-    text += `\n`;
+    text += "\n";
     if (selectedAssaultObjective) {
-      text += `Assault: ${selectedAssaultObjective.name}\n`;
+      text += "Assault: " + selectedAssaultObjective.name + "\n";
     }
     if (selectedDefenseObjective) {
-      text += `Defense: ${selectedDefenseObjective.name}\n`;
+      text += "Defense: " + selectedDefenseObjective.name + "\n";
     }
     if (selectedNavigationObjective) {
-      text += `Navigation: ${selectedNavigationObjective.name}\n`;
+      text += "Navigation: " + selectedNavigationObjective.name + "\n";
     }
 
     if (selectedShips.length > 0) {
-      text += `\n`;
+      text += "\n";
       selectedShips.forEach((ship) => {
-        text += `${ship.name}${
-          ship.source !== "regular"
-            ? ` [${capitalizeFirstLetter(ship.source)}]`
-            : ""
-        } (${ship.points})\n`;
+        text += ship.name + 
+          (ship.source !== "regular" ? " [" + capitalizeFirstLetter(ship.source) + "]" : "") + 
+          " (" + ship.points + ")\n";
         ship.assignedUpgrades.forEach((upgrade) => {
-          text += `• ${upgrade.name}${
-            upgrade.source !== "regular"
-              ? ` [${capitalizeFirstLetter(upgrade.source)}]`
-              : ""
-          } (${upgrade.points})\n`;
+          text += "• " + upgrade.name + 
+            (upgrade.source !== "regular" ? " [" + capitalizeFirstLetter(upgrade.source) + "]" : "") + 
+            " (" + upgrade.points + ")\n";
         });
-        text += `= ${
-          ship.points +
-          ship.assignedUpgrades.reduce(
-            (total, upgrade) => total + upgrade.points,
-            0
-          )
-        } Points\n\n`;
+        text += "= " + 
+          (ship.points + 
+          ship.assignedUpgrades.reduce((total, upgrade) => total + upgrade.points, 0)) + 
+          " Points\n\n";
       });
     }
 
-    text += `Squadrons:\n`;
+    text += "Squadrons:\n";
     if (selectedSquadrons.length > 0) {
       const groupedSquadrons = selectedSquadrons.reduce((acc, squadron) => {
         const key =
           squadron.unique || squadron["ace-name"]
-            ? `${squadron["ace-name"] || squadron.name}${
-                squadron["ace-name"] ? ` - ${squadron.name}` : ""
-              }${
-                squadron.source !== "regular"
-                  ? ` [${capitalizeFirstLetter(squadron.source)}]`
-                  : ""
-              } (${squadron.points})`
-            : `${squadron.name}${
-                squadron.source !== "regular"
-                  ? ` [${capitalizeFirstLetter(squadron.source)}]`
-                  : ""
-              } (${squadron.points * (squadron.count || 1)})`;
+            ? (squadron["ace-name"] || squadron.name) + 
+              (squadron["ace-name"] ? " - " + squadron.name : "") + 
+              (squadron.source !== "regular" ? " [" + capitalizeFirstLetter(squadron.source) + "]" : "") + 
+              " (" + squadron.points + ")"
+            : squadron.name + 
+              (squadron.source !== "regular" ? " [" + capitalizeFirstLetter(squadron.source) + "]" : "") + 
+              " (" + (squadron.points * (squadron.count || 1)) + ")";
         if (!acc[key]) {
           acc[key] = {
             count: 0,
@@ -1201,18 +1191,19 @@ export default function FleetBuilder({
       Object.entries(groupedSquadrons).forEach(
         ([squadronKey, { count, isUnique }]) => {
           if (isUnique) {
-            text += `• ${squadronKey}\n`;
+            text += "• " + squadronKey + "\n";
           } else {
-            text += `• ${count} x ${squadronKey}\n`;
+            text += "• " + count + " x " + squadronKey + "\n";
           }
         }
       );
     }
-    text += `= ${totalSquadronPoints} Points\n\n`;
+    text += "= " + totalSquadronPoints + " Points\n\n";
 
-    text += `Total Points: ${points}`;
+    text += "Total Points: " + points;
 
-    return text;
+    // Ensure the text is not URL encoded
+    return decodeURIComponent(encodeURIComponent(text));
   };
 
   const capitalizeFirstLetter = (string: string | undefined) => {
@@ -1227,11 +1218,19 @@ export default function FleetBuilder({
 
   useEffect(() => {
     const savedFleet = localStorage.getItem(`savedFleet_${faction}`);
-    if (savedFleet && selectedShips.length === 0 && selectedSquadrons.length === 0) {
-      setShowRecoveryPopup(true);
+    const retrievedFromList = document.cookie.includes('retrieved-from-list=true');
+  
+    if (!hasLoadedPage && savedFleet && selectedShips.length === 0 && selectedSquadrons.length === 0) {
+      if (retrievedFromList) {
+        handleImportFleet(savedFleet);
+        document.cookie = "retrieved-from-list=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      } else {
+        setShowRecoveryPopup(true);
+      }
+      setHasLoadedPage(true);
     }
-  }, [faction]);
-
+  }, [faction, selectedShips.length, selectedSquadrons.length, hasLoadedPage]);
+  
   const handleRecoverFleet = () => {
     const savedFleet = localStorage.getItem(`savedFleet_${faction}`);
     if (savedFleet) {
@@ -1247,7 +1246,8 @@ export default function FleetBuilder({
 
   const handleImportFleet = (importText: string) => {
     console.log("Starting fleet import...");
-    const lines = importText.split("\n");
+    const decodedText = decodeURIComponent(encodeURIComponent(importText));
+    const lines = decodedText.split("\n");
 
     // Check faction first
     const factionLine = lines.find((line) => line.startsWith("Faction:"));
@@ -1261,10 +1261,16 @@ export default function FleetBuilder({
       const normalizedCurrentFaction = faction.toLowerCase();
 
       if (normalizedImportedFaction !== normalizedCurrentFaction) {
-        setNotificationMessage(
-          `The imported fleet faction (${importedFaction}) does not match the current faction (${faction}). Import cancelled.`
-        );
-        setShowNotification(true);
+        // Instead of showing error, save fleet and redirect
+        localStorage.setItem(`savedFleet_${normalizedImportedFaction}`, importText);
+        document.cookie = "retrieved-from-list=true; path=/";
+        
+        // Navigate home first, then to the correct faction
+        router.push('/').then(() => {
+          setTimeout(() => {
+            router.push(`/${normalizedImportedFaction}`);
+          }, 250);
+        });
         return;
       }
     } else {
@@ -1942,6 +1948,22 @@ export default function FleetBuilder({
                 <p>Import Fleet</p>
               </TooltipContent>
             </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <SaveFleetButton
+                  fleetData={generateExportText()}
+                  faction={faction}
+                  fleetName={fleetName}
+                  commander={selectedShips.find(ship => 
+                    ship.assignedUpgrades.some(upgrade => upgrade.type === "commander"))?.assignedUpgrades
+                      .find(upgrade => upgrade.type === "commander")?.name || ""}
+                  points={points}
+                />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Save Fleet</p>
+              </TooltipContent>
+            </Tooltip>
           </TooltipProvider>
           {tournamentMode && tournamentViolations.length > 0 && (
             <Popover>
@@ -1977,7 +1999,6 @@ export default function FleetBuilder({
             onClearAll={clearAllShips}
             onAdd={handleAddShip}
           />
-          <div className="max-w-[3000px] w-full mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 4xl:grid-cols-5 gap-2">
               {selectedShips.map((ship) => (
                 <SelectedShip
@@ -1991,10 +2012,9 @@ export default function FleetBuilder({
                   enabledUpgrades={enabledUpgrades[ship.id] || []}
                   filledSlots={filledSlots[ship.id] || {}}
                   hasCommander={hasCommander}
-                  traits={ship.traits || []}
-                />
-              ))}
-            </div>
+                traits={ship.traits || []}
+              />
+            ))}
           </div>
         </>
       ) : (
