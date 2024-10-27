@@ -104,15 +104,15 @@ export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRem
             onTouchMove={handleShipTouchMove}
             onTouchEnd={handleShipTouchEnd}
           >
-            <CardContent className="flex items-center p-2">
-              <div className="w-16 aspect-[8/3] mr-4 relative overflow-hidden group">
+            <CardContent className="p-0">
+              <div className="relative w-full aspect-[8/3] overflow-hidden group">
                 <Image 
                   src={ship.cardimage} 
                   alt={ship.name}
                   layout="fill"
                   objectFit="cover"
                   objectPosition="top"
-                  className="scale-[100%]"
+                  className="scale-[103%]"
                   onClick={() => setShowImageModal(true)}
                 />
                 <button
@@ -123,43 +123,44 @@ export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRem
                   }}
                   onTouchEnd={handleImageTouch}
                 >
-                  <Eye size={16} className="text-white cursor-pointer" />
+                  <Eye size={24} className="text-white cursor-pointer" />
                 </button>
               </div>
-              <div className="flex-grow">
-                <span className="font-bold flex items-center">
-                  {ship.unique && <span className="mr-1 text-yellow-500">●</span>}
-                  {ship.name}
-                </span>
+              <div className="p-4 border-t">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-bold text-xl flex items-center">
+                    {ship.unique && <span className="mr-1 text-yellow-500">●</span>}
+                    {ship.name}
+                  </span>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={toggleToolbar}
+                    className="ml-2"
+                  >
+                    <span>{isToolbarVisible ? '▲' : '▼'}</span>
+                  </Button>
+                </div>
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <span>{totalShipPoints} points</span>
+                  <span>{totalShipPoints} points</span>
+                  <div className="flex items-center gap-1">
                     <Button 
                       variant="ghost" 
                       size="sm" 
                       onClick={() => onCopy(ship)} 
-                      className={`text-blue-500 p-1 ml-1 ${ship.unique ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      className={`text-blue-500 p-1 ${ship.unique ? 'opacity-50 cursor-not-allowed' : ''}`}
                       disabled={ship.unique}
                     >
                       <Copy size={16} />
                     </Button>
+                    <Button variant="ghost" size="sm" onClick={() => onRemove(ship.id)} className="text-red-500 p-1">
+                      <Trash2 size={16} />
+                    </Button>
                   </div>
-                  <Button variant="ghost" size="sm" onClick={() => onRemove(ship.id)} className="text-red-500 p-1">
-                    <Trash2 size={16} />
-                  </Button>
                 </div>
               </div>
             </CardContent>
           </div>
-          
-          <Button
-            variant="ghost"
-            className="w-full text-left p-2 flex justify-between items-center"
-            onClick={toggleToolbar}
-          >
-            <span>Upgrades</span>
-            <span>{isToolbarVisible ? '▲' : '▼'}</span>
-          </Button>
           
           {isToolbarVisible && (
             <>
@@ -236,10 +237,10 @@ function SwipeableUpgrade({ upgrade, onSwipe, onSwap, onRemove }: SwipeableUpgra
   const startX = useRef(0);
   const startY = useRef(0);
   const isHorizontalSwipe = useRef(false);
+  const [showImageModal, setShowImageModal] = useState(false);
 
   const SWIPE_THRESHOLD = 100;
   const ANGLE_THRESHOLD = 30; // Degrees
-  const [showImageModal, setShowImageModal] = useState(false);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     isDragging.current = true;
@@ -284,12 +285,7 @@ function SwipeableUpgrade({ upgrade, onSwipe, onSwap, onRemove }: SwipeableUpgra
     isHorizontalSwipe.current = false;
   };
 
-  
 
-  const handleImageTouch = (e: React.TouchEvent) => {
-    e.preventDefault();
-    setShowImageModal(true);
-  };
 
   return (
     <div className="relative overflow-hidden mb-2">
@@ -301,51 +297,39 @@ function SwipeableUpgrade({ upgrade, onSwipe, onSwap, onRemove }: SwipeableUpgra
         className="relative"
       >
         <div className="flex items-center justify-between bg-gray-100 dark:bg-gray-700 rounded p-2">
-          <div className="flex items-center flex-grow">
-            <div className="w-16 aspect-[3.75/2] mr-2 relative overflow-hidden group">
+          <div className="flex items-center min-w-0">
+            <div className="flex items-center gap-2 flex-shrink-0">
               <Image
-                src={upgrade.cardimage}
-                alt={upgrade.name}
-                fill
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                className="object-cover object-center rounded"
-                objectPosition="top"
-                onError={(e) => {
-                  e.currentTarget.src = '/placeholder-upgrade.png';
-                }}
-                onClick={() => setShowImageModal(true)}
-                onTouchEnd={handleImageTouch}
+                src={`/icons/${upgrade.type}.svg`}
+                alt={upgrade.type}
+                width={24}
+                height={24}
+                className="dark:invert"
               />
-              <button
-                className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowImageModal(true);
-                }}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowImageModal(true)}
+                className="p-1"
               >
-                <Eye size={12} className="text-white cursor-pointer" />
-              </button>
+                <Eye size={16} />
+              </Button>
             </div>
-            <Image
-              src={`/icons/${upgrade.type}.svg`}
-              alt={upgrade.type}
-              width={24}
-              height={24}
-              className="dark:invert mr-2"
-            />
-            <span className="font-medium flex items-center">
+            <span className="font-medium flex items-center ml-2">
               {upgrade.unique && <span className="mr-1 text-yellow-500">●</span>}
               {upgrade.name}
             </span>
-            <Button variant="ghost" size="sm" onClick={onSwap} className="text-blue-500 p-1 ml-1">
-              <ArrowLeftRight size={16} />
-            </Button>
           </div>
-          <div className="flex items-center">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <span>{upgrade.points} pts</span>
-            <Button variant="ghost" size="sm" onClick={onRemove} className="text-red-500 p-1 ml-1">
-              <X size={16} />
-            </Button>
+            <div className="hidden sm:flex items-center gap-1">
+              <Button variant="ghost" size="sm" onClick={onSwap} className="text-blue-500 p-1">
+                <ArrowLeftRight size={16} />
+              </Button>
+              <Button variant="ghost" size="sm" onClick={onRemove} className="text-red-500 p-1">
+                <X size={16} />
+              </Button>
+            </div>
           </div>
         </div>
         <div className="absolute left-0 top-0 bottom-0 flex items-center justify-center w-12 text-blue-500 bg-gray-800 bg-opacity-75" style={{ transform: 'translateX(-100%)' }}>
@@ -363,7 +347,7 @@ function SwipeableUpgrade({ upgrade, onSwipe, onSwap, onRemove }: SwipeableUpgra
               alt={upgrade.name}
               width={300}
               height={420}
-              className="rounded-lg"
+              className="rounded-lg sm:w-[450px] sm:h-[630px] lg:w-[600px] lg:h-[840px]"
             />
             <button
               className="absolute top-2 right-2 bg-black bg-opacity-50 rounded-full p-1"
@@ -377,3 +361,4 @@ function SwipeableUpgrade({ upgrade, onSwipe, onSwap, onRemove }: SwipeableUpgra
     </div>
   );
 }
+

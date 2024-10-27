@@ -145,11 +145,11 @@ const SectionHeader = ({
 }) => (
   <Card className="mb-4 relative">
     <Button
-      className="w-full justify-between bg-white dark:bg-gray-900 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md bg-opacity-30 dark:bg-opacity-30"
+      className="w-full justify-between bg-white dark:bg-gray-900 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md bg-opacity-30 dark:bg-opacity-30 text-lg py-6"
       variant="outline"
       onClick={onAdd}
     >
-      <span className="flex items-center">ADD {title.toUpperCase()}</span>
+      <span className="flex items-center text-l">ADD {title.toUpperCase()}</span>
       <span className="flex items-center">
         <button
           onClick={(e) => {
@@ -1906,7 +1906,7 @@ export default function FleetBuilder({
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-[2000px] mx-auto">
       <div className="flex flex-col sm:flex-row items-start sm:items-center mb-4">
         <div className="mb-2 sm:mb-0 flex items-center justify-start space-x-2">
           <TooltipProvider>
@@ -1968,22 +1968,43 @@ export default function FleetBuilder({
       </div>
 
       {selectedShips.length > 0 ? (
-        <SectionHeader
-          title="Ships"
-          points={totalShipPoints}
-          previousPoints={previousShipPoints}
-          show={true}
-          onClearAll={clearAllShips}
-          onAdd={handleAddShip}
-        />
+        <>
+          <SectionHeader
+            title="Ships"
+            points={totalShipPoints}
+            previousPoints={previousShipPoints}
+            show={true}
+            onClearAll={clearAllShips}
+            onAdd={handleAddShip}
+          />
+          <div className="max-w-[3000px] w-full mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 4xl:grid-cols-5 gap-2">
+              {selectedShips.map((ship) => (
+                <SelectedShip
+                  key={ship.id}
+                  ship={ship}
+                  onRemove={handleRemoveShip}
+                  onUpgradeClick={handleUpgradeClick}
+                  onCopy={handleCopyShip}
+                  handleRemoveUpgrade={handleRemoveUpgrade}
+                  disabledUpgrades={disabledUpgrades[ship.id] || []}
+                  enabledUpgrades={enabledUpgrades[ship.id] || []}
+                  filledSlots={filledSlots[ship.id] || {}}
+                  hasCommander={hasCommander}
+                  traits={ship.traits || []}
+                />
+              ))}
+            </div>
+          </div>
+        </>
       ) : (
         <Card className="mb-4 relative">
           <Button
-            className="w-full justify-between bg-white dark:bg-gray-900 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md bg-opacity-30 dark:bg-opacity-30"
+            className="w-full justify-between bg-white/30 dark:bg-gray-900/30 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md text-lg py-6"
             variant="outline"
             onClick={handleAddShip}
           >
-            ADD SHIP
+            <span className="text-lg">ADD SHIP</span>
           </Button>
           {showFilter && (
             <ShipFilter
@@ -1994,41 +2015,37 @@ export default function FleetBuilder({
         </Card>
       )}
 
-      <div className="mb-4">
-        {selectedShips.map((ship) => (
-          <SelectedShip
-            key={ship.id}
-            ship={ship}
-            onRemove={handleRemoveShip}
-            onUpgradeClick={handleUpgradeClick}
-            onCopy={handleCopyShip}
-            handleRemoveUpgrade={handleRemoveUpgrade}
-            disabledUpgrades={disabledUpgrades[ship.id] || []}
-            enabledUpgrades={enabledUpgrades[ship.id] || []}
-            filledSlots={filledSlots[ship.id] || {}}
-            hasCommander={hasCommander}
-            traits={ship.traits || []}
-          />
-        ))}
-      </div>
-
       {selectedSquadrons.length > 0 ? (
-        <SectionHeader
-          title="Squadrons"
-          points={totalSquadronPoints}
-          previousPoints={previousSquadronPoints}
-          show={true}
-          onClearAll={clearAllSquadrons}
-          onAdd={handleAddSquadron}
-        />
+        <>
+          <SectionHeader
+            title="Squadrons"
+            points={totalSquadronPoints}
+            previousPoints={previousSquadronPoints}
+            show={true}
+            onClearAll={clearAllSquadrons}
+            onAdd={handleAddSquadron}
+          />
+          <div className="mb-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-2">
+            {selectedSquadrons.map((squadron) => (
+              <SelectedSquadron
+                key={squadron.id}
+                squadron={squadron}
+                onRemove={handleRemoveSquadron}
+                onIncrement={handleIncrementSquadron}
+                onDecrement={handleDecrementSquadron}
+                onSwapSquadron={handleSwapSquadron}
+              />
+            ))}
+          </div>
+        </>
       ) : (
         <Card className="mb-4 relative">
           <Button
-            className="w-full justify-between bg-white dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md bg-opacity-30 dark:bg-opacity-30"
+            className="w-full justify-between bg-white/30 dark:bg-gray-900/30 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md text-lg py-6"
             variant="outline"
             onClick={handleAddSquadron}
           >
-            ADD SQUADRON
+            <span className="text-lg">ADD SQUADRON</span>
           </Button>
           {showFilter && (
             <SquadronFilter
@@ -2039,20 +2056,7 @@ export default function FleetBuilder({
         </Card>
       )}
 
-      <div className="mb-4">
-        {selectedSquadrons.map((squadron) => (
-          <SelectedSquadron
-            key={squadron.id}
-            squadron={squadron}
-            onRemove={handleRemoveSquadron}
-            onIncrement={handleIncrementSquadron}
-            onDecrement={handleDecrementSquadron}
-            onSwapSquadron={handleSwapSquadron}
-          />
-        ))}
-      </div>
-
-      <div className="space-y-2 mb-4">
+      <div className="mb-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-xl">
         <SwipeableObjective
           type="assault"
           selectedObjective={selectedAssaultObjective}
@@ -2060,7 +2064,6 @@ export default function FleetBuilder({
           onOpen={() => setShowAssaultObjectiveSelector(true)}
           color="#EB3F3A"
         />
-
         <SwipeableObjective
           type="defense"
           selectedObjective={selectedDefenseObjective}
@@ -2068,7 +2071,6 @@ export default function FleetBuilder({
           onOpen={() => setShowDefenseObjectiveSelector(true)}
           color="#FAEE13"
         />
-
         <SwipeableObjective
           type="navigation"
           selectedObjective={selectedNavigationObjective}

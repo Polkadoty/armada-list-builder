@@ -62,7 +62,7 @@ export default function FactionPage() {
     <div className="min-h-screen text-gray-900 dark:text-white relative bg-transparent">
       <StarryBackground show={currentTheme === 'dark'} />
       {isLoading && <LoadingScreen progress={loadingProgress} message={loadingMessage} />}
-      <div className="relative z-10 p-4">
+      <div className="relative z-10 p-4 max-w-[2000px] mx-auto"> {/* Added max-width and centering */}
         <div className="flex justify-between items-center mb-4">
           <div className="flex items-center">
             {faction && (

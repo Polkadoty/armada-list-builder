@@ -87,7 +87,7 @@ export default function Home() {
             <div
               key={faction}
               className={`absolute inset-0 transition-opacity duration-300 ${
-                hoveredFaction === faction ? 'opacity-75' : 'opacity-0'
+                hoveredFaction === faction ? 'opacity-100' : 'opacity-0'
               }`}
             >
               <Image 
@@ -95,6 +95,7 @@ export default function Home() {
                 alt={`${faction} ship`}
                 layout="fill"
                 objectFit="contain"
+                className='p-24'
               />
             </div>
           ))}
