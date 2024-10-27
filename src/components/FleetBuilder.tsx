@@ -1969,9 +1969,15 @@ export default function FleetBuilder({
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="outline" onClick={handleSaveFleet}>
-                  <Save className="h-4 w-4" />
-                </Button>
+                <SaveFleetButton
+                  fleetData={generateExportText()}
+                  faction={faction}
+                  fleetName={fleetName}
+                  commander={selectedShips.find(ship => 
+                    ship.assignedUpgrades.some(upgrade => upgrade.type === "commander"))?.assignedUpgrades
+                      .find(upgrade => upgrade.type === "commander")?.name || ""}
+                  points={points}
+                />
               </TooltipTrigger>
               <TooltipContent>
                 <p>Save Fleet</p>

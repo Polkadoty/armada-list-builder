@@ -74,9 +74,8 @@ export function SaveFleetButton({ fleetData, faction, fleetName, commander, poin
         onClick={handleSaveFleet} 
         disabled={isSaving || !user}
         variant="outline"
-        size="sm"
       >
-        <Save className="mr-2 h-4 w-4" />
+        <Save className="h-4 w-4" />
       </Button>
       {showNotification && (
         <NotificationWindow
