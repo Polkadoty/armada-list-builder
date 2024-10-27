@@ -40,6 +40,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { FleetRecoveryPopup } from "./FleetRecoveryPopup";
 
 export interface Ship {
   id: string;
@@ -237,6 +238,7 @@ export default function FleetBuilder({
   const [showNotification, setShowNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState("");
   const [squadronIdCounter, setSquadronIdCounter] = useState(0);
+  const [showRecoveryPopup, setShowRecoveryPopup] = useState(false);
 
   const checkTournamentViolations = useCallback(() => {
     const violations: string[] = [];
@@ -1096,6 +1098,7 @@ export default function FleetBuilder({
     setPoints(newPoints);
     setTotalShipPoints(0);
     setHasCommander(false); // Add this line
+    localStorage.removeItem(`savedFleet_${faction}`);
   };
 
   const clearAllSquadrons = () => {
@@ -1113,6 +1116,7 @@ export default function FleetBuilder({
     setPoints(points - totalSquadronPoints);
     setTotalSquadronPoints(0);
     setSelectedSquadrons([]);
+    localStorage.removeItem(`savedFleet_${faction}`);
   };
 
   const generateExportText = () => {
@@ -1214,6 +1218,31 @@ export default function FleetBuilder({
   const capitalizeFirstLetter = (string: string | undefined) => {
     if (!string) return "";
     return string.charAt(0).toUpperCase() + string.slice(1);
+  };
+
+  const saveFleetToLocalStorage = useCallback(() => {
+    const exportText = generateExportText();
+    localStorage.setItem(`savedFleet_${faction}`, exportText);
+  }, [faction, generateExportText]);
+
+  useEffect(() => {
+    const savedFleet = localStorage.getItem(`savedFleet_${faction}`);
+    if (savedFleet && selectedShips.length === 0 && selectedSquadrons.length === 0) {
+      setShowRecoveryPopup(true);
+    }
+  }, [faction]);
+
+  const handleRecoverFleet = () => {
+    const savedFleet = localStorage.getItem(`savedFleet_${faction}`);
+    if (savedFleet) {
+      handleImportFleet(savedFleet);
+    }
+    setShowRecoveryPopup(false);
+  };
+  
+  const handleDeclineRecovery = () => {
+    localStorage.removeItem(`savedFleet_${faction}`);
+    setShowRecoveryPopup(false);
   };
 
   const handleImportFleet = (importText: string) => {
@@ -1825,6 +1854,21 @@ export default function FleetBuilder({
     return content;
   };
 
+
+
+  useEffect(() => {
+    if (selectedShips.length > 0 || selectedSquadrons.length > 0) {
+      saveFleetToLocalStorage();
+    }
+  }, [
+    selectedShips,
+    selectedSquadrons,
+    selectedAssaultObjective,
+    selectedDefenseObjective,
+    selectedNavigationObjective,
+    saveFleetToLocalStorage,
+  ]);
+
   useEffect(() => {
     return () => {
       // Reset all state when component unmounts
@@ -2128,6 +2172,14 @@ export default function FleetBuilder({
         <NotificationWindow
           message={notificationMessage}
           onClose={() => setShowNotification(false)}
+        />
+      )}
+
+      {showRecoveryPopup && (
+        <FleetRecoveryPopup
+          isOpen={showRecoveryPopup}
+          onImport={handleRecoverFleet}
+          onDecline={handleDeclineRecovery}
         />
       )}
     </div>
