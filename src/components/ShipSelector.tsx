@@ -268,7 +268,7 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
           </div>
         </div>
         <CardContent className="p-2 sm:p-4 flex-grow overflow-auto">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3 md:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
             {displayedShips.map((ship) => (
               <div key={ship.id} className={`w-full ${isHugeShip(ship) ? 'col-span-2 aspect-[5/4]' : 'aspect-[8.75/15]'}`}>
                 <Button

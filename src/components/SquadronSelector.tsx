@@ -298,7 +298,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
           </div>
         </div>
         <CardContent className="p-2 sm:p-4 flex-grow overflow-auto">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3 md:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
             {displayedSquadrons.map((squadron) => (
               <div key={squadron.id} className="w-full aspect-[2/3]">
                 <Button

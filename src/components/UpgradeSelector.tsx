@@ -378,7 +378,7 @@ export default function UpgradeSelector({
           {loading ? (
             <p>Loading upgrades...</p>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3 md:gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
               {displayedUpgrades.map((upgrade) => (
                 <div key={upgrade.name} className="w-full aspect-[2/3]">
                   <Button

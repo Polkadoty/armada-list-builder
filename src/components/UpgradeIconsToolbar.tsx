@@ -82,8 +82,8 @@ export default function UpgradeIconsToolbar({ upgrades, onUpgradeClick, assigned
               <Image
                 src={`/icons/${upgrade}.svg`}
                 alt={upgrade}
-                width={upgrade === 'weapons-team-offensive-retro' ? 40 : 24}
-                height={24}
+                width={upgrade === 'weapons-team-offensive-retro' ? 45 : 32}
+                height={40}
                 className={`dark:invert ${isDisabled ? 'opacity-50' : ''}`}
               />
             </Button>

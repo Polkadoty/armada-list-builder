@@ -85,7 +85,7 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
   };
 
   return (
-    <div className="relative overflow-hidden mb-2">
+    <div className="relative overflow-hidden mb-4">
       <animated.div
         style={{ x }}
         onTouchStart={handleTouchStart}
@@ -93,58 +93,59 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
         onTouchEnd={handleTouchEnd}
       >
         <Card>
-          <CardContent className="flex items-center p-2">
-            <div className="w-16 aspect-[3.75/2] mr-4 relative overflow-hidden group">
-              <Image 
-                src={squadron.cardimage} 
-                alt={squadron.unique && squadron['ace-name'] ? squadron['ace-name'] : squadron.name}
-                layout="fill"
-                objectFit="cover"
-                objectPosition="top"
-                className="scale-[100%]"
-                onClick={() => setShowImageModal(true)}
-              />
-              <button
-                className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowImageModal(true);
-                }}
-                onTouchEnd={handleImageTouch}
-              >
-                <Eye size={16} className="text-white cursor-pointer" />
-              </button>
-            </div>
-            <div className="flex-grow">
-              <span className="font-bold flex items-center">
-                {squadron.unique && (
-                  <span className="mr-1 text-yellow-500">●</span>
-                )}
-                {count > 1 ? `(${count}) ` : ''}
-                {squadron.unique && squadron['ace-name'] ? squadron['ace-name'] : squadron.name}
-              </span>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-1">
-                  <span>{totalPoints} points</span>
-                  {squadron.unique ? (
-                    <Button variant="ghost" size="sm" onClick={() => onSwapSquadron(squadron.id)} className="text-blue-500 p-1">
+          <CardContent className="p-2">
+            <div className="flex items-center">
+              <div className="w-32 aspect-[3.75/2] mr-4 relative overflow-hidden group">
+                <Image 
+                  src={squadron.cardimage} 
+                  alt={squadron.unique && squadron['ace-name'] ? squadron['ace-name'] : squadron.name}
+                  layout="fill"
+                  objectFit="cover"
+                  objectPosition="top"
+                  className="scale-[100%]"
+                  onClick={() => setShowImageModal(true)}
+                />
+                <button
+                  className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowImageModal(true);
+                  }}
+                  onTouchEnd={handleImageTouch}
+                >
+                  <Eye size={16} className="text-white cursor-pointer" />
+                </button>
+              </div>
+              <div className="flex-grow">
+                <div className="font-bold text-base sm:text-lg flex items-center">
+                  {squadron.unique && <span className="mr-1 text-yellow-500">●</span>}
+                  {count > 1 ? `(${count}) ` : ''}
+                  {squadron.unique && squadron['ace-name'] ? squadron['ace-name'] : squadron.name}
+                  {squadron.unique && (
+                    <Button variant="ghost" size="sm" onClick={() => onSwapSquadron(squadron.id)} className="text-blue-500 p-1 ml-1">
                       <ArrowLeftRight size={16} />
                     </Button>
-                  ) : (
-                    <>
-                      <Button variant="ghost" size="sm" onClick={() => onDecrement(squadron.id)} className="text-red-500 p-1">
-                        <Minus size={16} />
-                      </Button>
-                      <span>{count}</span>
-                      <Button variant="ghost" size="sm" onClick={() => onIncrement(squadron.id)} className="text-blue-500 p-1">
-                        <Plus size={16} />
-                      </Button>
-                    </>
                   )}
                 </div>
-                <Button variant="ghost" size="sm" onClick={() => onRemove(squadron.id)} className="text-red-500 p-1">
-                  <Trash2 size={16} />
-                </Button>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-1">
+                    <div className="text-sm sm:text-base">{totalPoints} points</div>
+                    {!squadron.unique && (
+                      <>
+                        <Button variant="ghost" size="sm" onClick={() => onDecrement(squadron.id)} className="text-red-500 p-1">
+                          <Minus size={16} />
+                        </Button>
+                        <span>{count}</span>
+                        <Button variant="ghost" size="sm" onClick={() => onIncrement(squadron.id)} className="text-blue-500 p-1">
+                          <Plus size={16} />
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={() => onRemove(squadron.id)} className="text-red-500 p-1">
+                    <Trash2 size={16} />
+                  </Button>
+                </div>
               </div>
             </div>
           </CardContent>

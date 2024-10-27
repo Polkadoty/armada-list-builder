@@ -73,7 +73,7 @@ export function SwipeableObjective({ type, selectedObjective, onRemove, onOpen, 
       >
         <Button 
           variant="outline" 
-          className="w-full justify-start transition-colors"
+          className="w-full justify-start transition-colors py-6 text-lg" // Increased height to 6 for more vertical space
           onClick={onOpen}
         >
           <div className="flex justify-between items-center w-full">
