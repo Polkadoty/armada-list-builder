@@ -110,7 +110,7 @@ export function FleetList() {
       router.push('/').then(() => {
         setTimeout(() => {
           router.push(`/${fleet.faction}`);
-        }, 0);
+        }, 250);
       });
     } else {
       router.push(`/${fleet.faction}`);
