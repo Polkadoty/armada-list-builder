@@ -285,12 +285,7 @@ function SwipeableUpgrade({ upgrade, onSwipe, onSwap, onRemove }: SwipeableUpgra
     isHorizontalSwipe.current = false;
   };
 
-  
 
-  const handleImageTouch = (e: React.TouchEvent) => {
-    e.preventDefault();
-    setShowImageModal(true);
-  };
 
   return (
     <div className="relative overflow-hidden mb-2">
