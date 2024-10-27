@@ -23,7 +23,7 @@ export function SaveFleetButton({ fleetData, faction, fleetName }: SaveFleetButt
     setIsSaving(true);
 
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('fleets')
         .upsert({
           user_id: user.sub,
@@ -57,4 +57,3 @@ export function SaveFleetButton({ fleetData, faction, fleetName }: SaveFleetButt
     </Button>
   );
 }
-

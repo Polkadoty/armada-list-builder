@@ -9,8 +9,7 @@ import {
   FileText,
   Trash2,
   TriangleAlert,
-  Import,
-  Save,
+  Import
 } from "lucide-react";
 import { ShipSelector } from "./ShipSelector";
 import { SelectedShip } from "./SelectedShip";
