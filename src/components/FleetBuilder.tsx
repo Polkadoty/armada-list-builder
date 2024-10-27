@@ -1121,73 +1121,59 @@ export default function FleetBuilder({
   };
 
   const generateExportText = () => {
-    let text = `Name: ${fleetName}\n`;
-    text += `Faction: ${faction.charAt(0).toUpperCase() + faction.slice(1)}\n`;
+    let text = "Name: " + fleetName + "\n";
+    text += "Faction: " + faction.charAt(0).toUpperCase() + faction.slice(1) + "\n";
 
     const commander = selectedShips
       .flatMap((ship) => ship.assignedUpgrades)
       .find((upgrade) => upgrade.type === "commander");
     if (commander) {
-      text += `Commander: ${commander.name}${
-        commander.source !== "regular"
-          ? ` [${capitalizeFirstLetter(commander.source)}]`
-          : ""
-      } (${commander.points})\n`;
+      text += "Commander: " + commander.name + 
+        (commander.source !== "regular" ? " [" + capitalizeFirstLetter(commander.source) + "]" : "") + 
+        " (" + commander.points + ")\n";
     }
 
-    text += `\n`;
+    text += "\n";
     if (selectedAssaultObjective) {
-      text += `Assault: ${selectedAssaultObjective.name}\n`;
+      text += "Assault: " + selectedAssaultObjective.name + "\n";
     }
     if (selectedDefenseObjective) {
-      text += `Defense: ${selectedDefenseObjective.name}\n`;
+      text += "Defense: " + selectedDefenseObjective.name + "\n";
     }
     if (selectedNavigationObjective) {
-      text += `Navigation: ${selectedNavigationObjective.name}\n`;
+      text += "Navigation: " + selectedNavigationObjective.name + "\n";
     }
 
     if (selectedShips.length > 0) {
-      text += `\n`;
+      text += "\n";
       selectedShips.forEach((ship) => {
-        text += `${ship.name}${
-          ship.source !== "regular"
-            ? ` [${capitalizeFirstLetter(ship.source)}]`
-            : ""
-        } (${ship.points})\n`;
+        text += ship.name + 
+          (ship.source !== "regular" ? " [" + capitalizeFirstLetter(ship.source) + "]" : "") + 
+          " (" + ship.points + ")\n";
         ship.assignedUpgrades.forEach((upgrade) => {
-          text += `• ${upgrade.name}${
-            upgrade.source !== "regular"
-              ? ` [${capitalizeFirstLetter(upgrade.source)}]`
-              : ""
-          } (${upgrade.points})\n`;
+          text += "• " + upgrade.name + 
+            (upgrade.source !== "regular" ? " [" + capitalizeFirstLetter(upgrade.source) + "]" : "") + 
+            " (" + upgrade.points + ")\n";
         });
-        text += `= ${
-          ship.points +
-          ship.assignedUpgrades.reduce(
-            (total, upgrade) => total + upgrade.points,
-            0
-          )
-        } Points\n\n`;
+        text += "= " + 
+          (ship.points + 
+          ship.assignedUpgrades.reduce((total, upgrade) => total + upgrade.points, 0)) + 
+          " Points\n\n";
       });
     }
 
-    text += `Squadrons:\n`;
+    text += "Squadrons:\n";
     if (selectedSquadrons.length > 0) {
       const groupedSquadrons = selectedSquadrons.reduce((acc, squadron) => {
         const key =
           squadron.unique || squadron["ace-name"]
-            ? `${squadron["ace-name"] || squadron.name}${
-                squadron["ace-name"] ? ` - ${squadron.name}` : ""
-              }${
-                squadron.source !== "regular"
-                  ? ` [${capitalizeFirstLetter(squadron.source)}]`
-                  : ""
-              } (${squadron.points})`
-            : `${squadron.name}${
-                squadron.source !== "regular"
-                  ? ` [${capitalizeFirstLetter(squadron.source)}]`
-                  : ""
-              } (${squadron.points * (squadron.count || 1)})`;
+            ? (squadron["ace-name"] || squadron.name) + 
+              (squadron["ace-name"] ? " - " + squadron.name : "") + 
+              (squadron.source !== "regular" ? " [" + capitalizeFirstLetter(squadron.source) + "]" : "") + 
+              " (" + squadron.points + ")"
+            : squadron.name + 
+              (squadron.source !== "regular" ? " [" + capitalizeFirstLetter(squadron.source) + "]" : "") + 
+              " (" + (squadron.points * (squadron.count || 1)) + ")";
         if (!acc[key]) {
           acc[key] = {
             count: 0,
@@ -1202,16 +1188,16 @@ export default function FleetBuilder({
       Object.entries(groupedSquadrons).forEach(
         ([squadronKey, { count, isUnique }]) => {
           if (isUnique) {
-            text += `• ${squadronKey}\n`;
+            text += "• " + squadronKey + "\n";
           } else {
-            text += `• ${count} x ${squadronKey}\n`;
+            text += "• " + count + " x " + squadronKey + "\n";
           }
         }
       );
     }
-    text += `= ${totalSquadronPoints} Points\n\n`;
+    text += "= " + totalSquadronPoints + " Points\n\n";
 
-    text += `Total Points: ${points}`;
+    text += "Total Points: " + points;
 
     return text;
   };
@@ -2001,7 +1987,6 @@ export default function FleetBuilder({
             onClearAll={clearAllShips}
             onAdd={handleAddShip}
           />
-          <div className="max-w-[3000px] w-full mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 4xl:grid-cols-5 gap-2">
               {selectedShips.map((ship) => (
                 <SelectedShip
@@ -2015,10 +2000,9 @@ export default function FleetBuilder({
                   enabledUpgrades={enabledUpgrades[ship.id] || []}
                   filledSlots={filledSlots[ship.id] || {}}
                   hasCommander={hasCommander}
-                  traits={ship.traits || []}
-                />
-              ))}
-            </div>
+                traits={ship.traits || []}
+              />
+            ))}
           </div>
         </>
       ) : (

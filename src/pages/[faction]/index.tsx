@@ -10,6 +10,7 @@ import { ContentToggleButton } from '../../components/ContentToggleButton';
 import { Input } from '../../components/ui/input';
 import { Pencil } from 'lucide-react';
 import { UserAvatar } from '../../components/UserAvatar';
+import Link from 'next/link';
 
 export const factionLogos = {
   rebel: '/icons/rebel.svg',
@@ -67,13 +68,15 @@ export default function FactionPage() {
         <div className="flex justify-between items-center mb-4">
           <div className="flex items-center">
             {faction && (
-              <Image
-                src={factionLogos[faction as keyof typeof factionLogos]}
-                alt={`${faction} logo`}
-                width={32}
-                height={32}
-                className={`mr-2 ${currentTheme === 'dark' ? 'invert' : ''}`}
-              />
+              <Link href="/">
+                <Image
+                  src={factionLogos[faction as keyof typeof factionLogos]}
+                  alt={`${faction} logo`}
+                  width={32}
+                  height={32}
+                  className={`mr-2 ${currentTheme === 'dark' ? 'invert' : ''} cursor-pointer`}
+                />
+              </Link>
             )}
             <h1 className="text-2xl font-bold mr-4"></h1>
             {isEditingName ? (

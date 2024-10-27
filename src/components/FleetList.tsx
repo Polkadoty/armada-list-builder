@@ -95,9 +95,26 @@ export function FleetList() {
   };
 
   const handleFleetSelect = (fleet: Fleet) => {
+    // Clear any existing fleet data for all factions
+    const factions = ['rebel', 'empire', 'republic', 'separatist'];
+    factions.forEach(faction => {
+      localStorage.removeItem(`savedFleet_${faction}`);
+    });
+
+    // Set the flag and new fleet data
     document.cookie = "retrieved-from-list=true; path=/";
     localStorage.setItem(`savedFleet_${fleet.faction}`, fleet.fleet_data);
-    router.push(`/${fleet.faction}`);
+    
+    // If we're already on a faction page, first navigate to home to force a component reset
+    if (router.pathname.includes('[faction]')) {
+      router.push('/').then(() => {
+        setTimeout(() => {
+          router.push(`/${fleet.faction}`);
+        }, 0);
+      });
+    } else {
+      router.push(`/${fleet.faction}`);
+    }
   };
 
   const handleSort = (column: keyof Fleet) => {

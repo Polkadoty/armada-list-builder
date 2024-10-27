@@ -10,27 +10,38 @@ interface NotificationWindowProps {
   title?: string;
 }
 
-export function NotificationWindow({ 
-  message, 
-  onClose, 
+export function NotificationWindow({
+  title,
+  message,
+  onClose,
   showConfirmButton = false,
-  onConfirm,
-  title = "Notification"
+  onConfirm
 }: NotificationWindowProps) {
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent>
-        <DialogHeader className="flex flex-row items-center justify-between">
-          <DialogTitle>{title}</DialogTitle>
-        </DialogHeader>
-        <div className="py-4">{message}</div>
-        {showConfirmButton && onConfirm && (
-          <div className="flex justify-end space-x-2">
-            <Button variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
-          </div>
+      <DialogContent className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full">
+        {title && (
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold mb-4">{title}</DialogTitle>
+          </DialogHeader>
         )}
+        <p className="text-gray-700 dark:text-gray-300 mb-4">{message}</p>
+        <div className="flex justify-end gap-2">
+          {showConfirmButton && (
+            <Button
+              onClick={onConfirm}
+              variant="destructive"
+            >
+              Yes
+            </Button>
+          )}
+          <Button
+            onClick={onClose}
+            variant="outline"
+          >
+            {showConfirmButton ? 'No' : 'Close'}
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );
