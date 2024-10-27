@@ -265,7 +265,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-md bg-opacity-30 dark:bg-opacity-30">
-      <Card className="w-full h-full sm:w-11/12 sm:h-5/6 lg:w-3/4 lg:h-3/4 flex flex-col">
+      <Card className="w-full h-full sm:w-[95%] sm:h-[90%] lg:w-[85%] lg:h-[85%] flex flex-col">
         <div className="p-2 sm:p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
           {showSearch ? (
             <div className="flex-grow mr-2 relative">
@@ -298,7 +298,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
           </div>
         </div>
         <CardContent className="p-2 sm:p-4 flex-grow overflow-auto">
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-2">
             {displayedSquadrons.map((squadron) => (
               <div key={squadron.id} className="w-full aspect-[2/3]">
                 <Button

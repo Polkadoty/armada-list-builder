@@ -1978,7 +1978,7 @@ export default function FleetBuilder({
             onAdd={handleAddShip}
           />
           <div className="max-w-[3000px] w-full mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 4xl:grid-cols-5 gap-2">
               {selectedShips.map((ship) => (
                 <SelectedShip
                   key={ship.id}
@@ -2025,7 +2025,7 @@ export default function FleetBuilder({
             onClearAll={clearAllSquadrons}
             onAdd={handleAddSquadron}
           />
-          <div className="mb-4 grid grid-cols-1 md:grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-4">
+          <div className="mb-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-2">
             {selectedSquadrons.map((squadron) => (
               <SelectedSquadron
                 key={squadron.id}
