@@ -20,7 +20,7 @@ export function TextImportWindow({ onImport, onClose }: TextImportWindowProps) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <Card className="w-full max-w-lg md:max-w-2xl bg-white dark:bg-gray-800 backdrop-blur-md bg-opacity-30 dark:bg-opacity-30 rounded-lg shadow-lg flex flex-col">
+      <Card className="w-full max-w-lg md:max-w-2xl bg-white dark:bg-gray-800 backdrop-blur-md bg-opacity-90 dark:bg-opacity-90 rounded-lg shadow-lg flex flex-col">
         <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Import Fleet</h2>
           <Button variant="ghost" size="icon" onClick={onClose}>

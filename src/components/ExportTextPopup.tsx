@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Copy, Share, X } from 'lucide-react'; // Import icons
+import { NotificationWindow } from './NotificationWindow';
 
 interface ExportTextPopupProps {
   text: string;
@@ -9,30 +10,39 @@ interface ExportTextPopupProps {
 }
 
 export function ExportTextPopup({ text, onClose }: ExportTextPopupProps) {
+  const [showNotification, setShowNotification] = useState(false);
+  const [notificationMessage, setNotificationMessage] = useState('');
+
   const copyToClipboard = () => {
     navigator.clipboard.writeText(text).then(() => {
-      alert('Text copied to clipboard!');
+      setNotificationMessage('Text copied to clipboard!');
+      setShowNotification(true);
     }).catch(err => {
       console.error('Failed to copy text: ', err);
     });
   };
 
   const shareText = () => {
-    if (navigator.share) {
-      navigator.share({
-        title: 'Exported Text',
-        text: text,
-      }).catch(err => {
+    const shareData = {
+      title: 'Exported Fleet',
+      text: text,
+    };
+
+    if (navigator.canShare && navigator.canShare(shareData)) {
+      navigator.share(shareData).catch(err => {
         console.error('Failed to share text: ', err);
+        setNotificationMessage('Failed to share text. Please try again.');
+        setShowNotification(true);
       });
     } else {
-      alert('Share not supported on this browser.');
+      setNotificationMessage('Share not supported on this browser. Try copying the text instead.');
+      setShowNotification(true);
     }
   };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <Card className="w-full max-w-lg md:max-w-2xl bg-white dark:bg-gray-800 backdrop-blur-md bg-opacity-30 dark:bg-opacity-30 rounded-lg shadow-lg flex flex-col">
+      <Card className="w-full max-w-lg md:max-w-2xl bg-white dark:bg-gray-800 backdrop-blur-md bg-opacity-90 dark:bg-opacity-90 rounded-lg shadow-lg flex flex-col">
         <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Export Text</h2>
           <Button variant="ghost" size="icon" onClick={onClose}>
@@ -53,6 +63,12 @@ export function ExportTextPopup({ text, onClose }: ExportTextPopupProps) {
           </Button>
         </div>
       </Card>
+      {showNotification && (
+        <NotificationWindow
+          message={notificationMessage}
+          onClose={() => setShowNotification(false)}
+        />
+      )}
     </div>
   );
 }
