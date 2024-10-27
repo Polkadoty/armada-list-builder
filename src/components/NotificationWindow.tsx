@@ -1,5 +1,4 @@
 import React from 'react';
-import { X } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
@@ -29,7 +28,6 @@ export function NotificationWindow({
             className="h-6 w-6 p-0"
             onClick={onClose}
           >
-            <X className="h-4 w-4" />
           </Button>
         </DialogHeader>
         <div className="py-4">{message}</div>
