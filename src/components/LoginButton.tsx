@@ -9,7 +9,12 @@ export function LoginButton() {
 
   if (isLoading) {
     return (
-      <Button variant="outline" size="sm" disabled>
+      <Button 
+        variant="outline" 
+        size="sm" 
+        disabled
+        className="text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20"
+      >
         Loading...
       </Button>
     );
@@ -18,7 +23,12 @@ export function LoginButton() {
   if (error) {
     console.error('Auth Error:', error);
     return (
-      <Button variant="outline" size="sm" disabled>
+      <Button 
+        variant="outline" 
+        size="sm" 
+        disabled
+        className="text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20"
+      >
         Error
       </Button>
     );
@@ -30,6 +40,7 @@ export function LoginButton() {
         variant="outline" 
         size="sm" 
         asChild
+        className="text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20"
       >
         <Link href="/api/auth/logout">Sign Out</Link>
       </Button>
@@ -41,6 +52,7 @@ export function LoginButton() {
       variant="outline" 
       size="sm" 
       asChild
+      className="text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20"
     >
       <Link href="/api/auth/login">Sign In</Link>
     </Button>
