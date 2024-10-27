@@ -9,6 +9,7 @@ import { LoadingScreen } from '../../components/LoadingScreen';
 import { ContentToggleButton } from '../../components/ContentToggleButton';
 import { Input } from '../../components/ui/input';
 import { Pencil } from 'lucide-react';
+import { UserAvatar } from '../../components/UserAvatar';
 
 export const factionLogos = {
   rebel: '/icons/rebel.svg',
@@ -94,6 +95,7 @@ export default function FactionPage() {
             )}
           </div>
           <div className="flex items-center space-x-2">
+            <UserAvatar />
             <ContentToggleButton
               setIsLoading={setIsLoading}
               setLoadingProgress={setLoadingProgress}

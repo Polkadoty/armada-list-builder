@@ -10,6 +10,7 @@ import {
   Trash2,
   TriangleAlert,
   Import,
+  Save,
 } from "lucide-react";
 import { ShipSelector } from "./ShipSelector";
 import { SelectedShip } from "./SelectedShip";
@@ -41,6 +42,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { FleetRecoveryPopup } from "./FleetRecoveryPopup";
+import { SaveFleetButton } from './SaveFleetButton';
 
 export interface Ship {
   id: string;
@@ -296,6 +298,17 @@ export default function FleetBuilder({
       checkTournamentViolations();
     }
   }, [tournamentMode, checkTournamentViolations]);
+
+  const handleSaveFleet = () => {
+    const exportText = generateExportText();
+    return (
+      <SaveFleetButton
+        fleetData={exportText}
+        faction={faction}
+        fleetName={fleetName}
+      />
+    );
+  };
 
   const handleAddShip = () => {
     setShowShipSelector(true);
@@ -1940,6 +1953,14 @@ export default function FleetBuilder({
               </TooltipTrigger>
               <TooltipContent>
                 <p>Import Fleet</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                {handleSaveFleet()}
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Save Fleet</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>

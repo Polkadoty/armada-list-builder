@@ -9,8 +9,7 @@ import { LoadingScreen } from '../components/LoadingScreen';
 import { checkAndFetchData } from '../utils/dataFetcher';
 import { ContentToggleButton } from '../components/ContentToggleButton';
 import { LoginButton } from '../components/LoginButton';
-
-// a
+import { UserAvatar } from '../components/UserAvatar';
 
 const factionShips = {
   rebel: '/images/cr90.webp',
@@ -44,7 +43,8 @@ export default function Home() {
       <StarryBackground show={true} lightDisabled={true}/>
       {isLoading && <LoadingScreen progress={loadingProgress} message={loadingMessage} />}
       <div className={`bg-white dark:bg-transparent p-8 flex-grow lg:w-1/3 lg:min-w-[300px] relative z-10`}>
-        <div className="flex justify-end space-x-2 mb-4">
+        <div className="flex justify-end space-x-2 mb-4 items-center">
+          <UserAvatar />
           <ContentToggleButton setIsLoading={setIsLoading} setLoadingProgress={setLoadingProgress} setLoadingMessage={setLoadingMessage} tournamentMode={tournamentMode} setTournamentMode={setTournamentMode} />
           <ThemeToggle />
         </div>
