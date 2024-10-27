@@ -9,8 +9,7 @@ import {
   FileText,
   Trash2,
   TriangleAlert,
-  Import,
-  Save
+  Import
 } from "lucide-react";
 import { ShipSelector } from "./ShipSelector";
 import { SelectedShip } from "./SelectedShip";
@@ -298,22 +297,6 @@ export default function FleetBuilder({
       checkTournamentViolations();
     }
   }, [tournamentMode, checkTournamentViolations]);
-
-  const handleSaveFleet = () => {
-    const exportText = generateExportText();
-    const commander = selectedShips
-      .flatMap(ship => ship.assignedUpgrades)
-      .find(upgrade => upgrade.type === 'commander')?.name || 'No Commander';
-    return (
-      <SaveFleetButton
-        fleetData={exportText}
-        faction={faction}
-        fleetName={fleetName}
-        commander={commander}
-        points={points}
-      />
-    );
-  };
 
   const handleAddShip = () => {
     setShowShipSelector(true);

@@ -21,7 +21,8 @@ export function SaveFleetButton({ fleetData, faction, fleetName, commander, poin
 
   const handleSaveFleet = async () => {
     if (!user) {
-      alert('Please sign in to save your fleet');
+      setNotificationMessage('Please sign in to save your fleet');
+      setShowNotification(true);
       return;
     }
 
