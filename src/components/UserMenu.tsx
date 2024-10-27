@@ -24,36 +24,38 @@ export function UserMenu() {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Avatar className="cursor-pointer">
+        <Avatar className="cursor-pointer hover:opacity-80 transition-opacity">
           <AvatarImage src={user?.picture || undefined} alt={user?.name || 'User'} />
-          <AvatarFallback>
+          <AvatarFallback className="bg-background/10 backdrop-blur-sm">
             <User className="h-5 w-5" />
           </AvatarFallback>
         </Avatar>
       </PopoverTrigger>
-      <PopoverContent className="w-80 bg-white dark:bg-gray-800 backdrop-blur-md bg-opacity-90 dark:bg-opacity-90 border border-gray-200 dark:border-gray-700 shadow-lg">
+      <PopoverContent className="w-80 p-0 bg-background/60 dark:bg-gray-800/60 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-lg">
         {user ? (
-          <div className="space-y-4">
-            <div>
-              <h4 className="font-medium text-gray-900 dark:text-white">User Information</h4>
-              <p className="text-gray-600 dark:text-gray-300">Name: {user.name}</p>
+          <div className="space-y-4 p-4">
+            <div className="space-y-2">
+              <h4 className="font-medium text-foreground/90">User Information</h4>
+              <p className="text-foreground/60">{user.name}</p>
             </div>
-            <FleetList />
+            <div className="py-2 border-t border-gray-200/10 dark:border-gray-700/10">
+              <FleetList />
+            </div>
             <Button 
-              variant="outline" 
+              variant="ghost" 
               size="sm" 
               asChild
-              className="w-full"
+              className="w-full bg-background/40 hover:bg-background/60 transition-colors"
             >
               <Link href="/api/auth/logout">Sign Out</Link>
             </Button>
           </div>
         ) : (
           <Button 
-            variant="outline" 
+            variant="ghost" 
             size="sm" 
             asChild
-            className="w-full"
+            className="w-full bg-background/40 hover:bg-background/60 transition-colors"
           >
             <Link href="/api/auth/login">Sign In</Link>
           </Button>
