@@ -23,18 +23,27 @@ export function SaveFleetButton({ fleetData, faction, fleetName }: SaveFleetButt
     setIsSaving(true);
 
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('fleets')
-        .upsert({
-          user_id: user.sub,
-          fleet_data: fleetData,
-          faction,
-          fleet_name: fleetName,
-        }, {
-          onConflict: 'user_id,fleet_name',
-        });
+        .select('id')
+        .eq('user_id', user.sub)
+        .eq('fleet_name', fleetName)
+        .single();
 
-      if (error) throw error;
+      if (data) {
+        // Update existing fleet
+        const { error } = await supabase
+          .from('fleets')
+          .update({ fleet_data: fleetData, faction })
+          .eq('id', data.id);
+        if (error) throw error;
+      } else {
+        // Insert new fleet
+        const { error } = await supabase
+          .from('fleets')
+          .insert({ user_id: user.sub, fleet_name: fleetName, fleet_data: fleetData, faction });
+        if (error) throw error;
+      }
 
       alert('Fleet saved successfully!');
     } catch (error) {
