@@ -38,12 +38,6 @@ export function NotificationWindow({
             <Button variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button 
-              variant="destructive" 
-              onClick={onConfirm}
-            >
-              Delete
-            </Button>
           </div>
         )}
       </DialogContent>
