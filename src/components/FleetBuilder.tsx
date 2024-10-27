@@ -1463,8 +1463,18 @@ export default function FleetBuilder({
               );
               const usedSlots = existingUpgradesOfType.map(u => u.upgrade.slotIndex || 0);
               let nextSlot = 0;
-              while (usedSlots.includes(nextSlot)) {
-                nextSlot++;
+
+              // For officer upgrades specifically, we need to check if there's already an officer
+              // in the first slot and if so, use the second slot
+              if (upgrade.type === "officer") {
+                if (usedSlots.includes(0)) {
+                  nextSlot = 1;
+                }
+              } else {
+                // For other upgrade types, find the next available slot
+                while (usedSlots.includes(nextSlot)) {
+                  nextSlot++;
+                }
               }
       
               upgradesToAdd.push({
