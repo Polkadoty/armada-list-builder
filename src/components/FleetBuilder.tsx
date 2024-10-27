@@ -9,7 +9,8 @@ import {
   FileText,
   Trash2,
   TriangleAlert,
-  Import
+  Import,
+  Save
 } from "lucide-react";
 import { ShipSelector } from "./ShipSelector";
 import { SelectedShip } from "./SelectedShip";
@@ -1968,7 +1969,9 @@ export default function FleetBuilder({
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
-                {handleSaveFleet()}
+                <Button variant="outline" onClick={handleSaveFleet}>
+                  <Save className="h-4 w-4" />
+                </Button>
               </TooltipTrigger>
               <TooltipContent>
                 <p>Save Fleet</p>

@@ -44,13 +44,7 @@ export function UserMenu() {
             </>
           )}
           <div className="px-2 py-2">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="w-full justify-start text-sm font-normal h-9"
-            >
-              Fleet List
-            </Button>
+            <FleetList />
           </div>
           <Separator />
           <div className="px-2 py-2">

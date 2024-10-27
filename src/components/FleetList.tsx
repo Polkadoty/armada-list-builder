@@ -33,6 +33,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { NotificationWindow } from "@/components/NotificationWindow";
 
 interface Fleet {
   id: string;
@@ -70,6 +71,8 @@ export function FleetList() {
   const [factionFilter, setFactionFilter] = useState<string[]>([]);
   const [commanderFilter, setCommanderFilter] = useState<string[]>([]);
   const router = useRouter();
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [fleetToDelete, setFleetToDelete] = useState<Fleet | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -132,6 +135,29 @@ export function FleetList() {
 
   const uniqueFactions = Array.from(new Set(fleets.map(fleet => fleet.faction)));
   const uniqueCommanders = Array.from(new Set(fleets.map(fleet => fleet.commander)));
+
+  const handleFleetDelete = async (fleet: Fleet) => {
+    setFleetToDelete(fleet);
+    setShowDeleteConfirmation(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!fleetToDelete || !user) return;
+    
+    const { error } = await supabase
+      .from('fleets')
+      .delete()
+      .eq('id', fleetToDelete.id)
+      .eq('user_id', user.sub);
+
+    if (error) {
+      console.error('Error deleting fleet:', error);
+    } else {
+      fetchFleets();
+    }
+    setShowDeleteConfirmation(false);
+    setFleetToDelete(null);
+  };
 
   return (
     <Dialog>
@@ -249,6 +275,12 @@ export function FleetList() {
                       <DropdownMenuItem onClick={() => handleFleetSelect(fleet)}>
                         Load Fleet
                       </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        onClick={() => handleFleetDelete(fleet)}
+                        className="text-red-600 focus:text-red-600 focus:bg-red-100/50"
+                      >
+                        Delete Fleet
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
@@ -313,6 +345,18 @@ export function FleetList() {
             </Button>
           </div>
         </div>
+        {showDeleteConfirmation && fleetToDelete && (
+          <NotificationWindow
+            title="Delete Fleet"
+            message={`Are you sure you want to delete "${fleetToDelete.fleet_name}"?`}
+            onClose={() => {
+              setShowDeleteConfirmation(false);
+              setFleetToDelete(null);
+            }}
+            showConfirmButton={true}
+            onConfirm={confirmDelete}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );

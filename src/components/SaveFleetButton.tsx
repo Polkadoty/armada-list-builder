@@ -3,6 +3,7 @@ import { useUser } from '@auth0/nextjs-auth0/client';
 import { Button } from "@/components/ui/button";
 import { supabase } from '../lib/supabase';
 import { Save } from 'lucide-react';
+import { NotificationWindow } from '@/components/NotificationWindow';
 
 interface SaveFleetButtonProps {
     fleetData: string;
@@ -15,6 +16,8 @@ interface SaveFleetButtonProps {
 export function SaveFleetButton({ fleetData, faction, fleetName, commander, points }: SaveFleetButtonProps) {
   const { user } = useUser();
   const [isSaving, setIsSaving] = useState(false);
+  const [showNotification, setShowNotification] = useState(false);
+  const [notificationMessage, setNotificationMessage] = useState("");
 
   const handleSaveFleet = async () => {
     if (!user) {
@@ -54,24 +57,33 @@ export function SaveFleetButton({ fleetData, faction, fleetName, commander, poin
         if (error) throw error;
       }
 
-      alert('Fleet saved successfully!');
+      setNotificationMessage('Fleet saved successfully!');
+      setShowNotification(true);
     } catch (error) {
       console.error('Error saving fleet:', error);
-      alert('Failed to save fleet. Please try again.');
+      setNotificationMessage('Failed to save fleet. Please try again.');
+      setShowNotification(true);
     } finally {
       setIsSaving(false);
     }
   };
 
   return (
-    <Button 
-      onClick={handleSaveFleet} 
-      disabled={isSaving || !user}
-      variant="outline"
-      size="sm"
-    >
-      <Save className="mr-2 h-4 w-4" />
-      {isSaving ? 'Saving...' : 'Save Fleet'}
-    </Button>
+    <>
+      <Button 
+        onClick={handleSaveFleet} 
+        disabled={isSaving || !user}
+        variant="outline"
+        size="sm"
+      >
+        <Save className="mr-2 h-4 w-4" />
+      </Button>
+      {showNotification && (
+        <NotificationWindow
+          message={notificationMessage}
+          onClose={() => setShowNotification(false)}
+        />
+      )}
+    </>
   );
 }
