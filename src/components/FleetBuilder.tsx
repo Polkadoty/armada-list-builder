@@ -34,6 +34,12 @@ import {
 } from "@/components/ui/popover";
 import { TextImportWindow } from "./TextImportWindow";
 import { NotificationWindow } from "./NotificationWindow";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export interface Ship {
   id: string;
@@ -230,6 +236,7 @@ export default function FleetBuilder({
   const [showImportWindow, setShowImportWindow] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState("");
+  const [squadronIdCounter, setSquadronIdCounter] = useState(0);
 
   const checkTournamentViolations = useCallback(() => {
     const violations: string[] = [];
@@ -564,8 +571,7 @@ export default function FleetBuilder({
           const isModification = upgrade.modification ? "modification" : "";
 
           // Determine the source based on the alias
-          let source: "regular" | "legacy" | "legends" | "oldLegacy" =
-            "regular";
+          let source: "regular" | "legacy" | "legends" | "oldLegacy" = "regular";
           if (upgrade.alias) {
             if (upgrade.alias.includes("OldLegacy")) {
               source = "oldLegacy";
@@ -578,7 +584,7 @@ export default function FleetBuilder({
 
           const newUpgrade: Upgrade = {
             ...upgrade,
-            slotIndex: ship.assignedUpgrades.length,
+            slotIndex: upgrade.slotIndex || ship.assignedUpgrades.length,
             source: source,
             searchableText: JSON.stringify({
               ...upgrade,
@@ -591,7 +597,7 @@ export default function FleetBuilder({
 
           const updatedAssignedUpgrades = [...ship.assignedUpgrades];
           const existingUpgradeIndex = updatedAssignedUpgrades.findIndex(
-            (u) => u.type === upgrade.type
+            (u) => u.type === upgrade.type && u.slotIndex === newUpgrade.slotIndex
           );
 
           if (existingUpgradeIndex !== -1) {
@@ -910,34 +916,42 @@ export default function FleetBuilder({
               squadron["unique-class"].forEach((uc) => addUniqueClassName(uc));
             }
 
-            return { ...squadron, id: Date.now().toString(), count: 1 };
+            return { ...squadron, id: generateUniqueSquadronId(), count: 1 };
           }
           return s;
         })
       );
       setSquadronToSwap(null);
     } else {
-      const newSquadron: Squadron = {
-        ...squadron,
-        id: Date.now().toString(),
-        count: 1,
-      };
-      setSelectedSquadrons((prevSquadrons) => [...prevSquadrons, newSquadron]);
-      setPreviousPoints(points);
-      setPreviousSquadronPoints(totalSquadronPoints);
-      const newPoints = points + squadron.points;
-      setPoints(newPoints);
-      setTotalSquadronPoints(totalSquadronPoints + squadron.points);
-
-      // Add unique class names for the new squadron
-      if (squadron.unique) {
-        addUniqueClassName(squadron.name);
-      }
-      if (squadron["unique-class"]) {
-        squadron["unique-class"].forEach((uc) => addUniqueClassName(uc));
-      }
+      handleAddingSquadron(squadron);
     }
     setShowSquadronSelector(false);
+  };
+
+  const handleAddingSquadron = (squadron: Squadron) => {
+    const squadronId = generateUniqueSquadronId();
+    const newSquadron: Squadron = {
+      ...squadron,
+      id: squadronId,
+      count: 1,
+      source: squadron.source,
+    };
+    setSelectedSquadrons((prevSquadrons) => [...prevSquadrons, newSquadron]);
+    setPreviousPoints(points);
+    setPreviousSquadronPoints(totalSquadronPoints);
+    const newPoints = points + squadron.points;
+    setPoints(newPoints);
+    setTotalSquadronPoints(totalSquadronPoints + squadron.points);
+  
+    // Add unique class names for the new squadron
+    if (squadron.unique) {
+      addUniqueClassName(squadron.name);
+    }
+    if (squadron["unique-class"]) {
+      squadron["unique-class"].forEach((uc) => addUniqueClassName(uc));
+    }
+    
+    return squadronId;
   };
 
   const handleRemoveSquadron = (id: string) => {
@@ -1378,11 +1392,7 @@ export default function FleetBuilder({
             currentShipId = newShip.id;
           }
         }
-      } else if (
-        !processingSquadrons &&
-        line.startsWith("•") &&
-        currentShipId
-      ) {
+      } else if (!processingSquadrons && line.startsWith("•") && currentShipId) {
         // Handle upgrades
         const upgradeMatch = line.match(/^•\s*(.+?)\s*\((\d+)\)/);
         if (upgradeMatch) {
@@ -1394,8 +1404,7 @@ export default function FleetBuilder({
           if (upgradeKey) {
             const upgrade = fetchUpgrade(upgradeKey);
             if (upgrade) {
-              let source: "regular" | "legacy" | "legends" | "oldLegacy" =
-                "regular";
+              let source: "regular" | "legacy" | "legends" | "oldLegacy" = "regular";
               if (upgradeName.includes("[OldLegacy]")) {
                 source = "oldLegacy";
               } else if (upgradeName.includes("[Legacy]")) {
@@ -1403,9 +1412,20 @@ export default function FleetBuilder({
               } else if (upgradeName.includes("[Legends]")) {
                 source = "legends";
               }
+      
+              // Find the next available slot for this upgrade type
+              const existingUpgradesOfType = upgradesToAdd.filter(
+                u => u.shipId === currentShipId && u.upgrade.type === upgrade.type
+              );
+              const usedSlots = existingUpgradesOfType.map(u => u.upgrade.slotIndex || 0);
+              let nextSlot = 0;
+              while (usedSlots.includes(nextSlot)) {
+                nextSlot++;
+              }
+      
               upgradesToAdd.push({
                 shipId: currentShipId,
-                upgrade: { ...upgrade, source },
+                upgrade: { ...upgrade, source, slotIndex: nextSlot },
               });
             } else {
               console.log(`Upgrade not found: ${upgradeName}`);
@@ -1448,16 +1468,16 @@ export default function FleetBuilder({
               }
               const selectedSquadron = {
                 ...squadron,
-                id: Date.now().toString(),
-                count: 1,
                 source,
               };
-              handleSelectSquadron(selectedSquadron);
+              const squadronId = handleAddingSquadron(selectedSquadron);
 
               // Increment the count for the remaining squadrons
-              for (let i = 1; i < count; i++) {
-                console.log(`Incrementing squadron count:`, selectedSquadron);
-                handleIncrementSquadron(selectedSquadron.id);
+              if (squadronId) {
+                for (let i = 1; i < count; i++) {
+                  console.log(`Incrementing squadron count for ID: ${squadronId}`);
+                  handleIncrementSquadron(squadronId);
+                }
               }
             } else {
               console.log(`Squadron not found: ${squadronName}`);
@@ -1828,19 +1848,50 @@ export default function FleetBuilder({
     };
   }, []);
 
+  const generateUniqueSquadronId = (): string => {
+    setSquadronIdCounter(prev => prev + 1);
+    const randomPart = Math.floor(Math.random() * 10000).toString().padStart(4, "0");
+    return `squadron_${squadronIdCounter}_${randomPart}`;
+  };
+
   return (
     <div className="max-w-4xl mx-auto">
       <div className="flex flex-col sm:flex-row items-start sm:items-center mb-4">
         <div className="mb-2 sm:mb-0 flex items-center justify-start space-x-2">
-          <Button variant="outline" onClick={handlePrint}>
-            <Printer className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" onClick={() => setShowExportPopup(true)}>
-            <FileText className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" onClick={() => setShowImportWindow(true)}>
-            <Import className="h-4 w-4" />
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" onClick={handlePrint}>
+                  <Printer className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Print Fleet</p>
+              </TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" onClick={() => setShowExportPopup(true)}>
+                  <FileText className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Export Fleet</p>
+              </TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" onClick={() => setShowImportWindow(true)}>
+                  <Import className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Import Fleet</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           {tournamentMode && tournamentViolations.length > 0 && (
             <Popover>
               <PopoverTrigger asChild>
