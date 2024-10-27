@@ -1414,14 +1414,15 @@ export default function FleetBuilder({
         // Handle ships
         const shipMatch = line.match(/^(.+?)\s*\((\d+)\)/);
         if (shipMatch) {
-          let [, shipNameTemp, shipPoints] = shipMatch;
+          const [, shipName, shipPoints] = shipMatch;
+          let modifiedShipName = shipName;
           
           // Handle the Venator II case for Empire faction
-          if (shipNameTemp.trim() === "Venator II" && shipPoints === "100" && faction.toLowerCase() === "empire") {
-            shipNameTemp = "Venator II-Class Star Destroyer";
+          if (shipName.trim() === "Venator II" && shipPoints === "100" && faction.toLowerCase() === "empire") {
+            modifiedShipName = "Venator II-Class Star Destroyer";
           }
           
-          const newShip = addShipToFleet(shipNameTemp, shipPoints);
+          const newShip = addShipToFleet(modifiedShipName, shipPoints);
           if (newShip) {
             shipsToAdd.push(newShip);
             currentShipId = newShip.id;
