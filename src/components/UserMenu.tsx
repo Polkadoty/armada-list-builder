@@ -9,6 +9,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User } from 'lucide-react';
 import { FleetList } from './FleetList';
+import { Separator } from "@/components/ui/separator";
 
 export function UserMenu() {
   const { user, error, isLoading } = useUser();
@@ -31,35 +32,40 @@ export function UserMenu() {
           </AvatarFallback>
         </Avatar>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-0 bg-background/60 dark:bg-gray-800/60 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-lg">
-        {user ? (
-          <div className="space-y-4 p-4">
-            <div className="space-y-2">
-              <h4 className="font-medium text-foreground/90">User Information</h4>
-              <p className="text-foreground/60">{user.name}</p>
-            </div>
-            <div className="py-2 border-t border-gray-200/10 dark:border-gray-700/10">
-              <FleetList />
-            </div>
+      <PopoverContent className="w-56 p-0">
+        <div>
+          {user && (
+            <>
+              <div className="px-3 py-3">
+                <p className="text-sm font-medium leading-none">{user.name}</p>
+                <p className="text-xs text-muted-foreground mt-1">{user.email}</p>
+              </div>
+              <Separator />
+            </>
+          )}
+          <div className="px-2 py-2">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="w-full justify-start text-sm font-normal h-9"
+            >
+              Fleet List
+            </Button>
+          </div>
+          <Separator />
+          <div className="px-2 py-2">
             <Button 
               variant="ghost" 
               size="sm" 
               asChild
-              className="w-full bg-background/40 hover:bg-background/60 transition-colors"
+              className="w-full justify-start text-sm font-normal h-9 text-red-600 hover:text-red-600 hover:bg-red-100/50"
             >
-              <Link href="/api/auth/logout">Sign Out</Link>
+              <Link href={user ? "/api/auth/logout" : "/api/auth/login"}>
+                {user ? "Log out" : "Sign in"}
+              </Link>
             </Button>
           </div>
-        ) : (
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            asChild
-            className="w-full bg-background/40 hover:bg-background/60 transition-colors"
-          >
-            <Link href="/api/auth/login">Sign In</Link>
-          </Button>
-        )}
+        </div>
       </PopoverContent>
     </Popover>
   );

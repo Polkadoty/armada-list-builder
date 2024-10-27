@@ -42,7 +42,7 @@ export function LoginButton() {
         asChild
         className="text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20"
       >
-        <Link href="/api/auth/logout">Sign Out</Link>
+        <Link href="/api/auth/logout">SIGN OUT</Link>
       </Button>
     );
   }
@@ -54,7 +54,7 @@ export function LoginButton() {
       asChild
       className="text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20"
     >
-      <Link href="/api/auth/login">Sign In</Link>
+      <Link href="/api/auth/login">SIGN IN</Link>
     </Button>
   );
 }

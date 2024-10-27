@@ -1145,7 +1145,7 @@ export default function FleetBuilder({
       .find((upgrade) => upgrade.type === "commander");
     if (commander) {
       text += `Commander: ${commander.name}${
-        commander.type !== "regular"
+        commander.source !== "regular"
           ? ` [${capitalizeFirstLetter(commander.source)}]`
           : ""
       } (${commander.points})\n`;
