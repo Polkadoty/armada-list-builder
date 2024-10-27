@@ -240,6 +240,7 @@ export default function FleetBuilder({
   const [notificationMessage, setNotificationMessage] = useState("");
   const [squadronIdCounter, setSquadronIdCounter] = useState(0);
   const [showRecoveryPopup, setShowRecoveryPopup] = useState(false);
+  const [hasLoadedPage, setHasLoadedPage] = useState(false);
 
   const checkTournamentViolations = useCallback(() => {
     const violations: string[] = [];
@@ -1217,15 +1218,16 @@ export default function FleetBuilder({
     const savedFleet = localStorage.getItem(`savedFleet_${faction}`);
     const retrievedFromList = document.cookie.includes('retrieved-from-list=true');
   
-    if (savedFleet && selectedShips.length === 0 && selectedSquadrons.length === 0) {
+    if (!hasLoadedPage && savedFleet && selectedShips.length === 0 && selectedSquadrons.length === 0) {
       if (retrievedFromList) {
         handleImportFleet(savedFleet);
         document.cookie = "retrieved-from-list=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
       } else {
         setShowRecoveryPopup(true);
       }
+      setHasLoadedPage(true);
     }
-  }, [faction, selectedShips.length, selectedSquadrons.length]);
+  }, [faction, selectedShips.length, selectedSquadrons.length, hasLoadedPage]);
   
   const handleRecoverFleet = () => {
     const savedFleet = localStorage.getItem(`savedFleet_${faction}`);
