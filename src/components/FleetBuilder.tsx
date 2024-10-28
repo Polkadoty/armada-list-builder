@@ -1707,7 +1707,11 @@ export default function FleetBuilder({
     if (printWindow) {
       printWindow.document.write(printContent);
       printWindow.document.close();
-      printWindow.print();
+      
+      // Wait for the page to load before printing
+      printWindow.onload = () => {
+        printWindow.print();
+      };
     }
   };
 
