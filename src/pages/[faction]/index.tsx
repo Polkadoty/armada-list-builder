@@ -43,7 +43,7 @@ export default function FactionPage() {
     setMounted(true);
   }, []);
 
-  if (!mounted) return null;
+  if (!mounted || !faction) return null;
 
   const currentTheme = theme === 'system' ? systemTheme : theme;
 
