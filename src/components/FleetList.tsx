@@ -34,6 +34,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { NotificationWindow } from "@/components/NotificationWindow";
+import { useTheme } from 'next-themes';
 
 interface Fleet {
   id: string;
@@ -61,6 +62,7 @@ const columns: SortableColumn[] = [
 ];
 
 export function FleetList() {
+  const { theme } = useTheme();
   const { user } = useUser();
   const [fleets, setFleets] = useState<Fleet[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -187,7 +189,7 @@ export function FleetList() {
           Fleet List
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-[95vw] sm:max-w-3xl overflow-x-auto bg-background border shadow-lg">
+      <DialogContent className={`dialog-content ${theme === 'dark' ? 'dark' : ''} max-w-[95vw] sm:max-w-3xl overflow-x-auto border`}>
         <DialogHeader>
           <DialogTitle>Your Fleets</DialogTitle>
           <div className="flex flex-wrap items-center gap-2 mt-4">

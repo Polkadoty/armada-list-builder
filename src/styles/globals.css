@@ -132,3 +132,20 @@ body {
   height: calc(100vh - 200px); /* Adjust 200px based on your header height */
   overflow-y: auto;
 }
+
+.dialog-content {
+  background-color: rgba(255, 255, 255, 0.8); /* Light mode */
+  color: black;
+  backdrop-filter: blur(10px);
+  border-radius: 8px;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.dialog-content.dark {
+  background-color: rgba(0, 0, 0, 0.8); /* Dark mode */
+  color: white;
+}
+
+.dialog-content a {
+  color: blue; /* Link color */
+}
