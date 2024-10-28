@@ -182,12 +182,12 @@ export function FleetList() {
         <Button
           variant="ghost"
           size="sm"
-          className="w-full justify-start text-sm font-normal h-9"
+          className="w-full justify-start text-sm font-normal h-9 text-foreground hover:bg-accent hover:text-accent-foreground"
         >
           Fleet List
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-[95vw] sm:max-w-3xl overflow-x-auto bg-background/80 backdrop-blur-md">
+      <DialogContent className="max-w-[95vw] sm:max-w-3xl overflow-x-auto bg-background dark:bg-gray-900 backdrop-blur-md">
         <DialogHeader>
           <DialogTitle>Your Fleets</DialogTitle>
           <div className="flex flex-wrap items-center gap-2 mt-4">
@@ -245,11 +245,11 @@ export function FleetList() {
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
-              <TableRow>
+              <TableRow className="hover:bg-accent">
                 {columns.filter(col => col.visible).map((column) => (
                   <TableHead 
                     key={column.id}
-                    className="cursor-pointer"
+                    className="cursor-pointer text-foreground hover:text-accent-foreground"
                     onClick={() => handleSort(column.id)}
                   >
                     {column.label}
@@ -267,25 +267,25 @@ export function FleetList() {
             </TableHeader>
             <TableBody>
               {paginatedFleets.map((fleet) => (
-                <TableRow key={fleet.id}>
+                <TableRow key={fleet.id} className="hover:bg-accent">
                   <TableCell>
                     <button
                       onClick={() => handleFleetSelect(fleet)}
-                      className="text-blue-500 hover:underline"
+                      className="text-primary hover:underline"
                     >
                       {fleet.fleet_name}
                     </button>
                   </TableCell>
-                  <TableCell>{capitalizeFirstLetter(fleet.faction)}</TableCell>
-                  <TableCell>{fleet.commander}</TableCell>
-                  <TableCell>{fleet.points}</TableCell>
+                  <TableCell className="text-foreground">{capitalizeFirstLetter(fleet.faction)}</TableCell>
+                  <TableCell className="text-foreground">{fleet.commander}</TableCell>
+                  <TableCell className="text-foreground">{fleet.points}</TableCell>
                   {columns.find(col => col.id === 'date_added')?.visible && (
-                    <TableCell>{new Date(fleet.date_added).toLocaleDateString()}</TableCell>
+                    <TableCell className="text-foreground">{new Date(fleet.date_added).toLocaleDateString()}</TableCell>
                   )}
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
+                        <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-accent">
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
@@ -295,7 +295,7 @@ export function FleetList() {
                         </DropdownMenuItem>
                         <DropdownMenuItem 
                           onClick={() => handleFleetDelete(fleet)}
-                          className="text-red-600 focus:text-red-600 focus:bg-red-100/50"
+                          className="text-destructive focus:text-destructive focus:bg-destructive/10"
                         >
                           Delete Fleet
                         </DropdownMenuItem>
