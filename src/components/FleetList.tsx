@@ -187,7 +187,7 @@ export function FleetList() {
           Fleet List
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-[95vw] sm:max-w-3xl overflow-x-auto bg-background dark:bg-gray-900 backdrop-blur-md">
+      <DialogContent className="max-w-[95vw] sm:max-w-3xl overflow-x-auto bg-background border shadow-lg">
         <DialogHeader>
           <DialogTitle>Your Fleets</DialogTitle>
           <div className="flex flex-wrap items-center gap-2 mt-4">
@@ -267,25 +267,25 @@ export function FleetList() {
             </TableHeader>
             <TableBody>
               {paginatedFleets.map((fleet) => (
-                <TableRow key={fleet.id} className="hover:bg-accent">
+                <TableRow key={fleet.id} className="hover:bg-muted/50">
                   <TableCell>
                     <button
                       onClick={() => handleFleetSelect(fleet)}
-                      className="text-primary hover:underline"
+                      className="text-blue-600 dark:text-blue-400 hover:underline"
                     >
                       {fleet.fleet_name}
                     </button>
                   </TableCell>
-                  <TableCell className="text-foreground">{capitalizeFirstLetter(fleet.faction)}</TableCell>
-                  <TableCell className="text-foreground">{fleet.commander}</TableCell>
-                  <TableCell className="text-foreground">{fleet.points}</TableCell>
+                  <TableCell>{capitalizeFirstLetter(fleet.faction)}</TableCell>
+                  <TableCell>{fleet.commander}</TableCell>
+                  <TableCell>{fleet.points}</TableCell>
                   {columns.find(col => col.id === 'date_added')?.visible && (
-                    <TableCell className="text-foreground">{new Date(fleet.date_added).toLocaleDateString()}</TableCell>
+                    <TableCell>{new Date(fleet.date_added).toLocaleDateString()}</TableCell>
                   )}
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-accent">
+                        <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-muted">
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
