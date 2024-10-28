@@ -15,6 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { useRouter } from 'next/router';
 import { Button } from "@/components/ui/button";
@@ -75,6 +76,9 @@ export function FleetList() {
   const router = useRouter();
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [fleetToDelete, setFleetToDelete] = useState<Fleet | null>(null);
+  const [showRenameDialog, setShowRenameDialog] = useState(false);
+  const [fleetToRename, setFleetToRename] = useState<Fleet | null>(null);
+  const [newFleetName, setNewFleetName] = useState('');
 
   useEffect(() => {
     if (user) {
@@ -176,6 +180,41 @@ export function FleetList() {
     }
     setShowDeleteConfirmation(false);
     setFleetToDelete(null);
+  };
+
+  const handleFleetRename = async () => {
+    if (!fleetToRename || !user || !newFleetName.trim()) return;
+    
+    // Parse the fleet data to update the name within it
+    let updatedFleetData = fleetToRename.fleet_data;
+    try {
+      // Find the name line and replace it
+      updatedFleetData = fleetToRename.fleet_data.replace(
+        /Name: .*$/m,
+        `Name: ${newFleetName.trim()}`
+      );
+    } catch (error) {
+      console.error('Error updating fleet data name:', error);
+    }
+
+    const { error } = await supabase
+      .from('fleets')
+      .update({ 
+        fleet_name: newFleetName.trim(),
+        fleet_data: updatedFleetData
+      })
+      .eq('id', fleetToRename.id)
+      .eq('user_id', user.sub);
+
+    if (error) {
+      console.error('Error renaming fleet:', error);
+    } else {
+      fetchFleets();
+    }
+    
+    setShowRenameDialog(false);
+    setFleetToRename(null);
+    setNewFleetName('');
   };
 
   return (
@@ -295,6 +334,13 @@ export function FleetList() {
                         <DropdownMenuItem onClick={() => handleFleetSelect(fleet)}>
                           Load Fleet
                         </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => {
+                          setFleetToRename(fleet);
+                          setNewFleetName(fleet.fleet_name);
+                          setShowRenameDialog(true);
+                        }}>
+                          Rename Fleet
+                        </DropdownMenuItem>
                         <DropdownMenuItem 
                           onClick={() => handleFleetDelete(fleet)}
                           className="text-destructive focus:text-destructive focus:bg-destructive/10"
@@ -377,6 +423,42 @@ export function FleetList() {
             showConfirmButton={true}
             onConfirm={confirmDelete}
           />
+        )}
+        {showRenameDialog && fleetToRename && (
+          <Dialog open={showRenameDialog} onOpenChange={setShowRenameDialog}>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Rename Fleet</DialogTitle>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Input
+                    id="name"
+                    value={newFleetName}
+                    onChange={(e) => setNewFleetName(e.target.value)}
+                    className="col-span-4"
+                    placeholder="Enter new fleet name"
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => {
+                    setShowRenameDialog(false);
+                    setFleetToRename(null);
+                    setNewFleetName('');
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" onClick={handleFleetRename}>
+                  Save Changes
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         )}
       </DialogContent>
     </Dialog>
