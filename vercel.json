@@ -1,9 +1,0 @@
-{
-    "redirects": [
-      {
-        "source": "/(.*)",
-        "destination": "https://builder.swarmada.wiki/$1",
-        "permanent": true
-      }
-    ]
-  }
