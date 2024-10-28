@@ -1390,6 +1390,10 @@ export default function FleetBuilder({
       ) {
         // Handle objectives
         const [type, name] = line.split(":");
+        if (name.trim() === "") {
+          console.log("Skipping line due to empty objective name");
+          return; // Skip the line if the name is only spaces
+        }
         const objectiveKey = getAliasKey(aliases, name.trim());
         console.log(`Found objective: ${type} - ${name.trim()}`);
         if (objectiveKey) {
