@@ -868,31 +868,67 @@ export default function FleetBuilder({
       alert("Unique ships cannot be copied.");
       return;
     }
-
+  
+    // Load aliases from localStorage
+    const aliases = JSON.parse(localStorage.getItem("aliases") || "{}");
+    
+    // Get the ship's alias key
+    const shipKey = getAliasKey(aliases, `${shipToCopy.name} (${shipToCopy.points})`);
+    
+    if (!shipKey) {
+      console.error("Could not find ship in aliases");
+      return;
+    }
+  
+    // Fetch a fresh copy of the ship
+    const freshShipModel = fetchShip(shipKey);
+    if (!freshShipModel) {
+      console.error("Could not fetch ship model");
+      return;
+    }
+  
+    // Create new ship with fresh upgrade slots
     const newShip: Ship = {
-      ...shipToCopy,
+      ...freshShipModel,
       id: Date.now().toString(),
       assignedUpgrades: [],
-      availableUpgrades: [...shipToCopy.availableUpgrades],
+      availableUpgrades: freshShipModel.upgrades || [],
+      size: freshShipModel.size || "unknown",
+      searchableText: freshShipModel.searchableText || "",
+      source: shipToCopy.source
     };
-
-    let pointsToAdd = shipToCopy.points;
-
-    // Filter out unique upgrades and upgrades that add slots
+  
+    let pointsToAdd = newShip.points;
+  
+    // Copy over non-unique upgrades that don't add slots
     shipToCopy.assignedUpgrades.forEach((upgrade) => {
-      if (!upgrade.unique && !upgrade.restrictions?.enable_upgrades) {
-        newShip.assignedUpgrades.push({ ...upgrade });
-        pointsToAdd += upgrade.points;
-      } else if (upgrade.restrictions?.enable_upgrades) {
-        // Remove the enabled upgrade slots from availableUpgrades
-        newShip.availableUpgrades = newShip.availableUpgrades.filter(
-          (slot) => !upgrade.restrictions?.enable_upgrades?.includes(slot)
-        );
-        // Use handleRemoveUpgrade for the upgrades we're filtering out
-        handleRemoveUpgrade(newShip.id, upgrade.type, upgrade.slotIndex || 0);
-      }
-    });
+      // Skip unique upgrades
+      if (upgrade.unique) return;
 
+      // Skip flagship upgrades
+    if (upgrade.restrictions?.flagship) return;
+
+  
+      // Skip upgrades that were in slots added by other upgrades
+      const upgradeTypeExists = freshShipModel.upgrades?.includes(upgrade.type);
+      if (!upgradeTypeExists) return;
+  
+      // Fetch a fresh copy of the upgrade
+      const upgradeKey = getAliasKey(aliases, `${upgrade.name} (${upgrade.points})`);
+      if (!upgradeKey) return;
+  
+      const freshUpgrade = fetchUpgrade(upgradeKey);
+      if (!freshUpgrade) return;
+  
+      // Add the upgrade to the new ship
+      newShip.assignedUpgrades.push({
+        ...freshUpgrade,
+        slotIndex: upgrade.slotIndex,
+        source: upgrade.source
+      });
+      pointsToAdd += freshUpgrade.points;
+    });
+  
     setSelectedShips((prevShips) => [...prevShips, newShip]);
     setPreviousPoints(points);
     setPreviousShipPoints(totalShipPoints);
