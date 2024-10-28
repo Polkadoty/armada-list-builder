@@ -82,7 +82,7 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
   const handleImageTouch = (e: React.TouchEvent) => {
     e.preventDefault();
     // Only open modal if not swiping
-    if (!isDragging.current) {
+    if (isDragging.current) {
       setShowImageModal(true);
     }
   };

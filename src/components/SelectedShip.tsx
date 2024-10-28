@@ -91,7 +91,7 @@ export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRem
   const handleImageTouch = (e: React.TouchEvent) => {
     e.preventDefault();
     // Only open modal if not swiping
-    if (!isDragging.current) {
+    if (isDragging.current) {
       setShowImageModal(true);
     }
   };
@@ -327,8 +327,7 @@ function SwipeableUpgrade({ upgrade, onSwipe, onSwap, onRemove }: SwipeableUpgra
             </span>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
-            <span>{upgrade.points} pts</span>
-            <div className="hidden sm:flex items-center gap-1">
+            <div className="flex items-center gap-1">
               <Button variant="ghost" size="sm" onClick={onSwap} className="text-blue-500 p-1">
                 <ArrowLeftRight size={16} />
               </Button>
@@ -336,6 +335,7 @@ function SwipeableUpgrade({ upgrade, onSwipe, onSwap, onRemove }: SwipeableUpgra
                 <X size={16} />
               </Button>
             </div>
+            <span>{upgrade.points}<span className="hidden sm:inline"> pts</span></span>
           </div>
         </div>
         <div className="absolute left-0 top-0 bottom-0 flex items-center justify-center w-12 text-blue-500 bg-gray-800 bg-opacity-75" style={{ transform: 'translateX(-100%)' }}>
@@ -367,5 +367,6 @@ function SwipeableUpgrade({ upgrade, onSwipe, onSwap, onRemove }: SwipeableUpgra
     </div>
   );
 }
+
 
 
