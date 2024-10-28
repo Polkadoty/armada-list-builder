@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 
 // Configuration flags
 const CONFIG = {
-  showLegacyToggle: false,
+  showLegacyToggle: process.env.NEXT_PUBLIC_SHOW_LEGACY_TOGGLE === 'true',
   showLegendsToggle: true,
   showOldLegacyToggle: true,
 };
