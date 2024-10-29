@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-empty-interface */
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -243,6 +243,7 @@ export default function FleetBuilder({
   const [showRecoveryPopup, setShowRecoveryPopup] = useState(false);
   const [hasLoadedPage, setHasLoadedPage] = useState(false);
   const router = useRouter();
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const checkTournamentViolations = useCallback(() => {
     const violations: string[] = [];
@@ -1965,7 +1966,7 @@ export default function FleetBuilder({
   };
 
   return (
-    <div className="max-w-[2000px] mx-auto">
+    <div ref={contentRef} className="max-w-[2000px] mx-auto">
       <div className="flex flex-col sm:flex-row items-start sm:items-center mb-4">
         <div className="mb-2 sm:mb-0 flex items-center justify-start space-x-2">
           <TooltipProvider>
@@ -2052,7 +2053,8 @@ export default function FleetBuilder({
             onClearAll={clearAllShips}
             onAdd={handleAddShip}
           />
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 4xl:grid-cols-5 gap-2">
+          <div className="relative">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 4xl:grid-cols-5 gap-4">
               {selectedShips.map((ship) => (
                 <SelectedShip
                   key={ship.id}
@@ -2065,9 +2067,10 @@ export default function FleetBuilder({
                   enabledUpgrades={enabledUpgrades[ship.id] || []}
                   filledSlots={filledSlots[ship.id] || {}}
                   hasCommander={hasCommander}
-                traits={ship.traits || []}
-              />
-            ))}
+                  traits={ship.traits || []}
+                />
+              ))}
+            </div>
           </div>
         </>
       ) : (
@@ -2098,17 +2101,19 @@ export default function FleetBuilder({
             onClearAll={clearAllSquadrons}
             onAdd={handleAddSquadron}
           />
-          <div className="mb-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-2">
-            {selectedSquadrons.map((squadron) => (
-              <SelectedSquadron
-                key={squadron.id}
-                squadron={squadron}
-                onRemove={handleRemoveSquadron}
-                onIncrement={handleIncrementSquadron}
-                onDecrement={handleDecrementSquadron}
-                onSwapSquadron={handleSwapSquadron}
-              />
-            ))}
+          <div className="relative">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
+              {selectedSquadrons.map((squadron) => (
+                <SelectedSquadron
+                  key={squadron.id}
+                  squadron={squadron}
+                  onRemove={handleRemoveSquadron}
+                  onIncrement={handleIncrementSquadron}
+                  onDecrement={handleDecrementSquadron}
+                  onSwapSquadron={handleSwapSquadron}
+                />
+              ))}
+            </div>
           </div>
         </>
       ) : (
@@ -2129,28 +2134,30 @@ export default function FleetBuilder({
         </Card>
       )}
 
-      <div className="mb-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-xl">
-        <SwipeableObjective
-          type="assault"
-          selectedObjective={selectedAssaultObjective}
-          onRemove={handleRemoveAssaultObjective}
-          onOpen={() => setShowAssaultObjectiveSelector(true)}
-          color="#EB3F3A"
-        />
-        <SwipeableObjective
-          type="defense"
-          selectedObjective={selectedDefenseObjective}
-          onRemove={handleRemoveDefenseObjective}
-          onOpen={() => setShowDefenseObjectiveSelector(true)}
-          color="#FAEE13"
-        />
-        <SwipeableObjective
-          type="navigation"
-          selectedObjective={selectedNavigationObjective}
-          onRemove={handleRemoveNavigationObjective}
-          onOpen={() => setShowNavigationObjectiveSelector(true)}
-          color="#C2E1F4"
-        />
+      <div className="mb-4 relative">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-xl">
+          <SwipeableObjective
+            type="assault"
+            selectedObjective={selectedAssaultObjective}
+            onRemove={handleRemoveAssaultObjective}
+            onOpen={() => setShowAssaultObjectiveSelector(true)}
+            color="#EB3F3A"
+          />
+          <SwipeableObjective
+            type="defense"
+            selectedObjective={selectedDefenseObjective}
+            onRemove={handleRemoveDefenseObjective}
+            onOpen={() => setShowDefenseObjectiveSelector(true)}
+            color="#FAEE13"
+          />
+          <SwipeableObjective
+            type="navigation"
+            selectedObjective={selectedNavigationObjective}
+            onRemove={handleRemoveNavigationObjective}
+            onOpen={() => setShowNavigationObjectiveSelector(true)}
+            color="#C2E1F4"
+          />
+        </div>
       </div>
 
       <div className="flex flex-wrap justify-between gap-2">
@@ -2240,6 +2247,7 @@ export default function FleetBuilder({
         <ExportTextPopup
           text={generateExportText()}
           onClose={() => setShowExportPopup(false)}
+          contentRef={contentRef}
         />
       )}
 
