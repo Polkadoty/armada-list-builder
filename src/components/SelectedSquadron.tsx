@@ -5,6 +5,7 @@ import { useSpring, animated } from 'react-spring';
 import { Squadron } from './FleetBuilder';
 import { Plus, Minus, ArrowLeftRight, Trash2, Eye, X } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import { OptimizedImage } from './OptimizedImage';
 
 // Add this line at the top of the file
 /** @jsxImportSource react */
@@ -99,13 +100,12 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
           <CardContent className="p-2">
             <div className="flex items-center">
               <div className="w-32 aspect-[3.75/2] mr-4 relative overflow-hidden group">
-                <Image 
+                <OptimizedImage 
                   src={squadron.cardimage} 
                   alt={squadron.unique && squadron['ace-name'] ? squadron['ace-name'] : squadron.name}
-                  layout="fill"
-                  objectFit="cover"
-                  objectPosition="top"
-                  className="scale-[100%]"
+                  width={250}
+                  height={350}
+                  className="object-cover object-top scale-[103%]"
                   onClick={() => setShowImageModal(true)}
                 />
                 <button
@@ -166,12 +166,12 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
       {showImageModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowImageModal(false)}>
           <div className="relative">
-            <Image
+            <OptimizedImage
               src={squadron.cardimage}
               alt={squadron.unique && squadron['ace-name'] ? squadron['ace-name'] : squadron.name}
-              width={300}
-              height={420}
-              className="rounded-lg w-[300px] h-[420px] sm:w-[450px] sm:h-[630px] lg:w-[600px] lg:h-[840px]"
+              width={250}
+              height={350}
+              className="rounded-lg w-[250px] h-[350px] sm:w-[350px] sm:h-[490px] lg:w-[450px] lg:h-[630px]"
             />
             <button
               className="absolute top-2 right-2 bg-black bg-opacity-50 rounded-full p-1"

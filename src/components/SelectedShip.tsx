@@ -115,7 +115,7 @@ export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRem
                   alt={ship.name}
                   width={800}
                   height={300}
-                  className="object-cover object-position-top scale-[103%]"
+                  className="object-cover object-top scale-[103%]"
                   onClick={() => setShowImageModal(true)}
                 />
                 <button
