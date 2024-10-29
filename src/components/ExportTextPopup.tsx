@@ -96,7 +96,7 @@ export function ExportTextPopup({ text, onClose, contentRef }: ExportTextPopupPr
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" data-export-popup="true">
-      <Card className="w-full max-w-lg md:max-w-2xl bg-white dark:bg-gray-800 backdrop-blur-md bg-opacity-90 dark:bg-opacity-90 rounded-lg shadow-lg flex flex-col max-h-[90vh]">
+      <Card className="w-full max-w-lg md:max-w-2xl bg-white dark:bg-gray-800 backdrop-blur-md bg-opacity-80 dark:bg-opacity-80 rounded-lg shadow-lg flex flex-col max-h-[90vh]">
         <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Export Fleet</h2>
           <Button variant="ghost" size="icon" onClick={onClose}>
