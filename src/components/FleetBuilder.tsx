@@ -1285,6 +1285,92 @@ export default function FleetBuilder({
     setShowRecoveryPopup(false);
   };
 
+  const getAliasKey = (
+    aliases: Record<string, string>,
+    name: string
+  ): string | undefined => {
+    console.log(`Getting alias key for: ${name}`);
+    console.log(`Aliases:`, aliases);
+    const result = aliases[name];
+    console.log(`Alias key result:`, result);
+    return result;
+  };
+
+  const fetchObjective = (key: string): ObjectiveModel | null => {
+    console.log(`Fetching objective for key: ${key}`);
+    for (let i = 0; i < localStorage.length; i++) {
+      const storageKey = localStorage.key(i);
+      // console.log(`Checking localStorage key: ${storageKey}`);
+      if (storageKey && storageKey.includes("objectives")) {
+        try {
+          const data = JSON.parse(localStorage.getItem(storageKey) || "{}");
+          console.log(`Parsed objectives data for ${storageKey}:`, data);
+          const objectivesData = data.objectives || data;
+          if (objectivesData[key]) {
+            console.log(`Found objective in storage:`, objectivesData[key]);
+            return objectivesData[key] as ObjectiveModel;
+          }
+        } catch (error) {
+          console.error(`Error parsing JSON for key ${storageKey}:`, error);
+        }
+      }
+    }
+    console.log(`Objective not found for key: ${key}`);
+    return null;
+  };
+  const fetchFromLocalStorage = (
+    key: string,
+    type: "ships" | "upgrades" | "squadrons"
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ): any | null => {
+    console.log(`Fetching ${type} for key: ${key}`);
+    for (let i = 0; i < localStorage.length; i++) {
+      const storageKey = localStorage.key(i);
+      if (storageKey && storageKey.toLowerCase().includes(type)) {
+        try {
+          const data = JSON.parse(localStorage.getItem(storageKey) || "{}");
+          console.log(`Parsed ${type} data for ${storageKey}:`, data);
+          const itemsData = data[type] || data;
+
+          if (type === "ships") {
+            for (const chassisKey in itemsData) {
+              const models = itemsData[chassisKey].models;
+              if (models && models[key]) {
+                console.log(`Found ${type} in storage:`, models[key]);
+                return models[key];
+              }
+            }
+          } else {
+            if (itemsData[key]) {
+              console.log(`Found ${type} in storage:`, itemsData[key]);
+              return itemsData[key];
+            }
+          }
+        } catch (error) {
+          console.error(`Error parsing JSON for key ${storageKey}:`, error);
+        }
+      }
+    }
+    console.log(
+      `${
+        type.charAt(0).toUpperCase() + type.slice(1)
+      } not found for key: ${key}`
+    );
+    return null;
+  };
+
+  const fetchShip = (key: string): ShipModel | null => {
+    return fetchFromLocalStorage(key, "ships") as ShipModel | null;
+  };
+
+  const fetchUpgrade = (key: string): Upgrade | null => {
+    return fetchFromLocalStorage(key, "upgrades") as Upgrade | null;
+  };
+
+  const fetchSquadron = (key: string): Squadron | null => {
+    return fetchFromLocalStorage(key, "squadrons") as Squadron | null;
+  };
+
   const handleImportFleet = useCallback((importText: string) => {
     console.log("Starting fleet import...");
     const decodedText = decodeURIComponent(encodeURIComponent(importText));
@@ -1610,6 +1696,9 @@ export default function FleetBuilder({
       console.log("Skipped items:", skippedItems);
     }
   }, [
+    fetchShip,
+    fetchUpgrade,
+    fetchSquadron,
     clearAllShips,
     clearAllSquadrons,
     faction,
@@ -1628,92 +1717,6 @@ export default function FleetBuilder({
     setTotalShipPoints,
     setTotalSquadronPoints
   ]);
-
-  const getAliasKey = (
-    aliases: Record<string, string>,
-    name: string
-  ): string | undefined => {
-    console.log(`Getting alias key for: ${name}`);
-    console.log(`Aliases:`, aliases);
-    const result = aliases[name];
-    console.log(`Alias key result:`, result);
-    return result;
-  };
-
-  const fetchObjective = (key: string): ObjectiveModel | null => {
-    console.log(`Fetching objective for key: ${key}`);
-    for (let i = 0; i < localStorage.length; i++) {
-      const storageKey = localStorage.key(i);
-      // console.log(`Checking localStorage key: ${storageKey}`);
-      if (storageKey && storageKey.includes("objectives")) {
-        try {
-          const data = JSON.parse(localStorage.getItem(storageKey) || "{}");
-          console.log(`Parsed objectives data for ${storageKey}:`, data);
-          const objectivesData = data.objectives || data;
-          if (objectivesData[key]) {
-            console.log(`Found objective in storage:`, objectivesData[key]);
-            return objectivesData[key] as ObjectiveModel;
-          }
-        } catch (error) {
-          console.error(`Error parsing JSON for key ${storageKey}:`, error);
-        }
-      }
-    }
-    console.log(`Objective not found for key: ${key}`);
-    return null;
-  };
-  const fetchFromLocalStorage = (
-    key: string,
-    type: "ships" | "upgrades" | "squadrons"
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ): any | null => {
-    console.log(`Fetching ${type} for key: ${key}`);
-    for (let i = 0; i < localStorage.length; i++) {
-      const storageKey = localStorage.key(i);
-      if (storageKey && storageKey.toLowerCase().includes(type)) {
-        try {
-          const data = JSON.parse(localStorage.getItem(storageKey) || "{}");
-          console.log(`Parsed ${type} data for ${storageKey}:`, data);
-          const itemsData = data[type] || data;
-
-          if (type === "ships") {
-            for (const chassisKey in itemsData) {
-              const models = itemsData[chassisKey].models;
-              if (models && models[key]) {
-                console.log(`Found ${type} in storage:`, models[key]);
-                return models[key];
-              }
-            }
-          } else {
-            if (itemsData[key]) {
-              console.log(`Found ${type} in storage:`, itemsData[key]);
-              return itemsData[key];
-            }
-          }
-        } catch (error) {
-          console.error(`Error parsing JSON for key ${storageKey}:`, error);
-        }
-      }
-    }
-    console.log(
-      `${
-        type.charAt(0).toUpperCase() + type.slice(1)
-      } not found for key: ${key}`
-    );
-    return null;
-  };
-
-  const fetchShip = (key: string): ShipModel | null => {
-    return fetchFromLocalStorage(key, "ships") as ShipModel | null;
-  };
-
-  const fetchUpgrade = (key: string): Upgrade | null => {
-    return fetchFromLocalStorage(key, "upgrades") as Upgrade | null;
-  };
-
-  const fetchSquadron = (key: string): Squadron | null => {
-    return fetchFromLocalStorage(key, "squadrons") as Squadron | null;
-  };
 
   const handlePrint = () => {
     const printContent = generatePrintContent();

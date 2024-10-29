@@ -144,7 +144,7 @@ export function FleetList() {
       setLoadingMessage("");
       setLoadingProgress(0);
     }
-  }, [supabase, user?.sub]);
+  }, [user?.sub]);
 
   const handleFleetSelect = (fleet: Fleet) => {
     // Clear any existing fleet data for all factions
