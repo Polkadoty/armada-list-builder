@@ -170,10 +170,10 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
               alt={squadron.unique && squadron['ace-name'] ? squadron['ace-name'] : squadron.name}
               width={250}
               height={350}
-              className="rounded-lg w-[250px] h-[350px] sm:w-[450px] sm:h-[630px] lg:w-[600px] lg:h-[840px]"
+              className="rounded-lg w-[250px] h-[350px] sm:w-[450px] sm:h-[630px] lg:w-[600px] lg:h-[840px] scale-[1.03]"
             />
             <button
-              className="absolute top-2 right-2 bg-black bg-opacity-50 rounded-full p-1"
+              className="absolute top-2 right-2 rounded-full p-1"
               onClick={() => setShowImageModal(false)}
             >
               <X size={20} className="text-white" />

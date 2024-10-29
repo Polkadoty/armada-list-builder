@@ -208,17 +208,17 @@ export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRem
         </div>
       </animated.div>
       {showImageModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowImageModal(false)}>
+        <div className="fixed inset-0 flex items-center justify-center z-50" onClick={() => setShowImageModal(false)}>
           <div className="relative">
             <OptimizedImage
               src={ship.cardimage}
               alt={ship.name}
               width={420}
               height={630}
-              className="rounded-lg w-auto h-[420px] sm:h-[630px] lg:h-[840px]"
+              className="rounded-lg w-auto h-[420px] sm:h-[630px] lg:h-[840px] scale-[1.03]"
             />
             <button
-              className="absolute top-2 right-2 bg-black bg-opacity-50 rounded-full p-1"
+              className="absolute top-2 right-2 rounded-full p-1"
               onClick={() => setShowImageModal(false)}
             >
               <X size={20} className="text-white" />
@@ -353,10 +353,10 @@ function SwipeableUpgrade({ upgrade, onSwipe, onSwap, onRemove }: SwipeableUpgra
               alt={upgrade.name}
               width={300}
               height={420}
-              className="rounded-lg sm:w-[450px] sm:h-[630px] lg:w-[600px] lg:h-[840px]"
+              className="rounded-lg sm:w-[450px] sm:h-[630px] lg:w-[600px] lg:h-[840px] scale-[1.03]"
             />
             <button
-              className="absolute top-2 right-2 bg-black bg-opacity-50 rounded-full p-1"
+              className="absolute top-2 right-2 rounded-full p-1"
               onClick={() => setShowImageModal(false)}
             >
               <X size={20} className="text-white" />
