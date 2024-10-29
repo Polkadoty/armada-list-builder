@@ -14,7 +14,6 @@ interface ExportTextPopupProps {
 export function ExportTextPopup({ text, onClose, contentRef }: ExportTextPopupProps) {
   const [showNotification, setShowNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState('');
-  const [isCapturing, setIsCapturing] = useState(false);
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(text).then(() => {
@@ -33,7 +32,6 @@ export function ExportTextPopup({ text, onClose, contentRef }: ExportTextPopupPr
     }
 
     try {
-      setIsCapturing(true);
       
       // Hide the export popup temporarily
       const exportPopup = document.querySelector('[data-export-popup="true"]');
@@ -75,7 +73,6 @@ export function ExportTextPopup({ text, onClose, contentRef }: ExportTextPopupPr
       if (exportPopup) {
         exportPopup.classList.remove('hidden');
       }
-      setIsCapturing(false);
     }
   };
 
