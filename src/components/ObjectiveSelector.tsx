@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import Image from 'next/image';
+import { OptimizedImage } from './OptimizedImage';
 
 export interface ObjectiveModel {
   id: string;
@@ -80,21 +80,19 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose }: Objectiv
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-2">
               {objectives.map((objective) => (
-                <div key={objective.id} className="w-full aspect-[2/3]">
+                <div key={objective.id} className="w-full aspect-[2.5/3.5]">
                   <Button
                     onClick={() => onSelectObjective(objective)}
-                    className="p-0 overflow-hidden relative w-full h-full rounded-lg"
+                    className="p-0 overflow-hidden relative w-full h-full rounded-lg bg-transparent"
                   >
-                    <div className="absolute inset-0 bg-gray-200 flex items-center justify-center">
-                      <Image
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <OptimizedImage
                         src={objective.cardimage}
                         alt={objective.name}
-                        fill
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        width={250}
+                        height={350}
                         className="object-cover object-center scale-[103%]"
-                        onError={(e) => {
-                          e.currentTarget.src = '/placeholder-objective.png';
-                        }}
+                        onError={() => {}}
                       />
                     </div>
                     <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-1 sm:p-2 visually-hidden">

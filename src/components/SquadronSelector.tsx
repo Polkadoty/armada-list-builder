@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import Image from 'next/image';
 import { Squadron } from './FleetBuilder';
 import { useUniqueClassContext } from '../contexts/UniqueClassContext';
 import { SortToggleGroup, SortOption } from '@/components/SortToggleGroup';
 import { Search, X } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import Cookies from 'js-cookie';
+import { OptimizedImage } from '@/components/OptimizedImage';
 
 interface SquadronSelectorProps {
   faction: string;
@@ -300,24 +300,22 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
         <CardContent className="p-2 sm:p-4 flex-grow overflow-auto">
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-2">
             {displayedSquadrons.map((squadron) => (
-              <div key={squadron.id} className="w-full aspect-[2/3]">
+              <div key={squadron.id} className="w-full aspect-[2.5/3.5]">
                 <Button
                   onClick={() => handleSquadronClick(squadron)}
-                  className={`p-0 overflow-hidden relative w-full h-full rounded-lg ${
+                  className={`p-0 overflow-hidden relative w-full h-full rounded-lg bg-transparent ${
                     isSquadronSelected(squadron) ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
                   disabled={isSquadronSelected(squadron)}
                 >
-                  <div className="absolute inset-0 bg-gray-200 flex items-center justify-center">
-                    <Image
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <OptimizedImage
                       src={squadron.cardimage}
                       alt={squadron.name}
-                      fill
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                      className="object-cover object-center scale-[103%]"
-                      onError={(e) => {
-                        e.currentTarget.src = '/placeholder-squadron.png';
-                      }}
+                      width={250}  // Standard poker card width (2.5 inches * 100)
+                      height={350} // Standard poker card height (3.5 inches * 100)
+                      className="object-cover object-center w-full h-full scale-[103%]"
+                      onError={() => {}}
                     />
                   </div>
                   <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-1 sm:p-2 visually-hidden">

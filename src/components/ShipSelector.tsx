@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import Image from 'next/image';
+import { OptimizedImage } from '@/components/OptimizedImage';
 import { useUniqueClassContext } from '../contexts/UniqueClassContext';
 import { SortToggleGroup, SortOption } from '@/components/SortToggleGroup';
 import { Search, X } from 'lucide-react';
@@ -273,21 +273,19 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
               <div key={ship.id} className={`w-full ${isHugeShip(ship) ? 'col-span-2 aspect-[5/4]' : 'aspect-[8.75/15]'}`}>
                 <Button
                   onClick={() => handleShipClick(ship)}
-                  className={`p-0 overflow-hidden relative w-full h-full rounded-lg ${
+                  className={`p-0 overflow-hidden relative w-full h-full rounded-lg bg-transparent ${
                     !isShipAvailable(ship) ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
                   disabled={!isShipAvailable(ship)}
                 >
-                  <div className="absolute inset-0 bg-gray-200 flex items-center justify-center">
-                    <Image
+                  <div className="absolute inset-0flex items-center justify-center">
+                    <OptimizedImage
                       src={ship.cardimage}
                       alt={ship.name}
-                      fill
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      width={isHugeShip(ship) ? 600 : 300}
+                      height={isHugeShip(ship) ? 480 : 420}
                       className="object-cover object-center scale-[103%]"
-                      onError={(e) => {
-                        e.currentTarget.src = '/placeholder-ship.png';
-                      }}
+                      onError={() => {}}
                     />
                   </div>
                   <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-1 sm:p-2 visually-hidden">

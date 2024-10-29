@@ -8,6 +8,7 @@ import { SortToggleGroup, SortOption } from '@/components/SortToggleGroup';
 import { Search, X } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import Cookies from 'js-cookie';
+import { OptimizedImage } from './OptimizedImage';
 
 export interface UpgradeSelectorProps {
   id: string;
@@ -380,27 +381,25 @@ export default function UpgradeSelector({
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-2">
               {displayedUpgrades.map((upgrade) => (
-                <div key={upgrade.name} className="w-full aspect-[2/3]">
+                <div key={upgrade.name} className="w-full aspect-[2.5/3.5]">
                   <Button
                     onClick={() => handleUpgradeClick(upgrade)}
-                    className={`p-0 overflow-hidden relative w-full h-full rounded-lg ${
+                    className={`p-0 overflow-hidden relative w-full h-full rounded-lg bg-transparent ${
                       !isUpgradeAvailable(upgrade) || isUpgradeGreyedOut(upgrade) ? 'opacity-50 cursor-not-allowed' : ''
                     }`}
                     disabled={!isUpgradeAvailable(upgrade) || isUpgradeGreyedOut(upgrade)}
                   >
-                    <div className="absolute inset-0 bg-gray-200 flex items-center justify-center">
-                      <Image
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <OptimizedImage
                         src={validateImageUrl(upgrade.cardimage)}
                         alt={upgrade.name}
-                        fill
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        width={250}
+                        height={350}
                         className="object-cover object-center scale-[103%]"
-                        onError={(e) => {
-                          e.currentTarget.src = '/placeholder-upgrade.png';
-                        }}
+                        onError={() => {}}
                       />
                     </div>
-                    <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-1 sm:p-2 visually-hidden">
+                    <div className="absolute bottom-0 left-0 right-0 text-white p-1 sm:p-2 visually-hidden">
                       <p className="text-xs sm:text-sm font-bold flex items-center justify-center">
                         {upgrade.unique && <span className="mr-1 text-yellow-500 text-xs sm:text-sm">●</span>}
                         <span className="break-words line-clamp-2 text-center">{upgrade.name}</span>

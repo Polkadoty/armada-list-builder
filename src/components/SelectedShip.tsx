@@ -6,6 +6,7 @@ import { useSpring, animated } from 'react-spring';
 import UpgradeIconsToolbar from './UpgradeIconsToolbar';
 import { Ship, Upgrade } from "./FleetBuilder";
 import { Copy, Trash2, ArrowLeftRight, X, Eye } from 'lucide-react';
+import { OptimizedImage } from './OptimizedImage';
 
 interface SelectedShipProps {
   ship: Ship;
@@ -109,13 +110,12 @@ export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRem
           >
             <CardContent className="p-0">
               <div className="relative w-full aspect-[8/3] overflow-hidden group">
-                <Image 
+                <OptimizedImage 
                   src={ship.cardimage} 
                   alt={ship.name}
-                  layout="fill"
-                  objectFit="cover"
-                  objectPosition="top"
-                  className="scale-[103%]"
+                  width={800}
+                  height={300}
+                  className="object-cover object-position-top scale-[103%]"
                   onClick={() => setShowImageModal(true)}
                 />
                 <button
@@ -210,7 +210,7 @@ export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRem
       {showImageModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowImageModal(false)}>
           <div className="relative">
-            <Image
+            <OptimizedImage
               src={ship.cardimage}
               alt={ship.name}
               width={420}
