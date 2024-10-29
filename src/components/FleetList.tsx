@@ -91,16 +91,29 @@ export function FleetList() {
   }, [user]);
 
   const fetchFleets = async () => {
-    const { data, error } = await supabase
-      .from('fleets')
-      .select('*')
-      .eq('user_id', user?.sub)
-      .order('date_added', { ascending: false });
+    setIsLoading(true);
+    setLoadingMessage("Fetching your fleets...");
+    setLoadingProgress(0);
 
-    if (error) {
-      console.error('Error fetching fleets:', error);
-    } else {
-      setFleets(data || []);
+    try {
+      const { data, error } = await supabase
+        .from('fleets')
+        .select('*')
+        .eq('user_id', user?.sub)
+        .order('date_added', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching fleets:', error);
+      } else {
+        setLoadingProgress(100);
+        setFleets(data || []);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setIsLoading(false);
+      setLoadingMessage("");
+      setLoadingProgress(0);
     }
   };
 
@@ -171,76 +184,106 @@ export function FleetList() {
   const confirmDelete = async () => {
     if (!fleetToDelete || !user) return;
     
-    const { error } = await supabase
-      .from('fleets')
-      .delete()
-      .eq('id', fleetToDelete.id)
-      .eq('user_id', user.sub);
+    setIsLoading(true);
+    setLoadingMessage(`Deleting fleet: ${fleetToDelete.fleet_name}`);
+    setLoadingProgress(50);
 
-    if (error) {
-      console.error('Error deleting fleet:', error);
-    } else {
-      fetchFleets();
+    try {
+      const { error } = await supabase
+        .from('fleets')
+        .delete()
+        .eq('id', fleetToDelete.id)
+        .eq('user_id', user.sub);
+
+      if (error) {
+        console.error('Error deleting fleet:', error);
+      } else {
+        setLoadingProgress(100);
+        await fetchFleets();
+      }
+    } finally {
+      setIsLoading(false);
+      setLoadingMessage("");
+      setLoadingProgress(0);
+      setShowDeleteConfirmation(false);
+      setFleetToDelete(null);
     }
-    setShowDeleteConfirmation(false);
-    setFleetToDelete(null);
   };
 
   const handleFleetRename = async () => {
     if (!fleetToRename || !user || !newFleetName.trim()) return;
     
-    // Parse the fleet data to update the name within it
-    let updatedFleetData = fleetToRename.fleet_data;
+    setIsLoading(true);
+    setLoadingMessage(`Renaming fleet to: ${newFleetName}`);
+    setLoadingProgress(50);
+
     try {
-      // Find the name line and replace it
-      updatedFleetData = fleetToRename.fleet_data.replace(
-        /Name: .*$/m,
-        `Name: ${newFleetName.trim()}`
-      );
-    } catch (error) {
-      console.error('Error updating fleet data name:', error);
-    }
+      let updatedFleetData = fleetToRename.fleet_data;
+      try {
+        updatedFleetData = fleetToRename.fleet_data.replace(
+          /Name: .*$/m,
+          `Name: ${newFleetName.trim()}`
+        );
+      } catch (error) {
+        console.error('Error updating fleet data name:', error);
+      }
 
-    const { error } = await supabase
-      .from('fleets')
-      .update({ 
-        fleet_name: newFleetName.trim(),
-        fleet_data: updatedFleetData
-      })
-      .eq('id', fleetToRename.id)
-      .eq('user_id', user.sub);
+      const { error } = await supabase
+        .from('fleets')
+        .update({ 
+          fleet_name: newFleetName.trim(),
+          fleet_data: updatedFleetData
+        })
+        .eq('id', fleetToRename.id)
+        .eq('user_id', user.sub);
 
-    if (error) {
-      console.error('Error renaming fleet:', error);
-    } else {
-      fetchFleets();
+      if (error) {
+        console.error('Error renaming fleet:', error);
+      } else {
+        setLoadingProgress(100);
+        await fetchFleets();
+      }
+    } finally {
+      setIsLoading(false);
+      setLoadingMessage("");
+      setLoadingProgress(0);
+      setShowRenameDialog(false);
+      setFleetToRename(null);
+      setNewFleetName('');
     }
-    
-    setShowRenameDialog(false);
-    setFleetToRename(null);
-    setNewFleetName('');
   };
 
   const handleFleetCopy = async (fleet: Fleet) => {
     if (!user) return;
     
-    const newFleetName = `${fleet.fleet_name} (Copy)`;
-    
-    const { error } = await supabase
-      .from('fleets')
-      .insert({ 
-        user_id: user.sub,
-        fleet_name: newFleetName,
-        fleet_data: fleet.fleet_data,
-        faction: fleet.faction,
-        commander: fleet.commander,
-        points: fleet.points
-      });
+    setIsLoading(true);
+    setLoadingMessage(`Creating copy of: ${fleet.fleet_name}`);
+    setLoadingProgress(50);
 
-    if (error) {
-      console.error('Error copying fleet:', error);
-    } else {
-      fetchFleets();
+    try {
+      const newFleetName = `${fleet.fleet_name} (Copy)`;
+      
+      const { error } = await supabase
+        .from('fleets')
+        .insert({ 
+          user_id: user.sub,
+          fleet_name: newFleetName,
+          fleet_data: fleet.fleet_data,
+          faction: fleet.faction,
+          commander: fleet.commander,
+          points: fleet.points
+        });
+
+      if (error) {
+        console.error('Error copying fleet:', error);
+      } else {
+        setLoadingProgress(100);
+        await fetchFleets();
+      }
+    } finally {
+      setIsLoading(false);
+      setLoadingMessage("");
+      setLoadingProgress(0);
     }
   };
 
