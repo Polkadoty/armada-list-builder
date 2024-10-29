@@ -1250,7 +1250,17 @@ export default function FleetBuilder({
 
     // Ensure the text is not URL encoded
     return decodeURIComponent(encodeURIComponent(text));
-  }, [selectedShips, selectedSquadrons, selectedAssaultObjective, selectedDefenseObjective, selectedNavigationObjective]);
+  }, [
+    selectedShips, 
+    selectedSquadrons, 
+    selectedAssaultObjective, 
+    selectedDefenseObjective, 
+    selectedNavigationObjective,
+    faction,
+    fleetName,
+    points,
+    totalSquadronPoints
+  ]);
 
   const capitalizeFirstLetter = (string: string | undefined) => {
     if (!string) return "";
@@ -1275,7 +1285,7 @@ export default function FleetBuilder({
     setShowRecoveryPopup(false);
   };
 
-  const handleImportFleet = (importText: string) => {
+  const handleImportFleet = useCallback((importText: string) => {
     console.log("Starting fleet import...");
     const decodedText = decodeURIComponent(encodeURIComponent(importText));
     const lines = decodedText.split("\n");
@@ -1599,7 +1609,25 @@ export default function FleetBuilder({
       );
       console.log("Skipped items:", skippedItems);
     }
-  };
+  }, [
+    clearAllShips,
+    clearAllSquadrons,
+    faction,
+    handleAddUpgrade,
+    handleAddingSquadron,
+    handleIncrementSquadron,
+    router,
+    setFleetName,
+    setNotificationMessage,
+    setPoints,
+    setSelectedAssaultObjective,
+    setSelectedDefenseObjective,
+    setSelectedNavigationObjective,
+    setSelectedShips,
+    setShowNotification,
+    setTotalShipPoints,
+    setTotalSquadronPoints
+  ]);
 
   const getAliasKey = (
     aliases: Record<string, string>,

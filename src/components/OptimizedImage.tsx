@@ -1,4 +1,5 @@
 // components/OptimizedImage.tsx
+/* eslint-disable @next/next/no-img-element */
 import { useState } from 'react';
 import { AlertCircle } from 'lucide-react';
 

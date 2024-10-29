@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useUser } from '@auth0/nextjs-auth0/client';
 import { supabase } from '../lib/supabase';
 import {
@@ -97,7 +97,7 @@ export function FleetList() {
   const [loadingMessage, setLoadingMessage] = useState("");
   const [loadingProgress, setLoadingProgress] = useState(0);
 
-  const fetchFleets = async () => {
+  const fetchFleets = useCallback(async () => {
     setIsLoading(true);
     setLoadingMessage("Fetching your fleets...");
     setLoadingProgress(0);
@@ -144,7 +144,7 @@ export function FleetList() {
       setLoadingMessage("");
       setLoadingProgress(0);
     }
-  };
+  }, [supabase, user?.sub]);
 
   const handleFleetSelect = (fleet: Fleet) => {
     // Clear any existing fleet data for all factions
