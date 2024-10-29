@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/select";
 import { NotificationWindow } from "@/components/NotificationWindow";
 import { useTheme } from 'next-themes';
+import { LoadingScreen } from "@/components/LoadingScreen";
 
 interface Fleet {
   id: string;
@@ -79,6 +80,9 @@ export function FleetList() {
   const [showRenameDialog, setShowRenameDialog] = useState(false);
   const [fleetToRename, setFleetToRename] = useState<Fleet | null>(null);
   const [newFleetName, setNewFleetName] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState("");
+  const [loadingProgress, setLoadingProgress] = useState(0);
 
   useEffect(() => {
     if (user) {
@@ -217,250 +221,281 @@ export function FleetList() {
     setNewFleetName('');
   };
 
+  const handleFleetCopy = async (fleet: Fleet) => {
+    if (!user) return;
+    
+    const newFleetName = `${fleet.fleet_name} (Copy)`;
+    
+    const { error } = await supabase
+      .from('fleets')
+      .insert({ 
+        user_id: user.sub,
+        fleet_name: newFleetName,
+        fleet_data: fleet.fleet_data,
+        faction: fleet.faction,
+        commander: fleet.commander,
+        points: fleet.points
+      });
+
+    if (error) {
+      console.error('Error copying fleet:', error);
+    } else {
+      fetchFleets();
+    }
+  };
+
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="w-full justify-start text-sm font-normal h-9 text-foreground hover:bg-accent hover:text-accent-foreground"
-        >
-          Fleet List
-        </Button>
-      </DialogTrigger>
-      <DialogContent className={`dialog-content ${theme === 'dark' ? 'dark' : ''} max-w-[95vw] sm:max-w-3xl overflow-x-auto border`}>
-        <DialogHeader>
-          <DialogTitle>Your Fleets</DialogTitle>
-          <div className="flex flex-wrap items-center gap-2 mt-4">
-            <Input
-              placeholder="Filter fleets..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="max-w-sm"
-            />
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
-                  Faction <ChevronDown className="ml-2 h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                {uniqueFactions.map(faction => (
-                  <DropdownMenuItem
-                    key={faction}
-                    onClick={() => setFactionFilter(prev => 
-                      prev.includes(faction) 
-                        ? prev.filter(f => f !== faction)
-                        : [...prev, faction]
-                    )}
-                  >
-                    {capitalizeFirstLetter(faction)}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
-                  Commander <ChevronDown className="ml-2 h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                {uniqueCommanders.map(commander => (
-                  <DropdownMenuItem
-                    key={commander}
-                    onClick={() => setCommanderFilter(prev => 
-                      prev.includes(commander)
-                        ? prev.filter(c => c !== commander)
-                        : [...prev, commander]
-                    )}
-                  >
-                    {commander}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </DialogHeader>
-
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-accent">
-                {columns.filter(col => col.visible).map((column) => (
-                  <TableHead 
-                    key={column.id}
-                    className="cursor-pointer text-foreground hover:text-accent-foreground"
-                    onClick={() => handleSort(column.id)}
-                  >
-                    {column.label}
-                    {sortColumn === column.id && (
-                      <span className="ml-2">
-                        {sortDirection === 'asc' ? '↑' : '↓'}
-                      </span>
-                    )}
-                  </TableHead>
-                ))}
-                <TableHead className="w-[40px]">
-                  <MoreVertical className="h-4 w-4" />
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedFleets.map((fleet) => (
-                <TableRow key={fleet.id} className="hover:bg-muted/50">
-                  <TableCell>
-                    <button
-                      onClick={() => handleFleetSelect(fleet)}
-                      className="text-blue-600 dark:text-blue-400 hover:underline"
+    <>
+      {isLoading && (
+        <LoadingScreen progress={loadingProgress} message={loadingMessage} />
+      )}
+      <Dialog>
+        <DialogTrigger asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full justify-start text-sm font-normal h-9 text-foreground hover:bg-accent hover:text-accent-foreground"
+          >
+            Fleet List
+          </Button>
+        </DialogTrigger>
+        <DialogContent className={`dialog-content ${theme === 'dark' ? 'dark' : ''} max-w-[95vw] sm:max-w-3xl overflow-x-auto border`}>
+          <DialogHeader>
+            <DialogTitle>Your Fleets</DialogTitle>
+            <div className="flex flex-wrap items-center gap-2 mt-4">
+              <Input
+                placeholder="Filter fleets..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="max-w-sm"
+              />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    Faction <ChevronDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  {uniqueFactions.map(faction => (
+                    <DropdownMenuItem
+                      key={faction}
+                      onClick={() => setFactionFilter(prev => 
+                        prev.includes(faction) 
+                          ? prev.filter(f => f !== faction)
+                          : [...prev, faction]
+                      )}
                     >
-                      {fleet.fleet_name}
-                    </button>
-                  </TableCell>
-                  <TableCell>{capitalizeFirstLetter(fleet.faction)}</TableCell>
-                  <TableCell>{fleet.commander}</TableCell>
-                  <TableCell>{fleet.points}</TableCell>
-                  {columns.find(col => col.id === 'date_added')?.visible && (
-                    <TableCell>{new Date(fleet.date_added).toLocaleDateString()}</TableCell>
-                  )}
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-muted">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleFleetSelect(fleet)}>
-                          Load Fleet
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => {
-                          setFleetToRename(fleet);
-                          setNewFleetName(fleet.fleet_name);
-                          setShowRenameDialog(true);
-                        }}>
-                          Rename Fleet
-                        </DropdownMenuItem>
-                        <DropdownMenuItem 
-                          onClick={() => handleFleetDelete(fleet)}
-                          className="text-destructive focus:text-destructive focus:bg-destructive/10"
-                        >
-                          Delete Fleet
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+                      {capitalizeFirstLetter(faction)}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    Commander <ChevronDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  {uniqueCommanders.map(commander => (
+                    <DropdownMenuItem
+                      key={commander}
+                      onClick={() => setCommanderFilter(prev => 
+                        prev.includes(commander)
+                          ? prev.filter(c => c !== commander)
+                          : [...prev, commander]
+                      )}
+                    >
+                      {commander}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </DialogHeader>
 
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-4">
-          <div className="flex items-center space-x-2">
-            <Select
-              value={rowsPerPage.toString()}
-              onValueChange={(value) => setRowsPerPage(parseInt(value))}
-            >
-              <SelectTrigger className="w-[100px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {[10, 20, 30, 40, 50].map((value) => (
-                  <SelectItem key={value} value={value.toString()}>
-                    {value} rows
-                  </SelectItem>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-accent">
+                  {columns.filter(col => col.visible).map((column) => (
+                    <TableHead 
+                      key={column.id}
+                      className="cursor-pointer text-foreground hover:text-accent-foreground"
+                      onClick={() => handleSort(column.id)}
+                    >
+                      {column.label}
+                      {sortColumn === column.id && (
+                        <span className="ml-2">
+                          {sortDirection === 'asc' ? '↑' : '↓'}
+                        </span>
+                      )}
+                    </TableHead>
+                  ))}
+                  <TableHead className="w-[40px]">
+                    <MoreVertical className="h-4 w-4" />
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paginatedFleets.map((fleet) => (
+                  <TableRow key={fleet.id} className="hover:bg-muted/50">
+                    <TableCell>
+                      <button
+                        onClick={() => handleFleetSelect(fleet)}
+                        className="text-blue-600 dark:text-blue-400 hover:underline"
+                      >
+                        {fleet.fleet_name}
+                      </button>
+                    </TableCell>
+                    <TableCell>{capitalizeFirstLetter(fleet.faction)}</TableCell>
+                    <TableCell>{fleet.commander}</TableCell>
+                    <TableCell>{fleet.points}</TableCell>
+                    {columns.find(col => col.id === 'date_added')?.visible && (
+                      <TableCell>{new Date(fleet.date_added).toLocaleDateString()}</TableCell>
+                    )}
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-muted">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleFleetSelect(fleet)}>
+                            Load Fleet
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => {
+                            setFleetToRename(fleet);
+                            setNewFleetName(fleet.fleet_name);
+                            setShowRenameDialog(true);
+                          }}>
+                            Rename Fleet
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleFleetCopy(fleet)}>
+                            Copy Fleet
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            onClick={() => handleFleetDelete(fleet)}
+                            className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                          >
+                            Delete Fleet
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </SelectContent>
-            </Select>
-            <span className="text-sm text-muted-foreground">
-              Page {currentPage} of {totalPages}
-            </span>
+              </TableBody>
+            </Table>
           </div>
-          <div className="flex items-center space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(1)}
-              disabled={currentPage === 1}
-            >
-              First
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(prev => prev - 1)}
-              disabled={currentPage === 1}
-            >
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(prev => prev + 1)}
-              disabled={currentPage === totalPages}
-            >
-              Next
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(totalPages)}
-              disabled={currentPage === totalPages}
-            >
-              Last
-            </Button>
+
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-4">
+            <div className="flex items-center space-x-2">
+              <Select
+                value={rowsPerPage.toString()}
+                onValueChange={(value) => setRowsPerPage(parseInt(value))}
+              >
+                <SelectTrigger className="w-[100px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[10, 20, 30, 40, 50].map((value) => (
+                    <SelectItem key={value} value={value.toString()}>
+                      {value} rows
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <span className="text-sm text-muted-foreground">
+                Page {currentPage} of {totalPages}
+              </span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+              >
+                First
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => prev - 1)}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => prev + 1)}
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={currentPage === totalPages}
+              >
+                Last
+              </Button>
+            </div>
           </div>
-        </div>
-        {showDeleteConfirmation && fleetToDelete && (
-          <NotificationWindow
-            title="Delete Fleet"
-            message={`Are you sure you want to delete "${fleetToDelete.fleet_name}"?`}
-            onClose={() => {
-              setShowDeleteConfirmation(false);
-              setFleetToDelete(null);
-            }}
-            showConfirmButton={true}
-            onConfirm={confirmDelete}
-          />
-        )}
-        {showRenameDialog && fleetToRename && (
-          <Dialog open={showRenameDialog} onOpenChange={setShowRenameDialog}>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Rename Fleet</DialogTitle>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Input
-                    id="name"
-                    value={newFleetName}
-                    onChange={(e) => setNewFleetName(e.target.value)}
-                    className="col-span-4"
-                    placeholder="Enter new fleet name"
-                  />
+          {showDeleteConfirmation && fleetToDelete && (
+            <NotificationWindow
+              title="Delete Fleet"
+              message={`Are you sure you want to delete "${fleetToDelete.fleet_name}"?`}
+              onClose={() => {
+                setShowDeleteConfirmation(false);
+                setFleetToDelete(null);
+              }}
+              showConfirmButton={true}
+              onConfirm={confirmDelete}
+            />
+          )}
+          {showRenameDialog && fleetToRename && (
+            <Dialog open={showRenameDialog} onOpenChange={setShowRenameDialog}>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Rename Fleet</DialogTitle>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Input
+                      id="name"
+                      value={newFleetName}
+                      onChange={(e) => setNewFleetName(e.target.value)}
+                      className="col-span-4"
+                      placeholder="Enter new fleet name"
+                    />
+                  </div>
                 </div>
-              </div>
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => {
-                    setShowRenameDialog(false);
-                    setFleetToRename(null);
-                    setNewFleetName('');
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" onClick={handleFleetRename}>
-                  Save Changes
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        )}
-      </DialogContent>
-    </Dialog>
+                <DialogFooter>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => {
+                      setShowRenameDialog(false);
+                      setFleetToRename(null);
+                      setNewFleetName('');
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" onClick={handleFleetRename}>
+                    Save Changes
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
