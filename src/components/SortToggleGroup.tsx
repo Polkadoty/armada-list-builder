@@ -25,7 +25,7 @@ export function SortToggleGroup({ activeSorts, onToggle, selectorType }: SortTog
         }
       });
     }
-  }, []);
+  }, [activeSorts, onToggle, selectorType]);
 
   // Save sort state to cookie whenever it changes
   useEffect(() => {

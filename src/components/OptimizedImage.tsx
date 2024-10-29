@@ -51,7 +51,7 @@ export function OptimizedImage({
           }`}
           loading={priority ? 'eager' : 'lazy'}
           onLoad={handleLoad}
-          onError={(e) => {
+          onError={() => {
             setHasError(true);
             setIsLoading(false);
             onError?.();

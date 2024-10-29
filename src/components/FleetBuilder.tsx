@@ -1169,7 +1169,7 @@ export default function FleetBuilder({
     localStorage.removeItem(`savedFleet_${faction}`);
   };
 
-  const generateExportText = () => {
+  const generateExportText = useCallback(() => {
     let text = "Name: " + fleetName + "\n";
     text += "Faction: " + faction.charAt(0).toUpperCase() + faction.slice(1) + "\n";
 
@@ -1250,7 +1250,7 @@ export default function FleetBuilder({
 
     // Ensure the text is not URL encoded
     return decodeURIComponent(encodeURIComponent(text));
-  };
+  }, [selectedShips, selectedSquadrons, selectedAssaultObjective, selectedDefenseObjective, selectedNavigationObjective]);
 
   const capitalizeFirstLetter = (string: string | undefined) => {
     if (!string) return "";
@@ -1261,21 +1261,6 @@ export default function FleetBuilder({
     const exportText = generateExportText();
     localStorage.setItem(`savedFleet_${faction}`, exportText);
   }, [faction, generateExportText]);
-
-  useEffect(() => {
-    const savedFleet = localStorage.getItem(`savedFleet_${faction}`);
-    const retrievedFromList = document.cookie.includes('retrieved-from-list=true');
-  
-    if (!hasLoadedPage && savedFleet && selectedShips.length === 0 && selectedSquadrons.length === 0) {
-      if (retrievedFromList) {
-        handleImportFleet(savedFleet);
-        document.cookie = "retrieved-from-list=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      } else {
-        setShowRecoveryPopup(true);
-      }
-      setHasLoadedPage(true);
-    }
-  }, [faction, selectedShips.length, selectedSquadrons.length, hasLoadedPage]);
   
   const handleRecoverFleet = () => {
     const savedFleet = localStorage.getItem(`savedFleet_${faction}`);
@@ -1921,7 +1906,20 @@ export default function FleetBuilder({
     return content;
   };
 
-
+  useEffect(() => {
+    const savedFleet = localStorage.getItem(`savedFleet_${faction}`);
+    const retrievedFromList = document.cookie.includes('retrieved-from-list=true');
+  
+    if (!hasLoadedPage && savedFleet && selectedShips.length === 0 && selectedSquadrons.length === 0) {
+      if (retrievedFromList) {
+        handleImportFleet(savedFleet);
+        document.cookie = "retrieved-from-list=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      } else {
+        setShowRecoveryPopup(true);
+      }
+      setHasLoadedPage(true);
+    }
+  }, [faction, selectedShips.length, selectedSquadrons.length, hasLoadedPage, router, handleImportFleet]);
 
   useEffect(() => {
     if (selectedShips.length > 0 || selectedSquadrons.length > 0) {

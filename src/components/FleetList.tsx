@@ -46,6 +46,9 @@ interface Fleet {
   points: number;
   date_added: string;
   fleet_data: string;
+  legends?: boolean;
+  legacy?: boolean;
+  old_legacy?: boolean;
 }
 
 interface SortableColumn {
@@ -55,6 +58,14 @@ interface SortableColumn {
   visible: boolean;
 }
 
+export const getContentTypes = (fleetData: string) => {
+  return {
+    legends: fleetData.includes("[Legends]"),
+    legacy: fleetData.includes("[Legacy]"),
+    old_legacy: fleetData.includes("[OldLegacy]")
+  };
+};
+
 const columns: SortableColumn[] = [
   { id: 'fleet_name', label: 'Fleet Name', sortable: true, visible: true },
   { id: 'faction', label: 'Faction', sortable: true, visible: true },
@@ -62,6 +73,8 @@ const columns: SortableColumn[] = [
   { id: 'points', label: 'Points', sortable: true, visible: true },
   { id: 'date_added', label: 'Date Added', sortable: true, visible: false },
 ];
+
+
 
 export function FleetList() {
   const { theme } = useTheme();
@@ -84,12 +97,6 @@ export function FleetList() {
   const [loadingMessage, setLoadingMessage] = useState("");
   const [loadingProgress, setLoadingProgress] = useState(0);
 
-  useEffect(() => {
-    if (user) {
-      fetchFleets();
-    }
-  }, [user]);
-
   const fetchFleets = async () => {
     setIsLoading(true);
     setLoadingMessage("Fetching your fleets...");
@@ -105,8 +112,30 @@ export function FleetList() {
       if (error) {
         console.error('Error fetching fleets:', error);
       } else {
+        // Update content type flags for each fleet
+        const updatedFleets = data?.map(fleet => {
+          const contentTypes = getContentTypes(fleet.fleet_data);
+          return {
+            ...fleet,
+            legends: contentTypes.legends,
+            legacy: contentTypes.legacy,
+            old_legacy: contentTypes.old_legacy
+          };
+        });
+
+        // Batch update the fleets in supabase
+        if (updatedFleets?.length) {
+          const { error: updateError } = await supabase
+            .from('fleets')
+            .upsert(updatedFleets);
+
+          if (updateError) {
+            console.error('Error updating fleet content types:', updateError);
+          }
+        }
+
         setLoadingProgress(100);
-        setFleets(data || []);
+        setFleets(updatedFleets || []);
       }
     } catch (error) {
       console.error('Error:', error);
@@ -161,8 +190,8 @@ export function FleetList() {
       return matchesSearch && matchesFaction && matchesCommander;
     })
     .sort((a, b) => {
-      const aValue = a[sortColumn];
-      const bValue = b[sortColumn];
+      const aValue = a[sortColumn] !== undefined ? a[sortColumn] : '';
+      const bValue = b[sortColumn] !== undefined ? b[sortColumn] : '';
       const direction = sortDirection === 'asc' ? 1 : -1;
       return aValue > bValue ? direction : -direction;
     });
@@ -262,6 +291,7 @@ export function FleetList() {
 
     try {
       const newFleetName = `${fleet.fleet_name} (Copy)`;
+      const contentTypes = getContentTypes(fleet.fleet_data);
       
       const { error } = await supabase
         .from('fleets')
@@ -271,7 +301,10 @@ export function FleetList() {
           fleet_data: fleet.fleet_data,
           faction: fleet.faction,
           commander: fleet.commander,
-          points: fleet.points
+          points: fleet.points,
+          legends: contentTypes.legends,
+          legacy: contentTypes.legacy,
+          old_legacy: contentTypes.old_legacy
         });
 
       if (error) {
@@ -286,6 +319,12 @@ export function FleetList() {
       setLoadingProgress(0);
     }
   };
+
+  useEffect(() => {
+    if (user) {
+      fetchFleets();
+    }
+  }, [user, fetchFleets]);
 
   return (
     <>
