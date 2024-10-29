@@ -348,7 +348,7 @@ function SwipeableUpgrade({ upgrade, onSwipe, onSwap, onRemove }: SwipeableUpgra
       {showImageModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowImageModal(false)}>
           <div className="relative">
-            <Image
+            <OptimizedImage
               src={upgrade.cardimage}
               alt={upgrade.name}
               width={300}

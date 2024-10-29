@@ -171,7 +171,7 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
               alt={squadron.unique && squadron['ace-name'] ? squadron['ace-name'] : squadron.name}
               width={250}
               height={350}
-              className="rounded-lg w-[250px] h-[350px] sm:w-[350px] sm:h-[490px] lg:w-[450px] lg:h-[630px]"
+              className="rounded-lg w-[250px] h-[350px] sm:w-[450px] sm:h-[630px] lg:w-[600px] lg:h-[840px]"
             />
             <button
               className="absolute top-2 right-2 bg-black bg-opacity-50 rounded-full p-1"
