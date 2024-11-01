@@ -96,7 +96,7 @@ export function OptimizedImage({
           alt={alt}
           width={width}
           height={height}
-          className={`${className} relative w-full h-full transition-opacity duration-400 ease-in-out rounded-lg ${
+          className={`${className} relative w-full h-full transition-opacity duration-666 ease-in-out rounded-lg ${
             isLoading || !isVisible ? 'opacity-0' : 'opacity-100'
           }`}
           loading={priority ? 'eager' : 'lazy'}
