@@ -1373,8 +1373,7 @@ export default function FleetBuilder({
 
   const handleImportFleet = useCallback((importText: string) => {
     console.log("Starting fleet import...");
-    const decodedText = decodeURIComponent(encodeURIComponent(importText));
-    const lines = decodedText.split("\n");
+    const lines = importText.split("\n");
 
     // Check faction first
     const factionLine = lines.find((line) => line.startsWith("Faction:"));
@@ -1511,9 +1510,8 @@ export default function FleetBuilder({
         }
         continue;
       } else if (
-        line.startsWith("Assault:") ||
-        line.startsWith("Defense:") ||
-        line.startsWith("Navigation:")
+        (line.startsWith("Assault:") || line.startsWith("Defense:") || line.startsWith("Navigation:")) &&
+        line.split(":")[1]?.trim() // Check if the value after the colon is not blank or a new line
       ) {
         // Handle objectives
         const [type, name] = line.split(":");
