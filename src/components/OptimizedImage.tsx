@@ -1,7 +1,8 @@
 // components/OptimizedImage.tsx
 /* eslint-disable @next/next/no-img-element */
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { AlertCircle } from 'lucide-react';
+import { placeholderMap } from '@/generated/placeholderMap';
 
 interface OptimizedImageProps {
   src: string;
@@ -28,27 +29,75 @@ export function OptimizedImage({
 }: OptimizedImageProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const [shouldLoad, setShouldLoad] = useState(priority);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const imageKey = src.split('/').pop()?.replace(/\.[^/.]+$/, '');
+  const placeholderUrl = imageKey ? placeholderMap[imageKey] : undefined;
+
+  useEffect(() => {
+    if (priority) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          setIsVisible(entry.isIntersecting);
+          if (entry.isIntersecting && !shouldLoad) {
+            setShouldLoad(true);
+          }
+        });
+      },
+      {
+        rootMargin: '50px 0px',
+        threshold: 0.1
+      }
+    );
+
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [priority, shouldLoad]);
 
   const handleLoad = () => {
-    setIsLoading(false);
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 300);
+    
     onLoad?.();
   };
 
   return (
-    <div className="relative w-full h-full bg-transparent">
-      {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center border-2 border-primary/20 rounded-lg backdrop-blur-sm bg-transparent">
+    <div ref={containerRef} className="relative w-full h-full overflow-hidden">
+      {placeholderUrl && (
+        <div 
+          className="absolute inset-0 w-full h-full"
+          style={{
+            backgroundImage: `url(${placeholderUrl})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            filter: 'blur(8px)',
+            transform: 'scale(1.1)',
+          }}
+        />
+      )}
+      {isLoading && !placeholderUrl && (
+        <div className="absolute inset-0 flex items-center justify-center border-2 border-primary/20 rounded-lg backdrop-blur-sm">
           <div className="w-4 h-4 rounded-full animate-spin" />
         </div>
       )}
-      {!hasError && (
+      {!hasError && shouldLoad && (
         <img
           src={src}
           alt={alt}
           width={width}
           height={height}
-          className={`${className} w-full h-full transition-all duration-150 ease-out rounded-lg bg-transparent ${
-            isLoading ? 'scale-95 opacity-0' : 'scale-100 opacity-100'
+          className={`${className} relative w-full h-full transition-opacity duration-400 ease-in-out rounded-lg ${
+            isLoading || !isVisible ? 'opacity-0' : 'opacity-100'
           }`}
           loading={priority ? 'eager' : 'lazy'}
           onLoad={handleLoad}
@@ -61,7 +110,7 @@ export function OptimizedImage({
         />
       )}
       {hasError && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center border-2 border-red-500/20 rounded-lg bg-transparent">
+        <div className="absolute inset-0 flex flex-col items-center justify-center border-2 border-red-500/20 rounded-lg">
           <AlertCircle className="w-12 h-12 text-red-500 mb-2" />
           <span className="text-sm text-gray-500">Failed to load image</span>
         </div>

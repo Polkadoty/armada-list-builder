@@ -273,12 +273,12 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
               <div key={ship.id} className={`w-full ${isHugeShip(ship) ? 'col-span-2 aspect-[5/4]' : 'aspect-[8.75/15]'}`}>
                 <Button
                   onClick={() => handleShipClick(ship)}
-                  className={`p-0 overflow-hidden relative w-full h-full rounded-lg bg-transparent ${
+                  className={`p-0 overflow-visible relative w-full h-full rounded-lg bg-transparent ${
                     !isShipAvailable(ship) ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
                   disabled={!isShipAvailable(ship)}
                 >
-                  <div className="absolute inset-0flex items-center justify-center">
+                  <div className="absolute inset-0 flex items-center justify-center">
                     <OptimizedImage
                       src={ship.cardimage}
                       alt={ship.name}

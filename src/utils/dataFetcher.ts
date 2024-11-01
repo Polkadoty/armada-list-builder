@@ -6,7 +6,7 @@ export const checkAndFetchData = async (setIsLoading: (isLoading: boolean) => vo
     const data = await response.json();
     const lastModified = data.lastModified;
     const savedLastModified = Cookies.get('lastModified');
-    const isDataMissing = !localStorage.getItem('ships') || !localStorage.getItem('squadrons') || !localStorage.getItem('objectives') || !localStorage.getItem('upgrades');
+    const isDataMissing = !localStorage.getItem('ships') || !localStorage.getItem('squadrons') || !localStorage.getItem('objectives') || !localStorage.getItem('upgrades') || !localStorage.getItem('imageLinks') || !localStorage.getItem('aliases');
 
     if (savedLastModified !== lastModified || isDataMissing) {
       setIsLoading(true);
@@ -30,6 +30,7 @@ const fetchAndSaveData = async (setLoadingProgress: (progress: number) => void, 
     { name: 'objectives', url: '/api/objectives/' },
     { name: 'upgrades', url: '/api/upgrades/' },
     { name: 'aliases', url: '/aliases/' },
+    { name: 'imageLinks', url: '/image-links/' }
   ];
 
   if (enableLegacy) {
@@ -90,6 +91,7 @@ export const flushCacheAndReload = async (setIsLoading: (isLoading: boolean) => 
   localStorage.removeItem('oldLegacySquadrons');
   localStorage.removeItem('oldLegacyUpgrades');
   localStorage.removeItem('aliases');
+  localStorage.removeItem('imageLinks');
 
   // Reset sorting state cookies
   Cookies.remove('sortState_ships');
