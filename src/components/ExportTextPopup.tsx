@@ -32,7 +32,6 @@ export function ExportTextPopup({ text, onClose, contentRef }: ExportTextPopupPr
     }
 
     try {
-      
       // Hide the export popup temporarily
       const exportPopup = document.querySelector('[data-export-popup="true"]');
       if (exportPopup) {
@@ -42,12 +41,24 @@ export function ExportTextPopup({ text, onClose, contentRef }: ExportTextPopupPr
       // Wait for fonts to load
       await document.fonts.ready;
 
-      // Update image sources to use the proxy
+      // Force load all images within the content
       const images = contentRef.current.getElementsByTagName('img');
       await Promise.all(Array.from(images).map(async img => {
+        // Remove loading="lazy" attribute
+        img.removeAttribute('loading');
+        
+        // If it's an API image, use the proxy
         if (img.src.startsWith('https://api.swarmada.wiki')) {
           const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(img.src)}`;
           img.src = proxyUrl;
+        }
+
+        // Wait for image to load
+        if (!img.complete) {
+          await new Promise((resolve) => {
+            img.onload = resolve;
+            img.onerror = resolve;
+          });
         }
       }));
 
@@ -95,7 +106,10 @@ export function ExportTextPopup({ text, onClose, contentRef }: ExportTextPopupPr
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-md bg-opacity-30 dark:bg-opacity-30">
+    <div 
+      className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-md bg-opacity-30 dark:bg-opacity-30"
+      data-export-popup="true"
+    >
       <Card className="w-full max-w-lg md:max-w-2xl bg-white/90 dark:bg-gray-800/90 backdrop-blur-md shadow-lg flex flex-col max-h-[90vh]">
         <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
           <h2 className="text-lg sm:text-xl lg:text-2xl font-bold">Export Fleet</h2>

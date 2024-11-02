@@ -8,7 +8,9 @@ import Link from 'next/link';
 import { LoadingScreen } from '../components/LoadingScreen';
 import { checkAndFetchData } from '../utils/dataFetcher';
 import { ContentToggleButton } from '../components/ContentToggleButton';
-import { LoginButton } from '../components/LoginButton';
+import { TextImportWindow } from '../components/TextImportWindow';
+import { Import } from 'lucide-react';
+import { useRouter } from 'next/router';
 import { UserAvatar } from '../components/UserAvatar';
 
 const factionShips = {
@@ -26,6 +28,8 @@ export default function Home() {
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [loadingMessage, setLoadingMessage] = useState('');
   const [tournamentMode, setTournamentMode] = useState(true);
+  const [showImportWindow, setShowImportWindow] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     setMounted(true);
@@ -35,6 +39,16 @@ export default function Home() {
     checkAndFetchData(setIsLoading, setLoadingProgress, setLoadingMessage);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  const handleImportFleet = (importText: string) => {
+    const factionLine = importText.split('\n').find(line => line.startsWith('Faction:'));
+    if (factionLine) {
+      const importedFaction = factionLine.split(':')[1].trim().toLowerCase();
+      const normalizedFaction = importedFaction === 'imperial' ? 'empire' : importedFaction;
+      localStorage.setItem(`savedFleet_${normalizedFaction}`, importText);
+      router.push(`/${normalizedFaction}`);
+    }
+  };
 
   if (!mounted) return null;
 
@@ -60,7 +74,15 @@ export default function Home() {
         </div>
         <FactionSelection onHover={setHoveredFaction} />
         <div className="mt-8 flex justify-center space-x-4">
-          <LoginButton />
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20"
+            onClick={() => setShowImportWindow(true)}
+          >
+            <Import className="mr-2 h-4 w-4" />
+            IMPORT
+          </Button>
           <Link href="/faq">
             <Button variant="outline" size="sm" className="text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20">FAQ</Button>
           </Link>
@@ -93,6 +115,12 @@ export default function Home() {
             </div>
           ))}
         </div>
+      )}
+      {showImportWindow && (
+        <TextImportWindow
+          onImport={handleImportFleet}
+          onClose={() => setShowImportWindow(false)}
+        />
       )}
     </div>
   );

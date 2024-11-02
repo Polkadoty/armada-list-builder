@@ -1170,7 +1170,7 @@ export default function FleetBuilder({
   };
 
   const generateExportText = useCallback(() => {
-    let text = "Name: " + fleetName + "\n";
+    let text = " Name: " + fleetName + "\n";
     text += "Faction: " + faction.charAt(0).toUpperCase() + faction.slice(1) + "\n";
 
     const commander = selectedShips
@@ -1510,17 +1510,20 @@ export default function FleetBuilder({
         }
         continue;
       } else if (
-        (line.startsWith("Assault:") || line.startsWith("Defense:") || line.startsWith("Navigation:")) &&
-        line.split(":")[1]?.trim() // Check if the value after the colon is not blank or a new line
+        (line.startsWith("Assault:") || line.startsWith("Defense:") || line.startsWith("Navigation:")) 
       ) {
         // Handle objectives
         const [type, name] = line.split(":");
-        if (!name || name.trim() === "" || name.trim() === " ") {
-          console.log("Skipping line due to empty or undefined objective name");
-          return; // Skip the line if the name is undefined or only spaces
+        const trimmedName = name?.trim();
+        
+        // If there's no name after the colon, skip this line
+        if (!trimmedName) {
+          console.log(`Skipping empty objective: ${type}`);
+          continue;
         }
-        const objectiveKey = getAliasKey(aliases, name.trim());
-        console.log(`Found objective: ${type} - ${name.trim()}`);
+      
+        const objectiveKey = getAliasKey(aliases, trimmedName);
+        console.log(`Found objective: ${type} - ${trimmedName}`);
         if (objectiveKey) {
           const objective = fetchObjective(objectiveKey);
           console.log(`Fetched objective for key: ${objectiveKey}`, objective);
@@ -1538,13 +1541,21 @@ export default function FleetBuilder({
                 break;
             }
           } else {
-            console.log(`Objective not found: ${name.trim()}`);
-            skippedItems.push(name.trim());
+            console.log(`Objective not found: ${trimmedName}`);
+            skippedItems.push(trimmedName);
           }
         } else {
-          console.log(`Objective key not found in aliases: ${name.trim()}`);
-          skippedItems.push(name.trim());
+          console.log(`Objective key not found in aliases: ${trimmedName}`);
+          skippedItems.push(trimmedName);
         }
+      } else if (line.startsWith(" Name:") || line.startsWith("Name:")) {
+        // Handle fleet name with or without leading space
+        const fleetNameMatch = line.match(/Name:\s*(.+)/);
+        if (fleetNameMatch) {
+          const newFleetName = fleetNameMatch[1].trim();
+          setFleetName(newFleetName);
+        }
+        continue;
       } else if (!processingSquadrons && !line.startsWith("•")) {
         // Handle ships
         const shipMatch = line.match(/^(.+?)\s*\((\d+)\)/);
