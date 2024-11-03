@@ -18,6 +18,10 @@ const factionShips = {
   empire: '/images/star-destroyer.webp',
   republic: '/images/venator.webp',
   separatist: '/images/lucrehulk.webp',
+  unsc: '/images/unsc-marathon.webp',
+  covenant: '/images/covenant-ccs.webp',
+  colonial: '/images/colonial-galactica.webp',
+  cylon: '/images/cylon-basestar.webp',
 };
 
 export default function Home() {
