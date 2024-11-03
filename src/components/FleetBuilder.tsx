@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
   Printer,
-  ArrowLeft,
   FileText,
   Trash2,
   TriangleAlert,
@@ -19,7 +18,6 @@ import { SelectedSquadron } from "./SelectedSquadron";
 import { SquadronFilter } from "./SquadronFilter";
 import { SquadronSelector } from "./SquadronSelector";
 import { PointsDisplay } from "./PointsDisplay";
-import Link from "next/link";
 import { useTheme } from "next-themes";
 import { ObjectiveSelector, ObjectiveModel } from "./ObjectiveSelector";
 import UpgradeSelector from "./UpgradeSelector";
