@@ -45,8 +45,17 @@ export default function Home() {
     if (factionLine) {
       const importedFaction = factionLine.split(':')[1].trim().toLowerCase();
       const normalizedFaction = importedFaction === 'imperial' ? 'empire' : importedFaction;
+      
+      // Save fleet and set cookie
       localStorage.setItem(`savedFleet_${normalizedFaction}`, importText);
-      router.push(`/${normalizedFaction}`);
+      document.cookie = "retrieved-from-list=true; path=/";
+      
+      // Navigate home first, then to the correct faction
+      router.push('/').then(() => {
+        setTimeout(() => {
+          router.push(`/${normalizedFaction}`);
+        }, 250);
+      });
     }
   };
 
