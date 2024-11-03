@@ -158,7 +158,7 @@ const SectionHeader = ({
             e.stopPropagation();
             onClearAll();
           }}
-          className="mr-2 text-red-500 hover:text-red-700"
+          className="mr-2 text-red-500 hover:text-opacity-70"
         >
           <Trash2 size={16} />
         </button>
@@ -2198,13 +2198,13 @@ export default function FleetBuilder({
         </div>
       </div>
 
-      <div className="flex flex-wrap justify-between gap-2">
+      {/* <div className="flex flex-wrap justify-between gap-2">
         <Link href="/">
           <Button variant="outline" className="flex-grow">
             <ArrowLeft className="mr-2 h-4 w-4" /> BACK
           </Button>
         </Link>
-      </div>
+      </div> */}
 
       {showShipSelector && (
         <ShipSelector

@@ -83,7 +83,7 @@ export default function FactionSelection({ onHover }: { onHover: (faction: strin
               <div className={`col-span-2 w-full px-4 mb-4 transition-opacity duration-500 ${showLegendsContent ? 'opacity-100' : 'opacity-0'}`}>
                 <div className="bg-yellow-100/30 backdrop-blur-md border border-yellow-400 rounded-lg p-4">
                   <p className="text-yellow-800 dark:text-yellow-200 text-center font-medium">
-                    ⚠️ This content is experimental and subject to change
+                    ⚠️ This content is WIP and is subject to frequent changes.
                   </p>
                 </div>
               </div>

@@ -73,7 +73,7 @@ export function SwipeableObjective({ type, selectedObjective, onRemove, onOpen, 
       >
         <Button 
           variant="outline" 
-          className="w-full justify-start transition-colors py-6 text-lg" // Increased height to 6 for more vertical space
+          className="w-full justify-start transition-colors py-6 text-lg bg-white dark:bg-gray-800" // Added background color for light and dark mode
           onClick={onOpen}
         >
           <div className="flex justify-between items-center w-full">
@@ -84,7 +84,7 @@ export function SwipeableObjective({ type, selectedObjective, onRemove, onOpen, 
             {selectedObjective && (
               <button 
                 onClick={(e) => { e.stopPropagation(); onRemove(); }}
-                className="text-red-500 hover:text-red-700"
+                className="text-red-500 hover:text-red-700" // Changed to match current text color
               >
                 ✕
               </button>

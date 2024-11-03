@@ -86,7 +86,6 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
       setShowImageModal(true);
     }
   };
-
   return (
     <div className="relative overflow-hidden mb-4">
       <animated.div
@@ -96,15 +95,15 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
         onTouchEnd={handleTouchEnd}
       >
         <Card>
-          <CardContent className="p-2">
+          <CardContent className="p-0"> {/* Removed padding */}
             <div className="flex items-center">
-              <div className="w-32 aspect-[3.75/2] mr-4 relative overflow-hidden group">
+              <div className="w-2/5 aspect-[3.75/2] relative overflow-hidden group rounded-l-lg"> {/* Adjusted margin */}
                 <OptimizedImage 
                   src={squadron.cardimage} 
                   alt={squadron.unique && squadron['ace-name'] ? squadron['ace-name'] : squadron.name}
                   width={250}
                   height={350}
-                  className="object-cover object-top scale-[103%]"
+                  className="object-cover object-top scale-[103%] rounded-l-lg absolute top-0 left-0" // Added absolute positioning
                   onClick={() => setShowImageModal(true)}
                 />
                 <button
@@ -118,10 +117,10 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
                   }}
                   onTouchEnd={handleImageTouch}
                 >
-                  <Eye size={16} className="text-white cursor-pointer" />
+                  <Eye size={16} className="text-current" />
                 </button>
               </div>
-              <div className="flex-grow">
+              <div className="flex-grow p-2"> {/* Added padding here */}
                 <div className="font-bold text-base sm:text-lg flex items-center">
                   {squadron.unique && <span className="mr-1 text-yellow-500">●</span>}
                   {count > 1 ? `(${count}) ` : ''}
@@ -155,16 +154,16 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
             </div>
           </CardContent>
         </Card>
-        <div className="absolute left-0 top-0 bottom-0 flex items-center justify-center w-12 text-blue-500 bg-gray-800 bg-opacity-75" style={{ transform: 'translateX(-100%)' }}>
-          {squadron.unique ? <ArrowLeftRight size={20} /> : <Plus size={20} />}
+        <div className="absolute left-0 top-0 bottom-0 flex items-center justify-center w-12 bg-gray-800 bg-opacity-75" style={{ transform: 'translateX(-100%)' }}>
+          {squadron.unique ? <ArrowLeftRight size={20} className="text-blue-500" /> : <Plus size={20} className="text-blue-500" />}
         </div>
-        <div className="absolute right-0 top-0 bottom-0 flex items-center justify-center w-12 text-red-500 bg-gray-800 bg-opacity-75" style={{ transform: 'translateX(100%)' }}>
-          {squadron.count === 1 ? <Trash2 size={20} /> : <Minus size={20} />}
+        <div className="absolute right-0 top-0 bottom-0 flex items-center justify-center w-12 bg-gray-800 bg-opacity-75" style={{ transform: 'translateX(100%)' }}>
+          {squadron.count === 1 ? <Trash2 size={20} className="text-red-500" /> : <Minus size={20} className="text-red-500" />}
         </div>
       </animated.div>
       {showImageModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowImageModal(false)}>
-          <div className="relative">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 rounded-lg" onClick={() => setShowImageModal(false)}>
+          <div className="relative rounded-lg">
             <OptimizedImage
               src={squadron.cardimage}
               alt={squadron.unique && squadron['ace-name'] ? squadron['ace-name'] : squadron.name}

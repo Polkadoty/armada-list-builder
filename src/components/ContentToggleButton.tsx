@@ -137,6 +137,7 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
                   id="tournament-mode"
                   checked={tournamentMode}
                   onCheckedChange={setTournamentMode}
+                  className="custom-switch"
                 />
                 <Label htmlFor="tournament-mode">Tournament Mode</Label>
               </div>

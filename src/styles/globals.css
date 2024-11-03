@@ -104,15 +104,24 @@ body {
 
 @layer components {
   .custom-switch {
-    @apply bg-gray-200 dark:bg-gray-700;
+    @apply h-5 w-10 bg-gray-200 dark:bg-gray-700 !important;
   }
 
   .custom-switch[data-state="checked"] {
-    @apply bg-blue-600 dark:bg-blue-400;
+    @apply bg-blue-600 dark:bg-blue-400 !important;
   }
 
-  .custom-switch::before {
-    @apply bg-white dark:bg-gray-200;
+  .custom-switch[data-state="unchecked"] {
+    @apply bg-gray-200 dark:bg-gray-700 !important;
+  }
+
+  .custom-switch span {
+    @apply block h-4 w-4 rounded-full bg-white dark:bg-gray-200 shadow-lg ring-0 transition-transform !important;
+    transform: translateX(2px);
+  }
+
+  .custom-switch[data-state="checked"] span {
+    transform: translateX(21px) !important;
   }
 }
 

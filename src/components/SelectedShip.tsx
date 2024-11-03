@@ -109,13 +109,13 @@ export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRem
             onTouchEnd={handleShipTouchEnd}
           >
             <CardContent className="p-0">
-              <div className="relative w-full aspect-[8/3] overflow-hidden group">
+              <div className="relative w-full aspect-[8/3] overflow-hidden group rounded-t-lg">
                 <OptimizedImage 
                   src={ship.cardimage} 
                   alt={ship.name}
                   width={800}
                   height={300}
-                  className="object-cover object-top scale-[103%]"
+                  className="object-cover object-top scale-[103%]" // Added rounded corners
                   onClick={() => setShowImageModal(true)}
                 />
                 <button

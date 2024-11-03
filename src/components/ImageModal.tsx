@@ -20,7 +20,7 @@ export function ImageModal({ src, alt, onClose }: ImageModalProps) {
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" 
       onClick={onClose}
     >
-      <div className="relative">
+      <div className="relative p-4" onClick={(e) => e.stopPropagation()}>
         {isLoading && (
           <OptimizedImage
             src={thumbnailSrc}
@@ -36,7 +36,7 @@ export function ImageModal({ src, alt, onClose }: ImageModalProps) {
           alt={alt}
           width={300}
           height={420}
-          className="rounded-lg sm:w-[450px] sm:h-[630px] lg:w-[600px] lg:h-[840px]"
+          className="rounded-lg sm:w-[450px] sm:h-[630px] lg:w-[600px] lg:h-[840px] py-4"
           priority={true}
           onLoad={() => setIsLoading(false)}
         />
