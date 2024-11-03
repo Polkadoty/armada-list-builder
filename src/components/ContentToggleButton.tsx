@@ -12,8 +12,8 @@ import { Label } from "@/components/ui/label";
 
 // Configuration flags
 const CONFIG = {
-  showLegacyToggle: false,
-  showLegendsToggle: true,
+  showLegacyToggle: true,
+  showLegendsToggle: false,
   showOldLegacyToggle: true,
 };
 
