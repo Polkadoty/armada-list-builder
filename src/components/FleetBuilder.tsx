@@ -41,6 +41,7 @@ import {
 import { FleetRecoveryPopup } from "./FleetRecoveryPopup";
 import { SaveFleetButton } from './SaveFleetButton';
 import { useRouter } from 'next/router';
+import { PrintMenu } from "./PrintMenu";
 
 export interface Ship {
   id: string;
@@ -84,6 +85,13 @@ export interface Squadron {
   "unique-class": string[];
   source: "regular" | "legacy" | "legends" | "oldLegacy";
   searchableText: string;
+}
+
+interface Objective {
+  id: string;
+  name: string;
+  cardimage: string;
+  type: 'assault' | 'defense' | 'navigation';
 }
 
 export interface Upgrade {
@@ -242,6 +250,8 @@ export default function FleetBuilder({
   const [hasLoadedPage, setHasLoadedPage] = useState(false);
   const router = useRouter();
   const contentRef = useRef<HTMLDivElement>(null);
+  const [showPrintMenu, setShowPrintMenu] = useState(false);
+  const [paperSize, setPaperSize] = useState<'letter' | 'a4'>('letter');
 
   const checkTournamentViolations = useCallback(() => {
     const violations: string[] = [];
@@ -1726,17 +1736,39 @@ export default function FleetBuilder({
   ]);
 
   const handlePrint = () => {
+    setShowPrintMenu(true);
+  };
+
+  const handlePrintList = () => {
     const printContent = generatePrintContent();
     const printWindow = window.open("", "_blank");
     if (printWindow) {
       printWindow.document.write(printContent);
       printWindow.document.close();
-      
-      // Wait for the page to load before printing
-      printWindow.onload = () => {
+      setTimeout(() => {
         printWindow.print();
+      }, 2500);
+    }
+    setShowPrintMenu(false);
+  };
+
+  const handlePrintnPlay = () => {
+    const printContent = generatePrintnPlayContent();
+    const printWindow = window.open("", "_blank");
+    if (printWindow) {
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      
+      // Add event listener for load
+      printWindow.onload = () => {
+        setTimeout(() => {
+          printWindow.print();
+          // Close the window after printing (optional)
+          // printWindow.close();
+        }, 1000);
       };
     }
+    setShowPrintMenu(false);
   };
 
   const generatePrintContent = () => {
@@ -1942,6 +1974,148 @@ export default function FleetBuilder({
     </html>`;
 
     return content;
+  };
+
+  
+  const generatePrintnPlayContent = () => {
+    // Calculate number of pages needed for poker cards
+    const allCards = [
+      ...selectedSquadrons,
+      ...selectedShips.flatMap(ship => ship.assignedUpgrades),
+      ...[selectedAssaultObjective, selectedDefenseObjective, selectedNavigationObjective].filter((obj): obj is Objective => obj !== null)
+    ];
+    
+    const pokerPagesNeeded = Math.ceil(allCards.length / 9); // 9 cards per page
+  
+    return `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <title>Print & Play - ${fleetName}</title>
+          <style>
+            @page {
+              size: ${paperSize};
+              margin: 0;
+            }
+
+            body {
+              margin: 0;
+              padding: 0;
+              background: white;
+            }
+
+            .page {
+              position: relative;
+              width: ${paperSize === 'letter' ? '8.5in' : '210mm'};
+              height: ${paperSize === 'letter' ? '11in' : '297mm'};
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              page-break-after: always;
+            }
+
+            .grid {
+              display: grid;
+              gap: 0;
+            }
+
+            .tarot-grid {
+              grid-template-columns: repeat(3, 2.75in);
+              grid-template-rows: repeat(2, 4.75in);
+              width: 8.25in;
+              height: 9.5in;
+            }
+
+            .poker-grid {
+              grid-template-columns: repeat(3, 2.5in);
+              grid-template-rows: repeat(3, 3.5in);
+              width: 7.5in;
+              height: 10.5in;
+            }
+
+            .tarot-card {
+              width: 2.75in;
+              height: 4.75in;
+              position: relative;
+              overflow: hidden;
+            }
+
+            .poker-card {
+              width: 2.5in;
+              height: 3.5in;
+              position: relative;
+              overflow: hidden;
+            }
+
+            .card-container {
+              position: absolute;
+              inset: 0;
+              width: 100%;
+              height: 100%;
+              overflow: hidden;
+            }
+
+            .card-background {
+              position: absolute;
+              width: 110%;
+              height: 110%;
+              top: -5%;
+              left: -5%;
+              filter: blur(8px);
+              z-index: 1;
+              object-fit: cover;
+              object-position: center;
+            }
+
+            .card-image {
+              position: absolute;
+              inset: 0;
+              width: 100%;
+              height: 100%;
+              z-index: 2;
+              object-fit: contain;
+            }
+          </style>
+      </head>
+        <body>
+          ${selectedShips.length > 0 ? `
+            <div class="page">
+              <div class="grid tarot-grid">
+                ${selectedShips.map(ship => `
+                  <div class="tarot-card">
+                    <div class="card-container">
+                      <img class="card-background" src="${ship.cardimage}" alt="" />
+                      <img class="card-image" src="${ship.cardimage}" alt="${ship.name}" />
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          ` : ''}
+
+          ${Array.from({ length: pokerPagesNeeded }).map((_, pageIndex) => {
+            const startIndex = pageIndex * 9;
+            const pageCards = allCards.slice(startIndex, startIndex + 9);
+
+            return pageCards.length > 0 ? `
+              <div class="page">
+                <div class="grid poker-grid">
+                  ${pageCards.map(card => `
+                    <div class="poker-card">
+                      <div class="card-container">
+                        <img class="card-background" src="${card.cardimage}" alt="" />
+                        <img class="card-image" src="${card.cardimage}" alt="${card.name}" />
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            ` : '';
+          }).join('')}
+        </body>
+      </html>
+    `;
   };
 
   useEffect(() => {
@@ -2155,7 +2329,7 @@ export default function FleetBuilder({
       ) : (
         <Card className="mb-4 relative">
           <Button
-            className="w-full justify-between bg-white/30 dark:bg-gray-900/30 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md text-lg py-6"
+            className="w-full justify-between bg-white/30 dark:bg-gray-900/30 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-md text-lg py-6"
             variant="outline"
             onClick={handleAddSquadron}
           >
@@ -2306,6 +2480,16 @@ export default function FleetBuilder({
           isOpen={showRecoveryPopup}
           onImport={handleRecoverFleet}
           onDecline={handleDeclineRecovery}
+        />
+      )}
+
+      {showPrintMenu && (
+        <PrintMenu
+          onPrintList={handlePrintList}
+          onPrintnPlay={handlePrintnPlay}
+          onClose={() => setShowPrintMenu(false)}
+          paperSize={paperSize}
+          setPaperSize={setPaperSize}
         />
       )}
     </div>
