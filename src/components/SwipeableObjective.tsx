@@ -73,7 +73,7 @@ export function SwipeableObjective({ type, selectedObjective, onRemove, onOpen, 
       >
         <Button 
           variant="outline" 
-          className="w-full justify-start transition-colors py-6 text-lg bg-white dark:bg-gray-900" // Added background color for light and dark mode
+          className="w-full justify-start transition-colors py-6 text-lg bg-white dark:bg-gray-1000" // Added background color for light and dark mode
           onClick={onOpen}
         >
           <div className="flex justify-between items-center w-full">
