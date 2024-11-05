@@ -1772,7 +1772,7 @@ export default function FleetBuilder({
           printWindow.print();
           // Close the window after printing (optional)
           // printWindow.close();
-        }, 1000);
+        }, 2000);
       };
     }
     setShowPrintMenu(false);
@@ -2153,7 +2153,6 @@ export default function FleetBuilder({
 
             .grid {
               display: grid;
-              gap: 0;
             }
 
             .tarot-grid {
@@ -2161,6 +2160,7 @@ export default function FleetBuilder({
               grid-template-rows: repeat(2, 4.75in);
               width: 8.25in;
               height: 9.5in;
+              font-size: 0; /* Removes any potential whitespace */
             }
 
             .poker-grid {
@@ -2168,6 +2168,7 @@ export default function FleetBuilder({
               grid-template-rows: repeat(3, 3.5in);
               width: 7.5in;
               height: 10.5in;
+              font-size: 0; /* Removes any potential whitespace */
             }
 
             .tarot-card {
@@ -2175,6 +2176,9 @@ export default function FleetBuilder({
               height: 4.75in;
               position: relative;
               overflow: hidden;
+              display: flex;
+              justify-content: center;
+              align-items: center;
             }
 
             .poker-card {
@@ -2182,75 +2186,133 @@ export default function FleetBuilder({
               height: 3.5in;
               position: relative;
               overflow: hidden;
+              display: flex;
+              justify-content: center;
+              align-items: center;
             }
 
             .card-container {
-              position: absolute;
-              inset: 0;
+              position: relative;
               width: 100%;
               height: 100%;
-              overflow: hidden;
+              display: flex;
+              justify-content: center;
+              align-items: center;
             }
 
             .card-background {
               position: absolute;
-              width: 110%;
-              height: 110%;
-              top: -5%;
-              left: -5%;
+              width: 100%;
+              height: 100%;
+              top: 0;
+              left: 0;
               filter: blur(8px);
               z-index: 1;
               object-fit: cover;
-              object-position: center;
             }
 
             .card-image {
               position: absolute;
-              inset: 0;
               width: 100%;
               height: 100%;
+              object-fit: fill;
               z-index: 2;
-              object-fit: contain;
             }
+
           </style>
       </head>
-        <body>
-          ${selectedShips.length > 0 ? `
+      <body>
+        ${selectedShips.length > 0 ? `
+          <!-- Ship Cards Front -->
+          <div class="page">
+            <div class="grid tarot-grid">
+              ${selectedShips.map(ship => `
+                <div class="tarot-card">
+                  <div class="card-container">
+                    <img class="card-background" src="${ship.cardimage}" alt="" />
+                    <img class="card-image" src="${ship.cardimage}" alt="${ship.name}" />
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+          
+          <!-- Ship Cards Back -->
+          <div class="page">
+            <div class="grid tarot-grid">
+              ${selectedShips.slice().reverse().map(ship => `
+                <div class="tarot-card">
+                  <div class="card-container">
+                    <img class="card-image" 
+                        src="https://api.swarmada.wiki/images/${ship.faction}-ship-rear.webp" 
+                        alt="${ship.name} back" />
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        ` : ''}
+
+        ${Array.from({ length: pokerPagesNeeded }).map((_, pageIndex) => {
+          const startIndex = pageIndex * 9;
+          const pageCards = allCards.slice(startIndex, startIndex + 9);
+
+          return pageCards.length > 0 ? `
+            <!-- Poker Cards Front -->
             <div class="page">
-              <div class="grid tarot-grid">
-                ${selectedShips.map(ship => `
-                  <div class="tarot-card">
+              <div class="grid poker-grid">
+                ${pageCards.map(card => `
+                  <div class="poker-card">
                     <div class="card-container">
-                      <img class="card-background" src="${ship.cardimage}" alt="" />
-                      <img class="card-image" src="${ship.cardimage}" alt="${ship.name}" />
+                      <img class="card-background" src="${card.cardimage}" alt="" />
+                      <img class="card-image" src="${card.cardimage}" alt="${card.name}" />
                     </div>
                   </div>
                 `).join('')}
               </div>
             </div>
-          ` : ''}
+            
+            <!-- Poker Cards Back -->
+            <div class="page">
+              <div class="grid poker-grid">
+                ${pageCards.map((card, index) => {
+                  // Calculate position in the grid
+                  const row = Math.floor(index / 3); // 3 cards per row
+                  const col = index % 3;
+                  // Reverse the column position while keeping the same row
+                  const reversedCol = 2 - col;
+                  const reversedIndex = (row * 3) + reversedCol;
+                  const reversedCard = pageCards[reversedIndex];
 
-          ${Array.from({ length: pokerPagesNeeded }).map((_, pageIndex) => {
-            const startIndex = pageIndex * 9;
-            const pageCards = allCards.slice(startIndex, startIndex + 9);
+                  if (!reversedCard) return '';
 
-            return pageCards.length > 0 ? `
-              <div class="page">
-                <div class="grid poker-grid">
-                  ${pageCards.map(card => `
+                  let rearImage;
+                  if ('squadron_type' in reversedCard) {
+                    rearImage = `${reversedCard.faction}-squadron-rear`;
+                  } 
+                  else if ('restrictions' in reversedCard) {
+                    rearImage = `${reversedCard.type}-rear`;
+                  }
+                  else {
+                    rearImage = 'objective-rear';
+                  }
+                  
+                  return `
                     <div class="poker-card">
                       <div class="card-container">
-                        <img class="card-background" src="${card.cardimage}" alt="" />
-                        <img class="card-image" src="${card.cardimage}" alt="${card.name}" />
+                        <img class="card-image" 
+                             src="https://api.swarmada.wiki/images/${rearImage}.webp" 
+                             alt="Card back" />
                       </div>
                     </div>
-                  `).join('')}
-                </div>
+                  `;
+                }).join('')}
               </div>
-            ` : '';
-          }).join('')}
-          ${baseTokensHTML}
-        </body>
+            </div>
+          ` : '';
+        }).join('')}
+        ${baseTokensHTML}
+      </body>
       </html>
     `;
   };
