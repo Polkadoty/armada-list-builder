@@ -93,7 +93,7 @@ export default function FactionSelection({ onHover }: { onHover: (faction: strin
             <TooltipTrigger>
               <Link href={`/${faction.slug}`}>
                 <div 
-                  className={`p-4 hover:bg-gray-200 dark:hover:bg-white/20 transition-all duration-500 rounded-lg ${
+                  className={`p-4 transition-all duration-500 rounded-lg ${
                     enableLegends && index >= baseFactions.length 
                       ? `transition-all duration-500 ${showLegendsContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`
                       : ''
@@ -112,7 +112,7 @@ export default function FactionSelection({ onHover }: { onHover: (faction: strin
                     className={`transition-all duration-200 ${!mounted || currentTheme === 'dark' ? shouldInvertImage(faction.logo) ? 'invert' : '' : ''}`}
                     style={{
                       filter: hoveredFaction === faction.slug 
-                        ? `drop-shadow(0 0 0.75rem ${factionColors[faction.slug as keyof typeof factionColors]}) ${!mounted || currentTheme === 'dark' ? shouldInvertImage(faction.logo) ? 'invert(1) hue-rotate(180deg)' : '' : ''}`
+                        ? `drop-shadow(0 0 1.5rem ${factionColors[faction.slug as keyof typeof factionColors]}) ${!mounted || currentTheme === 'dark' ? shouldInvertImage(faction.logo) ? 'invert(1) hue-rotate(180deg)' : '' : ''}`
                         : !mounted || currentTheme === 'dark' ? shouldInvertImage(faction.logo) ? 'invert(1)' : 'none' : 'none',
                     }}
                   />
