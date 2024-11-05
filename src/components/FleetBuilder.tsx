@@ -1987,6 +1987,135 @@ export default function FleetBuilder({
     
     const pokerPagesNeeded = Math.ceil(allCards.length / 9); // 9 cards per page
   
+    // Define base token sizes
+    const baseTokenSizes = {
+      small: { width: '38.75mm', height: '70.45mm' },
+      medium: { width: '58.5mm', height: '101.5mm' },
+      large: { width: '73.0mm', height: '128.5mm' }
+    };
+  
+    // Function to get base token size
+    const getBaseTokenSize = (size: string) => {
+      switch (size) {
+        case 'small':
+          return baseTokenSizes.small;
+        case 'medium':
+          return baseTokenSizes.medium;
+        case 'large':
+          return baseTokenSizes.large;
+        default:
+          return baseTokenSizes.small; // Default to small if size is unknown
+      }
+    };
+
+    // Helper function to calculate optimal layout
+    const calculateOptimalLayout = (ships: Ship[]) => {
+      const margin = 0.5; // inches
+      const pageWidth = paperSize === 'letter' ? 8.5 : 210/25.4; // convert mm to inches for A4
+      const pageHeight = paperSize === 'letter' ? 11 : 297/25.4;
+      const usableWidth = pageWidth - (2 * margin);
+      const usableHeight = pageHeight - (2 * margin);
+      
+      // Convert mm to inches
+      const tokenSizes = {
+        small: { width: 38.75/25.4, height: 70.45/25.4 },
+        medium: { width: 58.5/25.4, height: 101.5/25.4 },
+        large: { width: 73.0/25.4, height: 128.5/25.4 }
+      };
+    
+      // Sort ships by size (large to small) for better packing
+      const sortedShips = [...ships].sort((a, b) => {
+        const sizeOrder = { large: 3, medium: 2, small: 1 };
+        return sizeOrder[b.size as keyof typeof sizeOrder] - sizeOrder[a.size as keyof typeof sizeOrder];
+      });
+    
+      const pages: { rows: { ships: Ship[]; height: number }[] }[] = [{ rows: [] }];
+      let currentRow: Ship[] = [];
+      let currentRowWidth = 0;
+      let currentPageHeight = 0;
+    
+      sortedShips.forEach(ship => {
+        const tokenSize = tokenSizes[ship.size as keyof typeof tokenSizes] || tokenSizes.small;
+        
+        if (currentRowWidth + tokenSize.width > usableWidth && currentRow.length > 0) {
+          // Calculate height of current row
+          const maxHeight = Math.max(...currentRow.map(s => 
+            tokenSizes[s.size as keyof typeof tokenSizes]?.height || tokenSizes.small.height
+          ));
+    
+          // Check if adding this row would exceed usable height
+          if (currentPageHeight + maxHeight > usableHeight) {
+            // Start new page
+            pages.push({ rows: [] });
+            currentPageHeight = 0;
+          }
+    
+          // Add row to current page
+          pages[pages.length - 1].rows.push({ ships: currentRow, height: maxHeight });
+          currentPageHeight += maxHeight;
+          
+          // Start new row
+          currentRow = [];
+          currentRowWidth = 0;
+        }
+        
+        currentRow.push(ship);
+        currentRowWidth += tokenSize.width;
+      });
+    
+      // Add remaining ships
+      if (currentRow.length > 0) {
+        const maxHeight = Math.max(...currentRow.map(s => 
+          tokenSizes[s.size as keyof typeof tokenSizes]?.height || tokenSizes.small.height
+        ));
+    
+        // Check if adding this row would exceed usable height
+        if (currentPageHeight + maxHeight > usableHeight) {
+          // Start new page
+          pages.push({ rows: [] });
+        }
+    
+        // Add final row to current page
+        pages[pages.length - 1].rows.push({ ships: currentRow, height: maxHeight });
+      }
+    
+      return pages;
+    };
+  
+    const baseTokensLayout = calculateOptimalLayout(selectedShips);
+    const baseTokensHTML = baseTokensLayout.map(page => `
+    <div class="page">
+      <div class="base-token-grid" style="
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin: 0.5in;
+      ">
+        ${page.rows.map(row => `
+          <div style="display: flex; justify-content: center; margin-bottom: 0;">
+            ${row.ships.map(ship => {
+              const { width, height } = getBaseTokenSize(ship.size);
+              const baseTokenUrl = ship.cardimage.replace('.webp', '-base.webp');
+              return `
+                <div class="base-token" style="
+                  width: ${width};
+                  height: ${height};
+                  margin: 0;
+                ">
+                  <img 
+                    src="${baseTokenUrl}" 
+                    alt="${ship.name} Base Token" 
+                    style="width: 100%; height: 100%; object-fit: contain;"
+                  />
+                </div>
+              `;
+            }).join('')}
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+  
     return `
       <!DOCTYPE html>
       <html lang="en">
@@ -2113,6 +2242,7 @@ export default function FleetBuilder({
               </div>
             ` : '';
           }).join('')}
+          ${baseTokensHTML}
         </body>
       </html>
     `;
