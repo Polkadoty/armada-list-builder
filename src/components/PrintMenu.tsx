@@ -37,6 +37,10 @@ export function PrintMenu({ onPrintList, onPrintnPlay, onClose, paperSize, setPa
             </div>
           </div>
           <div className="space-y-2">
+            <div className="flex items-center text-yellow-600">
+              <span className="mr-2">⚠️</span>
+              <span className="text-sm">Ship bases may not be the right size for Print & Play.</span>
+            </div>
             <Button 
               className="w-full flex items-center justify-between" 
               variant="outline"
