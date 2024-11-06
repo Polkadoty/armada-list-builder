@@ -2156,19 +2156,16 @@ export default function FleetBuilder({
             }
 
             .tarot-grid {
-              grid-template-columns: repeat(3, 2.75in);
+              grid-template-columns: repeat(2, 2.75in);
               grid-template-rows: repeat(2, 4.75in);
-              width: 8.25in;
-              height: 9.5in;
               font-size: 0; /* Removes any potential whitespace */
             }
 
             .poker-grid {
               grid-template-columns: repeat(3, 2.5in);
               grid-template-rows: repeat(3, 3.5in);
-              width: 7.5in;
-              height: 10.5in;
-              font-size: 0; /* Removes any potential whitespace */
+              font-size: 0;
+              margin: 0.4in;
             }
 
             .tarot-card {
@@ -2311,11 +2308,13 @@ export default function FleetBuilder({
             </div>
           ` : '';
         }).join('')}
-        ${baseTokensHTML}
+        
       </body>
       </html>
     `;
   };
+
+  //${baseTokensHTML}
 
   useEffect(() => {
     const savedFleet = localStorage.getItem(`savedFleet_${faction}`);
