@@ -73,10 +73,10 @@ export default function FactionPage() {
   };
 
   return (
-    <div className="min-h-screen text-gray-900 dark:text-white relative bg-transparent">
-      <StarryBackground show={currentTheme === 'dark'} />
-      {isLoading && <LoadingScreen progress={loadingProgress} message={loadingMessage} />}
-      <div className="relative z-10 p-4 max-w-[2000px] mx-auto"> {/* Added max-width and centering */}
+  <div className="min-h-screen text-gray-900 dark:text-white relative bg-transparent">
+    <StarryBackground show={currentTheme === 'dark'} />
+    {isLoading && <LoadingScreen progress={loadingProgress} message={loadingMessage} />}
+    <div className="relative z-10 p-4 max-w-[2000px] mx-auto">
         <div className="flex justify-between items-center mb-4">
           <div className="flex items-center">
             {faction && (
@@ -121,14 +121,17 @@ export default function FactionPage() {
             <ThemeToggle />
           </div>
         </div>
-        <FleetBuilder 
-          faction={faction as string} 
+        {mounted && faction && (
+        <FleetBuilder
+          key={faction as string} // Add this line to force remount
+          faction={faction as string}
           factionColor={factionColors[faction as keyof typeof factionColors]}
           fleetName={fleetName}
           setFleetName={setFleetName}
           tournamentMode={tournamentMode}
           setTournamentMode={setTournamentMode}
-        />
+            />
+          )}
       </div>
     </div>
   );
