@@ -13,9 +13,8 @@ interface FractalStreak {
 const StarryBackground: React.FC<{ show: boolean, lightDisabled?: boolean }> = ({ show, lightDisabled }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
-  const animationFrameIdRef = useRef<number>();
-  const lastFrameTime = useRef(0);
   const globalHueOffset = useRef(0);
+  const animationFrameRef = useRef<number>();
 
   const updateDimensions = useCallback(() => {
     if (canvasRef.current) {
@@ -28,17 +27,6 @@ const StarryBackground: React.FC<{ show: boolean, lightDisabled?: boolean }> = (
       setDimensions({ width, height });
     }
   }, []);
-
-  useEffect(() => {
-    updateDimensions();
-    
-    const handleResize = () => {
-      updateDimensions();
-    };
-    
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [updateDimensions]);
 
   const getElementCounts = useCallback((width: number, height: number) => {
     const pixelCount = width * height;
@@ -261,63 +249,42 @@ const StarryBackground: React.FC<{ show: boolean, lightDisabled?: boolean }> = (
     [dimensions, generateFractalStreaks]
   );
 
-  // Update drawBackground to use new dimming effect
-  const drawBackground = useCallback((time: number) => {
+  const drawBackground = useCallback(() => {
     if (!show) return;
     
     const ctx = canvasRef.current?.getContext('2d', { alpha: false });
     if (!ctx) return;
 
-    const frameInterval = 1000 / 30;
-    const elapsed = time - lastFrameTime.current;
-    
-    if (elapsed < frameInterval) {
-      animationFrameIdRef.current = requestAnimationFrame(drawBackground);
-      return;
-    }
-    
-    lastFrameTime.current = time - (elapsed % frameInterval);
-
-    // Clear with black instead of transparent
+    // Clear with black
     ctx.fillStyle = 'rgb(0, 0, 0)';
     ctx.fillRect(0, 0, dimensions.width, dimensions.height);
 
-    // Draw batched stars first
+    // Draw static elements in batches
     ctx.save();
     
-    // Draw all stars in one batch
+    // Batch all stars
     ctx.beginPath();
     stars.forEach(star => {
       ctx.moveTo(star.x, star.y);
       ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
     });
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-    ctx.fill();
-
-    // Draw central stars in one batch
-    ctx.beginPath();
     centralStars.forEach(star => {
       ctx.moveTo(star.x, star.y);
       ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
     });
     ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
     ctx.fill();
-
     ctx.restore();
 
     // Draw fractal streaks
     fractalStreaks.forEach(streak => {
-      drawFractalStreak(
-        ctx,
-        streak.x,
-        streak.y,
-        streak.size,
-        streak.rotation,
-        streak.depth,
-        streak.opacity
-      );
+      drawFractalStreak(ctx, streak.x, streak.y, streak.size, streak.rotation, streak.depth, streak.opacity);
     });
 
+    // Update nebula hues and draw
+    globalHueOffset.current = (globalHueOffset.current + 0.1) % 360;
+    
+    // Batch nebula drawing
     nebulaClouds.forEach(cloud => {
       ctx.save();
       ctx.globalAlpha = cloud.opacity;
@@ -338,43 +305,28 @@ const StarryBackground: React.FC<{ show: boolean, lightDisabled?: boolean }> = (
       ctx.restore();
     });
 
-    cosmicDust.forEach(particle => {
-      ctx.save();
-      ctx.globalAlpha = particle.opacity;
-      ctx.beginPath();
-      ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    });
+    // Use requestAnimationFrame for smoother animation
+    animationFrameRef.current = requestAnimationFrame(drawBackground);
+  }, [show, dimensions, stars, nebulaClouds, centralStars, fractalStreaks, drawFractalStreak]);
 
-    brightCores.forEach(core => {
-      ctx.save();
-      const gradient = ctx.createRadialGradient(
-        core.x, core.y, 0,
-        core.x, core.y, core.radius
-      );
-      gradient.addColorStop(0, `rgba(255, 255, 255, ${core.opacity * 0.3})`);
-      gradient.addColorStop(0.5, `rgba(255, 255, 240, ${core.opacity * 0.15})`);
-      gradient.addColorStop(1, 'transparent');
-      
-      ctx.fillStyle = gradient;
-      ctx.beginPath();
-      ctx.arc(core.x, core.y, core.radius, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    });
-
-    animationFrameIdRef.current = requestAnimationFrame(drawBackground);
-  }, [show, dimensions, stars, nebulaClouds, cosmicDust, centralStars, fractalStreaks, brightCores, drawFractalStreak]);
+  useEffect(() => {
+    updateDimensions();
+    const handleResize = () => {
+      updateDimensions();
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [updateDimensions]);
 
   useEffect(() => {
     if (!show) return;
     
-    animationFrameIdRef.current = requestAnimationFrame(drawBackground);
+    drawBackground();
     
     return () => {
-      if (animationFrameIdRef.current) {
-        cancelAnimationFrame(animationFrameIdRef.current);
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
       }
     };
   }, [show, drawBackground]);
