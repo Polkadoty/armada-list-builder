@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-empty-interface */
-
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -253,7 +252,7 @@ export default function FleetBuilder({
   const [showPrintMenu, setShowPrintMenu] = useState(false);
   const [paperSize, setPaperSize] = useState<'letter' | 'a4'>('letter');
 
-  const checkTournamentViolations = useCallback(() => {
+  const checkTournamentViolations = useMemo(() => {
     const violations: string[] = [];
 
     if (points > 400) {
@@ -293,7 +292,7 @@ export default function FleetBuilder({
       violations.push("One commander upgrade is required");
     }
 
-    setTournamentViolations(violations);
+    return violations;
   }, [
     points,
     totalSquadronPoints,
@@ -306,7 +305,7 @@ export default function FleetBuilder({
 
   useEffect(() => {
     if (tournamentMode) {
-      checkTournamentViolations();
+      setTournamentViolations(checkTournamentViolations);
     }
     
     // Cleanup function to reset state when component unmounts

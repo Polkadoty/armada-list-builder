@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import Image from 'next/image';
+import { throttle } from '@/utils/throttle';
 
 interface FractalStreak {
   x: number;
@@ -12,6 +13,7 @@ interface FractalStreak {
 
 const StarryBackground: React.FC<{ show: boolean, lightDisabled?: boolean }> = ({ show, lightDisabled }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const offscreenCanvasRef = useRef<OffscreenCanvas | null>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const globalHueOffset = useRef(0);
   const animationFrameRef = useRef<number>();
@@ -24,9 +26,18 @@ const StarryBackground: React.FC<{ show: boolean, lightDisabled?: boolean }> = (
       canvasRef.current.width = width;
       canvasRef.current.height = height;
       
+      // Create new offscreen canvas when dimensions change
+      offscreenCanvasRef.current = new OffscreenCanvas(width, height);
+      
       setDimensions({ width, height });
     }
   }, []);
+
+  // Throttle resize handler
+  const throttledResize = useMemo(
+    () => throttle(() => updateDimensions(), 100),
+    [updateDimensions]
+  );
 
   const getElementCounts = useCallback((width: number, height: number) => {
     const pixelCount = width * height;
@@ -89,24 +100,24 @@ const StarryBackground: React.FC<{ show: boolean, lightDisabled?: boolean }> = (
     return clouds;
   }, [getElementCounts]);
   
-  const generateCosmicDust = useCallback((width: number, height: number) => {
-    const dust = [];
-    const bandHeight = height * 0.3;
-    const bandY = height / 2 - bandHeight / 2;
-    const counts = getElementCounts(width, height);
+  // const generateCosmicDust = useCallback((width: number, height: number) => {
+  //   const dust = [];
+  //   const bandHeight = height * 0.3;
+  //   const bandY = height / 2 - bandHeight / 2;
+  //   const counts = getElementCounts(width, height);
     
-    for (let i = 0; i < counts.stars * 0.3; i++) {
-      const inBand = Math.random() < 0.7;
-      dust.push({
-        x: Math.random() * width,
-        y: inBand ? bandY + Math.random() * bandHeight : Math.random() * height,
-        radius: Math.random() * 2 + (inBand ? 1.5 : 1),
-        baseHue: Math.random() * 60 + 180,
-        opacity: Math.random() * 0.5 + (inBand ? 0.3 : 0.2),
-      });
-    }
-    return dust;
-  }, [getElementCounts]);
+  //   for (let i = 0; i < counts.stars * 0.3; i++) {
+  //     const inBand = Math.random() < 0.7;
+  //     dust.push({
+  //       x: Math.random() * width,
+  //       y: inBand ? bandY + Math.random() * bandHeight : Math.random() * height,
+  //       radius: Math.random() * 2 + (inBand ? 1.5 : 1),
+  //       baseHue: Math.random() * 60 + 180,
+  //       opacity: Math.random() * 0.5 + (inBand ? 0.3 : 0.2),
+  //     });
+  //   }
+  //   return dust;
+  // }, [getElementCounts]);
 
   const generateFractalStreaks = useCallback((width: number, height: number) => {
     const streaks: FractalStreak[] = [];
@@ -130,7 +141,7 @@ const StarryBackground: React.FC<{ show: boolean, lightDisabled?: boolean }> = (
   }, [getElementCounts]);
 
   const drawFractalStreak = useCallback((
-    ctx: CanvasRenderingContext2D, 
+    ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, 
     x: number, 
     y: number, 
     size: number, 
@@ -183,29 +194,29 @@ const StarryBackground: React.FC<{ show: boolean, lightDisabled?: boolean }> = (
     ctx.restore();
   }, []);
 
-  const generateBrightCores = useCallback((width: number, height: number) => {
-    const cores = [];
-    const centerY = height / 2;
+  // const generateBrightCores = useCallback((width: number, height: number) => {
+  //   const cores = [];
+  //   const centerY = height / 2;
     
-    // Center bright core on the background image
-    const clusterCenterX = width / 2;
-    const clusterCenterY = centerY;
+  //   // Center bright core on the background image
+  //   const clusterCenterX = width / 2;
+  //   const clusterCenterY = centerY;
     
-    // Generate 3-5 bright core regions
-    const numCores = Math.floor(Math.random() * 3) + 3;
-    for (let i = 0; i < numCores; i++) {
-      const angle = Math.random() * Math.PI * 2;
-      const distance = Math.random() * width * 0.2; // Keep cores clustered
+  //   // Generate 3-5 bright core regions
+  //   const numCores = Math.floor(Math.random() * 3) + 3;
+  //   for (let i = 0; i < numCores; i++) {
+  //     const angle = Math.random() * Math.PI * 2;
+  //     const distance = Math.random() * width * 0.2; // Keep cores clustered
       
-      cores.push({
-        x: clusterCenterX + Math.cos(angle) * distance,
-        y: clusterCenterY + Math.sin(angle) * distance * 0.3,
-        radius: Math.random() * 150 + 100,
-        opacity: Math.random() * 0.03 + 0.01
-      });
-    }
-    return cores;
-  }, []);
+  //     cores.push({
+  //       x: clusterCenterX + Math.cos(angle) * distance,
+  //       y: clusterCenterY + Math.sin(angle) * distance * 0.3,
+  //       radius: Math.random() * 150 + 100,
+  //       opacity: Math.random() * 0.03 + 0.01
+  //     });
+  //   }
+  //   return cores;
+  // }, []);
 
   const generateCentralStars = useCallback((width: number, height: number) => {
     const stars = [];
@@ -241,44 +252,44 @@ const StarryBackground: React.FC<{ show: boolean, lightDisabled?: boolean }> = (
 
   const stars = useMemo(() => generateStars(dimensions.width, dimensions.height), [dimensions, generateStars]);
   const nebulaClouds = useMemo(() => generateNebulaClouds(dimensions.width, dimensions.height), [dimensions, generateNebulaClouds]);
-  const cosmicDust = useMemo(() => generateCosmicDust(dimensions.width, dimensions.height), [dimensions, generateCosmicDust]);
   const centralStars = useMemo(() => generateCentralStars(dimensions.width, dimensions.height), [dimensions, generateCentralStars]);
-  const brightCores = useMemo(() => generateBrightCores(dimensions.width, dimensions.height), [dimensions, generateBrightCores]);
   const fractalStreaks = useMemo(
     () => generateFractalStreaks(dimensions.width, dimensions.height),
     [dimensions, generateFractalStreaks]
   );
 
   const drawBackground = useCallback(() => {
-    if (!show) return;
+    if (!show || !offscreenCanvasRef.current || !canvasRef.current) return;
     
-    const ctx = canvasRef.current?.getContext('2d', { alpha: false });
-    if (!ctx) return;
+    const offscreenCtx = offscreenCanvasRef.current.getContext('2d', { alpha: false });
+    const ctx = canvasRef.current.getContext('2d', { alpha: false });
+    
+    if (!offscreenCtx || !ctx) return;
 
     // Clear with black
-    ctx.fillStyle = 'rgb(0, 0, 0)';
-    ctx.fillRect(0, 0, dimensions.width, dimensions.height);
+    offscreenCtx.fillStyle = 'rgb(0, 0, 0)';
+    offscreenCtx.fillRect(0, 0, dimensions.width, dimensions.height);
 
-    // Draw static elements in batches
-    ctx.save();
+    // Draw all elements to offscreen canvas
+    offscreenCtx.save();
     
     // Batch all stars
-    ctx.beginPath();
+    offscreenCtx.beginPath();
     stars.forEach(star => {
-      ctx.moveTo(star.x, star.y);
-      ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+      offscreenCtx.moveTo(star.x, star.y);
+      offscreenCtx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
     });
     centralStars.forEach(star => {
-      ctx.moveTo(star.x, star.y);
-      ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+      offscreenCtx.moveTo(star.x, star.y);
+      offscreenCtx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
     });
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-    ctx.fill();
-    ctx.restore();
+    offscreenCtx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    offscreenCtx.fill();
+    offscreenCtx.restore();
 
     // Draw fractal streaks
     fractalStreaks.forEach(streak => {
-      drawFractalStreak(ctx, streak.x, streak.y, streak.size, streak.rotation, streak.depth, streak.opacity);
+      drawFractalStreak(offscreenCtx, streak.x, streak.y, streak.size, streak.rotation, streak.depth, streak.opacity);
     });
 
     // Update nebula hues and draw
@@ -286,11 +297,11 @@ const StarryBackground: React.FC<{ show: boolean, lightDisabled?: boolean }> = (
     
     // Batch nebula drawing
     nebulaClouds.forEach(cloud => {
-      ctx.save();
-      ctx.globalAlpha = cloud.opacity;
+      offscreenCtx.save();
+      offscreenCtx.globalAlpha = cloud.opacity;
       const currentHue = (cloud.baseHue + cloud.hueOffset + globalHueOffset.current) % 360;
       
-      const gradient = ctx.createRadialGradient(
+      const gradient = offscreenCtx.createRadialGradient(
         cloud.x, cloud.y, 0,
         cloud.x, cloud.y, cloud.radius
       );
@@ -298,26 +309,25 @@ const StarryBackground: React.FC<{ show: boolean, lightDisabled?: boolean }> = (
       gradient.addColorStop(0.5, `hsla(${currentHue}, 80%, 30%, 0.1)`);
       gradient.addColorStop(1, 'transparent');
       
-      ctx.fillStyle = gradient;
-      ctx.beginPath();
-      ctx.arc(cloud.x, cloud.y, cloud.radius, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
+      offscreenCtx.fillStyle = gradient;
+      offscreenCtx.beginPath();
+      offscreenCtx.arc(cloud.x, cloud.y, cloud.radius, 0, Math.PI * 2);
+      offscreenCtx.fill();
+      offscreenCtx.restore();
     });
 
-    // Use requestAnimationFrame for smoother animation
+    // Copy from offscreen canvas to main canvas
+    ctx.clearRect(0, 0, dimensions.width, dimensions.height);
+    ctx.drawImage(offscreenCanvasRef.current, 0, 0);
+
     animationFrameRef.current = requestAnimationFrame(drawBackground);
   }, [show, dimensions, stars, nebulaClouds, centralStars, fractalStreaks, drawFractalStreak]);
 
   useEffect(() => {
     updateDimensions();
-    const handleResize = () => {
-      updateDimensions();
-    };
-    
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [updateDimensions]);
+    window.addEventListener('resize', throttledResize);
+    return () => window.removeEventListener('resize', throttledResize);
+  }, [updateDimensions, throttledResize]);
 
   useEffect(() => {
     if (!show) return;
