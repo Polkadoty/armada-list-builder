@@ -308,7 +308,34 @@ export default function FleetBuilder({
     if (tournamentMode) {
       checkTournamentViolations();
     }
-  }, [tournamentMode, checkTournamentViolations]);
+    
+    // Cleanup function to reset state when component unmounts
+    return () => {
+      // Clear unique class names
+      selectedShips.forEach(ship => {
+        if (ship.unique) {
+          removeUniqueClassName(ship.name);
+        }
+        ship.assignedUpgrades.forEach(upgrade => {
+          if (upgrade.unique) {
+            removeUniqueClassName(upgrade.name);
+          }
+          if (upgrade["unique-class"]) {
+            upgrade["unique-class"].forEach(uc => removeUniqueClassName(uc));
+          }
+        });
+      });
+      
+      selectedSquadrons.forEach(squadron => {
+        if (squadron.unique) {
+          removeUniqueClassName(squadron.name);
+        }
+        if (squadron["unique-class"]) {
+          squadron["unique-class"].forEach(uc => removeUniqueClassName(uc));
+        }
+      });
+    };
+  }, [tournamentMode, checkTournamentViolations, selectedShips, selectedSquadrons, removeUniqueClassName]);
 
   const handleAddShip = () => {
     setShowShipSelector(true);
@@ -1994,12 +2021,12 @@ export default function FleetBuilder({
     
     const pokerPagesNeeded = Math.ceil(allCards.length / 9); // 9 cards per page
   
-    // Define base token sizes
-    const baseTokenSizes = {
-      small: { width: '38.75mm', height: '70.45mm' },
-      medium: { width: '58.5mm', height: '101.5mm' },
-      large: { width: '73.0mm', height: '128.5mm' }
-    };
+    // // Define base token sizes
+    // const baseTokenSizes = {
+    //   small: { width: '38.75mm', height: '70.45mm' },
+    //   medium: { width: '58.5mm', height: '101.5mm' },
+    //   large: { width: '73.0mm', height: '128.5mm' }
+    // };
   
     // // Function to get base token size
     // const getBaseTokenSize = (size: string) => {
