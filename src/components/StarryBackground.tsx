@@ -10,13 +10,6 @@ interface FractalStreak {
   opacity: number;
 }
 
-interface BrightCore {
-  x: number;
-  y: number;
-  radius: number;
-  opacity: number;
-}
-
 const StarryBackground: React.FC<{ show: boolean, lightDisabled?: boolean }> = ({ show, lightDisabled }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -92,8 +85,6 @@ const StarryBackground: React.FC<{ show: boolean, lightDisabled?: boolean }> = (
 
   const generateNebulaClouds = useCallback((width: number, height: number) => {
     const clouds = [];
-    const bandHeight = height * 0.6;
-    const bandY = height / 2 - bandHeight / 2;
     const counts = getElementCounts(width, height);
     
     for (let i = 0; i < counts.nebulaClouds; i++) {
@@ -389,10 +380,12 @@ const StarryBackground: React.FC<{ show: boolean, lightDisabled?: boolean }> = (
   }, [show, drawBackground]);
 
   useEffect(() => {
+    const canvas = canvasRef.current;
+    
     return () => {
-      const ctx = canvasRef.current?.getContext('2d');
-      if (ctx) {
-        ctx.clearRect(0, 0, dimensions.width, dimensions.height);
+      const ctx = canvas?.getContext('2d');
+      if (ctx && canvas) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
       }
     };
   }, [dimensions]);
