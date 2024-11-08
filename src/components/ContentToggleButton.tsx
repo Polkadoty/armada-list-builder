@@ -7,8 +7,6 @@ import { useTheme } from 'next-themes';
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import Cookies from 'js-cookie';
 import { flushCacheAndReload } from '../utils/dataFetcher';
-import { Label } from "@/components/ui/label";
-// beep boop
 
 // Configuration flags
 const CONFIG = {
@@ -132,18 +130,23 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
                   />
                 </div>
               )}
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center justify-between">
+                <label htmlFor="tournament-mode" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Tournament Mode
+                </label>
                 <Switch
                   id="tournament-mode"
                   checked={tournamentMode}
                   onCheckedChange={setTournamentMode}
                   className="custom-switch"
                 />
-                <Label htmlFor="tournament-mode">Tournament Mode</Label>
               </div>
               <Button onClick={handleFlushCache} variant="outline" size="sm" className="mt-2">
                 Flush Cache and Reload
               </Button>
+              <p className="text-xs text-muted-foreground text-center">
+                Tip: Press Ctrl+Shift+R if you're still seeing old images
+              </p>
             </div>
           </div>
         </PopoverContent>
