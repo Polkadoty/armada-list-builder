@@ -2,14 +2,14 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { OptimizedImage } from './OptimizedImage';
-import { Objective } from '@/components/FleetBuilder';
+import { ContentSource } from './FleetBuilder';
 
 export interface ObjectiveModel {
   id: string;
   name: string;
   type: string;
   cardimage: string;
-  source: "regular" | "legacy" | "legends" | "oldLegacy" | "arc";
+  source: ContentSource;
 }
 
 interface ObjectiveSelectorProps {
@@ -43,6 +43,7 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose }: Objectiv
             const objectivesData = data.objectives || {};
             const source = storageKey.replace(/objectives|Objectives/g, '').toLowerCase() || 'regular';
 
+            /* eslint-disable @typescript-eslint/no-explicit-any */
             Object.entries(objectivesData).forEach(([objectiveId, objective]: [string, any]) => {
               if (objective.type === type) {
                 const processedObjective = {
@@ -50,7 +51,7 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose }: Objectiv
                   name: objective.name,
                   type: objective.type,
                   cardimage: validateImageUrl(objective.cardimage),
-                  source: source as "regular" | "legacy" | "legends" | "oldLegacy" | "arc"
+                  source: source as ContentSource
                 };
 
                 // Use base objective ID (without errata suffix) as the map key
