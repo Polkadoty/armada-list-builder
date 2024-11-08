@@ -54,7 +54,7 @@ export interface Ship {
   chassis: string;
   size: string;
   traits?: string[];
-  source: "regular" | "legacy" | "legends" | "oldLegacy";
+  source: ContentSource;
   searchableText: string;
 }
 
@@ -82,15 +82,17 @@ export interface Squadron {
   };
   ace: boolean;
   "unique-class": string[];
-  source: "regular" | "legacy" | "legends" | "oldLegacy";
+  source: ContentSource;
   searchableText: string;
 }
 
-interface Objective {
+export interface Objective {
   id: string;
   name: string;
   cardimage: string;
   type: 'assault' | 'defense' | 'navigation';
+  source: ContentSource;
+  searchableText: string;
 }
 
 export interface Upgrade {
@@ -126,7 +128,7 @@ export interface Upgrade {
     ready_amount?: number;
   };
   searchableText: string;
-  source: "regular" | "legacy" | "legends" | "oldLegacy";
+  source: ContentSource;
 }
 
 export interface Ship extends ShipModel {
@@ -135,6 +137,8 @@ export interface Ship extends ShipModel {
   assignedUpgrades: Upgrade[];
   searchableText: string;
 }
+
+export type ContentSource = "regular" | "legacy" | "legends" | "oldLegacy" | "arc";
 
 const SectionHeader = ({
   title,

@@ -23,6 +23,7 @@ const fetchAndSaveData = async (setLoadingProgress: (progress: number) => void, 
   const enableLegacy = Cookies.get('enableLegacy') === 'true';
   const enableLegends = Cookies.get('enableLegends') === 'true';
   const enableOldLegacy = Cookies.get('enableOldLegacy') === 'true';
+  const enableArc = Cookies.get('enableArc') === 'true';
 
   const endpoints = [
     { name: 'ships', url: '/api/ships/' },
@@ -30,7 +31,8 @@ const fetchAndSaveData = async (setLoadingProgress: (progress: number) => void, 
     { name: 'objectives', url: '/api/objectives/' },
     { name: 'upgrades', url: '/api/upgrades/' },
     { name: 'aliases', url: '/aliases/' },
-    { name: 'imageLinks', url: '/image-links/' }
+    { name: 'imageLinks', url: '/image-links/' },
+    { name: 'errataKeys', url: '/errata-keys/' }
   ];
 
   if (enableLegacy) {
@@ -51,9 +53,18 @@ const fetchAndSaveData = async (setLoadingProgress: (progress: number) => void, 
 
   if (enableOldLegacy) {
     endpoints.push(
-      { name: 'oldLegacyShips', url: '/old-legacy/ships/' },
-      { name: 'oldLegacySquadrons', url: '/old-legacy/squadrons/' },
-      { name: 'oldLegacyUpgrades', url: '/old-legacy/upgrades/' }
+      { name: 'old-legacyShips', url: '/old-legacy/ships/' },
+      { name: 'old-legacySquadrons', url: '/old-legacy/squadrons/' },
+      { name: 'old-legacyUpgrades', url: '/old-legacy/upgrades/' }
+    );
+  }
+
+  if (enableArc) {
+    endpoints.push(
+      { name: 'arcShips', url: '/arc/ships/' },
+      { name: 'arcSquadrons', url: '/arc/squadrons/' },
+      { name: 'arcUpgrades', url: '/arc/upgrades/' },
+      { name: 'arcObjectives', url: '/arc/objectives/' }
     );
   }
 
@@ -87,9 +98,13 @@ export const flushCacheAndReload = async (setIsLoading: (isLoading: boolean) => 
   localStorage.removeItem('legendsShips');
   localStorage.removeItem('legendsSquadrons');
   localStorage.removeItem('legendsUpgrades');
-  localStorage.removeItem('oldLegacyShips');
-  localStorage.removeItem('oldLegacySquadrons');
-  localStorage.removeItem('oldLegacyUpgrades');
+  localStorage.removeItem('old-legacyShips');
+  localStorage.removeItem('old-legacySquadrons');
+  localStorage.removeItem('old-legacyUpgrades');
+  localStorage.removeItem('arcShips');
+  localStorage.removeItem('arcSquadrons');
+  localStorage.removeItem('arcUpgrades');
+  localStorage.removeItem('arcObjectives');
   localStorage.removeItem('aliases');
   localStorage.removeItem('imageLinks');
 

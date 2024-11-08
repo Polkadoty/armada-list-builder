@@ -2,19 +2,14 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { OptimizedImage } from './OptimizedImage';
+import { Objective } from '@/components/FleetBuilder';
 
 export interface ObjectiveModel {
   id: string;
   name: string;
   type: string;
   cardimage: string;
-}
-
-interface CachedObjective {
-  _id: string;
-  name: string;
-  type: string;
-  cardimage: string;
+  source: "regular" | "legacy" | "legends" | "oldLegacy" | "arc";
 }
 
 interface ObjectiveSelectorProps {
@@ -31,21 +26,48 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose }: Objectiv
     const fetchObjectives = () => {
       setLoading(true);
       try {
-        const cachedObjectives = localStorage.getItem('objectives');
-        if (cachedObjectives) {
-          const objectiveData = JSON.parse(cachedObjectives).objectives as Record<string, CachedObjective>;
-          const flattenedObjectives = Object.values(objectiveData)
-            .filter((objective) => objective.type === type)
-            .map((objective) => ({
-              id: objective._id,
-              name: objective.name,
-              type: objective.type,
-              cardimage: validateImageUrl(objective.cardimage),
-            }));
-          setObjectives(flattenedObjectives);
-        } else {
-          console.error('Objectives data not found in localStorage');
-        }
+        const objectiveMap = new Map<string, ObjectiveModel>();
+        
+        // Get all localStorage keys
+        const storageKeys = Object.keys(localStorage);
+        
+        // Filter keys that contain 'objectives' or 'Objectives'
+        const objectiveKeys = storageKeys.filter(key => 
+          key.toLowerCase().includes('objectives')
+        );
+
+        // Process each objectives file
+        objectiveKeys.forEach(storageKey => {
+          try {
+            const data = JSON.parse(localStorage.getItem(storageKey) || '{}');
+            const objectivesData = data.objectives || {};
+            const source = storageKey.replace(/objectives|Objectives/g, '').toLowerCase() || 'regular';
+
+            Object.entries(objectivesData).forEach(([objectiveId, objective]: [string, any]) => {
+              if (objective.type === type) {
+                const processedObjective = {
+                  id: objectiveId,
+                  name: objective.name,
+                  type: objective.type,
+                  cardimage: validateImageUrl(objective.cardimage),
+                  source: source as "regular" | "legacy" | "legends" | "oldLegacy" | "arc"
+                };
+
+                // Use base objective ID (without errata suffix) as the map key
+                const baseId = objectiveId.replace(/-errata-(legacy|legends|oldLegacy|arc)$/, '');
+                
+                // If this is an errata version or there's no existing objective with this ID
+                if (objectiveId.includes('-errata-') || !objectiveMap.has(baseId)) {
+                  objectiveMap.set(baseId, processedObjective);
+                }
+              }
+            });
+          } catch (error) {
+            console.error(`Error processing ${storageKey}:`, error);
+          }
+        });
+
+        setObjectives(Array.from(objectiveMap.values()));
       } catch (error) {
         console.error('Error fetching objectives:', error);
       } finally {

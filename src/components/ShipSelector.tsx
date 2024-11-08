@@ -7,6 +7,7 @@ import { SortToggleGroup, SortOption } from '@/components/SortToggleGroup';
 import { Search, X } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import Cookies from 'js-cookie';
+import { ContentSource } from './FleetBuilder';
 
 export interface ShipModel {
   id: string;
@@ -19,7 +20,7 @@ export interface ShipModel {
   chassis: string;
   size?: string;
   traits?: string[];
-  source: 'regular' | 'legacy' | 'legends' | 'oldLegacy';
+  source: ContentSource;
   speed: Record<string, number[]>;
   tokens: Record<string, number>;
   armament: Record<string, number[]>;
@@ -89,7 +90,7 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
                 chassis: chassisName,
                 size: chassisData.size,
                 traits: model.traits || [],
-                source: (prefix || 'regular') as 'regular' | 'legacy' | 'legends' | 'oldLegacy',
+                source: (prefix || 'regular') as 'regular' | 'legacy' | 'legends' | 'oldLegacy' | 'arc',
                 searchableText: JSON.stringify({
                   ...model,
                   name: model.name.toLowerCase(),

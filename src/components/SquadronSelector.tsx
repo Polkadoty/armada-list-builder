@@ -8,6 +8,7 @@ import { Search, X } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import Cookies from 'js-cookie';
 import { OptimizedImage } from '@/components/OptimizedImage';
+import { ContentSource } from './FleetBuilder';
 
 interface SquadronSelectorProps {
   faction: string;
@@ -83,7 +84,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
                 count: 1,
                 ace: squadron.ace || false,
                 'unique-class': squadron['unique-class'] || [],
-                source: (prefix || 'regular') as 'regular' | 'legacy' | 'legends' | 'oldLegacy',
+                source: (prefix || 'regular') as ContentSource,
                 searchableText: JSON.stringify({
                   ...squadron,
                   abilities: abilityText,

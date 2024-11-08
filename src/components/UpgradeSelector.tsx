@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Image from 'next/image';
-import { Ship, Upgrade } from './FleetBuilder';
+import { ContentSource, Ship, Upgrade } from './FleetBuilder';
 import { useUniqueClassContext } from '../contexts/UniqueClassContext';
 import { SortToggleGroup, SortOption } from '@/components/SortToggleGroup';
 import { Search, X } from 'lucide-react';
@@ -97,7 +97,7 @@ export default function UpgradeSelector({
                 enable_upgrades: upgrade.restrictions?.enable_upgrades || [],
                 disqualify_if: upgrade.restrictions?.disqualify_if || {}
               },
-              source: prefix || 'regular',
+              source: prefix || 'regular' as ContentSource,
               searchableText: JSON.stringify({
                 ...upgrade,
                 name: upgrade.name,
