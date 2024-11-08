@@ -173,7 +173,9 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
                 Flush Cache and Reload
               </Button>
               <p className="text-xs text-muted-foreground text-center">
-                Tip: Press Ctrl+Shift+R if you&apos;re still seeing old images
+                Tip: Press Ctrl+Shift+R if you&apos;re still seeing old images.
+                <br />
+                Note: Arc Tournament content will be added very soon.
               </p>
             </div>
           </div>
