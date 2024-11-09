@@ -1207,6 +1207,22 @@ export default function FleetBuilder({
     localStorage.removeItem(`savedFleet_${faction}`);
   };
 
+  // Add this helper function to format the objective source
+  const formatObjectiveSource = (source: ContentSource) => {
+    switch (source) {
+      case 'legacy':
+        return '[Legacy]';
+      case 'legends':
+        return '[Legends]';
+      case 'oldLegacy':
+        return '[Old Legacy]';
+      case 'arc':
+        return '[Arc]';
+      default:
+        return '';
+    }
+  };
+
   const generateExportText = useCallback(() => {
 
     const allRegularSource = [
@@ -1226,16 +1242,21 @@ export default function FleetBuilder({
         (commander.source !== "regular" ? " [" + capitalizeFirstLetter(commander.source) + "]" : "") + 
         " (" + commander.points + ")\n";
     }
-
-    text += "\n";
+    
+    text += '\n';
+    
+    // Add objectives with source tags
     if (selectedAssaultObjective) {
-      text += "Assault: " + selectedAssaultObjective.name + "\n";
+      const sourceTag = formatObjectiveSource(selectedAssaultObjective.source);
+      text += `Assault: ${selectedAssaultObjective.name}${sourceTag ? ` ${sourceTag}` : ''}\n`;
     }
     if (selectedDefenseObjective) {
-      text += "Defense: " + selectedDefenseObjective.name + "\n";
+      const sourceTag = formatObjectiveSource(selectedDefenseObjective.source);
+      text += `Defense: ${selectedDefenseObjective.name}${sourceTag ? ` ${sourceTag}` : ''}\n`;
     }
     if (selectedNavigationObjective) {
-      text += "Navigation: " + selectedNavigationObjective.name + "\n";
+      const sourceTag = formatObjectiveSource(selectedNavigationObjective.source);
+      text += `Navigation: ${selectedNavigationObjective.name}${sourceTag ? ` ${sourceTag}` : ''}\n`;
     }
 
     if (selectedShips.length > 0) {
