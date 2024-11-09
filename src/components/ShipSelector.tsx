@@ -200,6 +200,7 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
           upgrades: upgradesText,
           traits: model.traits?.map(trait => ` ${trait} `).join(' ') || '',
           tokens: Object.entries(model.tokens || {})
+            /* eslint-disable @typescript-eslint/no-unused-vars */
             .filter(([_key, value]) => value > 0)
             .reduce((acc, [key, value]) => ({ ...acc, [key.replace('def_', '')]: value }), {})
         }).toLowerCase();
