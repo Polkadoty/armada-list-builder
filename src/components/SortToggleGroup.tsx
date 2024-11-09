@@ -5,7 +5,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import Cookies from 'js-cookie';
 
 export type SortOption = 'alphabetical' | 'points' | 'unique' | 'custom';
-export type SelectorType = 'ships' | 'squadrons' | 'upgrades';
+export type SelectorType = 'ships' | 'squadrons' | 'upgrades' | 'objectives';
 
 interface SortToggleGroupProps {
   activeSorts: Record<SortOption, 'asc' | 'desc' | null>;
