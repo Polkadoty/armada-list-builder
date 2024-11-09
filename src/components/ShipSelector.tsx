@@ -74,7 +74,6 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
       const errataKeysJson = localStorage.getItem('errataKeys');
       const errataKeys = errataKeysJson ? JSON.parse(errataKeysJson).ships : [];
       
-      const shipMap = new Map<string, ShipModel>();
 
       
         // Add this helper function at the top of the file
@@ -201,7 +200,7 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
           upgrades: upgradesText,
           traits: model.traits?.map(trait => ` ${trait} `).join(' ') || '',
           tokens: Object.entries(model.tokens || {})
-            .filter(([_, value]) => value > 0)
+            .filter(([_key, value]) => value > 0)
             .reduce((acc, [key, value]) => ({ ...acc, [key.replace('def_', '')]: value }), {})
         }).toLowerCase();
       };

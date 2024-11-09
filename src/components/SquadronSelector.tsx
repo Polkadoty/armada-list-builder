@@ -82,7 +82,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
               // Only process if there's no errata version or the errata source isn't enabled
               if (!errataVersion || !errataEnabled) {
                 const abilityText = Object.entries(squadron.abilities || {})
-                  .filter(([_, value]) => value !== 0 && value !== false)
+                  .filter(([_key, value]) => value !== 0 && value !== false)
                   .map(([key, value]) => typeof value === 'boolean' ? key : `${key} ${value}`)
                   .join(' ');
           
@@ -112,7 +112,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
                     abilities: abilityText,
                     armament: armamentText,
                     tokens: Object.entries(squadron.tokens || {})
-                      .filter(([_, value]) => value > 0)
+                      .filter(([_key, value]) => value > 0)
                       .reduce((acc, [key, value]) => ({ ...acc, [key.replace('def_', '')]: value }), {})
                   }).toLowerCase()
                 });
@@ -132,7 +132,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
                 const baseKey = `${baseId}-${squadron.name}-${aceName}`;
 
                 const abilityText = Object.entries(squadron.abilities || {})
-                  .filter(([_, value]) => value !== 0 && value !== false)
+                  .filter(([_key, value]) => value !== 0 && value !== false)
                   .map(([key, value]) => typeof value === 'boolean' ? key : `${key} ${value}`)
                   .join(' ');
       
@@ -162,7 +162,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
                     abilities: abilityText,
                     armament: armamentText,
                     tokens: Object.entries(squadron.tokens || {})
-                      .filter(([_, value]) => value > 0)
+                      .filter(([_key, value]) => value > 0)
                       .reduce((acc, [key, value]) => ({ ...acc, [key.replace('def_', '')]: value }), {})
                   }).toLowerCase()
                 });

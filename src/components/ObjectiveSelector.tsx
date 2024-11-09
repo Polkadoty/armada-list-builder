@@ -47,6 +47,7 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose }: Objectiv
             const objectivesData = data.objectives || {};
             const source = storageKey.replace(/objectives|Objectives/g, '').toLowerCase() || 'regular';
 
+            /* eslint-disable @typescript-eslint/no-explicit-any */
             Object.entries(objectivesData).forEach(([objectiveId, objective]: [string, any]) => {
               if (objective.type === type && !objectiveId.includes('-errata-')) {
                 const baseId = objectiveId;
@@ -79,6 +80,7 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose }: Objectiv
             const objectivesData = data.objectives || {};
             const source = storageKey.replace(/objectives|Objectives/g, '').toLowerCase() || 'regular';
 
+            /* eslint-enable @typescript-eslint/no-explicit-any */
             Object.entries(objectivesData).forEach(([objectiveId, objective]: [string, any]) => {
               if (objective.type === type && objectiveId.includes('-errata-')) {
                 const baseId = objectiveId.replace(/-errata-(legacy|legends|oldLegacy|arc)$/, '');
