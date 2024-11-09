@@ -101,9 +101,26 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
         const shipMap = new Map<string, ShipModel>();
 
         if (data && data.ships) {
-          // First, collect all errata information
-          const errataModels = new Map<string, { modelId: string, model: ShipModel, chassisData: ChassisData }>();
-          
+          // First, process all non-errata ships
+          Object.entries(data.ships).forEach(([chassisName, chassisData]) => {
+            if (!chassisName.includes('-errata-')) {
+              Object.entries(chassisData.models || {}).forEach(([modelId, model]) => {
+                if (!modelId.includes('-errata-') && model.faction === faction) {
+                  shipMap.set(modelId, {
+                    ...model,
+                    id: modelId,
+                    chassis: chassisName,
+                    size: chassisData.size,
+                    traits: model.traits || [],
+                    source: (prefix || 'regular') as ContentSource,
+                    searchableText: createSearchableText(model)
+                  });
+                }
+              });
+            }
+          });
+
+          // Then process all ships
           Object.entries(data.ships).forEach(([chassisName, chassisData]) => {
             if (chassisName.includes('-errata-')) {
               const [baseChassisName, errataSource] = chassisName.split('-errata-');
@@ -114,64 +131,20 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
                   if (modelId.includes('-errata-') && errataKeys.includes(chassisName)) {
                     const baseModelId = modelId.split('-errata-')[0];
                     
-                    console.log('Found errata model:', {
-                      baseModelId,
-                      modelId,
-                      errataSource,
-                      chassisName
-                    });
-
-                    errataModels.set(baseModelId, {
-                      modelId,
-                      model: {
+                    if (model.faction === faction) {
+                      shipMap.set(baseModelId, {
                         ...model,
                         id: modelId,
-                        chassis: baseChassisName, // Keep the original chassis name
-                        source: normalizeSourceName(errataSource)
-                      },
-                      chassisData
-                    });
+                        chassis: baseChassisName,
+                        size: chassisData.size,
+                        traits: model.traits || [],
+                        source: normalizeSourceName(errataSource),
+                        searchableText: createSearchableText(model)
+                      });
+                    }
                   }
                 });
               }
-            }
-          });
-
-          console.log('Collected errata models:', Array.from(errataModels.entries()));
-
-          // Then process all ships
-          Object.entries(data.ships).forEach(([chassisName, chassisData]) => {
-            if (!chassisName.includes('-errata-')) {
-              Object.entries(chassisData.models || {}).forEach(([modelId, model]) => {
-                if (!modelId.includes('-errata-') && model.faction === faction) {
-                  const errataData = errataModels.get(modelId);
-                  
-                  if (errataData) {
-                    console.log('Replacing ship with errata version:', {
-                      originalId: modelId,
-                      errataId: errataData.modelId,
-                      chassis: model.chassis
-                    });
-                  }
-
-                  const ship = errataData ? {
-                    ...errataData.model,
-                    size: errataData.chassisData.size,
-                    traits: errataData.model.traits || [],
-                    chassis: model.chassis, // Keep the original chassis
-                    searchableText: createSearchableText(errataData.model)
-                  } : {
-                    ...model,
-                    id: modelId,
-                    chassis: model.chassis,
-                    size: chassisData.size,
-                    traits: model.traits || [],
-                    source: (prefix || 'regular') as ContentSource,
-                    searchableText: createSearchableText(model)
-                  };
-                  shipMap.set(modelId, ship);
-                }
-              });
             }
           });
         }

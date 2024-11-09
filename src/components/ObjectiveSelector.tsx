@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { OptimizedImage } from './OptimizedImage';
 import { ContentSource } from './FleetBuilder';
+import Cookies from 'js-cookie';
 
 export interface ObjectiveModel {
   id: string;
@@ -22,6 +23,38 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose }: Objectiv
   const [objectives, setObjectives] = useState<ObjectiveModel[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Add state to track content source enablement
+  const [contentSources, setContentSources] = useState({
+    arc: Cookies.get('enableArc') === 'true',
+    legacy: Cookies.get('enableLegacy') === 'true',
+    legends: Cookies.get('enableLegends') === 'true',
+    oldLegacy: Cookies.get('enableOldLegacy') === 'true'
+  });
+
+  // Check for cookie changes
+  useEffect(() => {
+    const checkCookies = () => {
+      const newContentSources = {
+        arc: Cookies.get('enableArc') === 'true',
+        legacy: Cookies.get('enableLegacy') === 'true',
+        legends: Cookies.get('enableLegends') === 'true',
+        oldLegacy: Cookies.get('enableOldLegacy') === 'true'
+      };
+
+      // Check if any values have changed
+      if (JSON.stringify(newContentSources) !== JSON.stringify(contentSources)) {
+        setContentSources(newContentSources);
+      }
+    };
+
+    // Check immediately and set up interval
+    checkCookies();
+    const interval = setInterval(checkCookies, 1000);
+
+    return () => clearInterval(interval);
+  }, [contentSources]);
+
+  // Modified useEffect to depend on contentSources
   useEffect(() => {
     const fetchObjectives = () => {
       setLoading(true);
@@ -50,22 +83,13 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose }: Objectiv
             /* eslint-disable @typescript-eslint/no-explicit-any */
             Object.entries(objectivesData).forEach(([objectiveId, objective]: [string, any]) => {
               if (objective.type === type && !objectiveId.includes('-errata-')) {
-                const baseId = objectiveId;
-                // Check if this objective has an errata version
-                const errataVersion = errataKeys.find((key: string) => 
-                  key.startsWith(baseId + '-errata-')
-                );
-
-                // If no errata version exists, add the base version
-                if (!errataVersion) {
-                  objectiveMap.set(baseId, {
-                    id: objectiveId,
-                    name: objective.name,
-                    type: objective.type,
-                    cardimage: validateImageUrl(objective.cardimage),
-                    source: source as ContentSource
-                  });
-                }
+                objectiveMap.set(objectiveId, {
+                  id: objectiveId,
+                  name: objective.name,
+                  type: objective.type,
+                  cardimage: validateImageUrl(objective.cardimage),
+                  source: source as ContentSource
+                });
               }
             });
           } catch (error) {
@@ -111,7 +135,7 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose }: Objectiv
     };
 
     fetchObjectives();
-  }, [type]);
+  }, [type, contentSources]);
 
   const validateImageUrl = (url: string): string => {
     if (url.startsWith('http://') || url.startsWith('https://')) {
