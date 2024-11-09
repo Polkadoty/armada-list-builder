@@ -28,6 +28,10 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose }: Objectiv
       try {
         const objectiveMap = new Map<string, ObjectiveModel>();
         
+        // Get errata keys for objectives
+        const errataKeysJson = localStorage.getItem('errataKeys');
+        const errataKeys = errataKeysJson ? JSON.parse(errataKeysJson).objectives : [];
+        
         // Get all localStorage keys
         const storageKeys = Object.keys(localStorage);
         
@@ -36,30 +40,58 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose }: Objectiv
           key.toLowerCase().includes('objectives')
         );
 
-        // Process each objectives file
+        // First, process non-errata objectives
         objectiveKeys.forEach(storageKey => {
           try {
             const data = JSON.parse(localStorage.getItem(storageKey) || '{}');
             const objectivesData = data.objectives || {};
             const source = storageKey.replace(/objectives|Objectives/g, '').toLowerCase() || 'regular';
 
-            /* eslint-disable @typescript-eslint/no-explicit-any */
             Object.entries(objectivesData).forEach(([objectiveId, objective]: [string, any]) => {
-              if (objective.type === type) {
-                const processedObjective = {
-                  id: objectiveId,
-                  name: objective.name,
-                  type: objective.type,
-                  cardimage: validateImageUrl(objective.cardimage),
-                  source: source as ContentSource
-                };
+              if (objective.type === type && !objectiveId.includes('-errata-')) {
+                const baseId = objectiveId;
+                // Check if this objective has an errata version
+                const errataVersion = errataKeys.find((key: string) => 
+                  key.startsWith(baseId + '-errata-')
+                );
 
-                // Use base objective ID (without errata suffix) as the map key
+                // If no errata version exists, add the base version
+                if (!errataVersion) {
+                  objectiveMap.set(baseId, {
+                    id: objectiveId,
+                    name: objective.name,
+                    type: objective.type,
+                    cardimage: validateImageUrl(objective.cardimage),
+                    source: source as ContentSource
+                  });
+                }
+              }
+            });
+          } catch (error) {
+            console.error(`Error processing ${storageKey}:`, error);
+          }
+        });
+
+        // Then, process and add errata objectives
+        objectiveKeys.forEach(storageKey => {
+          try {
+            const data = JSON.parse(localStorage.getItem(storageKey) || '{}');
+            const objectivesData = data.objectives || {};
+            const source = storageKey.replace(/objectives|Objectives/g, '').toLowerCase() || 'regular';
+
+            Object.entries(objectivesData).forEach(([objectiveId, objective]: [string, any]) => {
+              if (objective.type === type && objectiveId.includes('-errata-')) {
                 const baseId = objectiveId.replace(/-errata-(legacy|legends|oldLegacy|arc)$/, '');
                 
-                // If this is an errata version or there's no existing objective with this ID
-                if (objectiveId.includes('-errata-') || !objectiveMap.has(baseId)) {
-                  objectiveMap.set(baseId, processedObjective);
+                // If this is an errata version in errataKeys, add/replace it
+                if (errataKeys.includes(objectiveId)) {
+                  objectiveMap.set(baseId, {
+                    id: objectiveId,
+                    name: objective.name,
+                    type: objective.type,
+                    cardimage: validateImageUrl(objective.cardimage),
+                    source: source as ContentSource
+                  });
                 }
               }
             });

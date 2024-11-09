@@ -49,57 +49,130 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
       const cachedLegacySquadrons = localStorage.getItem('legacySquadrons');
       const cachedLegendsSquadrons = localStorage.getItem('legendsSquadrons');
       const cachedOldLegacySquadrons = localStorage.getItem('oldLegacySquadrons');
+      const cachedArcSquadrons = localStorage.getItem('arcSquadrons');
+      
+      // Get errata keys for squadrons
+      const errataKeysJson = localStorage.getItem('errataKeys');
+      const errataKeys = errataKeysJson ? JSON.parse(errataKeysJson).squadrons : [];
       
       const squadronMap = new Map<string, Squadron>();
 
       const processSquadrons = (data: SquadronData, prefix: string = '') => {
+        // Check if this content source is enabled - base content is always enabled
+        const contentEnabled = prefix === '' || prefix === 'regular' || Cookies.get(`enable${prefix.charAt(0).toUpperCase() + prefix.slice(1)}`) === 'true';
+        
+        if (!contentEnabled) return;
+
         if (data && data.squadrons) {
+          // First pass: Process non-errata squadrons
           Object.entries(data.squadrons).forEach(([squadronId, squadron]) => {
-            const aceName = squadron['ace-name'] && squadron['ace-name'] !== '' ? squadron['ace-name'] : '';
-            const uniqueKey = `${prefix}-${squadronId}-${squadron.name}-${aceName}`;
-            if (!squadronMap.has(uniqueKey)) {
-              const abilityText = Object.entries(squadron.abilities || {})
-              // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                .filter(([_, value]) => value !== 0 && value !== false)
-                .map(([key, value]) => typeof value === 'boolean' ? key : `${key} ${value}`)
-                .join(' ');
-      
-              const armamentText = Object.entries(squadron.armament || {}).map(([key, value]) => {
-                const diceColors = ['red', 'blue', 'black'];
-                return value.map((dice, index) => dice > 0 ? `${key} ${diceColors[index]}` : '').filter(Boolean);
-              }).flat().join(' ');
-      
-              squadronMap.set(uniqueKey, {
-                ...squadron,
-                id: squadronId,
-                name: squadron.name,
-                'ace-name': aceName,
-                squadron_type: squadron.squadron_type,
-                points: squadron.points,
-                cardimage: validateImageUrl(squadron.cardimage),
-                faction: squadron.faction,
-                hull: squadron.hull,
-                speed: squadron.speed,
-                unique: squadron.unique,
-                count: 1,
-                ace: squadron.ace || false,
-                'unique-class': squadron['unique-class'] || [],
-                source: (prefix || 'regular') as ContentSource,
-                searchableText: JSON.stringify({
+            if (!squadronId.includes('-errata-')) {
+              const aceName = squadron['ace-name'] && squadron['ace-name'] !== '' ? squadron['ace-name'] : '';
+              const baseKey = `${squadronId}-${squadron.name}-${aceName}`;
+              
+              // Check if this squadron has an errata version
+              const errataVersion = errataKeys.find((key: string) => 
+                key.startsWith(squadronId + '-errata-')
+              );
+
+              // Check if errata source is enabled and exists
+              const errataSource = errataVersion?.split('-errata-')[1];
+              const errataEnabled = errataSource && Cookies.get(`enable${errataSource}`) === 'true';
+
+              // Only process if there's no errata version or the errata source isn't enabled
+              if (!errataVersion || !errataEnabled) {
+                const abilityText = Object.entries(squadron.abilities || {})
+                  .filter(([_, value]) => value !== 0 && value !== false)
+                  .map(([key, value]) => typeof value === 'boolean' ? key : `${key} ${value}`)
+                  .join(' ');
+          
+                const armamentText = Object.entries(squadron.armament || {}).map(([key, value]) => {
+                  const diceColors = ['red', 'blue', 'black'];
+                  return value.map((dice, index) => dice > 0 ? `${key} ${diceColors[index]}` : '').filter(Boolean);
+                }).flat().join(' ');
+          
+                squadronMap.set(baseKey, {
                   ...squadron,
-                  abilities: abilityText,
-                  armament: armamentText,
-                  tokens: Object.entries(squadron.tokens || {})
-                  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                    .filter(([_, value]) => value > 0)
-                    .reduce((acc, [key, value]) => ({ ...acc, [key.replace('def_', '')]: value }), {})
-                }).toLowerCase()
-              });
+                  id: squadronId,
+                  name: squadron.name,
+                  'ace-name': aceName,
+                  squadron_type: squadron.squadron_type,
+                  points: squadron.points,
+                  cardimage: validateImageUrl(squadron.cardimage),
+                  faction: squadron.faction,
+                  hull: squadron.hull,
+                  speed: squadron.speed,
+                  unique: squadron.unique,
+                  count: 1,
+                  ace: squadron.ace || false,
+                  'unique-class': squadron['unique-class'] || [],
+                  source: (prefix || 'regular') as ContentSource,
+                  searchableText: JSON.stringify({
+                    ...squadron,
+                    abilities: abilityText,
+                    armament: armamentText,
+                    tokens: Object.entries(squadron.tokens || {})
+                      .filter(([_, value]) => value > 0)
+                      .reduce((acc, [key, value]) => ({ ...acc, [key.replace('def_', '')]: value }), {})
+                  }).toLowerCase()
+                });
+              }
+            }
+          });
+
+          // Second pass: Process errata versions
+          Object.entries(data.squadrons).forEach(([squadronId, squadron]) => {
+            if (squadronId.includes('-errata-') && errataKeys.includes(squadronId)) {
+              const [baseId, errataSource] = squadronId.split('-errata-');
+              
+              // Check if the errata content source is enabled
+              const errataEnabled = Cookies.get(`enable${errataSource.charAt(0).toUpperCase() + errataSource.slice(1)}`) === 'true';
+              if (errataEnabled) {
+                const aceName = squadron['ace-name'] && squadron['ace-name'] !== '' ? squadron['ace-name'] : '';
+                const baseKey = `${baseId}-${squadron.name}-${aceName}`;
+
+                const abilityText = Object.entries(squadron.abilities || {})
+                  .filter(([_, value]) => value !== 0 && value !== false)
+                  .map(([key, value]) => typeof value === 'boolean' ? key : `${key} ${value}`)
+                  .join(' ');
+      
+                const armamentText = Object.entries(squadron.armament || {}).map(([key, value]) => {
+                  const diceColors = ['red', 'blue', 'black'];
+                  return value.map((dice, index) => dice > 0 ? `${key} ${diceColors[index]}` : '').filter(Boolean);
+                }).flat().join(' ');
+                
+                squadronMap.set(baseKey, {
+                  ...squadron,
+                  id: squadronId,
+                  name: squadron.name,
+                  'ace-name': aceName,
+                  squadron_type: squadron.squadron_type,
+                  points: squadron.points,
+                  cardimage: validateImageUrl(squadron.cardimage),
+                  faction: squadron.faction,
+                  hull: squadron.hull,
+                  speed: squadron.speed,
+                  unique: squadron.unique,
+                  count: 1,
+                  ace: squadron.ace || false,
+                  'unique-class': squadron['unique-class'] || [],
+                  source: errataSource as ContentSource,
+                  searchableText: JSON.stringify({
+                    ...squadron,
+                    abilities: abilityText,
+                    armament: armamentText,
+                    tokens: Object.entries(squadron.tokens || {})
+                      .filter(([_, value]) => value > 0)
+                      .reduce((acc, [key, value]) => ({ ...acc, [key.replace('def_', '')]: value }), {})
+                  }).toLowerCase()
+                });
+              }
             }
           });
         }
       };
 
+      // Process each content source in order
       if (cachedSquadrons) {
         const squadronData = JSON.parse(cachedSquadrons);
         processSquadrons(squadronData);
@@ -118,6 +191,11 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
       if (cachedOldLegacySquadrons) {
         const oldLegacySquadronData = JSON.parse(cachedOldLegacySquadrons);
         processSquadrons(oldLegacySquadronData, 'oldLegacy');
+      }
+
+      if (cachedArcSquadrons) {
+        const arcSquadronData = JSON.parse(cachedArcSquadrons);
+        processSquadrons(arcSquadronData, 'arc');
       }
 
       const allSquadrons = Array.from(squadronMap.values());

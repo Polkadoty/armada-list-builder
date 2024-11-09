@@ -72,44 +72,117 @@ export default function UpgradeSelector({
       const cachedLegacyUpgrades = localStorage.getItem('legacyUpgrades');
       const cachedLegendsUpgrades = localStorage.getItem('legendsUpgrades');
       const cachedOldLegacyUpgrades = localStorage.getItem('oldLegacyUpgrades');
+      const cachedArcUpgrades = localStorage.getItem('arcUpgrades');
       
-      let allUpgrades: Upgrade[] = [];
+      // Get errata keys for upgrades
+      const errataKeysJson = localStorage.getItem('errataKeys');
+      const errataKeys = errataKeysJson ? JSON.parse(errataKeysJson).upgrades : [];
+      
+      const upgradeMap = new Map<string, Upgrade>();
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const processUpgrades = (data: UpgradeData, prefix: string = ''): Upgrade[] => {
+      const processUpgrades = (data: UpgradeData, prefix: string = '') => {
+        // Check if this content source is enabled - base content is always enabled
+        const contentEnabled = prefix === '' || prefix === 'regular' || Cookies.get(`enable${prefix.charAt(0).toUpperCase() + prefix.slice(1)}`) === 'true';
+        
+        if (!contentEnabled) return [];
+
         if (data && data.upgrades) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          return Object.values(data.upgrades).map((upgrade: any) => {
-            const exhaustType = upgrade.exhaust?.type || '';
-            const isModification = upgrade.modification ? 'modification' : '';
-            return {
-              ...upgrade,
-              id: prefix ? `${prefix}-${upgrade.id || upgrade.name}` : (upgrade.id || upgrade.name),
-              alias: upgrade.alias || '',
-              faction: Array.isArray(upgrade.faction) ? upgrade.faction : [upgrade.faction],
-              "unique-class": upgrade["unique-class"] || [],
-              restrictions: {
-                ...upgrade.restrictions,
-                traits: upgrade.restrictions?.traits || [],
-                size: upgrade.restrictions?.size || [],
-                disqual_upgrades: upgrade.restrictions?.disqual_upgrades || [],
-                disable_upgrades: upgrade.restrictions?.disable_upgrades || [],
-                enable_upgrades: upgrade.restrictions?.enable_upgrades || [],
-                disqualify_if: upgrade.restrictions?.disqualify_if || {}
-              },
-              source: prefix || 'regular' as ContentSource,
-              searchableText: JSON.stringify({
-                ...upgrade,
-                name: upgrade.name,
-                ability: upgrade.ability,
-                exhaustType: exhaustType,
-                isModification: isModification
-              }).toLowerCase()
-            };
+          // First pass: Process non-errata upgrades
+          Object.entries(data.upgrades).forEach(([upgradeId, upgrade]) => {
+            if (!upgradeId.includes('-errata-')) {
+              const baseKey = upgradeId;
+              
+              // Check if this upgrade has an errata version and if its source is enabled
+              const errataVersion = errataKeys.find((key: string) => 
+                key.startsWith(upgradeId + '-errata-')
+              );
+
+              // Check if errata source is enabled and exists
+              const errataSource = errataVersion?.split('-errata-')[1];
+              const errataEnabled = errataSource && Cookies.get(`enable${errataSource.charAt(0).toUpperCase() + errataSource.slice(1)}`) === 'true';
+
+              // Only process if there's no errata version or if the errata source isn't enabled
+              if (!errataVersion || !errataEnabled) {
+                const exhaustType = upgrade.exhaust?.type || '';
+                const isModification = upgrade.modification ? 'modification' : '';
+                
+                const restrictions = {
+                  ...upgrade.restrictions,
+                  traits: upgrade.restrictions?.traits || [],
+                  size: upgrade.restrictions?.size || [],
+                  disqual_upgrades: upgrade.restrictions?.disqual_upgrades || [],
+                  disable_upgrades: upgrade.restrictions?.disable_upgrades || [],
+                  enable_upgrades: upgrade.restrictions?.enable_upgrades || [],
+                  disqualify_if: upgrade.restrictions?.disqualify_if || {},
+                  flagship: upgrade.restrictions?.flagship || false
+                };
+
+                upgradeMap.set(baseKey, {
+                  ...upgrade,
+                  id: prefix ? `${prefix}-${upgrade.id || upgrade.name}` : (upgrade.id || upgrade.name),
+                  alias: upgrade.alias || '',
+                  faction: Array.isArray(upgrade.faction) ? upgrade.faction : [upgrade.faction],
+                  "unique-class": upgrade["unique-class"] || [],
+                  restrictions: restrictions,
+                  source: (prefix || 'regular') as ContentSource,
+                  searchableText: JSON.stringify({
+                    ...upgrade,
+                    name: upgrade.name,
+                    ability: upgrade.ability,
+                    exhaustType: exhaustType,
+                    isModification: isModification
+                  }).toLowerCase()
+                });
+              }
+            }
+          });
+
+          // Second pass: Process errata versions
+          Object.entries(data.upgrades).forEach(([upgradeId, upgrade]) => {
+            if (upgradeId.includes('-errata-') && errataKeys.includes(upgradeId)) {
+              const [baseId, errataSource] = upgradeId.split('-errata-');
+              
+              // Check if the errata content source is enabled
+              const errataEnabled = Cookies.get(`enable${errataSource.charAt(0).toUpperCase() + errataSource.slice(1)}`) === 'true';
+              if (errataEnabled) {
+                const exhaustType = upgrade.exhaust?.type || '';
+                const isModification = upgrade.modification ? 'modification' : '';
+                
+                const restrictions = {
+                  ...upgrade.restrictions,
+                  traits: upgrade.restrictions?.traits || [],
+                  size: upgrade.restrictions?.size || [],
+                  disqual_upgrades: upgrade.restrictions?.disqual_upgrades || [],
+                  disable_upgrades: upgrade.restrictions?.disable_upgrades || [],
+                  enable_upgrades: upgrade.restrictions?.enable_upgrades || [],
+                  disqualify_if: upgrade.restrictions?.disqualify_if || {},
+                  flagship: upgrade.restrictions?.flagship || false
+                };
+
+                upgradeMap.set(baseId, {
+                  ...upgrade,
+                  id: upgradeId,
+                  alias: upgrade.alias || '',
+                  faction: Array.isArray(upgrade.faction) ? upgrade.faction : [upgrade.faction],
+                  "unique-class": upgrade["unique-class"] || [],
+                  restrictions: restrictions,
+                  source: errataSource as ContentSource,
+                  searchableText: JSON.stringify({
+                    ...upgrade,
+                    name: upgrade.name,
+                    ability: upgrade.ability,
+                    exhaustType: exhaustType,
+                    isModification: isModification
+                  }).toLowerCase()
+                });
+              }
+            }
           });
         }
-        return [];
+        return Array.from(upgradeMap.values());
       };
+
+      let allUpgrades: Upgrade[] = [];
 
       if (cachedUpgrades) {
         const upgradeData = JSON.parse(cachedUpgrades);
@@ -131,7 +204,24 @@ export default function UpgradeSelector({
         allUpgrades = [...allUpgrades, ...processUpgrades(oldLegacyUpgradeData, 'oldLegacy')];
       }
 
-      const filteredUpgrades = allUpgrades.filter(upgrade => {
+      if (cachedArcUpgrades) {
+        const arcUpgradeData = JSON.parse(cachedArcUpgrades);
+        allUpgrades = [...allUpgrades, ...processUpgrades(arcUpgradeData, 'arc')];
+      }
+
+      // Remove duplicates by using a Map with a composite key
+      const uniqueUpgrades = new Map<string, Upgrade>();
+      allUpgrades.forEach(upgrade => {
+        const key = `${upgrade.name}-${upgrade.type}`;
+        // Only keep the upgrade if it's not already in the map or if it's from a higher priority source
+        if (!uniqueUpgrades.has(key) || 
+            (upgrade.source === 'arc' && uniqueUpgrades.get(key)?.source !== 'arc')) {
+          uniqueUpgrades.set(key, upgrade);
+        }
+      });
+
+      // Convert back to array and filter
+      const filteredUpgrades = Array.from(uniqueUpgrades.values()).filter(upgrade => {
         const factionMatch = Array.isArray(upgrade.faction) 
           ? upgrade.faction.includes(faction) || upgrade.faction.includes('')
           : upgrade.faction === faction || upgrade.faction === '';

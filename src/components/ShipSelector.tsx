@@ -68,47 +68,145 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
       const cachedLegacyShips = localStorage.getItem('legacyShips');
       const cachedLegendsShips = localStorage.getItem('legendsShips');
       const cachedOldLegacyShips = localStorage.getItem('oldLegacyShips');
+      const cachedArcShips = localStorage.getItem('arcShips');
       
-      let allShips: ShipModel[] = [];
+      // Get errata keys for ships
+      const errataKeysJson = localStorage.getItem('errataKeys');
+      const errataKeys = errataKeysJson ? JSON.parse(errataKeysJson).ships : [];
+      
+      const shipMap = new Map<string, ShipModel>();
+
+      
+        // Add this helper function at the top of the file
+      const normalizeSourceName = (source: string): ContentSource => {
+        switch (source.toLowerCase()) {
+          case 'old-legacy':
+            return 'oldLegacy';
+          case 'legacy':
+            return 'legacy';
+          case 'legends':
+            return 'legends';
+          case 'arc':
+            return 'arc';
+          default:
+            return 'regular';
+        }
+      };
 
       const processShips = (data: ShipData, prefix: string = '') => {
-        if (data && data.ships) {
-          return Object.entries(data.ships).flatMap(([chassisName, chassisData]: [string, ChassisData]) => 
-            Object.values(chassisData.models || {}).map((model: ShipModel) => {
-              const speedText = Object.entries(model.speed || {})
-                .map(([speed, yaw]) => `speed ${speed} yaw ${yaw.join(' ')}`)
-                .join(' ');
-              const armamentText = Object.entries(model.armament || {}).map(([zone, dice]) => {
-                const diceColors = ['red', 'blue', 'black'];
-                return dice.map((count, index) => count > 0 ? `${zone} ${diceColors[index]} ${count}` : '').filter(Boolean);
-              }).flat().join(' ');
-              const upgradesText = model.upgrades?.join(' ') || '';
+        console.log('Processing ships with prefix:', prefix);
+        const contentEnabled = prefix === '' || prefix === 'regular' || Cookies.get(`enable${prefix.charAt(0).toUpperCase() + prefix.slice(1)}`) === 'true';
+        
+        if (!contentEnabled) return [];
 
-              return {
-                ...model,
-                id: prefix ? `${prefix}-${chassisName}-${model.name}` : `${chassisName}-${model.name}`,
-                chassis: chassisName,
-                size: chassisData.size,
-                traits: model.traits || [],
-                source: (prefix || 'regular') as 'regular' | 'legacy' | 'legends' | 'oldLegacy' | 'arc',
-                searchableText: JSON.stringify({
-                  ...model,
-                  name: model.name.toLowerCase(),
-                  speed: speedText,
-                  armament: armamentText,
-                  upgrades: upgradesText,
-                  traits: model.traits?.map(trait => ` ${trait} `).join(' ') || '',
-                  tokens: Object.entries(model.tokens || {})
-                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                    .filter(([_, value]) => value > 0)
-                    .reduce((acc, [key, value]) => ({ ...acc, [key.replace('def_', '')]: value }), {})
-                }).toLowerCase()
-              };
-            })
-          );
+        const shipMap = new Map<string, ShipModel>();
+
+        if (data && data.ships) {
+          // First, collect all errata information
+          const errataModels = new Map<string, { modelId: string, model: ShipModel, chassisData: ChassisData }>();
+          
+          Object.entries(data.ships).forEach(([chassisName, chassisData]) => {
+            if (chassisName.includes('-errata-')) {
+              const [baseChassisName, errataSource] = chassisName.split('-errata-');
+              const errataEnabled = Cookies.get(`enable${errataSource.charAt(0).toUpperCase() + errataSource.slice(1)}`) === 'true';
+              
+              if (errataEnabled) {
+                Object.entries(chassisData.models || {}).forEach(([modelId, model]) => {
+                  if (modelId.includes('-errata-') && errataKeys.includes(chassisName)) {
+                    const baseModelId = modelId.split('-errata-')[0];
+                    
+                    console.log('Found errata model:', {
+                      baseModelId,
+                      modelId,
+                      errataSource,
+                      chassisName
+                    });
+
+                    errataModels.set(baseModelId, {
+                      modelId,
+                      model: {
+                        ...model,
+                        id: modelId,
+                        chassis: baseChassisName, // Keep the original chassis name
+                        source: normalizeSourceName(errataSource)
+                      },
+                      chassisData
+                    });
+                  }
+                });
+              }
+            }
+          });
+
+          console.log('Collected errata models:', Array.from(errataModels.entries()));
+
+          // Then process all ships
+          Object.entries(data.ships).forEach(([chassisName, chassisData]) => {
+            if (!chassisName.includes('-errata-')) {
+              Object.entries(chassisData.models || {}).forEach(([modelId, model]) => {
+                if (!modelId.includes('-errata-') && model.faction === faction) {
+                  const errataData = errataModels.get(modelId);
+                  
+                  if (errataData) {
+                    console.log('Replacing ship with errata version:', {
+                      originalId: modelId,
+                      errataId: errataData.modelId,
+                      chassis: model.chassis
+                    });
+                  }
+
+                  const ship = errataData ? {
+                    ...errataData.model,
+                    size: errataData.chassisData.size,
+                    traits: errataData.model.traits || [],
+                    chassis: model.chassis, // Keep the original chassis
+                    searchableText: createSearchableText(errataData.model)
+                  } : {
+                    ...model,
+                    id: modelId,
+                    chassis: model.chassis,
+                    size: chassisData.size,
+                    traits: model.traits || [],
+                    source: (prefix || 'regular') as ContentSource,
+                    searchableText: createSearchableText(model)
+                  };
+                  shipMap.set(modelId, ship);
+                }
+              });
+            }
+          });
         }
-        return [];
+
+        const processedShips = Array.from(shipMap.values());
+        console.log('Processed ships:', processedShips);
+        return processedShips;
       };
+
+      // Helper function to create searchable text
+      const createSearchableText = (model: ShipModel) => {
+        const speedText = Object.entries(model.speed || {})
+          .map(([speed, yaw]) => `speed ${speed} yaw ${yaw.join(' ')}`)
+          .join(' ');
+        const armamentText = Object.entries(model.armament || {}).map(([zone, dice]) => {
+          const diceColors = ['red', 'blue', 'black'];
+          return dice.map((count, index) => count > 0 ? `${zone} ${diceColors[index]} ${count}` : '').filter(Boolean);
+        }).flat().join(' ');
+        const upgradesText = model.upgrades?.join(' ') || '';
+
+        return JSON.stringify({
+          ...model,
+          name: model.name.toLowerCase(),
+          speed: speedText,
+          armament: armamentText,
+          upgrades: upgradesText,
+          traits: model.traits?.map(trait => ` ${trait} `).join(' ') || '',
+          tokens: Object.entries(model.tokens || {})
+            .filter(([_, value]) => value > 0)
+            .reduce((acc, [key, value]) => ({ ...acc, [key.replace('def_', '')]: value }), {})
+        }).toLowerCase();
+      };
+
+      let allShips: ShipModel[] = [];
 
       if (cachedShips) {
         const shipData = JSON.parse(cachedShips);
@@ -130,23 +228,38 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
         allShips = [...allShips, ...processShips(oldLegacyShipData, 'oldLegacy')];
       }
 
-      const filteredShips = allShips.filter(ship => 
-        ship.faction === faction &&
-        ship.points >= filter.minPoints &&
-        ship.points <= filter.maxPoints
-      );
+      if (cachedArcShips) {
+        const arcShipData = JSON.parse(cachedArcShips);
+        allShips = [...allShips, ...processShips(arcShipData, 'arc')];
+      }
 
-      // Sort ships: non-unique, unique, then huge
-      const sortedShips = filteredShips.sort((a, b) => {
-        if (a.size === 'huge' && b.size !== 'huge') return 1;
-        if (a.size !== 'huge' && b.size === 'huge') return -1;
-        if (a.unique && !b.unique) return 1;
-        if (!a.unique && b.unique) return -1;
-        return a.name.localeCompare(b.name);
+      // Remove duplicates by using a Map with a composite key
+      const uniqueShips = new Map<string, ShipModel>();
+      allShips.forEach(ship => {
+        const key = ship.id.split('-errata-')[0]; // Use base ID as key
+        const existingShip = uniqueShips.get(key);
+        
+        // Replace existing ship if:
+        // 1. No existing ship OR
+        // 2. New ship is from arc OR
+        // 3. New ship is an errata version and its source is enabled
+        const isErrata = ship.id.includes('-errata-');
+        const errataSource = isErrata ? ship.id.split('-errata-')[1] : '';
+        const errataEnabled = isErrata && Cookies.get(`enable${errataSource.charAt(0).toUpperCase() + errataSource.slice(1)}`) === 'true';
+        
+        if (!existingShip || 
+            ship.source === 'arc' || 
+            (isErrata && errataEnabled)) {
+          uniqueShips.set(key, ship);
+        }
       });
 
-      setAllShips(sortedShips);
-      setDisplayedShips(sortedShips);
+      // Convert back to array and filter
+      const filteredShips = Array.from(uniqueShips.values())
+        .filter(ship => ship.faction === faction);
+
+      setAllShips(filteredShips);
+      setDisplayedShips(filteredShips);
     };
 
     fetchShips();
