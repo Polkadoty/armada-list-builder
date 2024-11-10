@@ -1214,7 +1214,7 @@ export default function FleetBuilder({
       case 'legends':
         return '[Legends]';
       case 'oldLegacy':
-        return '[Old Legacy]';
+        return '[OldLegacy]';
       case 'arc':
         return '[ARC]';
       default:
@@ -1359,23 +1359,38 @@ export default function FleetBuilder({
 
   const fetchObjective = (key: string): ObjectiveModel | null => {
     console.log(`Fetching objective for key: ${key}`);
-    for (let i = 0; i < localStorage.length; i++) {
-      const storageKey = localStorage.key(i);
-      // console.log(`Checking localStorage key: ${storageKey}`);
-      if (storageKey && storageKey.includes("objectives")) {
-        try {
-          const data = JSON.parse(localStorage.getItem(storageKey) || "{}");
-          console.log(`Parsed objectives data for ${storageKey}:`, data);
-          const objectivesData = data.objectives || data;
-          if (objectivesData[key]) {
-            console.log(`Found objective in storage:`, objectivesData[key]);
-            return objectivesData[key] as ObjectiveModel;
-          }
-        } catch (error) {
-          console.error(`Error parsing JSON for key ${storageKey}:`, error);
+    
+    // Get all localStorage keys that contain 'objectives'
+    const objectiveKeys = Object.keys(localStorage).filter(k => 
+      k.toLowerCase().includes('objectives')
+    );
+    
+    // Search through all objective-related localStorage items
+    for (const storageKey of objectiveKeys) {
+      try {
+        const data = JSON.parse(localStorage.getItem(storageKey) || "{}");
+        console.log(`Checking objectives in ${storageKey}`);
+        
+        // Handle both direct objectives and nested objectives structure
+        const objectivesData = data.objectives || data;
+        
+        // Check if the objective exists in this data
+        if (objectivesData[key]) {
+          console.log(`Found objective in ${storageKey}:`, objectivesData[key]);
+          return {
+            ...objectivesData[key],
+            // Set source based on storage key
+            source: storageKey.includes('arc') ? 'arc' :
+                   storageKey.includes('oldLegacy') ? 'oldLegacy' :
+                   storageKey.includes('legacy') ? 'legacy' :
+                   storageKey.includes('legends') ? 'legends' : 'regular'
+          } as ObjectiveModel;
         }
+      } catch (error) {
+        console.error(`Error parsing JSON for key ${storageKey}:`, error);
       }
     }
+    
     console.log(`Objective not found for key: ${key}`);
     return null;
   };
@@ -1648,15 +1663,28 @@ export default function FleetBuilder({
           if (upgradeKey) {
             const upgrade = fetchUpgrade(upgradeKey);
             if (upgrade) {
-              let source: "regular" | "legacy" | "legends" | "oldLegacy" = "regular";
-              if (upgradeName.includes("[OldLegacy]")) {
-                source = "oldLegacy";
-              } else if (upgradeName.includes("[Legacy]")) {
-                source = "legacy";
-              } else if (upgradeName.includes("[Legends]")) {
-                source = "legends";
+              // Extract source directly from the upgrade name string
+              let source: ContentSource = "regular";
+              const sourceMatch = upgradeName.match(/\[(.*?)\]/);
+              if (sourceMatch) {
+                const sourceTag = sourceMatch[1].toLowerCase();
+                switch (sourceTag) {
+                  case 'oldlegacy':
+                    source = 'oldLegacy';
+                    break;
+                  case 'legacy':
+                    source = 'legacy';
+                    break;
+                  case 'legends':
+                    source = 'legends';
+                    break;
+                  case 'arc':
+                    source = 'arc';
+                    break;
+                }
               }
-      
+              console.log(`Source for ${upgradeName}:`, source);
+
               // Find the next available slot for this upgrade type
               const existingUpgradesOfType = upgradesToAdd.filter(
                 u => u.shipId === currentShipId && u.upgrade.type === upgrade.type
@@ -1701,14 +1729,15 @@ export default function FleetBuilder({
             console.log(`Fetched squadron for key: ${squadronKey}`, squadron);
             if (squadron) {
               console.log(`Selecting squadron:`, squadron);
-              let source: "regular" | "legacy" | "legends" | "oldLegacy" =
-                "regular";
+              let source: ContentSource = "regular";
               if (squadronName.includes("[OldLegacy]")) {
                 source = "oldLegacy";
               } else if (squadronName.includes("[Legacy]")) {
                 source = "legacy";
               } else if (squadronName.includes("[Legends]")) {
                 source = "legends";
+              } else if (squadronName.includes("[ARC]")) {
+                source = "arc";
               }
               const selectedSquadron = {
                 ...squadron,
