@@ -91,6 +91,7 @@ interface Objective {
   name: string;
   cardimage: string;
   type: 'assault' | 'defense' | 'navigation';
+  source: ContentSource;
 }
 
 export interface Upgrade {
