@@ -297,6 +297,8 @@ export default function UpgradeSelector({
   }, [allUpgrades, activeSorts, searchQuery]);
 
   const isUpgradeAvailable = (upgrade: Upgrade) => {
+    
+    // Huge ships can't have enable_upgrades
     if (shipSize === 'huge' && upgrade.restrictions?.enable_upgrades && upgrade.restrictions.enable_upgrades.length > 0 && upgrade.restrictions.enable_upgrades.some(upgrade => upgrade.trim() !== '')) {
       return false;
     }

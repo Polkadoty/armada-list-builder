@@ -506,34 +506,34 @@ export default function FleetBuilder({
               });
             }
 
-             // Clear enabled upgrades from the old upgrade
-            if (oldUpgrade.restrictions?.enable_upgrades) {
-              oldUpgrade.restrictions.enable_upgrades.forEach((enabledType) => {
-                const slotIndex = ship.availableUpgrades.lastIndexOf(enabledType);
-                if (slotIndex !== -1) {
-                  ship.availableUpgrades.splice(slotIndex, 1);
-                }
-              });
-              // Clear from enabledUpgrades state
-              setEnabledUpgrades((prev) => {
-                const newEnabled = { ...prev };
-                newEnabled[ship.id] = (newEnabled[ship.id] || []).filter(
-                  (type) => !oldUpgrade.restrictions?.enable_upgrades?.includes(type)
-                );
-                return newEnabled;
-              });
-            }
+          //    // Clear enabled upgrades from the old upgrade
+          // if (oldUpgrade.restrictions?.enable_upgrades) {
+          //   oldUpgrade.restrictions.enable_upgrades.forEach((enabledType) => {
+          //     const slotIndex = ship.availableUpgrades.lastIndexOf(enabledType);
+          //     if (slotIndex !== -1) {
+          //       ship.availableUpgrades.splice(slotIndex, 1);
+          //     }
+          //   });
+          //   // Clear from enabledUpgrades state
+          //   setEnabledUpgrades((prev) => {
+          //     const newEnabled = { ...prev };
+          //     newEnabled[ship.id] = (newEnabled[ship.id] || []).filter(
+          //       (type) => !oldUpgrade.restrictions?.enable_upgrades?.includes(type)
+          //     );
+          //     return newEnabled;
+          //   });
+          // }
 
-            // Clear disabled upgrades from the old upgrade
-            if (oldUpgrade.restrictions?.disable_upgrades) {
-              setDisabledUpgrades((prev) => {
-                const newDisabled = { ...prev };
-                newDisabled[ship.id] = (newDisabled[ship.id] || []).filter(
-                  (type) => !oldUpgrade.restrictions?.disable_upgrades?.includes(type)
-                );
-                return newDisabled;
-              });
-            }
+          // Clear disabled upgrades from the old upgrade
+          if (oldUpgrade.restrictions?.disable_upgrades) {
+            setDisabledUpgrades((prev) => {
+              const newDisabled = { ...prev };
+              newDisabled[ship.id] = (newDisabled[ship.id] || []).filter(
+                (type) => !oldUpgrade.restrictions?.disable_upgrades?.includes(type)
+              );
+              return newDisabled;
+            });
+          }
 
             if (oldUpgrade.unique) {
               removeUniqueClassName(oldUpgrade.name);
