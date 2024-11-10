@@ -669,10 +669,11 @@ export default function FleetBuilder({
           const isModification = upgrade.modification ? "modification" : "";
 
           // Determine the source based on the alias
-          let source: "regular" | "legacy" | "legends" | "oldLegacy" | "arc" = "regular";
+          let source: ContentSource = "regular";
           if (upgrade.alias) {
             if (upgrade.alias.includes("OldLegacy")) {
-              source = "oldLegacy";
+              source = "oldLegacy"; // Ensure this matches the ContentSource type
+              console.log('Setting Old Legacy source for upgrade:', upgrade.name);
             } else if (upgrade.alias.includes("Legacy")) {
               source = "legacy";
             } else if (upgrade.alias.includes("Legends")) {

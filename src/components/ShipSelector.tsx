@@ -94,7 +94,11 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
 
       const processShips = (data: ShipData, prefix: string = '') => {
         console.log('Processing ships with prefix:', prefix);
-        const contentEnabled = prefix === '' || prefix === 'regular' || Cookies.get(`enable${prefix.charAt(0).toUpperCase() + prefix.slice(1)}`) === 'true';
+        const contentEnabled = prefix === '' || prefix === 'regular' || 
+          (prefix === 'oldLegacy' ? 
+            Cookies.get('enableOldLegacy') === 'true' : 
+            Cookies.get(`enable${prefix.charAt(0).toUpperCase() + prefix.slice(1)}`) === 'true'
+          );
         
         if (!contentEnabled) return [];
 
