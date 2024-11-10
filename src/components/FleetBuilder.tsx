@@ -1270,10 +1270,16 @@ export default function FleetBuilder({
       case 'oldLegacy':
         return '[Old Legacy]';
       case 'arc':
-        return '[Arc]';
+        return '[ARC]';
       default:
         return '';
     }
+  };
+
+  const capitalizeFirstLetter = (string: string | undefined) => {
+    if (!string) return "";
+    if (string === "arc" || string === "Arc") return "ARC";
+    return string.charAt(0).toUpperCase() + string.slice(1);
   };
 
   const generateExportText = useCallback(() => {
@@ -1380,11 +1386,6 @@ export default function FleetBuilder({
     points,
     totalSquadronPoints
   ]);
-
-  const capitalizeFirstLetter = (string: string | undefined) => {
-    if (!string) return "";
-    return string.charAt(0).toUpperCase() + string.slice(1);
-  };
 
   const saveFleetToLocalStorage = useCallback(() => {
     const exportText = generateExportText();
@@ -1575,7 +1576,7 @@ export default function FleetBuilder({
             source = "legacy";
           } else if (shipName.includes("[Legends]")) {
             source = "legends";
-          } else if (shipName.includes("[Arc]")) {
+          } else if (shipName.includes("[ARC]")) {
             source = "arc";
           }
           const newShip: Ship = {
