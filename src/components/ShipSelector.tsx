@@ -79,7 +79,7 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
         // Add this helper function at the top of the file
       const normalizeSourceName = (source: string): ContentSource => {
         switch (source.toLowerCase()) {
-          case 'old-legacy':
+          case 'oldLegacy':
             return 'oldLegacy';
           case 'legacy':
             return 'legacy';
