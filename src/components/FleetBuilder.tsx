@@ -1206,6 +1206,22 @@ export default function FleetBuilder({
     localStorage.removeItem(`savedFleet_${faction}`);
   };
 
+  // Add this helper function to format the objective source
+  const formatObjectiveSource = (source: ContentSource) => {
+    switch (source) {
+      case 'legacy':
+        return '[Legacy]';
+      case 'legends':
+        return '[Legends]';
+      case 'oldLegacy':
+        return '[Old Legacy]';
+      case 'arc':
+        return '[ARC]';
+      default:
+        return '';
+    }
+  };
+
   const generateExportText = useCallback(() => {
 
     const allRegularSource = [
@@ -1228,14 +1244,18 @@ export default function FleetBuilder({
     }
 
     text += "\n";
+    // Add objectives with source tags
     if (selectedAssaultObjective) {
-      text += "Assault: " + selectedAssaultObjective.name + "\n";
+      const sourceTag = formatObjectiveSource(selectedAssaultObjective.source);
+      text += `Assault: ${selectedAssaultObjective.name}${sourceTag ? ` ${sourceTag}` : ''}\n`;
     }
     if (selectedDefenseObjective) {
-      text += "Defense: " + selectedDefenseObjective.name + "\n";
+      const sourceTag = formatObjectiveSource(selectedDefenseObjective.source);
+      text += `Defense: ${selectedDefenseObjective.name}${sourceTag ? ` ${sourceTag}` : ''}\n`;
     }
     if (selectedNavigationObjective) {
-      text += "Navigation: " + selectedNavigationObjective.name + "\n";
+      const sourceTag = formatObjectiveSource(selectedNavigationObjective.source);
+      text += `Navigation: ${selectedNavigationObjective.name}${sourceTag ? ` ${sourceTag}` : ''}\n`;
     }
 
     if (selectedShips.length > 0) {
@@ -1246,7 +1266,7 @@ export default function FleetBuilder({
           " (" + ship.points + ")\n";
         ship.assignedUpgrades.forEach((upgrade) => {
           text += "• " + upgrade.name + 
-            (upgrade.source !== "regular" ? " [" + capitalizeFirstLetter(upgrade.source) + "]" : "") + 
+            (upgrade.source && upgrade.source !== "regular" ? " [" + capitalizeFirstLetter(upgrade.source) + "]" : "") + 
             " (" + upgrade.points + ")\n";
         });
         text += "= " + 

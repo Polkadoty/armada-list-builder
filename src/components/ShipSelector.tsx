@@ -61,6 +61,31 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
   });
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [contentSources, setContentSources] = useState({
+    arc: Cookies.get('enableArc') === 'true',
+    legacy: Cookies.get('enableLegacy') === 'true',
+    legends: Cookies.get('enableLegends') === 'true',
+    oldLegacy: Cookies.get('enableOldLegacy') === 'true'
+  });
+
+  useEffect(() => {
+    const checkCookies = () => {
+      const newContentSources = {
+        arc: Cookies.get('enableArc') === 'true',
+        legacy: Cookies.get('enableLegacy') === 'true',
+        legends: Cookies.get('enableLegends') === 'true',
+        oldLegacy: Cookies.get('enableOldLegacy') === 'true'
+      };
+
+      if (JSON.stringify(newContentSources) !== JSON.stringify(contentSources)) {
+        setContentSources(newContentSources);
+      }
+    };
+
+    checkCookies();
+    const interval = setInterval(checkCookies, 1000);
+    return () => clearInterval(interval);
+  }, [contentSources]);
 
   useEffect(() => {
     const fetchShips = () => {
@@ -135,6 +160,83 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
         allShips = [...allShips, ...processShips(arcShipData, 'arc')];
       }
 
+      // Get errata keys from localStorage
+      const errataKeys = JSON.parse(localStorage.getItem('errataKeys') || '{}');
+      const shipErrataKeys = errataKeys.ships || [];
+      console.log('Retrieved errata keys:', shipErrataKeys);
+      
+      // Create a Map to group ships by their base name
+      const shipGroups = new Map<string, ShipModel[]>();
+
+      allShips.forEach(ship => {
+        // Use chassis name for grouping since errata is chassis-based
+        const baseName = ship.chassis
+          .replace(/^(legacy|legends|oldLegacy|arc)-/, '') // Remove source prefix
+          .replace(/-errata(-[^-]+)?$/, ''); // Remove errata suffix
+        
+        if (!shipGroups.has(baseName)) {
+          shipGroups.set(baseName, []);
+        }
+        shipGroups.get(baseName)?.push(ship);
+      });
+
+      console.log('Grouped ships by base name:', Array.from(shipGroups.entries()));
+
+      // Filter out non-errata versions when errata exists
+      allShips = Array.from(shipGroups.values()).map(group => {
+        // First, identify which ships in the group have errata versions
+        const shipsWithErrataStatus = group.map(ship => {
+          // Check if this ship's chassis matches any errata keys
+          const hasErrata = shipErrataKeys.some((errataKey: string) => ship.chassis.includes(errataKey));
+          const isSourceVersion = ship.id.match(/^(legacy|legends|oldLegacy|arc)-/);
+          
+          return { ship, hasErrata };
+        });
+
+        // If any ship in this group has errata, process the replacements
+        if (shipsWithErrataStatus.some(({ hasErrata }) => hasErrata)) {
+          const processedShips = group.map(ship => {
+            // Find if there's a source-prefixed version of this exact model
+            const sourceVersion = group.find(candidate => 
+              candidate.id !== ship.id && 
+              candidate.id.match(/^(legacy|legends|oldLegacy|arc)-/) &&
+              ship.id === candidate.id.replace(/^(legacy|legends|oldLegacy|arc)-/, '')
+            );
+
+            if (sourceVersion) {
+              // Check if the source version is enabled
+              const source = sourceVersion.source;
+              const isSourceEnabled = source ? contentSources[source as keyof typeof contentSources] : true;
+              
+              if (isSourceEnabled) {
+                console.log(`Replacing ${ship.id} with source version ${sourceVersion.id}`);
+                return sourceVersion;
+              }
+            }
+            
+            return ship;
+          });
+
+          // Remove duplicates and check content sources
+          const uniqueShips = new Map();
+          processedShips.forEach(ship => {
+            const normalizedId = ship.id.replace(/^(legacy|legends|oldLegacy|arc)-/, '');
+            const isSourceEnabled = ship.source === 'regular' || contentSources[ship.source as keyof typeof contentSources];
+            
+            if (isSourceEnabled && (!uniqueShips.has(normalizedId) || ship.id.match(/^(legacy|legends|oldLegacy|arc)-/))) {
+              uniqueShips.set(normalizedId, ship);
+            }
+          });
+
+          return Array.from(uniqueShips.values());
+        }
+
+        // If no errata in this group, filter out ships with disabled content sources
+        return group.filter(ship => 
+          ship.source === 'regular' || contentSources[ship.source as keyof typeof contentSources]
+        );
+      }).flat();
+
       const filteredShips = allShips.filter(ship => 
         ship.faction === faction &&
         ship.points >= filter.minPoints &&
@@ -155,7 +257,7 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
     };
 
     fetchShips();
-  }, [faction, filter.minPoints, filter.maxPoints]);
+  }, [faction, filter.minPoints, filter.maxPoints, contentSources]);
 
   useEffect(() => {
     const sortAndFilterShips = () => {

@@ -73,9 +73,11 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
   };
 
   const handleArcToggle = (checked: boolean) => {
-    setEnableArc(checked);
-    Cookies.set('enableArc', checked.toString(), { expires: 365 });
-    flushCacheAndReload(() => {}, () => {}, () => {});
+    if (CONFIG.showArcToggle) {
+      setEnableArc(checked);
+      Cookies.set('enableArc', checked.toString(), { expires: 365 });
+      flushCacheAndReload(() => {}, () => {}, () => {});
+    }
   };
 
   const handleFlushCache = async () => {

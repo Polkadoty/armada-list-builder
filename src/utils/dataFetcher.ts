@@ -31,7 +31,8 @@ const fetchAndSaveData = async (setLoadingProgress: (progress: number) => void, 
     { name: 'objectives', url: '/api/objectives/' },
     { name: 'upgrades', url: '/api/upgrades/' },
     { name: 'aliases', url: '/aliases/' },
-    { name: 'imageLinks', url: '/image-links/' }
+    { name: 'imageLinks', url: '/image-links/' },
+    { name: 'errataKeys', url: '/errata-keys/' }
   ];
 
   if (enableLegacy) {

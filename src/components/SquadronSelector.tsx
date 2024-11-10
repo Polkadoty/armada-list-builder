@@ -41,6 +41,31 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
   });
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [contentSources, setContentSources] = useState({
+    arc: Cookies.get('enableArc') === 'true',
+    legacy: Cookies.get('enableLegacy') === 'true',
+    legends: Cookies.get('enableLegends') === 'true',
+    oldLegacy: Cookies.get('enableOldLegacy') === 'true'
+  });
+
+  useEffect(() => {
+    const checkCookies = () => {
+      const newContentSources = {
+        arc: Cookies.get('enableArc') === 'true',
+        legacy: Cookies.get('enableLegacy') === 'true',
+        legends: Cookies.get('enableLegends') === 'true',
+        oldLegacy: Cookies.get('enableOldLegacy') === 'true'
+      };
+
+      if (JSON.stringify(newContentSources) !== JSON.stringify(contentSources)) {
+        setContentSources(newContentSources);
+      }
+    };
+
+    checkCookies();
+    const interval = setInterval(checkCookies, 1000);
+    return () => clearInterval(interval);
+  }, [contentSources]);
 
   useEffect(() => {
     const fetchSquadrons = () => {
@@ -125,9 +150,51 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
         processSquadrons(arcSquadronData, 'arc');
       }
 
-      const allSquadrons = Array.from(squadronMap.values());
+      // Get errata keys from localStorage
+      const errataKeys = JSON.parse(localStorage.getItem('errataKeys') || '{}');
+      const squadronErrataKeys = errataKeys.squadrons || [];
+      console.log('Errata Keys for Squadrons:', squadronErrataKeys);
 
-      const filteredSquadrons = allSquadrons.filter(squadron => 
+      let squadronsArray = Array.from(squadronMap.values());
+
+      // Create a Map to group squadrons by their base name
+      const squadronGroups = new Map<string, Squadron[]>();
+
+      squadronsArray.forEach(squadron => {
+        // Extract base name without any prefixes or errata suffixes
+        const baseName = squadron.id.split('-errata-')[0];
+        
+        if (!squadronGroups.has(baseName)) {
+          squadronGroups.set(baseName, []);
+        }
+        squadronGroups.get(baseName)?.push(squadron);
+      });
+
+      // Filter out non-errata versions when errata exists
+      squadronsArray = Array.from(squadronGroups.values()).map(group => {
+        // Check if any squadron in the group has an errata version
+        const hasErrata = squadronErrataKeys.some((errataKey: string) => {
+          const matchingSquadron = group.find(squadron => squadron.id === errataKey);
+          if (!matchingSquadron) return false;
+          
+          // Check if the errata source is enabled
+          const source = matchingSquadron.source;
+          return source ? contentSources[source as keyof typeof contentSources] : true;
+        });
+
+        if (hasErrata) {
+          // Return only the errata version
+          return group.find(squadron => 
+            squadronErrataKeys.includes(squadron.id) && 
+            contentSources[squadron.source as keyof typeof contentSources]
+          );
+        }
+        
+        // If no errata exists, return the first squadron in the group
+        return group[0];
+      }).filter((squadron): squadron is Squadron => squadron !== undefined);
+
+      const filteredSquadrons = squadronsArray.filter(squadron => 
         squadron.faction === faction &&
         squadron.points >= filter.minPoints &&
         squadron.points <= filter.maxPoints
@@ -145,7 +212,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
     };
 
     fetchSquadrons();
-  }, [faction, filter.minPoints, filter.maxPoints]);
+  }, [faction, filter.minPoints, filter.maxPoints, contentSources]);
 
   useEffect(() => {
     const sortAndFilterSquadrons = () => {
@@ -320,7 +387,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
                       alt={squadron.name}
                       width={250}  // Standard poker card width (2.5 inches * 100)
                       height={350} // Standard poker card height (3.5 inches * 100)
-                      className="object-cover object-center w-full h-full scale-[101%]"
+                      className="object-cover object-center w-full h-full"
                       onError={() => {}}
                     />
                   </div>
