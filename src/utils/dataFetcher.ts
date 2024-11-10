@@ -23,6 +23,7 @@ const fetchAndSaveData = async (setLoadingProgress: (progress: number) => void, 
   const enableLegacy = Cookies.get('enableLegacy') === 'true';
   const enableLegends = Cookies.get('enableLegends') === 'true';
   const enableOldLegacy = Cookies.get('enableOldLegacy') === 'true';
+  const enableArc = Cookies.get('enableArc') === 'true';
 
   const endpoints = [
     { name: 'ships', url: '/api/ships/' },
@@ -54,6 +55,15 @@ const fetchAndSaveData = async (setLoadingProgress: (progress: number) => void, 
       { name: 'oldLegacyShips', url: '/old-legacy/ships/' },
       { name: 'oldLegacySquadrons', url: '/old-legacy/squadrons/' },
       { name: 'oldLegacyUpgrades', url: '/old-legacy/upgrades/' }
+    );
+  }
+
+  if (enableArc) {
+    endpoints.push(
+      { name: 'arcShips', url: '/arc/ships/' },
+      { name: 'arcSquadrons', url: '/arc/squadrons/' },
+      { name: 'arcUpgrades', url: '/arc/upgrades/' },
+      { name: 'arcObjectives', url: '/arc/objectives/' }
     );
   }
 

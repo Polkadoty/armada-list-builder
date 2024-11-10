@@ -13,6 +13,7 @@ const CONFIG = {
   showLegacyToggle: false,
   showLegendsToggle: true,
   showOldLegacyToggle: true,
+  showArcToggle: true,
 };
 
 export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadingMessage, tournamentMode, setTournamentMode }: {
@@ -25,6 +26,7 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
   const [enableLegacy, setEnableLegacy] = useState(false);
   const [enableLegends, setEnableLegends] = useState(false);
   const [enableOldLegacy, setEnableOldLegacy] = useState(false);
+  const [enableArc, setEnableArc] = useState(false);
   const { theme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -33,9 +35,11 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
     const legacyCookie = Cookies.get('enableLegacy');
     const legendsCookie = Cookies.get('enableLegends');
     const oldLegacyCookie = Cookies.get('enableOldLegacy');
+    const arcCookie = Cookies.get('enableArc');
     setEnableLegacy(CONFIG.showLegacyToggle && legacyCookie === 'true');
     setEnableLegends(CONFIG.showLegendsToggle && legendsCookie === 'true');
     setEnableOldLegacy(CONFIG.showOldLegacyToggle && oldLegacyCookie === 'true');
+    setEnableArc(CONFIG.showArcToggle && arcCookie === 'true');
   }, []);
 
   if (!mounted) {
@@ -66,6 +70,12 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
       Cookies.set('enableOldLegacy', checked.toString(), { expires: 365 });
       flushCacheAndReload(() => {}, () => {}, () => {});
     }
+  };
+
+  const handleArcToggle = (checked: boolean) => {
+    setEnableArc(checked);
+    Cookies.set('enableArc', checked.toString(), { expires: 365 });
+    flushCacheAndReload(() => {}, () => {}, () => {});
   };
 
   const handleFlushCache = async () => {
@@ -126,6 +136,19 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
                     id="old-legacy-toggle"
                     checked={enableOldLegacy}
                     onCheckedChange={handleOldLegacyToggle}
+                    className="custom-switch"
+                  />
+                </div>
+              )}
+              {CONFIG.showArcToggle && (
+                <div className="flex items-center justify-between">
+                  <label htmlFor="arc-toggle" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    Enable Arc Tournament Content
+                  </label>
+                  <Switch
+                    id="arc-toggle"
+                    checked={enableArc}
+                    onCheckedChange={handleArcToggle}
                     className="custom-switch"
                   />
                 </div>
