@@ -290,7 +290,7 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
                       alt={ship.name}
                       width={isHugeShip(ship) ? 600 : 300}
                       height={isHugeShip(ship) ? 480 : 420}
-                      className="object-cover object-center scale-[103%]"
+                      className="object-cover object-center scale-[101%]"
                       onError={() => {}}
                     />
                   </div>

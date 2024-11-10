@@ -320,7 +320,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
                       alt={squadron.name}
                       width={250}  // Standard poker card width (2.5 inches * 100)
                       height={350} // Standard poker card height (3.5 inches * 100)
-                      className="object-cover object-center w-full h-full scale-[103%]"
+                      className="object-cover object-center w-full h-full scale-[101%]"
                       onError={() => {}}
                     />
                   </div>

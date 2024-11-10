@@ -401,7 +401,7 @@ export default function UpgradeSelector({
                         alt={upgrade.name}
                         width={250}
                         height={350}
-                        className="object-cover object-center scale-[103%]"
+                        className="object-cover object-center scale-[101%]"
                         onError={() => {}}
                       />
                     </div>
