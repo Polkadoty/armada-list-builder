@@ -82,13 +82,13 @@ export default function UpgradeSelector({
 
       const processUpgrades = (data: UpgradeData, prefix: string = '') => {
         // Check if this content source is enabled - base content is always enabled
-        const contentEnabled = prefix === '' || prefix === 'regular' || 
-          (prefix === 'oldLegacy' ? 
-            Cookies.get('enableOldLegacy') === 'true' : 
-            Cookies.get(`enable${prefix.charAt(0).toUpperCase() + prefix.slice(1)}`) === 'true'
-          );
+        // const contentEnabled = prefix === '' || prefix === 'regular' || 
+        //   (prefix === 'oldLegacy' ? 
+        //     Cookies.get('enableOldLegacy') === 'true' : 
+        //     Cookies.get(`enable${prefix.charAt(0).toUpperCase() + prefix.slice(1)}`) === 'true'
+        //   );
         
-        if (!contentEnabled) return [];
+        // if (!contentEnabled) return [];
 
         if (data && data.upgrades) {
           // First pass: Process non-errata upgrades
