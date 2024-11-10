@@ -32,6 +32,8 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose }: Objectiv
       setLoading(true);
       try {
         const cachedObjectives = localStorage.getItem('objectives');
+        const cachedArcObjectives = localStorage.getItem('arcObjectives');
+        
         if (cachedObjectives) {
           const objectiveData = JSON.parse(cachedObjectives).objectives as Record<string, CachedObjective>;
           const flattenedObjectives = Object.values(objectiveData)

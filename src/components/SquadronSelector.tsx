@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Squadron } from './FleetBuilder';
+import { ContentSource, Squadron } from './FleetBuilder';
 import { useUniqueClassContext } from '../contexts/UniqueClassContext';
 import { SortToggleGroup, SortOption } from '@/components/SortToggleGroup';
 import { Search, X } from 'lucide-react';
@@ -48,7 +48,8 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
       const cachedLegacySquadrons = localStorage.getItem('legacySquadrons');
       const cachedLegendsSquadrons = localStorage.getItem('legendsSquadrons');
       const cachedOldLegacySquadrons = localStorage.getItem('oldLegacySquadrons');
-      
+      const cachedArcSquadrons = localStorage.getItem('arcSquadrons');
+
       const squadronMap = new Map<string, Squadron>();
 
       const processSquadrons = (data: SquadronData, prefix: string = '') => {
@@ -83,7 +84,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
                 count: 1,
                 ace: squadron.ace || false,
                 'unique-class': squadron['unique-class'] || [],
-                source: (prefix || 'regular') as 'regular' | 'legacy' | 'legends' | 'oldLegacy',
+                source: (prefix || 'regular') as ContentSource,
                 searchableText: JSON.stringify({
                   ...squadron,
                   abilities: abilityText,
@@ -117,6 +118,11 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
       if (cachedOldLegacySquadrons) {
         const oldLegacySquadronData = JSON.parse(cachedOldLegacySquadrons);
         processSquadrons(oldLegacySquadronData, 'oldLegacy');
+      }
+
+      if (cachedArcSquadrons) {
+        const arcSquadronData = JSON.parse(cachedArcSquadrons);
+        processSquadrons(arcSquadronData, 'arc');
       }
 
       const allSquadrons = Array.from(squadronMap.values());

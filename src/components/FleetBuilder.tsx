@@ -54,7 +54,7 @@ export interface Ship {
   chassis: string;
   size: string;
   traits?: string[];
-  source: "regular" | "legacy" | "legends" | "oldLegacy";
+  source: ContentSource;
   searchableText: string;
 }
 
@@ -82,7 +82,7 @@ export interface Squadron {
   };
   ace: boolean;
   "unique-class": string[];
-  source: "regular" | "legacy" | "legends" | "oldLegacy";
+  source: ContentSource;
   searchableText: string;
 }
 
@@ -126,7 +126,7 @@ export interface Upgrade {
     ready_amount?: number;
   };
   searchableText: string;
-  source: "regular" | "legacy" | "legends" | "oldLegacy";
+  source: ContentSource;
 }
 
 export interface Ship extends ShipModel {
@@ -135,6 +135,8 @@ export interface Ship extends ShipModel {
   assignedUpgrades: Upgrade[];
   searchableText: string;
 }
+
+export type ContentSource = "regular" | "legacy" | "legends" | "oldLegacy" | "arc";
 
 const SectionHeader = ({
   title,
@@ -1211,6 +1213,7 @@ export default function FleetBuilder({
       ...selectedSquadrons
     ].every(item => !item.source || item.source === 'regular');
 
+
     let text = " Name: " + fleetName + "\n";
     text += "Faction: " + faction.charAt(0).toUpperCase() + faction.slice(1) + "\n";
 
@@ -1305,6 +1308,7 @@ export default function FleetBuilder({
 
   const capitalizeFirstLetter = (string: string | undefined) => {
     if (!string) return "";
+    if (string === "arc" || string === "Arc") return "ARC";
     return string.charAt(0).toUpperCase() + string.slice(1);
   };
 
@@ -1489,14 +1493,15 @@ export default function FleetBuilder({
         const shipModel = fetchShip(shipKey);
         if (shipModel) {
           console.log(`Adding ship to fleet:`, shipModel);
-          let source: "regular" | "legacy" | "legends" | "oldLegacy" =
-            "regular";
+          let source: ContentSource = "regular";
           if (shipName.includes("[OldLegacy]")) {
             source = "oldLegacy";
           } else if (shipName.includes("[Legacy]")) {
             source = "legacy";
           } else if (shipName.includes("[Legends]")) {
             source = "legends";
+          } else if (shipName.includes("[ARC]")) {
+            source = "arc";
           }
           const newShip: Ship = {
             ...shipModel,
