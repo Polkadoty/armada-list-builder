@@ -1207,7 +1207,7 @@ export default function FleetBuilder({
   };
 
   // Add this helper function to format the objective source
-  const formatObjectiveSource = (source: ContentSource) => {
+  const formatSource = (source: ContentSource) => {
     switch (source) {
       case 'legacy':
         return '[Legacy]';
@@ -1221,13 +1221,6 @@ export default function FleetBuilder({
         return '';
     }
   };
-
-  const capitalizeFirstLetter = (string: string | undefined) => {
-    if (!string) return "";
-    if (string === "arc" || string === "Arc") return "ARC";
-    return string.charAt(0).toUpperCase() + string.slice(1);
-  };
-
 
   const generateExportText = useCallback(() => {
 
@@ -1245,7 +1238,7 @@ export default function FleetBuilder({
       .find((upgrade) => upgrade.type === "commander");
     if (commander) {
       text += "Commander: " + commander.name + 
-        (commander.source !== "regular" ? " [" + capitalizeFirstLetter(commander.source) + "]" : "") + 
+        (commander.source && commander.source !== "regular" ? " " + formatSource(commander.source) : "") + 
         " (" + commander.points + ")\n";
     }
     
@@ -1253,27 +1246,28 @@ export default function FleetBuilder({
     
     // Add objectives with source tags
     if (selectedAssaultObjective) {
-      const sourceTag = formatObjectiveSource(selectedAssaultObjective.source);
+      const sourceTag = formatSource(selectedAssaultObjective.source);
       text += `Assault: ${selectedAssaultObjective.name}${sourceTag ? ` ${sourceTag}` : ''}\n`;
     }
     if (selectedDefenseObjective) {
-      const sourceTag = formatObjectiveSource(selectedDefenseObjective.source);
+      const sourceTag = formatSource(selectedDefenseObjective.source);
       text += `Defense: ${selectedDefenseObjective.name}${sourceTag ? ` ${sourceTag}` : ''}\n`;
     }
     if (selectedNavigationObjective) {
-      const sourceTag = formatObjectiveSource(selectedNavigationObjective.source);
+      const sourceTag = formatSource(selectedNavigationObjective.source);
       text += `Navigation: ${selectedNavigationObjective.name}${sourceTag ? ` ${sourceTag}` : ''}\n`;
     }
 
     if (selectedShips.length > 0) {
       text += "\n";
       selectedShips.forEach((ship) => {
+        // In the ships forEach loop, change this part:
         text += ship.name + 
-          (ship.source !== "regular" ? " [" + capitalizeFirstLetter(ship.source) + "]" : "") + 
+          (ship.source && ship.source !== "regular" ? " " + formatSource(ship.source) : "") + 
           " (" + ship.points + ")\n";
         ship.assignedUpgrades.forEach((upgrade) => {
           text += "• " + upgrade.name + 
-            (upgrade.source !== "regular" ? " [" + capitalizeFirstLetter(upgrade.source) + "]" : "") + 
+            (upgrade.source && upgrade.source !== "regular" ? " " + formatSource(upgrade.source) : "") + 
             " (" + upgrade.points + ")\n";
         });
         text += "= " + 
@@ -1290,10 +1284,10 @@ export default function FleetBuilder({
           squadron.unique || squadron["ace-name"]
             ? (squadron["ace-name"] || squadron.name) + 
               (squadron["ace-name"] && !allRegularSource ? " - " + squadron.name : "") + 
-              (squadron.source !== "regular" ? " [" + capitalizeFirstLetter(squadron.source) + "]" : "") + 
+              (squadron.source && squadron.source !== "regular" ? " " + formatSource(squadron.source) : "") + 
               " (" + squadron.points + ")"
             : squadron.name + 
-              (squadron.source !== "regular" ? " [" + capitalizeFirstLetter(squadron.source) + "]" : "") + 
+              (squadron.source && squadron.source !== "regular" ? " " + formatSource(squadron.source) : "") + 
               " (" + (squadron.points * (squadron.count || 1)) + ")";
         if (!acc[key]) {
           acc[key] = {
