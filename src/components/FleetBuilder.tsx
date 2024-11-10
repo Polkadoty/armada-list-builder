@@ -482,6 +482,59 @@ export default function FleetBuilder({
                 }
               });
             }
+
+            // Remove disabled upgrades
+            if (oldUpgrade.restrictions?.disable_upgrades) {
+              oldUpgrade.restrictions.disable_upgrades.forEach((disabledType) => {
+                const disabledUpgradeIndices = updatedAssignedUpgrades
+                  .map((u, index) => (u.type === disabledType ? index : -1))
+                  .filter((index) => index !== -1);
+
+                if (disabledUpgradeIndices.length > 0) {
+                  const lastDisabledUpgradeIndex = Math.max(
+                    ...disabledUpgradeIndices
+                  );
+                  const disabledUpgrade =
+                    updatedAssignedUpgrades[lastDisabledUpgradeIndex];
+                  handleRemoveUpgrade(
+                    ship.id,
+                    disabledUpgrade.type,
+                    disabledUpgrade.slotIndex || 0
+                  );
+                  updatedAssignedUpgrades.splice(lastDisabledUpgradeIndex, 1);
+                }
+              });
+            }
+
+             // Clear enabled upgrades from the old upgrade
+            if (oldUpgrade.restrictions?.enable_upgrades) {
+              oldUpgrade.restrictions.enable_upgrades.forEach((enabledType) => {
+                const slotIndex = ship.availableUpgrades.lastIndexOf(enabledType);
+                if (slotIndex !== -1) {
+                  ship.availableUpgrades.splice(slotIndex, 1);
+                }
+              });
+              // Clear from enabledUpgrades state
+              setEnabledUpgrades((prev) => {
+                const newEnabled = { ...prev };
+                newEnabled[ship.id] = (newEnabled[ship.id] || []).filter(
+                  (type) => !oldUpgrade.restrictions?.enable_upgrades?.includes(type)
+                );
+                return newEnabled;
+              });
+            }
+
+            // Clear disabled upgrades from the old upgrade
+            if (oldUpgrade.restrictions?.disable_upgrades) {
+              setDisabledUpgrades((prev) => {
+                const newDisabled = { ...prev };
+                newDisabled[ship.id] = (newDisabled[ship.id] || []).filter(
+                  (type) => !oldUpgrade.restrictions?.disable_upgrades?.includes(type)
+                );
+                return newDisabled;
+              });
+            }
+
             if (oldUpgrade.unique) {
               removeUniqueClassName(oldUpgrade.name);
             }
@@ -507,7 +560,7 @@ export default function FleetBuilder({
           }
 
           // Handle disabled upgrades
-          const newDisabledUpgrades = [...(disabledUpgrades[ship.id] || [])];
+          const newDisabledUpgrades = [];  // Start fresh instead of keeping old disabled upgrades
           if (upgrade.restrictions?.disable_upgrades) {
             newDisabledUpgrades.push(...upgrade.restrictions.disable_upgrades);
           }
@@ -660,7 +713,7 @@ export default function FleetBuilder({
           }
 
           // Handle disabled upgrades
-          const newDisabledUpgrades = [...(disabledUpgrades[ship.id] || [])];
+          const newDisabledUpgrades = [];  // Start fresh instead of keeping old disabled upgrades
           if (upgrade.restrictions?.disable_upgrades) {
             newDisabledUpgrades.push(...upgrade.restrictions.disable_upgrades);
           }

@@ -297,6 +297,10 @@ export default function UpgradeSelector({
   }, [allUpgrades, activeSorts, searchQuery]);
 
   const isUpgradeAvailable = (upgrade: Upgrade) => {
+    if (shipSize === 'huge' && upgrade.restrictions?.enable_upgrades && upgrade.restrictions.enable_upgrades.length > 0) {
+      return false;
+    }
+
     if (upgradeType === 'title' || upgradeType === 'super-weapon') {
       // For titles and super-weapons, we'll only check for uniqueness and current ship conflicts
       if (upgrade.unique && selectedUpgrades.some(su => su.name === upgrade.name)) {
