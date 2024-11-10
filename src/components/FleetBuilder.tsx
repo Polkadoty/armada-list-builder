@@ -615,7 +615,7 @@ export default function FleetBuilder({
           const isModification = upgrade.modification ? "modification" : "";
 
           // Determine the source based on the alias
-          let source: "regular" | "legacy" | "legends" | "oldLegacy" = "regular";
+          let source: ContentSource = "regular";
           if (upgrade.alias) {
             if (upgrade.alias.includes("OldLegacy")) {
               source = "oldLegacy";
@@ -623,6 +623,8 @@ export default function FleetBuilder({
               source = "legacy";
             } else if (upgrade.alias.includes("Legends")) {
               source = "legends";
+            } else if (upgrade.alias.includes("ARC")) {
+              source = "arc";
             }
           }
 
@@ -1266,9 +1268,10 @@ export default function FleetBuilder({
           (ship.source && ship.source !== "regular" ? " " + formatSource(ship.source) : "") + 
           " (" + ship.points + ")\n";
         ship.assignedUpgrades.forEach((upgrade) => {
-          text += "• " + upgrade.name + 
-            (upgrade.source && upgrade.source !== "regular" ? " " + formatSource(upgrade.source) : "") + 
-            " (" + upgrade.points + ")\n";
+          const sourceSuffix = upgrade.source && upgrade.source !== "regular" 
+            ? " " + formatSource(upgrade.source) 
+            : "";
+          text += "• " + upgrade.name + sourceSuffix + " (" + upgrade.points + ")\n";
         });
         text += "= " + 
           (ship.points + 
@@ -1397,7 +1400,6 @@ export default function FleetBuilder({
   const fetchFromLocalStorage = (
     key: string,
     type: "ships" | "upgrades" | "squadrons"
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ): any | null => {
     console.log(`Fetching ${type} for key: ${key}`);
     for (let i = 0; i < localStorage.length; i++) {
@@ -1412,14 +1414,26 @@ export default function FleetBuilder({
             for (const chassisKey in itemsData) {
               const models = itemsData[chassisKey].models;
               if (models && models[key]) {
-                console.log(`Found ${type} in storage:`, models[key]);
-                return models[key];
+                const item = models[key];
+                return {
+                  ...item,
+                  source: storageKey.includes('arc') ? 'arc' :
+                          storageKey.includes('oldLegacy') ? 'oldLegacy' :
+                          storageKey.includes('legacy') ? 'legacy' :
+                          storageKey.includes('legends') ? 'legends' : 'regular'
+                };
               }
             }
           } else {
             if (itemsData[key]) {
-              console.log(`Found ${type} in storage:`, itemsData[key]);
-              return itemsData[key];
+              const item = itemsData[key];
+              return {
+                ...item,
+                source: storageKey.includes('arc') ? 'arc' :
+                        storageKey.includes('oldLegacy') ? 'oldLegacy' :
+                        storageKey.includes('legacy') ? 'legacy' :
+                        storageKey.includes('legends') ? 'legends' : 'regular'
+              };
             }
           }
         } catch (error) {
@@ -1427,11 +1441,6 @@ export default function FleetBuilder({
         }
       }
     }
-    console.log(
-      `${
-        type.charAt(0).toUpperCase() + type.slice(1)
-      } not found for key: ${key}`
-    );
     return null;
   };
 
