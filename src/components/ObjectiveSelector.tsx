@@ -94,12 +94,17 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose }: Objectiv
           key.toLowerCase().includes('objectives')
         );
 
-        // First, process non-errata objectives
+        // Process objectives based on enabled content sources
         objectiveKeys.forEach(storageKey => {
           try {
             const data = JSON.parse(localStorage.getItem(storageKey) || '{}');
             const objectivesData = data.objectives || {};
             const source = storageKey.replace(/objectives|Objectives/g, '').toLowerCase() || 'regular';
+
+            // Skip if this content source is disabled (except for regular content)
+            if (source !== 'regular' && !contentSources[source as keyof typeof contentSources]) {
+              return;
+            }
 
             /* eslint-disable @typescript-eslint/no-explicit-any */
             Object.entries(objectivesData).forEach(([objectiveId, objective]: [string, any]) => {
@@ -125,12 +130,16 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose }: Objectiv
             const objectivesData = data.objectives || {};
             const source = storageKey.replace(/objectives|Objectives/g, '').toLowerCase() || 'regular';
 
+            // Skip if this content source is disabled (except for regular content)
+            if (source !== 'regular' && !contentSources[source as keyof typeof contentSources]) {
+              return;
+            }
+
             /* eslint-disable @typescript-eslint/no-explicit-any */
             Object.entries(objectivesData).forEach(([objectiveId, objective]: [string, any]) => {
               if (objective.type === type && objectiveId.includes('-errata-')) {
                 const baseId = objectiveId.replace(/-errata-(legacy|legends|oldLegacy|arc)$/, '');
                 
-                // If this is an errata version in errataKeys, add/replace it
                 if (errataKeys.includes(objectiveId)) {
                   objectiveMap.set(baseId, {
                     id: objectiveId,
