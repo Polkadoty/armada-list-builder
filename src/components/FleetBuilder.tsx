@@ -1222,6 +1222,13 @@ export default function FleetBuilder({
     }
   };
 
+  const capitalizeFirstLetter = (string: string | undefined) => {
+    if (!string) return "";
+    if (string === "arc" || string === "Arc") return "ARC";
+    return string.charAt(0).toUpperCase() + string.slice(1);
+  };
+
+
   const generateExportText = useCallback(() => {
 
     const allRegularSource = [
@@ -1229,7 +1236,6 @@ export default function FleetBuilder({
       ...selectedShips.flatMap(ship => ship.assignedUpgrades),
       ...selectedSquadrons
     ].every(item => !item.source || item.source === 'regular');
-
 
     let text = " Name: " + fleetName + "\n";
     text += "Faction: " + faction.charAt(0).toUpperCase() + faction.slice(1) + "\n";
@@ -1242,8 +1248,9 @@ export default function FleetBuilder({
         (commander.source !== "regular" ? " [" + capitalizeFirstLetter(commander.source) + "]" : "") + 
         " (" + commander.points + ")\n";
     }
-
-    text += "\n";
+    
+    text += '\n';
+    
     // Add objectives with source tags
     if (selectedAssaultObjective) {
       const sourceTag = formatObjectiveSource(selectedAssaultObjective.source);
@@ -1266,7 +1273,7 @@ export default function FleetBuilder({
           " (" + ship.points + ")\n";
         ship.assignedUpgrades.forEach((upgrade) => {
           text += "• " + upgrade.name + 
-            (upgrade.source && upgrade.source !== "regular" ? " [" + capitalizeFirstLetter(upgrade.source) + "]" : "") + 
+            (upgrade.source !== "regular" ? " [" + capitalizeFirstLetter(upgrade.source) + "]" : "") + 
             " (" + upgrade.points + ")\n";
         });
         text += "= " + 
@@ -1326,12 +1333,6 @@ export default function FleetBuilder({
     points,
     totalSquadronPoints
   ]);
-
-  const capitalizeFirstLetter = (string: string | undefined) => {
-    if (!string) return "";
-    if (string === "arc" || string === "Arc") return "ARC";
-    return string.charAt(0).toUpperCase() + string.slice(1);
-  };
 
   const saveFleetToLocalStorage = useCallback(() => {
     const exportText = generateExportText();

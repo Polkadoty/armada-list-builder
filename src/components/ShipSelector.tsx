@@ -188,8 +188,6 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
         const shipsWithErrataStatus = group.map(ship => {
           // Check if this ship's chassis matches any errata keys
           const hasErrata = shipErrataKeys.some((errataKey: string) => ship.chassis.includes(errataKey));
-          const isSourceVersion = ship.id.match(/^(legacy|legends|oldLegacy|arc)-/);
-          
           return { ship, hasErrata };
         });
 

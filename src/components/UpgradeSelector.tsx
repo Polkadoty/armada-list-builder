@@ -85,6 +85,7 @@ export default function UpgradeSelector({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const processUpgrades = (data: UpgradeData, prefix: string = ''): Upgrade[] => {
         if (data && data.upgrades) {
+          /* eslint-disable @typescript-eslint/no-explicit-any */
           return Object.entries(data.upgrades).map(([key, upgrade]: [string, any]) => {
             const exhaustType = upgrade.exhaust?.type || '';
             const isModification = upgrade.modification ? 'modification' : '';
