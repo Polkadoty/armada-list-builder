@@ -327,8 +327,18 @@ function SwipeableUpgrade({ upgrade, onSwipe, onSwap, onRemove }: SwipeableUpgra
             </span>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
-            <div className="flex items-center gap-1">
-              <Button variant="ghost" size="sm" onClick={onSwap} className="text-blue-500 p-1">
+          <div className="flex items-center gap-1">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={onSwap} 
+                className={`p-1 ${
+                  upgrade.restrictions?.enable_upgrades?.some(upgrade => upgrade.trim() !== '') 
+                    ? 'text-gray-400 cursor-not-allowed' 
+                    : 'text-blue-500'
+                }`}
+                disabled={upgrade.restrictions?.enable_upgrades?.some(upgrade => upgrade.trim() !== '')}
+              >
                 <ArrowLeftRight size={16} />
               </Button>
               <Button variant="ghost" size="sm" onClick={onRemove} className="text-red-500 p-1">
