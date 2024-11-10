@@ -49,6 +49,7 @@ interface Fleet {
   legends?: boolean;
   legacy?: boolean;
   old_legacy?: boolean;
+  arc?: boolean;
 }
 
 interface SortableColumn {
@@ -62,7 +63,8 @@ export const getContentTypes = (fleetData: string) => {
   return {
     legends: fleetData.includes("[Legends]"),
     legacy: fleetData.includes("[Legacy]"),
-    old_legacy: fleetData.includes("[OldLegacy]")
+    old_legacy: fleetData.includes("[OldLegacy]"),
+    arc: fleetData.includes("[ARC]")
   };
 };
 
@@ -336,12 +338,12 @@ export function FleetList() {
           <Button
             variant="ghost"
             size="sm"
-            className="w-full justify-start text-sm font-normal h-9 text-foreground hover:bg-accent hover:text-accent-foreground"
+            className="w-full justify-start text-sm font-normal h-9 bg-background text-foreground hover:bg-accent hover:text-accent-foreground"
           >
             Fleet List
           </Button>
         </DialogTrigger>
-        <DialogContent className={`dialog-content ${theme === 'dark' ? 'dark' : ''} max-w-[95vw] sm:max-w-3xl overflow-x-auto border`}>
+        <DialogContent className="max-w-[95vw] sm:max-w-3xl max-h-[90vh] flex flex-col border backdrop-blur-md bg-background/95 text-foreground">
           <DialogHeader>
             <DialogTitle>Your Fleets</DialogTitle>
             <div className="flex flex-wrap items-center gap-2 mt-4">
@@ -396,83 +398,85 @@ export function FleetList() {
             </div>
           </DialogHeader>
 
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="hover:bg-accent">
-                  {columns.filter(col => col.visible).map((column) => (
-                    <TableHead 
-                      key={column.id}
-                      className="cursor-pointer text-foreground hover:text-accent-foreground"
-                      onClick={() => handleSort(column.id)}
-                    >
-                      {column.label}
-                      {sortColumn === column.id && (
-                        <span className="ml-2">
-                          {sortDirection === 'asc' ? '↑' : '↓'}
-                        </span>
-                      )}
-                    </TableHead>
-                  ))}
-                  <TableHead className="w-[40px]">
-                    <MoreVertical className="h-4 w-4" />
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {paginatedFleets.map((fleet) => (
-                  <TableRow key={fleet.id} className="hover:bg-muted/50">
-                    <TableCell>
-                      <button
-                        onClick={() => handleFleetSelect(fleet)}
-                        className="text-blue-600 dark:text-blue-400 hover:underline"
+          <div className="flex-1 min-h-0 overflow-auto">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="hover:bg-muted/50">
+                    {columns.filter(col => col.visible).map((column) => (
+                      <TableHead 
+                        key={column.id}
+                        className="cursor-pointer text-foreground dark:text-foreground hover:text-accent-foreground"
+                        onClick={() => handleSort(column.id)}
                       >
-                        {fleet.fleet_name}
-                      </button>
-                    </TableCell>
-                    <TableCell>{capitalizeFirstLetter(fleet.faction)}</TableCell>
-                    <TableCell>{fleet.commander}</TableCell>
-                    <TableCell>{fleet.points}</TableCell>
-                    {columns.find(col => col.id === 'date_added')?.visible && (
-                      <TableCell>{new Date(fleet.date_added).toLocaleDateString()}</TableCell>
-                    )}
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-muted">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleFleetSelect(fleet)}>
-                            Load Fleet
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => {
-                            setFleetToRename(fleet);
-                            setNewFleetName(fleet.fleet_name);
-                            setShowRenameDialog(true);
-                          }}>
-                            Rename Fleet
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleFleetCopy(fleet)}>
-                            Copy Fleet
-                          </DropdownMenuItem>
-                          <DropdownMenuItem 
-                            onClick={() => handleFleetDelete(fleet)}
-                            className="text-destructive focus:text-destructive focus:bg-destructive/10"
-                          >
-                            Delete Fleet
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
+                        {column.label}
+                        {sortColumn === column.id && (
+                          <span className="ml-2">
+                            {sortDirection === 'asc' ? '↑' : '↓'}
+                          </span>
+                        )}
+                      </TableHead>
+                    ))}
+                    <TableHead className="w-[40px]">
+                      <MoreVertical className="h-4 w-4" />
+                    </TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {paginatedFleets.map((fleet) => (
+                    <TableRow key={fleet.id} className="hover:bg-muted/50 border-b">
+                      <TableCell>
+                        <button
+                          onClick={() => handleFleetSelect(fleet)}
+                          className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline"
+                        >
+                          {fleet.fleet_name}
+                        </button>
+                      </TableCell>
+                      <TableCell className="text-foreground dark:text-foreground">{capitalizeFirstLetter(fleet.faction)}</TableCell>
+                      <TableCell className="text-foreground dark:text-foreground">{fleet.commander}</TableCell>
+                      <TableCell className="text-foreground dark:text-foreground">{fleet.points}</TableCell>
+                      {columns.find(col => col.id === 'date_added')?.visible && (
+                        <TableCell>{new Date(fleet.date_added).toLocaleDateString()}</TableCell>
+                      )}
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-muted">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleFleetSelect(fleet)}>
+                              Load Fleet
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => {
+                              setFleetToRename(fleet);
+                              setNewFleetName(fleet.fleet_name);
+                              setShowRenameDialog(true);
+                            }}>
+                              Rename Fleet
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleFleetCopy(fleet)}>
+                              Copy Fleet
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => handleFleetDelete(fleet)}
+                              className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                            >
+                              Delete Fleet
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-4 border-t pt-4">
             <div className="flex items-center space-x-2">
               <Select
                 value={rowsPerPage.toString()}

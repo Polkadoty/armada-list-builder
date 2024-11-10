@@ -1459,7 +1459,62 @@ export default function FleetBuilder({
 
   const handleImportFleet = useCallback((importText: string) => {
     console.log("Starting fleet import...");
-    const lines = importText.split("\n");
+
+    const preprocessFleetText = (text: string): string => {
+      // Remove <fleet> tags if present
+      text = text.replace(/<\/?fleet>/g, '');
+      
+      let lines = text.split('\n').map(line => {
+        // Replace dashes with bullets at the start of lines
+        line = line.replace(/^\s*-\s*/, '• ');
+        
+        // Remove [flagship] markers
+        line = line.replace(/\[\s*flagship\s*\]\s*/, '');
+        
+        // Convert "Points: X/Y" format to "Total Points: X"
+        line = line.replace(/^Points:\s*(\d+)\/\d+/, 'Total Points: $1');
+        
+        // Fix point format: ( # points) -> (#) but preserve existing (#) formats
+        line = line.replace(/\(\s*(\d+)\s*points?\)/, '($1)');
+        
+        return line.trim();
+      });
+    
+    // Find the first squadron line (line starting with a number)
+    const squadronStartIndex = lines.findIndex(line => 
+      /^\d+\s+\S/.test(line) || // matches "1 Squadron Name"
+      /^\d+x\s+\S/.test(line)   // matches "1x Squadron Name"
+    );
+
+      if (squadronStartIndex !== -1) {
+        // Insert "Squadrons:" line before processing squadron formats
+        lines.splice(squadronStartIndex, 0, 'Squadrons:');
+        
+        // Now process squadron formats for all lines after the "Squadrons:" line
+        lines = lines.map((line, index) => {
+          if (index > squadronStartIndex && /^\d+\s+.+?\s*\(\d+\)$/.test(line)) {
+            return line.replace(/^(\d+)\s+(.+?)(\s*\(\d+\))$/, (match, count, name, points) => {
+              const numCount = parseInt(count);
+              if (numCount === 1) {
+                return `• ${name}${points}`;
+              }
+              return `• ${count} x ${name}${points}`;
+            });
+          }
+          return line;
+        });
+      }
+      
+      return lines.join('\n');
+    };
+
+    const processedText = preprocessFleetText(importText);
+    console.log("Preprocessed fleet text:", processedText);
+
+    const lines = processedText.split("\n");
+
+
+    // const lines = importText.split("\n");
 
     // Check faction first
     const factionLine = lines.find((line) => line.startsWith("Faction:"));
@@ -1467,8 +1522,14 @@ export default function FleetBuilder({
       const importedFaction = factionLine.split(":")[1].trim().toLowerCase();
       // Normalize faction names
       const normalizedImportedFaction =
-        importedFaction === "imperial" || importedFaction === "empire"
+        importedFaction === "imperial" || importedFaction === "empire" || importedFaction === "galactic empire"
           ? "empire"
+          : importedFaction === "rebel alliance"
+          ? "rebel"
+          : importedFaction === "galactic republic"
+          ? "republic"
+          : importedFaction === "separatist alliance"
+          ? "separatist"
           : importedFaction;
       const normalizedCurrentFaction = faction.toLowerCase();
 
@@ -1597,7 +1658,7 @@ export default function FleetBuilder({
         }
         continue;
       } else if (
-        (line.startsWith("Assault:") || line.startsWith("Defense:") || line.startsWith("Navigation:")) 
+        (line.startsWith("Assault:") || line.startsWith("Defense:") || line.startsWith("Navigation:") || line.startsWith("Assault Objective:") || line.startsWith("Defense Objective:") || line.startsWith("Navigation Objective:")) 
       ) {
         // Handle objectives
         const [type, name] = line.split(":");
@@ -1727,6 +1788,10 @@ export default function FleetBuilder({
           const [, countStr, squadronName, totalPoints] = squadronMatch;
           const count = countStr ? parseInt(countStr) : 1;
           const pointsPerSquadron = Math.round(parseInt(totalPoints) / count);
+          
+          // Add to squadron points total
+          squadronPoints += parseInt(totalPoints);
+          
           const squadronKey = getAliasKey(
             aliases,
             `${squadronName} (${pointsPerSquadron})`
@@ -1784,18 +1849,19 @@ export default function FleetBuilder({
       handleAddUpgrade(shipId, upgrade);
     });
 
-    // Set the final points
-    setPoints(totalPoints);
-    setTotalSquadronPoints(squadronPoints);
-    const totalShipPoints =
-      shipsToAdd.reduce((total, ship) => total + ship.points, 0) +
-      upgradesToAdd.reduce((total, { upgrade }) => total + upgrade.points, 0);
+    // Calculate total ship points (ships + upgrades)
+    const totalShipPoints = shipsToAdd.reduce((total, ship) => {
+      const shipTotal = ship.points + 
+        upgradesToAdd
+          .filter(u => u.shipId === ship.id)
+          .reduce((upgradeTotal, { upgrade }) => upgradeTotal + upgrade.points, 0);
+      return total + shipTotal;
+    }, 0);
+
+    // Set all point values
     setTotalShipPoints(totalShipPoints);
-    console.log(
-      `Final total points: ${totalPoints}, Squadron points: ${squadronPoints}, Ship points: ${
-        totalPoints - squadronPoints
-      }`
-    );
+    setTotalSquadronPoints(squadronPoints);
+    setPoints(totalShipPoints + squadronPoints);
 
     if (skippedItems.length > 0) {
       alert(
