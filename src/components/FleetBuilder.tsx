@@ -560,7 +560,7 @@ export default function FleetBuilder({
           }
 
           // Handle disabled upgrades
-          const newDisabledUpgrades = [];  // Start fresh instead of keeping old disabled upgrades
+          const newDisabledUpgrades = [...(disabledUpgrades[ship.id] || [])];
           if (upgrade.restrictions?.disable_upgrades) {
             newDisabledUpgrades.push(...upgrade.restrictions.disable_upgrades);
           }
@@ -1567,7 +1567,7 @@ export default function FleetBuilder({
         const shipModel = fetchShip(shipKey);
         if (shipModel) {
           console.log(`Adding ship to fleet:`, shipModel);
-          let source: "regular" | "legacy" | "legends" | "oldLegacy" =
+          let source: "regular" | "legacy" | "legends" | "oldLegacy" | "arc" =
             "regular";
           if (shipName.includes("[OldLegacy]")) {
             source = "oldLegacy";
@@ -1575,6 +1575,8 @@ export default function FleetBuilder({
             source = "legacy";
           } else if (shipName.includes("[Legends]")) {
             source = "legends";
+          } else if (shipName.includes("[Arc]")) {
+            source = "arc";
           }
           const newShip: Ship = {
             ...shipModel,
@@ -1705,13 +1707,15 @@ export default function FleetBuilder({
           if (upgradeKey) {
             const upgrade = fetchUpgrade(upgradeKey);
             if (upgrade) {
-              let source: "regular" | "legacy" | "legends" | "oldLegacy" = "regular";
+              let source: "regular" | "legacy" | "legends" | "oldLegacy" | "arc" = "regular";
               if (upgradeName.includes("[OldLegacy]")) {
                 source = "oldLegacy";
               } else if (upgradeName.includes("[Legacy]")) {
                 source = "legacy";
               } else if (upgradeName.includes("[Legends]")) {
                 source = "legends";
+              } else if (upgradeName.includes("[Arc]")) {
+                source = "arc";
               }
       
               // Find the next available slot for this upgrade type
@@ -1758,7 +1762,7 @@ export default function FleetBuilder({
             console.log(`Fetched squadron for key: ${squadronKey}`, squadron);
             if (squadron) {
               console.log(`Selecting squadron:`, squadron);
-              let source: "regular" | "legacy" | "legends" | "oldLegacy" =
+              let source: "regular" | "legacy" | "legends" | "oldLegacy" | "arc" =
                 "regular";
               if (squadronName.includes("[OldLegacy]")) {
                 source = "oldLegacy";
@@ -1766,6 +1770,8 @@ export default function FleetBuilder({
                 source = "legacy";
               } else if (squadronName.includes("[Legends]")) {
                 source = "legends";
+              } else if (squadronName.includes("[Arc]")) {
+                source = "arc";
               }
               const selectedSquadron = {
                 ...squadron,
