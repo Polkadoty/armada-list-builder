@@ -1478,7 +1478,7 @@ export default function FleetBuilder({
 
       // Handle DMBorque fleet name format
       if (isDMBorqueFormat) {
-        let lines = text.split("\n");
+        const lines = text.split("\n");
         const firstLine = lines[0];
         const nameMatch = firstLine.match(/^(.+?)\s*\(\d+\/\d+\/\d+\)/);
         if (nameMatch) {
