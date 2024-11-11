@@ -10,7 +10,15 @@ interface TextImportWindowProps {
   onClose: () => void;
 }
 
-export function TextImportWindow({ onImport, onClose }: TextImportWindowProps) {
+export function TextImportWindow({ 
+  onImport, 
+  onClose,
+  isIndexPage = false 
+}: { 
+  onImport: (text: string) => void; 
+  onClose: () => void;
+  isIndexPage?: boolean;
+}) {
   const [importText, setImportText] = useState('');
 
   const handleImport = () => {
@@ -31,7 +39,11 @@ export function TextImportWindow({ onImport, onClose }: TextImportWindowProps) {
           <Textarea
             value={importText}
             onChange={(e) => setImportText(e.target.value)}
-            placeholder="Paste your fleet text here..."
+            placeholder={
+              isIndexPage 
+                ? "Paste your fleet text in RK, AFD, or Warlords format here... \n\nYou must include one of the following in the list when importing from the home page: \n\nFaction: Empire \nFaction: Rebel \nFaction: Separatist \nFaction: Republic" 
+                : "Paste your fleet text in RK, AFD, or Warlords format here..."
+            }
             className="w-full h-full min-h-[200px] bg-transparent text-gray-900 dark:text-white"
           />
         </CardContent>

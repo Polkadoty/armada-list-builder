@@ -45,22 +45,105 @@ export default function Home() {
   }, []);
 
   const handleImportFleet = (importText: string) => {
-    const factionLine = importText.split('\n').find(line => line.startsWith('Faction:'));
+    // Load aliases first, before any processing
+    const aliases = JSON.parse(localStorage.getItem("aliases") || "{}");
+
+    const preprocessFleetText = (text: string): string => {
+      // Remove <fleet> tags if present
+      text = text.replace(/<\/?fleet>/g, "");
+
+      // Check if this is DMBorque format
+      const isDMBorqueFormat =
+        (text.includes("+") && text.includes(":") && text.match(/\(\d+\s*\+\s*\d+\s*:\s*\d+\)/)) ||
+        text.match(/^.+?\(\d+\/\d+\/\d+\)\n=+$/m);
+
+      // Handle DMBorque fleet name format
+      if (isDMBorqueFormat) {
+        let lines = text.split("\n");
+        const firstLine = lines[0];
+        const nameMatch = firstLine.match(/^(.+?)\s*\(\d+\/\d+\/\d+\)/);
+        if (nameMatch) {
+          lines[0] = `Name: ${nameMatch[1]}`;
+          // Remove the line of equals signs if it exists
+          if (lines[1] && lines[1].match(/^=+$/)) {
+            lines.splice(1, 1);
+          }
+          text = lines.join("\n");
+        }
+      }
+      return text;
+    };
+
+    const processedText = preprocessFleetText(importText);
+    const lines = processedText.split("\n");
+
+    // Check faction first
+    const factionLine = lines.find((line) => line.startsWith("Faction:"));
+    let normalizedImportedFaction = '';
+
     if (factionLine) {
-      const importedFaction = factionLine.split(':')[1].trim().toLowerCase();
-      const normalizedFaction = importedFaction === 'imperial' ? 'empire' : importedFaction;
-      
-      // Save fleet and set cookie
-      localStorage.setItem(`savedFleet_${normalizedFaction}`, importText);
-      document.cookie = "retrieved-from-list=true; path=/";
-      
-      // Navigate home first, then to the correct faction
-      router.push('/').then(() => {
-        setTimeout(() => {
-          router.push(`/${normalizedFaction}`);
-        }, 250);
+      const importedFaction = factionLine.split(":")[1].trim().toLowerCase();
+      // Normalize faction names
+      normalizedImportedFaction =
+        importedFaction === "imperial" || importedFaction === "empire" || importedFaction === "galactic empire"
+          ? "empire"
+          : importedFaction === "rebel alliance"
+          ? "rebel"
+          : importedFaction === "galactic republic"
+          ? "republic"
+          : importedFaction === "separatist alliance"
+          ? "separatist"
+          : importedFaction;
+    } else {
+      // Try to determine faction from first ship or squadron
+      const firstItemMatch = lines.find(line => {
+        if (!line.trim() || line.startsWith('Total Points:') || line.startsWith('Squadrons:')) {
+          return false;
+        }
+        
+        const match = line.match(/^(?:•\s*)?(.+?)\s*\((\d+)\)/);
+        if (match) {
+          const [, itemName, itemPoints] = match;
+          const itemKey = aliases[`${itemName} (${itemPoints})`];
+          
+          if (itemKey) {
+            // Try to fetch as ship first
+            const shipData = JSON.parse(localStorage.getItem("ships") || "{}");
+            for (const chassisKey in shipData) {
+              const models = shipData[chassisKey].models;
+              if (models && models[itemKey]?.faction) {
+                normalizedImportedFaction = models[itemKey].faction.toLowerCase();
+                return true;
+              }
+            }
+            
+            // Try as squadron
+            const squadronData = JSON.parse(localStorage.getItem("squadrons") || "{}");
+            if (squadronData[itemKey]?.faction) {
+              normalizedImportedFaction = squadronData[itemKey].faction.toLowerCase();
+              return true;
+            }
+          }
+        }
+        return false;
       });
+
+      if (!firstItemMatch) {
+        console.error("Could not determine faction from fleet list");
+        return;
+      }
     }
+
+    // Save fleet and redirect
+    localStorage.setItem(`savedFleet_${normalizedImportedFaction}`, importText);
+    document.cookie = "retrieved-from-list=true; path=/";
+    
+    // Navigate to the correct faction
+    router.push('/').then(() => {
+      setTimeout(() => {
+        router.push(`/${normalizedImportedFaction}`);
+      }, 250);
+    });
   };
 
   if (!mounted) return null;
@@ -133,6 +216,7 @@ export default function Home() {
         <TextImportWindow
           onImport={handleImportFleet}
           onClose={() => setShowImportWindow(false)}
+          isIndexPage={true}
         />
       )}
     </div>
