@@ -1460,52 +1460,95 @@ export default function FleetBuilder({
   const handleImportFleet = useCallback((importText: string) => {
     console.log("Starting fleet import...");
 
+    // Load aliases first, before any processing
+    console.log("Loading aliases from localStorage...");
+    const aliases = JSON.parse(localStorage.getItem("aliases") || "{}");
+    console.log("Aliases loaded:", aliases);
+
+
     const preprocessFleetText = (text: string): string => {
       // Remove <fleet> tags if present
-      text = text.replace(/<\/?fleet>/g, '');
-      
-      let lines = text.split('\n').map(line => {
+      text = text.replace(/<\/?fleet>/g, "");
+
+      // Check if this is DMBorque format by looking for the characteristic patterns
+      const isDMBorqueFormat =
+        text.includes("+") &&
+        text.includes(":") &&
+        text.match(/\(\d+\s*\+\s*\d+\s*:\s*\d+\)/);
+
+      let lines = text.split("\n").map((line) => {
         // Replace dashes with bullets at the start of lines
-        line = line.replace(/^\s*-\s*/, '• ');
-        
+        line = line.replace(/^\s*-\s*/, "• ");
+
         // Remove [flagship] markers
-        line = line.replace(/\[\s*flagship\s*\]\s*/, '');
-        
+        line = line.replace(/\[\s*flagship\s*\]\s*/, "");
+
         // Convert "Points: X/Y" format to "Total Points: X"
-        line = line.replace(/^Points:\s*(\d+)\/\d+/, 'Total Points: $1');
-        
+        line = line.replace(/^Points:\s*(\d+)\/\d+/, "Total Points: $1");
+
         // Fix point format: ( # points) -> (#) but preserve existing (#) formats
-        line = line.replace(/\(\s*(\d+)\s*points?\)/, '($1)');
-        
+        line = line.replace(/\(\s*(\d+)\s*points?\)/, "($1)");
+
+        // Handle DMBorques format: (X + Y: Z) -> (X)
+        line = line.replace(/\((\d+)\s*\+[^)]+\)/, "($1)");
+
+        // Handle DMBorques squadron format: (N x M) -> (calculated total)
+        line = line.replace(
+          /\((\d+)\s*x\s*(\d+)\)/,
+          (_match, count, points) => {
+            const total = parseInt(count) * parseInt(points);
+            return `(${total})`;
+          }
+        );
+
         return line.trim();
       });
-    
-    // Find the first squadron line (line starting with a number)
-    const squadronStartIndex = lines.findIndex(line => 
-      /^\d+\s+\S/.test(line) || // matches "1 Squadron Name"
-      /^\d+x\s+\S/.test(line)   // matches "1x Squadron Name"
-    );
+
+      // Find the first squadron line (line starting with a number)
+      const squadronStartIndex = lines.findIndex(
+        (line) =>
+          /^\d+\s+\S/.test(line) || // matches "1 Squadron Name"
+          /^\d+x\s+\S/.test(line) // matches "1x Squadron Name"
+      );
 
       if (squadronStartIndex !== -1) {
         // Insert "Squadrons:" line before processing squadron formats
-        lines.splice(squadronStartIndex, 0, 'Squadrons:');
-        
+        lines.splice(squadronStartIndex, 0, "Squadrons:");
+
         // Now process squadron formats for all lines after the "Squadrons:" line
         lines = lines.map((line, index) => {
-          if (index > squadronStartIndex && /^\d+\s+.+?\s*\(\d+\)$/.test(line)) {
-            return line.replace(/^(\d+)\s+(.+?)(\s*\(\d+\))$/, (match, count, name, points) => {
-              const numCount = parseInt(count);
-              if (numCount === 1) {
-                return `• ${name}${points}`;
+          if (
+            index > squadronStartIndex &&
+            /^\d+\s+.+?\s*\(\d+\)$/.test(line)
+          ) {
+            return line.replace(
+              /^(\d+)\s+(.+?)(\s*\(\d+\))$/,
+              (match, count, name, points) => {
+                const numCount = parseInt(count);
+                if (numCount === 1) {
+                  return `• ${name}${points}`;
+                }
+                return `• ${count} x ${name}${points}`;
               }
-              return `• ${count} x ${name}${points}`;
-            });
+            );
           }
           return line;
         });
       }
-      
-      return lines.join('\n');
+
+      // If it's DMBorque format, process the objectives
+      if (isDMBorqueFormat && lines.length >= 3) {
+        const lastThreeLines = lines.slice(-3);
+        lines = lines.slice(0, -3);
+
+        lines.push(
+          `Assault: ${lastThreeLines[0]}`,
+          `Defense: ${lastThreeLines[1]}`,
+          `Navigation: ${lastThreeLines[2]}`
+        );
+      }
+
+      return lines.join("\n");
     };
 
     const processedText = preprocessFleetText(importText);
@@ -1518,10 +1561,12 @@ export default function FleetBuilder({
 
     // Check faction first
     const factionLine = lines.find((line) => line.startsWith("Faction:"));
+    let normalizedImportedFaction = '';
+
     if (factionLine) {
       const importedFaction = factionLine.split(":")[1].trim().toLowerCase();
       // Normalize faction names
-      const normalizedImportedFaction =
+      normalizedImportedFaction =
         importedFaction === "imperial" || importedFaction === "empire" || importedFaction === "galactic empire"
           ? "empire"
           : importedFaction === "rebel alliance"
@@ -1531,26 +1576,59 @@ export default function FleetBuilder({
           : importedFaction === "separatist alliance"
           ? "separatist"
           : importedFaction;
-      const normalizedCurrentFaction = faction.toLowerCase();
-
-      if (normalizedImportedFaction !== normalizedCurrentFaction) {
-        // Instead of showing error, save fleet and redirect
-        localStorage.setItem(`savedFleet_${normalizedImportedFaction}`, importText);
-        document.cookie = "retrieved-from-list=true; path=/";
+    } else {
+      // Try to determine faction from first ship, commander, or squadron
+      const firstItemMatch = lines.find(line => {
+        // Skip empty lines and section headers
+        if (!line.trim() || line.startsWith('Total Points:') || line.startsWith('Squadrons:')) {
+          return false;
+        }
         
-        // Navigate home first, then to the correct faction
-        router.push('/').then(() => {
-          setTimeout(() => {
-            router.push(`/${normalizedImportedFaction}`);
-          }, 250);
-        });
+        // Extract item name and points
+        const match = line.match(/^(?:•\s*)?(.+?)\s*\((\d+)\)/);
+        if (match) {
+          const [, itemName, itemPoints] = match;
+          const itemKey = getAliasKey(aliases, `${itemName} (${itemPoints})`);
+          
+          if (itemKey) {
+            // Try to fetch as ship first
+            const ship = fetchShip(itemKey);
+            if (ship?.faction) {
+              normalizedImportedFaction = ship.faction.toLowerCase();
+              return true;
+            }
+            
+            // Try as squadron
+            const squadron = fetchSquadron(itemKey);
+            if (squadron?.faction && typeof squadron.faction === 'string') {
+              normalizedImportedFaction = squadron.faction.toLowerCase();
+              return true;
+            }
+          }
+        }
+        return false;
+      });
+
+      if (!firstItemMatch) {
+        setNotificationMessage("Could not determine faction from fleet list. Import cancelled.");
+        setShowNotification(true);
         return;
       }
-    } else {
-      setNotificationMessage(
-        "No faction found in the imported fleet. Import cancelled."
-      );
-      setShowNotification(true);
+    }
+
+    const normalizedCurrentFaction = faction.toLowerCase();
+
+    if (normalizedImportedFaction !== normalizedCurrentFaction) {
+      // Instead of showing error, save fleet and redirect
+      localStorage.setItem(`savedFleet_${normalizedImportedFaction}`, importText);
+      document.cookie = "retrieved-from-list=true; path=/";
+      
+      // Navigate home first, then to the correct faction
+      router.push('/').then(() => {
+        setTimeout(() => {
+          router.push(`/${normalizedImportedFaction}`);
+        }, 250);
+      });
       return;
     }
 
@@ -1563,11 +1641,6 @@ export default function FleetBuilder({
     setSelectedAssaultObjective(null);
     setSelectedDefenseObjective(null);
     setSelectedNavigationObjective(null);
-
-    // Load aliases
-    console.log("Loading aliases from localStorage...");
-    const aliases = JSON.parse(localStorage.getItem("aliases") || "{}");
-    console.log("Aliases loaded:", aliases);
 
     let processingSquadrons = false;
     let totalPoints = 0;
