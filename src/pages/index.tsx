@@ -12,6 +12,7 @@ import { TextImportWindow } from '../components/TextImportWindow';
 import { Import } from 'lucide-react';
 import { useRouter } from 'next/router';
 import { UserAvatar } from '../components/UserAvatar';
+import { NotificationWindow } from "@/components/NotificationWindow";
 
 const factionShips = {
   rebel: '/images/cr90.webp',
@@ -34,6 +35,8 @@ export default function Home() {
   const [tournamentMode, setTournamentMode] = useState(true);
   const [showImportWindow, setShowImportWindow] = useState(false);
   const router = useRouter();
+  const [showNotification, setShowNotification] = useState(false);
+  const [notificationMessage, setNotificationMessage] = useState("");
 
   useEffect(() => {
     setMounted(true);
@@ -129,7 +132,8 @@ export default function Home() {
       });
 
       if (!firstItemMatch) {
-        console.error("Could not determine faction from fleet list");
+        setNotificationMessage("Could not determine faction from fleet list. Please include a 'Faction:' line in your fleet.");
+        setShowNotification(true);
         return;
       }
     }
@@ -217,6 +221,12 @@ export default function Home() {
           onImport={handleImportFleet}
           onClose={() => setShowImportWindow(false)}
           isIndexPage={true}
+        />
+      )}
+      {showNotification && (
+        <NotificationWindow
+          message={notificationMessage}
+          onClose={() => setShowNotification(false)}
         />
       )}
     </div>

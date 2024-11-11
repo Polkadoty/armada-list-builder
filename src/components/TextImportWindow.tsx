@@ -5,11 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { X, Import } from 'lucide-react'; // Import icons
 
-interface TextImportWindowProps {
-  onImport: (text: string) => void;
-  onClose: () => void;
-}
-
 export function TextImportWindow({ 
   onImport, 
   onClose,

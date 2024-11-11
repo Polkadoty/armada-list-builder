@@ -1736,8 +1736,11 @@ export default function FleetBuilder({
             const selectedSquadron = {
               ...squadron,
               source,
+              points: parseInt(shipPoints) // Add this line to ensure points are set correctly
             };
             handleAddingSquadron(selectedSquadron);
+            // Add to squadron points total
+            squadronPoints += parseInt(shipPoints); // Add this line to update total squadron points
             return null;
           } else {
             console.log(`Neither ship nor squadron found: ${shipName}`);
