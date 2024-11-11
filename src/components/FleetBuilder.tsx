@@ -1537,7 +1537,8 @@ export default function FleetBuilder({
         lines = lines.map((line, index) => {
           if (
             index > squadronStartIndex &&
-            /^\d+\s+.+?\s*\(\d+\)$/.test(line)
+            /^\d+\s+.+?\s*\(\d+\)$/.test(line) &&
+            !line.includes("x") // Only process if 'x' is not already present
           ) {
             return line.replace(
               /^(\d+)\s+(.+?)(\s*\(\d+\))$/,
