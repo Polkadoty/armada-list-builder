@@ -9,9 +9,23 @@ interface PrintMenuProps {
   onClose: () => void;
   paperSize: 'letter' | 'a4';
   setPaperSize: (size: 'letter' | 'a4') => void;
+  showRestrictions: boolean;
+  setShowRestrictions: (show: boolean) => void;
+  showObjectives: boolean;
+  setShowObjectives: (show: boolean) => void;
 }
 
-export function PrintMenu({ onPrintList, onPrintnPlay, onClose, paperSize, setPaperSize }: PrintMenuProps) {
+export function PrintMenu({ 
+  onPrintList, 
+  onPrintnPlay, 
+  onClose, 
+  paperSize, 
+  setPaperSize,
+  showRestrictions,
+  setShowRestrictions,
+  showObjectives,
+  setShowObjectives 
+}: PrintMenuProps) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
       <Card className="w-80 p-4" onClick={(e) => e.stopPropagation()}>
@@ -36,6 +50,27 @@ export function PrintMenu({ onPrintList, onPrintnPlay, onClose, paperSize, setPa
               </Button>
             </div>
           </div>
+
+          <div className="space-y-2">
+            <h3 className="text-sm font-medium">Include in List</h3>
+            <div className="flex gap-2">
+              <Button 
+                variant={showRestrictions ? 'default' : 'outline'}
+                className="flex-1"
+                onClick={() => setShowRestrictions(!showRestrictions)}
+              >
+                Restrictions
+              </Button>
+              <Button 
+                variant={showObjectives ? 'default' : 'outline'}
+                className="flex-1"
+                onClick={() => setShowObjectives(!showObjectives)}
+              >
+                Objectives
+              </Button>
+            </div>
+          </div>
+
           <div className="space-y-2">
             <div className="flex items-center text-yellow-600">
               <span className="mr-2">⚠️</span>

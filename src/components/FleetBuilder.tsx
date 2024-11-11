@@ -254,6 +254,8 @@ export default function FleetBuilder({
   const contentRef = useRef<HTMLDivElement>(null);
   const [showPrintMenu, setShowPrintMenu] = useState(false);
   const [paperSize, setPaperSize] = useState<'letter' | 'a4'>('letter');
+  const [showPrintObjectives, setShowPrintObjectives] = useState(false);
+  const [showPrintRestrictions, setShowPrintRestrictions] = useState(false);
 
   const checkTournamentViolations = useMemo(() => {
     const violations: string[] = [];
@@ -2060,208 +2062,43 @@ export default function FleetBuilder({
   };
 
   const generatePrintContent = () => {
-    const factionLogo = factionLogos[faction as keyof typeof factionLogos];
-
-    const content = `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${fleetName}</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
-        
-        body {
-        font-family: 'Roboto', sans-serif;
-        line-height: 1.5;
-        max-width: 800px;
-        margin: 0 auto;
-        padding: 40px 20px;
-        background-color: #f9f9f9;
-        }
-
-        .header {
-        display: grid;
-        grid-template-columns: 1fr 40px 1fr;
-        align-items: center;
-        gap: 20px;
-        margin-bottom: 1.25em;
-        }
-
-        .fleet-name {
-        font-size: 28px;
-        font-weight: bold;
-        text-align: right;
-        }
-
-        .total-points {
-        font-size: 28px;
-        font-weight: bold;
-        text-align: left;
-        }
-
-        .logo {
-        width: 40px;
-        height: 40px;
-        object-fit: contain;
-        }
-
-        .grid {
-        border-top: 1px solid #ddd;
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 1em;
-        padding-top: 1.5em;
-        margin-bottom: 1.5em;
-        }
-
-        .section {
-        background-color: #fff;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        padding: 1em;
-        }
-
-        .ship, .squadron {
-        margin-bottom: 12px;
-        }
-
-        .upgrade {
-        margin-left: 1em;
-        font-size: 14px;
-        color: #555;
-        }
-
-        .objectives {
-        display: flex;
-        justify-content: space-between;
-        gap: 1em;
-        margin-top: 1.5em;
-        border-top: 1px solid #ddd;
-        padding-top: 1.5em;
-        }
-
-        .objective-card {
-        flex: 1;
-        background-color: #fff;
-        border: 1px solid #ddd;
-        border-radius: .5em;
-        padding: .5em;
-        text-align: center;
-        }
-
-        .objective-card h4 {
-        margin: 0px;
-        font-size: 18px;
-        font-weight: bold;
-        }
-
-        .objective-card p {
-        margin: 0;
-        font-size: 1em;
-        color: #666;
-        }
-    </style>
-    </head>
-    <body>
-    <div class="header">
-        <div class="fleet-name">${fleetName}</div>
-        <img src="${factionLogo}" alt="Faction logo" class="logo">
-        <div class="total-points">${points} points</div>
-    </div>
-
-    <div class="grid">
-        ${selectedShips
-          .map(
-            (ship) => `
-        <div class="section">
-            <strong>${ship.name}</strong> (${ship.points} points)
-            ${ship.assignedUpgrades
-              .map(
-                (upgrade) => `
-            <div class="upgrade">
-                <div style="display: flex; align-items: center; gap: 0.25em;"><img src="/icons/${upgrade.type}.svg" style="width: 16px; height: 16px;"/> ${upgrade.name} (${upgrade.points} points)</div>
-            </div>
-            `
-              )
-              .join("")}
-            <div><strong>Total:</strong> ${
-              ship.points +
-              ship.assignedUpgrades.reduce(
-                (total, upgrade) => total + upgrade.points,
-                0
-              )
-            } points</div>
+    const fleetContent = `
+      <h1>${fleetName || "Unnamed Fleet"}</h1>
+      <p>Points: ${points}/400</p>
+      
+      ${selectedShips.map(ship => `
+        <div>
+          <h2>${ship.name} (${ship.points})</h2>
+          ${ship.assignedUpgrades.map(upgrade => 
+            `<p>• ${upgrade.name} (${upgrade.points})</p>`
+          ).join('')}
         </div>
-        `
-          )
-          .join("")}
-    </div>
-
-    <div class="grid">
-        ${selectedSquadrons
-          .map(
-            (squadron) => `
-        <div class="section">
-            <strong>${squadron["ace-name"] || squadron.name}</strong> (${
-              squadron.points
-            } points)${squadron.count > 1 ? ` x${squadron.count}` : ""}
-        </div>
-        `
-          )
-          .join("")}
-    </div>
-
-    <div class="objectives">
-        <div class="objective-card">
-        <h4>Assault</h4>
-        <p>${
-          selectedAssaultObjective ? selectedAssaultObjective.name : "None"
-        }</p>
-        </div>
-        <div class="objective-card">
-        <h4>Defense</h4>
-        <p>${
-          selectedDefenseObjective ? selectedDefenseObjective.name : "None"
-        }</p>
-        </div>
-        <div class="objective-card">
-        <h4>Navigation</h4>
-        <p>${
-          selectedNavigationObjective
-            ? selectedNavigationObjective.name
-            : "None"
-        }</p>
-        </div>
-    </div>
-
-    ${
-      tournamentMode
-        ? `
-      <div class="tournament-info">
-        <h3>Tournament Restrictions:</h3>
-        ${
-          tournamentViolations.length === 0
-            ? "<p>This list complies with tournament restrictions.</p>"
-            : `
-            <p>This list does not comply with tournament restrictions:</p>
-            <ul>
-              ${tournamentViolations
-                .map((violation) => `<li>${violation}</li>`)
-                .join("")}
-            </ul>
-          `
+      `).join('')}
+      
+      ${selectedSquadrons.length > 0 ? `
+        <h2>Squadrons (${totalSquadronPoints})</h2>
+        ${selectedSquadrons.map(squadron => 
+          `<p>• ${squadron.count}x ${squadron.name} (${squadron.points * squadron.count})</p>`
+        ).join('')}
+      ` : ''}
+      
+      ${showPrintObjectives && selectedAssaultObjective ? `
+        <h2>Objectives</h2>
+        <p>Assault: ${selectedAssaultObjective.name}</p>
+        <p>Defense: ${selectedDefenseObjective?.name || 'None'}</p>
+        <p>Navigation: ${selectedNavigationObjective?.name || 'None'}</p>
+      ` : ''}
+      
+      ${showPrintRestrictions && tournamentMode ? `
+        <h2>Tournament Restrictions:</h2>
+        ${tournamentViolations.length > 0 
+          ? `<ul>${tournamentViolations.map(v => `<li>${v}</li>`).join('')}</ul>`
+          : '<p>This list complies with tournament restrictions.</p>'
         }
-      </div>
-    `
-        : ""
-    }
+      ` : ''}
+    `;
 
-    </body>
-    </html>`;
-
-    return content;
+    return fleetContent;
   };
 
   
@@ -2969,6 +2806,10 @@ export default function FleetBuilder({
           onClose={() => setShowPrintMenu(false)}
           paperSize={paperSize}
           setPaperSize={setPaperSize}
+          showRestrictions={showPrintRestrictions}
+          setShowRestrictions={setShowPrintRestrictions}
+          showObjectives={showPrintObjectives}
+          setShowObjectives={setShowPrintObjectives}
         />
       )}
     </div>
