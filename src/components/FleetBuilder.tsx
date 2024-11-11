@@ -1476,9 +1476,27 @@ export default function FleetBuilder({
         text.includes(":") &&
         text.match(/\(\d+\s*\+\s*\d+\s*:\s*\d+\)/);
 
+      // Handle DMBorque fleet name format
+      if (isDMBorqueFormat) {
+        let lines = text.split("\n");
+        const firstLine = lines[0];
+        const nameMatch = firstLine.match(/^(.+?)\s*\(\d+\/\d+\/\d+\)/);
+        if (nameMatch) {
+          lines[0] = `Name: ${nameMatch[1]}`;
+          // Remove the line of equals signs if it exists
+          if (lines[1] && lines[1].match(/^=+$/)) {
+            lines.splice(1, 1);
+          }
+          text = lines.join("\n");
+        }
+      }
+
       let lines = text.split("\n").map((line) => {
         // Replace dashes with bullets at the start of lines
         line = line.replace(/^\s*-\s*/, "• ");
+
+        // Replace bullets with bullets at the start of lines
+        line = line.replace(/^\s*·\s*/, "• ");
 
         // Remove [flagship] markers
         line = line.replace(/\[\s*flagship\s*\]\s*/, "");
@@ -1546,6 +1564,18 @@ export default function FleetBuilder({
           `Defense: ${lastThreeLines[1]}`,
           `Navigation: ${lastThreeLines[2]}`
         );
+      }
+
+      // If it's DMBorque format and we have squadrons without bullets, add them
+      if (isDMBorqueFormat) {
+        const squadronLines = lines.slice(squadronStartIndex);
+        const processedSquadrons = squadronLines.map(line => {
+          if (!line.startsWith('•') && !line.startsWith('=') && line.trim()) {
+            return `• ${line}`;
+          }
+          return line;
+        });
+        lines.splice(squadronStartIndex, squadronLines.length, ...processedSquadrons);
       }
 
       return lines.join("\n");
@@ -1689,11 +1719,33 @@ export default function FleetBuilder({
           };
           return newShip;
         } else {
-          console.log(`Ship model not found: ${shipName}`);
-          skippedItems.push(shipName);
+          // If ship not found, try to find a squadron
+          const squadron = fetchSquadron(shipKey);
+          if (squadron) {
+            console.log(`Found squadron instead of ship:`, squadron);
+            let source: ContentSource = "regular";
+            if (shipName.includes("[OldLegacy]")) {
+              source = "oldLegacy";
+            } else if (shipName.includes("[Legacy]")) {
+              source = "legacy";
+            } else if (shipName.includes("[Legends]")) {
+              source = "legends";
+            } else if (shipName.includes("[ARC]")) {
+              source = "arc";
+            }
+            const selectedSquadron = {
+              ...squadron,
+              source,
+            };
+            handleAddingSquadron(selectedSquadron);
+            return null;
+          } else {
+            console.log(`Neither ship nor squadron found: ${shipName}`);
+            skippedItems.push(shipName);
+          }
         }
       } else {
-        console.log(`Ship key not found in aliases: ${shipName}`);
+        console.log(`Ship/Squadron key not found in aliases: ${shipName}`);
         skippedItems.push(shipName);
       }
       return null;
