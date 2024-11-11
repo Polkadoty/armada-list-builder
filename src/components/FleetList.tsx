@@ -343,7 +343,9 @@ export function FleetList() {
             Fleet List
           </Button>
         </DialogTrigger>
-        <DialogContent className="max-w-[95vw] sm:max-w-3xl max-h-[90vh] flex flex-col border backdrop-blur-md bg-background/95 text-foreground">
+        <DialogContent className={`max-w-[95vw] sm:max-w-3xl max-h-[90vh] flex flex-col border backdrop-blur-md ${
+          theme === 'light' ? 'bg-white/95 text-slate-900' : 'bg-background/80 text-foreground'
+        }`}>
           <DialogHeader>
             <DialogTitle>Your Fleets</DialogTitle>
             <div className="flex flex-wrap items-center gap-2 mt-4">
@@ -424,7 +426,9 @@ export function FleetList() {
                 </TableHeader>
                 <TableBody>
                   {paginatedFleets.map((fleet) => (
-                    <TableRow key={fleet.id} className="hover:bg-muted/50 border-b">
+                    <TableRow key={fleet.id} className={`hover:bg-muted/50 border-b ${
+                      theme === 'light' ? 'text-slate-900' : 'text-foreground'
+                    }`}>
                       <TableCell>
                         <button
                           onClick={() => handleFleetSelect(fleet)}
@@ -433,9 +437,11 @@ export function FleetList() {
                           {fleet.fleet_name}
                         </button>
                       </TableCell>
-                      <TableCell className="text-foreground dark:text-foreground">{capitalizeFirstLetter(fleet.faction)}</TableCell>
-                      <TableCell className="text-foreground dark:text-foreground">{fleet.commander}</TableCell>
-                      <TableCell className="text-foreground dark:text-foreground">{fleet.points}</TableCell>
+                      <TableCell className={
+                        theme === 'light' ? 'text-slate-900' : 'text-foreground'
+                      }>{capitalizeFirstLetter(fleet.faction)}</TableCell>
+                      <TableCell className={theme === 'light' ? 'text-foreground' : 'text-foreground'}>{fleet.commander}</TableCell>
+                      <TableCell className={theme === 'light' ? 'text-foreground' : 'text-foreground'}>{fleet.points}</TableCell>
                       {columns.find(col => col.id === 'date_added')?.visible && (
                         <TableCell>{new Date(fleet.date_added).toLocaleDateString()}</TableCell>
                       )}
