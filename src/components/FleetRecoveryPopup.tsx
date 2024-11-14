@@ -21,7 +21,7 @@ export function FleetRecoveryPopup({
 }: FleetRecoveryPopupProps) {
   return (
     <Dialog open={isOpen}>
-      <DialogContent>
+      <DialogContent className="w-full max-w-lg md:max-w-2xl bg-white/90 dark:bg-gray-800/90 backdrop-blur-md shadow-lg">
         <DialogHeader>
           <DialogTitle>Recover Previous Fleet</DialogTitle>
           <DialogDescription>

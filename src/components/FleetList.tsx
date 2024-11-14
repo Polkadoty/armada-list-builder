@@ -344,7 +344,9 @@ export function FleetList() {
           </Button>
         </DialogTrigger>
         <DialogContent className={`max-w-[95vw] sm:max-w-3xl max-h-[90vh] flex flex-col border backdrop-blur-md ${
-          theme === 'light' ? 'bg-white/95 text-slate-900' : 'bg-background/80 text-foreground'
+          theme === 'light' 
+            ? 'bg-white/95 text-black' 
+            : 'bg-background/80 text-white'
         }`}>
           <DialogHeader>
             <DialogTitle>Your Fleets</DialogTitle>
@@ -408,7 +410,9 @@ export function FleetList() {
                     {columns.filter(col => col.visible).map((column) => (
                       <TableHead 
                         key={column.id}
-                        className="cursor-pointer text-foreground dark:text-foreground hover:text-accent-foreground"
+                        className={`cursor-pointer hover:text-accent-foreground ${
+                          theme === 'light' ? 'text-black' : 'text-white'
+                        }`}
                         onClick={() => handleSort(column.id)}
                       >
                         {column.label}
@@ -438,10 +442,10 @@ export function FleetList() {
                         </button>
                       </TableCell>
                       <TableCell className={
-                        theme === 'light' ? 'text-slate-900' : 'text-foreground'
+                        theme === 'light' ? 'text-black' : 'text-white'
                       }>{capitalizeFirstLetter(fleet.faction)}</TableCell>
-                      <TableCell className={theme === 'light' ? 'text-foreground' : 'text-foreground'}>{fleet.commander}</TableCell>
-                      <TableCell className={theme === 'light' ? 'text-foreground' : 'text-foreground'}>{fleet.points}</TableCell>
+                      <TableCell className={theme === 'light' ? 'text-black' : 'text-white'}>{fleet.commander}</TableCell>
+                      <TableCell className={theme === 'light' ? 'text-black' : 'text-white'}>{fleet.points}</TableCell>
                       {columns.find(col => col.id === 'date_added')?.visible && (
                         <TableCell>{new Date(fleet.date_added).toLocaleDateString()}</TableCell>
                       )}
