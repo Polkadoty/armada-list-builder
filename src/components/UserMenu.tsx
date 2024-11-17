@@ -12,11 +12,7 @@ import { FleetList } from './FleetList';
 import { Separator } from "@/components/ui/separator";
 
 export function UserMenu() {
-  const { user, error, isLoading } = useUser();
-
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
+  const { user, error } = useUser();
 
   if (error) {
     return <div>Error: {error.message}</div>;
@@ -28,7 +24,7 @@ export function UserMenu() {
         <Avatar className="cursor-pointer hover:opacity-80 transition-opacity">
           <AvatarImage src={user?.picture || undefined} alt={user?.name || 'User'} />
           <AvatarFallback className="bg-background/10 backdrop-blur-sm">
-            <User className="h-5 w-5" />
+            <User className="h-5 w-5 text-foreground" />
           </AvatarFallback>
         </Avatar>
       </PopoverTrigger>
@@ -52,7 +48,7 @@ export function UserMenu() {
               variant="ghost" 
               size="sm" 
               asChild
-              className="w-full justify-start text-sm font-normal h-9 text-red-600 hover:text-red-600 hover:bg-red-100/50"
+              className="w-full justify-start text-sm font-normal h-9"
             >
               <Link href={user ? "/api/auth/logout" : "/api/auth/login"}>
                 {user ? "Log out" : "Sign in"}

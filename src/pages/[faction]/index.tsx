@@ -12,11 +12,19 @@ import { Pencil } from 'lucide-react';
 import { UserAvatar } from '../../components/UserAvatar';
 import Link from 'next/link';
 
+const shouldInvertImage = (logoPath: string) => {
+  return !logoPath.endsWith('.webp');
+};
+
 export const factionLogos = {
   rebel: '/icons/rebel.svg',
   empire: '/icons/empire.svg',
   republic: '/icons/republic.svg',
   separatist: '/icons/separatist.svg',
+  unsc: '/icons/unsc.webp',
+  covenant: '/icons/covenant.webp',
+  colonial: '/icons/colonial.webp',
+  cylon: '/icons/cylon.webp',
 };
 
 const factionColors = {
@@ -24,6 +32,10 @@ const factionColors = {
   empire: '#046000',
   republic: '#880606',
   separatist: '#161FDA',
+  unsc: '#2B579A',
+  covenant: '#800080',
+  colonial: '#B8860B',
+  cylon: '#CC0000',
 };
 
 export default function FactionPage() {
@@ -61,10 +73,10 @@ export default function FactionPage() {
   };
 
   return (
-    <div className="min-h-screen text-gray-900 dark:text-white relative bg-transparent">
-      <StarryBackground show={currentTheme === 'dark'} />
-      {isLoading && <LoadingScreen progress={loadingProgress} message={loadingMessage} />}
-      <div className="relative z-10 p-4 max-w-[2000px] mx-auto"> {/* Added max-width and centering */}
+  <div className="min-h-screen text-gray-900 dark:text-white relative bg-transparent">
+    <StarryBackground show={currentTheme === 'dark'} />
+    {isLoading && <LoadingScreen progress={loadingProgress} message={loadingMessage} />}
+    <div className="relative z-10 p-4 max-w-[2000px] mx-auto">
         <div className="flex justify-between items-center mb-4">
           <div className="flex items-center">
             {faction && (
@@ -74,7 +86,7 @@ export default function FactionPage() {
                   alt={`${faction} logo`}
                   width={32}
                   height={32}
-                  className={`mr-2 ${currentTheme === 'dark' ? 'invert' : ''} cursor-pointer`}
+                  className={`mr-2 ${currentTheme === 'dark' ? shouldInvertImage(factionLogos[faction as keyof typeof factionLogos]) ? 'invert' : '' : ''} cursor-pointer`}
                 />
               </Link>
             )}
@@ -109,14 +121,17 @@ export default function FactionPage() {
             <ThemeToggle />
           </div>
         </div>
-        <FleetBuilder 
-          faction={faction as string} 
+        {mounted && faction && (
+        <FleetBuilder
+          key={faction as string} // Add this line to force remount
+          faction={faction as string}
           factionColor={factionColors[faction as keyof typeof factionColors]}
           fleetName={fleetName}
           setFleetName={setFleetName}
           tournamentMode={tournamentMode}
           setTournamentMode={setTournamentMode}
-        />
+            />
+          )}
       </div>
     </div>
   );

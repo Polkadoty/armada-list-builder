@@ -7,14 +7,13 @@ import { useTheme } from 'next-themes';
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import Cookies from 'js-cookie';
 import { flushCacheAndReload } from '../utils/dataFetcher';
-import { Label } from "@/components/ui/label";
-// beep boop
 
 // Configuration flags
 const CONFIG = {
   showLegacyToggle: false,
   showLegendsToggle: true,
   showOldLegacyToggle: true,
+  showArcToggle: true,
 };
 
 export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadingMessage, tournamentMode, setTournamentMode }: {
@@ -27,6 +26,7 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
   const [enableLegacy, setEnableLegacy] = useState(false);
   const [enableLegends, setEnableLegends] = useState(false);
   const [enableOldLegacy, setEnableOldLegacy] = useState(false);
+  const [enableArc, setEnableArc] = useState(false);
   const { theme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -35,9 +35,11 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
     const legacyCookie = Cookies.get('enableLegacy');
     const legendsCookie = Cookies.get('enableLegends');
     const oldLegacyCookie = Cookies.get('enableOldLegacy');
+    const arcCookie = Cookies.get('enableArc');
     setEnableLegacy(CONFIG.showLegacyToggle && legacyCookie === 'true');
     setEnableLegends(CONFIG.showLegendsToggle && legendsCookie === 'true');
     setEnableOldLegacy(CONFIG.showOldLegacyToggle && oldLegacyCookie === 'true');
+    setEnableArc(CONFIG.showArcToggle && arcCookie === 'true');
   }, []);
 
   if (!mounted) {
@@ -66,6 +68,14 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
     if (CONFIG.showOldLegacyToggle) {
       setEnableOldLegacy(checked);
       Cookies.set('enableOldLegacy', checked.toString(), { expires: 365 });
+      flushCacheAndReload(() => {}, () => {}, () => {});
+    }
+  };
+
+  const handleArcToggle = (checked: boolean) => {
+    if (CONFIG.showArcToggle) {
+      setEnableArc(checked);
+      Cookies.set('enableArc', checked.toString(), { expires: 365 });
       flushCacheAndReload(() => {}, () => {}, () => {});
     }
   };
@@ -132,17 +142,36 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
                   />
                 </div>
               )}
-              <div className="flex items-center space-x-2">
+              {CONFIG.showArcToggle && (
+                <div className="flex items-center justify-between">
+                  <label htmlFor="arc-toggle" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    Enable Arc Tournament Content
+                  </label>
+                  <Switch
+                    id="arc-toggle"
+                    checked={enableArc}
+                    onCheckedChange={handleArcToggle}
+                    className="custom-switch"
+                  />
+                </div>
+              )}
+              <div className="flex items-center justify-between">
+                <label htmlFor="tournament-mode" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Tournament Mode
+                </label>
                 <Switch
                   id="tournament-mode"
                   checked={tournamentMode}
                   onCheckedChange={setTournamentMode}
+                  className="custom-switch"
                 />
-                <Label htmlFor="tournament-mode">Tournament Mode</Label>
               </div>
               <Button onClick={handleFlushCache} variant="outline" size="sm" className="mt-2">
                 Flush Cache and Reload
               </Button>
+              <p className="text-xs text-muted-foreground text-center">
+                Tip: Press Ctrl+Shift+R if you&apos;re still seeing old images
+              </p>
             </div>
           </div>
         </PopoverContent>

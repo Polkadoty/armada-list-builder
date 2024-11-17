@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from '../lib/supabase';
 import { Save } from 'lucide-react';
 import { NotificationWindow } from '@/components/NotificationWindow';
+import { getContentTypes } from './FleetList';
 
 interface SaveFleetButtonProps {
     fleetData: string;
@@ -29,6 +30,7 @@ export function SaveFleetButton({ fleetData, faction, fleetName, commander, poin
     setIsSaving(true);
 
     try {
+      const contentTypes = getContentTypes(fleetData);
       const { data } = await supabase
         .from('fleets')
         .select('id')
@@ -40,7 +42,15 @@ export function SaveFleetButton({ fleetData, faction, fleetName, commander, poin
         // Update existing fleet
         const { error } = await supabase
           .from('fleets')
-          .update({ fleet_data: fleetData, faction, commander, points })
+          .update({ 
+            fleet_data: fleetData, 
+            faction, 
+            commander, 
+            points,
+            legends: contentTypes.legends,
+            legacy: contentTypes.legacy,
+            old_legacy: contentTypes.old_legacy
+          })
           .eq('id', data.id);
         if (error) throw error;
       } else {
@@ -48,12 +58,15 @@ export function SaveFleetButton({ fleetData, faction, fleetName, commander, poin
         const { error } = await supabase
           .from('fleets')
           .insert({ 
-            user_id: user.sub, 
-            fleet_name: fleetName, 
-            fleet_data: fleetData, 
-            faction, 
-            commander, 
-            points 
+            user_id: user.sub,
+            fleet_name: fleetName,
+            fleet_data: fleetData,
+            faction,
+            commander,
+            points,
+            legends: contentTypes.legends,
+            legacy: contentTypes.legacy,
+            old_legacy: contentTypes.old_legacy
           });
         if (error) throw error;
       }

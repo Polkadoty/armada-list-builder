@@ -1,11 +1,9 @@
 /* eslint-disable @typescript-eslint/no-empty-interface */
-
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
   Printer,
-  ArrowLeft,
   FileText,
   Trash2,
   TriangleAlert,
@@ -19,7 +17,6 @@ import { SelectedSquadron } from "./SelectedSquadron";
 import { SquadronFilter } from "./SquadronFilter";
 import { SquadronSelector } from "./SquadronSelector";
 import { PointsDisplay } from "./PointsDisplay";
-import Link from "next/link";
 import { useTheme } from "next-themes";
 import { ObjectiveSelector, ObjectiveModel } from "./ObjectiveSelector";
 import UpgradeSelector from "./UpgradeSelector";
@@ -43,6 +40,7 @@ import {
 import { FleetRecoveryPopup } from "./FleetRecoveryPopup";
 import { SaveFleetButton } from './SaveFleetButton';
 import { useRouter } from 'next/router';
+import { PrintMenu } from "./PrintMenu";
 
 export interface Ship {
   id: string;
@@ -56,7 +54,7 @@ export interface Ship {
   chassis: string;
   size: string;
   traits?: string[];
-  source: "regular" | "legacy" | "legends" | "oldLegacy";
+  source: ContentSource;
   searchableText: string;
 }
 
@@ -84,8 +82,16 @@ export interface Squadron {
   };
   ace: boolean;
   "unique-class": string[];
-  source: "regular" | "legacy" | "legends" | "oldLegacy";
+  source: ContentSource;
   searchableText: string;
+}
+
+interface Objective {
+  id: string;
+  name: string;
+  cardimage: string;
+  type: 'assault' | 'defense' | 'navigation';
+  source: ContentSource;
 }
 
 export interface Upgrade {
@@ -121,7 +127,7 @@ export interface Upgrade {
     ready_amount?: number;
   };
   searchableText: string;
-  source: "regular" | "legacy" | "legends" | "oldLegacy";
+  source: ContentSource;
 }
 
 export interface Ship extends ShipModel {
@@ -130,6 +136,8 @@ export interface Ship extends ShipModel {
   assignedUpgrades: Upgrade[];
   searchableText: string;
 }
+
+export type ContentSource = "regular" | "legacy" | "legends" | "oldLegacy" | "arc";
 
 const SectionHeader = ({
   title,
@@ -158,7 +166,7 @@ const SectionHeader = ({
             e.stopPropagation();
             onClearAll();
           }}
-          className="mr-2 text-red-500 hover:text-red-700"
+          className="mr-2 text-red-500 hover:text-opacity-70"
         >
           <Trash2 size={16} />
         </button>
@@ -243,8 +251,15 @@ export default function FleetBuilder({
   const [showRecoveryPopup, setShowRecoveryPopup] = useState(false);
   const [hasLoadedPage, setHasLoadedPage] = useState(false);
   const router = useRouter();
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [showPrintMenu, setShowPrintMenu] = useState(false);
+  const [paperSize, setPaperSize] = useState<'letter' | 'a4'>('letter');
+  // Add these state variables near the other useState declarations
+const [showPrintRestrictions, setShowPrintRestrictions] = useState(true);
+const [showPrintObjectives, setShowPrintObjectives] = useState(true);
 
-  const checkTournamentViolations = useCallback(() => {
+
+  const checkTournamentViolations = useMemo(() => {
     const violations: string[] = [];
 
     if (points > 400) {
@@ -284,7 +299,7 @@ export default function FleetBuilder({
       violations.push("One commander upgrade is required");
     }
 
-    setTournamentViolations(violations);
+    return violations;
   }, [
     points,
     totalSquadronPoints,
@@ -297,9 +312,36 @@ export default function FleetBuilder({
 
   useEffect(() => {
     if (tournamentMode) {
-      checkTournamentViolations();
+      setTournamentViolations(checkTournamentViolations);
     }
-  }, [tournamentMode, checkTournamentViolations]);
+    
+    // Cleanup function to reset state when component unmounts
+    return () => {
+      // Clear unique class names
+      selectedShips.forEach(ship => {
+        if (ship.unique) {
+          removeUniqueClassName(ship.name);
+        }
+        ship.assignedUpgrades.forEach(upgrade => {
+          if (upgrade.unique) {
+            removeUniqueClassName(upgrade.name);
+          }
+          if (upgrade["unique-class"]) {
+            upgrade["unique-class"].forEach(uc => removeUniqueClassName(uc));
+          }
+        });
+      });
+      
+      selectedSquadrons.forEach(squadron => {
+        if (squadron.unique) {
+          removeUniqueClassName(squadron.name);
+        }
+        if (squadron["unique-class"]) {
+          squadron["unique-class"].forEach(uc => removeUniqueClassName(uc));
+        }
+      });
+    };
+  }, [tournamentMode, checkTournamentViolations, selectedShips, selectedSquadrons, removeUniqueClassName]);
 
   const handleAddShip = () => {
     setShowShipSelector(true);
@@ -577,7 +619,7 @@ export default function FleetBuilder({
           const isModification = upgrade.modification ? "modification" : "";
 
           // Determine the source based on the alias
-          let source: "regular" | "legacy" | "legends" | "oldLegacy" = "regular";
+          let source: ContentSource = "regular";
           if (upgrade.alias) {
             if (upgrade.alias.includes("OldLegacy")) {
               source = "oldLegacy";
@@ -585,6 +627,8 @@ export default function FleetBuilder({
               source = "legacy";
             } else if (upgrade.alias.includes("Legends")) {
               source = "legends";
+            } else if (upgrade.alias.includes("ARC")) {
+              source = "arc";
             }
           }
 
@@ -1168,8 +1212,31 @@ export default function FleetBuilder({
     localStorage.removeItem(`savedFleet_${faction}`);
   };
 
-  const generateExportText = () => {
-    let text = "Name: " + fleetName + "\n";
+  // Add this helper function to format the objective source
+  const formatSource = (source: ContentSource) => {
+    switch (source) {
+      case 'legacy':
+        return '[Legacy]';
+      case 'legends':
+        return '[Legends]';
+      case 'oldLegacy':
+        return '[OldLegacy]';
+      case 'arc':
+        return '[ARC]';
+      default:
+        return '';
+    }
+  };
+
+  const generateExportText = useCallback(() => {
+
+    const allRegularSource = [
+      ...selectedShips,
+      ...selectedShips.flatMap(ship => ship.assignedUpgrades),
+      ...selectedSquadrons
+    ].every(item => !item.source || item.source === 'regular');
+
+    let text = " Name: " + fleetName + "\n";
     text += "Faction: " + faction.charAt(0).toUpperCase() + faction.slice(1) + "\n";
 
     const commander = selectedShips
@@ -1177,31 +1244,38 @@ export default function FleetBuilder({
       .find((upgrade) => upgrade.type === "commander");
     if (commander) {
       text += "Commander: " + commander.name + 
-        (commander.source !== "regular" ? " [" + capitalizeFirstLetter(commander.source) + "]" : "") + 
+        (commander.source && commander.source !== "regular" ? " " + formatSource(commander.source) : "") + 
         " (" + commander.points + ")\n";
     }
-
-    text += "\n";
+    
+    text += '\n';
+    
+    // Add objectives with source tags
     if (selectedAssaultObjective) {
-      text += "Assault: " + selectedAssaultObjective.name + "\n";
+      const sourceTag = formatSource(selectedAssaultObjective.source);
+      text += `Assault: ${selectedAssaultObjective.name}${sourceTag ? ` ${sourceTag}` : ''}\n`;
     }
     if (selectedDefenseObjective) {
-      text += "Defense: " + selectedDefenseObjective.name + "\n";
+      const sourceTag = formatSource(selectedDefenseObjective.source);
+      text += `Defense: ${selectedDefenseObjective.name}${sourceTag ? ` ${sourceTag}` : ''}\n`;
     }
     if (selectedNavigationObjective) {
-      text += "Navigation: " + selectedNavigationObjective.name + "\n";
+      const sourceTag = formatSource(selectedNavigationObjective.source);
+      text += `Navigation: ${selectedNavigationObjective.name}${sourceTag ? ` ${sourceTag}` : ''}\n`;
     }
 
     if (selectedShips.length > 0) {
       text += "\n";
       selectedShips.forEach((ship) => {
+        // In the ships forEach loop, change this part:
         text += ship.name + 
-          (ship.source !== "regular" ? " [" + capitalizeFirstLetter(ship.source) + "]" : "") + 
+          (ship.source && ship.source !== "regular" ? " " + formatSource(ship.source) : "") + 
           " (" + ship.points + ")\n";
         ship.assignedUpgrades.forEach((upgrade) => {
-          text += "• " + upgrade.name + 
-            (upgrade.source !== "regular" ? " [" + capitalizeFirstLetter(upgrade.source) + "]" : "") + 
-            " (" + upgrade.points + ")\n";
+          const sourceSuffix = upgrade.source && upgrade.source !== "regular" 
+            ? " " + formatSource(upgrade.source) 
+            : "";
+          text += "• " + upgrade.name + sourceSuffix + " (" + upgrade.points + ")\n";
         });
         text += "= " + 
           (ship.points + 
@@ -1216,11 +1290,11 @@ export default function FleetBuilder({
         const key =
           squadron.unique || squadron["ace-name"]
             ? (squadron["ace-name"] || squadron.name) + 
-              (squadron["ace-name"] ? " - " + squadron.name : "") + 
-              (squadron.source !== "regular" ? " [" + capitalizeFirstLetter(squadron.source) + "]" : "") + 
+              (squadron["ace-name"] && !allRegularSource ? " - " + squadron.name : "") + 
+              (squadron.source && squadron.source !== "regular" ? " " + formatSource(squadron.source) : "") + 
               " (" + squadron.points + ")"
             : squadron.name + 
-              (squadron.source !== "regular" ? " [" + capitalizeFirstLetter(squadron.source) + "]" : "") + 
+              (squadron.source && squadron.source !== "regular" ? " " + formatSource(squadron.source) : "") + 
               " (" + (squadron.points * (squadron.count || 1)) + ")";
         if (!acc[key]) {
           acc[key] = {
@@ -1249,32 +1323,22 @@ export default function FleetBuilder({
 
     // Ensure the text is not URL encoded
     return decodeURIComponent(encodeURIComponent(text));
-  };
-
-  const capitalizeFirstLetter = (string: string | undefined) => {
-    if (!string) return "";
-    return string.charAt(0).toUpperCase() + string.slice(1);
-  };
+  }, [
+    selectedShips, 
+    selectedSquadrons, 
+    selectedAssaultObjective, 
+    selectedDefenseObjective, 
+    selectedNavigationObjective,
+    faction,
+    fleetName,
+    points,
+    totalSquadronPoints
+  ]);
 
   const saveFleetToLocalStorage = useCallback(() => {
     const exportText = generateExportText();
     localStorage.setItem(`savedFleet_${faction}`, exportText);
   }, [faction, generateExportText]);
-
-  useEffect(() => {
-    const savedFleet = localStorage.getItem(`savedFleet_${faction}`);
-    const retrievedFromList = document.cookie.includes('retrieved-from-list=true');
-  
-    if (!hasLoadedPage && savedFleet && selectedShips.length === 0 && selectedSquadrons.length === 0) {
-      if (retrievedFromList) {
-        handleImportFleet(savedFleet);
-        document.cookie = "retrieved-from-list=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      } else {
-        setShowRecoveryPopup(true);
-      }
-      setHasLoadedPage(true);
-    }
-  }, [faction, selectedShips.length, selectedSquadrons.length, hasLoadedPage]);
   
   const handleRecoverFleet = () => {
     const savedFleet = localStorage.getItem(`savedFleet_${faction}`);
@@ -1289,40 +1353,316 @@ export default function FleetBuilder({
     setShowRecoveryPopup(false);
   };
 
-  const handleImportFleet = (importText: string) => {
+  const getAliasKey = (
+    aliases: Record<string, string>,
+    name: string
+  ): string | undefined => {
+    console.log(`Getting alias key for: ${name}`);
+    console.log(`Aliases:`, aliases);
+    const result = aliases[name];
+    console.log(`Alias key result:`, result);
+    return result;
+  };
+
+  const fetchObjective = (key: string): ObjectiveModel | null => {
+    console.log(`Fetching objective for key: ${key}`);
+    
+    // Get all localStorage keys that contain 'objectives'
+    const objectiveKeys = Object.keys(localStorage).filter(k => 
+      k.toLowerCase().includes('objectives')
+    );
+    
+    // Search through all objective-related localStorage items
+    for (const storageKey of objectiveKeys) {
+      try {
+        const data = JSON.parse(localStorage.getItem(storageKey) || "{}");
+        console.log(`Checking objectives in ${storageKey}`);
+        
+        // Handle both direct objectives and nested objectives structure
+        const objectivesData = data.objectives || data;
+        
+        // Check if the objective exists in this data
+        if (objectivesData[key]) {
+          console.log(`Found objective in ${storageKey}:`, objectivesData[key]);
+          return {
+            ...objectivesData[key],
+            // Set source based on storage key
+            source: storageKey.includes('arc') ? 'arc' :
+                   storageKey.includes('oldLegacy') ? 'oldLegacy' :
+                   storageKey.includes('legacy') ? 'legacy' :
+                   storageKey.includes('legends') ? 'legends' : 'regular'
+          } as ObjectiveModel;
+        }
+      } catch (error) {
+        console.error(`Error parsing JSON for key ${storageKey}:`, error);
+      }
+    }
+    
+    console.log(`Objective not found for key: ${key}`);
+    return null;
+  };
+  const fetchFromLocalStorage = (
+    key: string,
+    type: "ships" | "upgrades" | "squadrons"
+    /* eslint-disable @typescript-eslint/no-explicit-any */
+  ): any | null => {
+    console.log(`Fetching ${type} for key: ${key}`);
+    for (let i = 0; i < localStorage.length; i++) {
+      const storageKey = localStorage.key(i);
+      if (storageKey && storageKey.toLowerCase().includes(type)) {
+        try {
+          const data = JSON.parse(localStorage.getItem(storageKey) || "{}");
+          console.log(`Parsed ${type} data for ${storageKey}:`, data);
+          const itemsData = data[type] || data;
+
+          if (type === "ships") {
+            for (const chassisKey in itemsData) {
+              const models = itemsData[chassisKey].models;
+              if (models && models[key]) {
+                const item = models[key];
+                return {
+                  ...item,
+                  source: storageKey.includes('arc') ? 'arc' :
+                          storageKey.includes('oldLegacy') ? 'oldLegacy' :
+                          storageKey.includes('legacy') ? 'legacy' :
+                          storageKey.includes('legends') ? 'legends' : 'regular'
+                };
+              }
+            }
+          } else {
+            if (itemsData[key]) {
+              const item = itemsData[key];
+              return {
+                ...item,
+                source: storageKey.includes('arc') ? 'arc' :
+                        storageKey.includes('oldLegacy') ? 'oldLegacy' :
+                        storageKey.includes('legacy') ? 'legacy' :
+                        storageKey.includes('legends') ? 'legends' : 'regular'
+              };
+            }
+          }
+        } catch (error) {
+          console.error(`Error parsing JSON for key ${storageKey}:`, error);
+        }
+      }
+    }
+    return null;
+  };
+
+  const fetchShip = (key: string): ShipModel | null => {
+    return fetchFromLocalStorage(key, "ships") as ShipModel | null;
+  };
+
+  const fetchUpgrade = (key: string): Upgrade | null => {
+    return fetchFromLocalStorage(key, "upgrades") as Upgrade | null;
+  };
+
+  const fetchSquadron = (key: string): Squadron | null => {
+    return fetchFromLocalStorage(key, "squadrons") as Squadron | null;
+  };
+
+  const handleImportFleet = useCallback((importText: string) => {
     console.log("Starting fleet import...");
-    const decodedText = decodeURIComponent(encodeURIComponent(importText));
-    const lines = decodedText.split("\n");
+
+    // Load aliases first, before any processing
+    console.log("Loading aliases from localStorage...");
+    const aliases = JSON.parse(localStorage.getItem("aliases") || "{}");
+    console.log("Aliases loaded:", aliases);
+
+
+    const preprocessFleetText = (text: string): string => {
+      // Remove <fleet> tags if present
+      text = text.replace(/<\/?fleet>/g, "");
+
+      // Check if this is DMBorque format by looking for the characteristic patterns
+      const isDMBorqueFormat =
+        text.includes("+") &&
+        text.includes(":") &&
+        text.match(/\(\d+\s*\+\s*\d+\s*:\s*\d+\)/);
+
+      // Handle DMBorque fleet name format
+      if (isDMBorqueFormat) {
+        const lines = text.split("\n");
+        const firstLine = lines[0];
+        const nameMatch = firstLine.match(/^(.+?)\s*\(\d+\/\d+\/\d+\)/);
+        if (nameMatch) {
+          lines[0] = `Name: ${nameMatch[1]}`;
+          // Remove the line of equals signs if it exists
+          if (lines[1] && lines[1].match(/^=+$/)) {
+            lines.splice(1, 1);
+          }
+          text = lines.join("\n");
+        }
+      }
+
+      let lines = text.split("\n").map((line) => {
+        // Replace dashes with bullets at the start of lines
+        line = line.replace(/^\s*-\s*/, "• ");
+
+        // Replace bullets with bullets at the start of lines
+        line = line.replace(/^\s*·\s*/, "• ");
+
+        // Remove [flagship] markers
+        line = line.replace(/\[\s*flagship\s*\]\s*/, "");
+
+        // Convert "Points: X/Y" format to "Total Points: X"
+        line = line.replace(/^Points:\s*(\d+)\/\d+/, "Total Points: $1");
+
+        // Fix point format: ( # points) -> (#) but preserve existing (#) formats
+        line = line.replace(/\(\s*(\d+)\s*points?\)/, "($1)");
+
+        // Handle DMBorques format: (X + Y: Z) -> (X)
+        line = line.replace(/\((\d+)\s*\+[^)]+\)/, "($1)");
+
+        // Handle DMBorques squadron format: (N x M) -> (calculated total)
+        line = line.replace(
+          /\((\d+)\s*x\s*(\d+)\)/,
+          (_match, count, points) => {
+            const total = parseInt(count) * parseInt(points);
+            return `(${total})`;
+          }
+        );
+
+        return line.trim();
+      });
+
+      // Find the first squadron line (line starting with a number)
+      const squadronStartIndex = lines.findIndex(
+        (line) =>
+          /^\d+\s+\S/.test(line) || // matches "1 Squadron Name"
+          /^\d+x\s+\S/.test(line) // matches "1x Squadron Name"
+      );
+
+      if (squadronStartIndex !== -1) {
+        // Insert "Squadrons:" line before processing squadron formats
+        lines.splice(squadronStartIndex, 0, "Squadrons:");
+
+        // Now process squadron formats for all lines after the "Squadrons:" line
+        lines = lines.map((line, index) => {
+          if (
+            index > squadronStartIndex &&
+            /^\d+\s+.+?\s*\(\d+\)$/.test(line)
+          ) {
+            return line.replace(
+              /^(\d+)\s+(.+?)(\s*\(\d+\))$/,
+              (match, count, name, points) => {
+                const numCount = parseInt(count);
+                if (numCount === 1) {
+                  return `• ${name}${points}`;
+                }
+                return `• ${count} x ${name}${points}`;
+              }
+            );
+          }
+          return line;
+        });
+      }
+
+      // If it's DMBorque format, process the objectives
+      if (isDMBorqueFormat && lines.length >= 3) {
+        const lastThreeLines = lines.slice(-3);
+        lines = lines.slice(0, -3);
+
+        lines.push(
+          `Assault: ${lastThreeLines[0]}`,
+          `Defense: ${lastThreeLines[1]}`,
+          `Navigation: ${lastThreeLines[2]}`
+        );
+      }
+
+      // If it's DMBorque format and we have squadrons without bullets, add them
+      if (isDMBorqueFormat) {
+        const squadronLines = lines.slice(squadronStartIndex);
+        const processedSquadrons = squadronLines.map(line => {
+          if (!line.startsWith('•') && !line.startsWith('=') && line.trim()) {
+            return `• ${line}`;
+          }
+          return line;
+        });
+        lines.splice(squadronStartIndex, squadronLines.length, ...processedSquadrons);
+      }
+
+      return lines.join("\n");
+    };
+
+    const processedText = preprocessFleetText(importText);
+    console.log("Preprocessed fleet text:", processedText);
+
+    const lines = processedText.split("\n");
+
+
+    // const lines = importText.split("\n");
 
     // Check faction first
     const factionLine = lines.find((line) => line.startsWith("Faction:"));
+    let normalizedImportedFaction = '';
+
     if (factionLine) {
       const importedFaction = factionLine.split(":")[1].trim().toLowerCase();
       // Normalize faction names
-      const normalizedImportedFaction =
-        importedFaction === "imperial" || importedFaction === "empire"
+      normalizedImportedFaction =
+        importedFaction === "imperial" || importedFaction === "empire" || importedFaction === "galactic empire"
           ? "empire"
+          : importedFaction === "rebel alliance"
+          ? "rebel"
+          : importedFaction === "galactic republic"
+          ? "republic"
+          : importedFaction === "separatist alliance"
+          ? "separatist"
           : importedFaction;
-      const normalizedCurrentFaction = faction.toLowerCase();
-
-      if (normalizedImportedFaction !== normalizedCurrentFaction) {
-        // Instead of showing error, save fleet and redirect
-        localStorage.setItem(`savedFleet_${normalizedImportedFaction}`, importText);
-        document.cookie = "retrieved-from-list=true; path=/";
+    } else {
+      // Try to determine faction from first ship, commander, or squadron
+      const firstItemMatch = lines.find(line => {
+        // Skip empty lines and section headers
+        if (!line.trim() || line.startsWith('Total Points:') || line.startsWith('Squadrons:')) {
+          return false;
+        }
         
-        // Navigate home first, then to the correct faction
-        router.push('/').then(() => {
-          setTimeout(() => {
-            router.push(`/${normalizedImportedFaction}`);
-          }, 250);
-        });
+        // Extract item name and points
+        const match = line.match(/^(?:•\s*)?(.+?)\s*\((\d+)\)/);
+        if (match) {
+          const [, itemName, itemPoints] = match;
+          const itemKey = getAliasKey(aliases, `${itemName} (${itemPoints})`);
+          
+          if (itemKey) {
+            // Try to fetch as ship first
+            const ship = fetchShip(itemKey);
+            if (ship?.faction) {
+              normalizedImportedFaction = ship.faction.toLowerCase();
+              return true;
+            }
+            
+            // Try as squadron
+            const squadron = fetchSquadron(itemKey);
+            if (squadron?.faction && typeof squadron.faction === 'string') {
+              normalizedImportedFaction = squadron.faction.toLowerCase();
+              return true;
+            }
+          }
+        }
+        return false;
+      });
+
+      if (!firstItemMatch) {
+        setNotificationMessage("Could not determine faction from fleet list. Import cancelled.");
+        setShowNotification(true);
         return;
       }
-    } else {
-      setNotificationMessage(
-        "No faction found in the imported fleet. Import cancelled."
-      );
-      setShowNotification(true);
+    }
+
+    const normalizedCurrentFaction = faction.toLowerCase();
+
+    if (normalizedImportedFaction !== normalizedCurrentFaction) {
+      // Instead of showing error, save fleet and redirect
+      localStorage.setItem(`savedFleet_${normalizedImportedFaction}`, importText);
+      document.cookie = "retrieved-from-list=true; path=/";
+      
+      // Navigate home first, then to the correct faction
+      router.push('/').then(() => {
+        setTimeout(() => {
+          router.push(`/${normalizedImportedFaction}`);
+        }, 250);
+      });
       return;
     }
 
@@ -1335,11 +1675,6 @@ export default function FleetBuilder({
     setSelectedAssaultObjective(null);
     setSelectedDefenseObjective(null);
     setSelectedNavigationObjective(null);
-
-    // Load aliases
-    console.log("Loading aliases from localStorage...");
-    const aliases = JSON.parse(localStorage.getItem("aliases") || "{}");
-    console.log("Aliases loaded:", aliases);
 
     let processingSquadrons = false;
     let totalPoints = 0;
@@ -1367,14 +1702,15 @@ export default function FleetBuilder({
         const shipModel = fetchShip(shipKey);
         if (shipModel) {
           console.log(`Adding ship to fleet:`, shipModel);
-          let source: "regular" | "legacy" | "legends" | "oldLegacy" =
-            "regular";
+          let source: ContentSource = "regular";
           if (shipName.includes("[OldLegacy]")) {
             source = "oldLegacy";
           } else if (shipName.includes("[Legacy]")) {
             source = "legacy";
           } else if (shipName.includes("[Legends]")) {
             source = "legends";
+          } else if (shipName.includes("[ARC]")) {
+            source = "arc";
           }
           const newShip: Ship = {
             ...shipModel,
@@ -1387,11 +1723,36 @@ export default function FleetBuilder({
           };
           return newShip;
         } else {
-          console.log(`Ship model not found: ${shipName}`);
-          skippedItems.push(shipName);
+          // If ship not found, try to find a squadron
+          const squadron = fetchSquadron(shipKey);
+          if (squadron) {
+            console.log(`Found squadron instead of ship:`, squadron);
+            let source: ContentSource = "regular";
+            if (shipName.includes("[OldLegacy]")) {
+              source = "oldLegacy";
+            } else if (shipName.includes("[Legacy]")) {
+              source = "legacy";
+            } else if (shipName.includes("[Legends]")) {
+              source = "legends";
+            } else if (shipName.includes("[ARC]")) {
+              source = "arc";
+            }
+            const selectedSquadron = {
+              ...squadron,
+              source,
+              points: parseInt(shipPoints) // Add this line to ensure points are set correctly
+            };
+            handleAddingSquadron(selectedSquadron);
+            // Add to squadron points total
+            squadronPoints += parseInt(shipPoints); // Add this line to update total squadron points
+            return null;
+          } else {
+            console.log(`Neither ship nor squadron found: ${shipName}`);
+            skippedItems.push(shipName);
+          }
         }
       } else {
-        console.log(`Ship key not found in aliases: ${shipName}`);
+        console.log(`Ship/Squadron key not found in aliases: ${shipName}`);
         skippedItems.push(shipName);
       }
       return null;
@@ -1429,18 +1790,20 @@ export default function FleetBuilder({
         }
         continue;
       } else if (
-        line.startsWith("Assault:") ||
-        line.startsWith("Defense:") ||
-        line.startsWith("Navigation:")
+        (line.startsWith("Assault:") || line.startsWith("Defense:") || line.startsWith("Navigation:") || line.startsWith("Assault Objective:") || line.startsWith("Defense Objective:") || line.startsWith("Navigation Objective:")) 
       ) {
         // Handle objectives
         const [type, name] = line.split(":");
-        if (name.trim() === "") {
-          console.log("Skipping line due to empty objective name");
-          return; // Skip the line if the name is only spaces
+        const trimmedName = name?.trim();
+        
+        // If there's no name after the colon, skip this line
+        if (!trimmedName) {
+          console.log(`Skipping empty objective: ${type}`);
+          continue;
         }
-        const objectiveKey = getAliasKey(aliases, name.trim());
-        console.log(`Found objective: ${type} - ${name.trim()}`);
+      
+        const objectiveKey = getAliasKey(aliases, trimmedName);
+        console.log(`Found objective: ${type} - ${trimmedName}`);
         if (objectiveKey) {
           const objective = fetchObjective(objectiveKey);
           console.log(`Fetched objective for key: ${objectiveKey}`, objective);
@@ -1458,13 +1821,21 @@ export default function FleetBuilder({
                 break;
             }
           } else {
-            console.log(`Objective not found: ${name.trim()}`);
-            skippedItems.push(name.trim());
+            console.log(`Objective not found: ${trimmedName}`);
+            skippedItems.push(trimmedName);
           }
         } else {
-          console.log(`Objective key not found in aliases: ${name.trim()}`);
-          skippedItems.push(name.trim());
+          console.log(`Objective key not found in aliases: ${trimmedName}`);
+          skippedItems.push(trimmedName);
         }
+      } else if (line.startsWith(" Name:") || line.startsWith("Name:")) {
+        // Handle fleet name with or without leading space
+        const fleetNameMatch = line.match(/Name:\s*(.+)/);
+        if (fleetNameMatch) {
+          const newFleetName = fleetNameMatch[1].trim();
+          setFleetName(newFleetName);
+        }
+        continue;
       } else if (!processingSquadrons && !line.startsWith("•")) {
         // Handle ships
         const shipMatch = line.match(/^(.+?)\s*\((\d+)\)/);
@@ -1495,15 +1866,28 @@ export default function FleetBuilder({
           if (upgradeKey) {
             const upgrade = fetchUpgrade(upgradeKey);
             if (upgrade) {
-              let source: "regular" | "legacy" | "legends" | "oldLegacy" = "regular";
-              if (upgradeName.includes("[OldLegacy]")) {
-                source = "oldLegacy";
-              } else if (upgradeName.includes("[Legacy]")) {
-                source = "legacy";
-              } else if (upgradeName.includes("[Legends]")) {
-                source = "legends";
+              // Extract source directly from the upgrade name string
+              let source: ContentSource = "regular";
+              const sourceMatch = upgradeName.match(/\[(.*?)\]/);
+              if (sourceMatch) {
+                const sourceTag = sourceMatch[1].toLowerCase();
+                switch (sourceTag) {
+                  case 'oldlegacy':
+                    source = 'oldLegacy';
+                    break;
+                  case 'legacy':
+                    source = 'legacy';
+                    break;
+                  case 'legends':
+                    source = 'legends';
+                    break;
+                  case 'arc':
+                    source = 'arc';
+                    break;
+                }
               }
-      
+              console.log(`Source for ${upgradeName}:`, source);
+
               // Find the next available slot for this upgrade type
               const existingUpgradesOfType = upgradesToAdd.filter(
                 u => u.shipId === currentShipId && u.upgrade.type === upgrade.type
@@ -1536,6 +1920,10 @@ export default function FleetBuilder({
           const [, countStr, squadronName, totalPoints] = squadronMatch;
           const count = countStr ? parseInt(countStr) : 1;
           const pointsPerSquadron = Math.round(parseInt(totalPoints) / count);
+          
+          // Add to squadron points total
+          squadronPoints += parseInt(totalPoints);
+          
           const squadronKey = getAliasKey(
             aliases,
             `${squadronName} (${pointsPerSquadron})`
@@ -1548,14 +1936,15 @@ export default function FleetBuilder({
             console.log(`Fetched squadron for key: ${squadronKey}`, squadron);
             if (squadron) {
               console.log(`Selecting squadron:`, squadron);
-              let source: "regular" | "legacy" | "legends" | "oldLegacy" =
-                "regular";
+              let source: ContentSource = "regular";
               if (squadronName.includes("[OldLegacy]")) {
                 source = "oldLegacy";
               } else if (squadronName.includes("[Legacy]")) {
                 source = "legacy";
               } else if (squadronName.includes("[Legends]")) {
                 source = "legends";
+              } else if (squadronName.includes("[ARC]")) {
+                source = "arc";
               }
               const selectedSquadron = {
                 ...squadron,
@@ -1592,18 +1981,19 @@ export default function FleetBuilder({
       handleAddUpgrade(shipId, upgrade);
     });
 
-    // Set the final points
-    setPoints(totalPoints);
-    setTotalSquadronPoints(squadronPoints);
-    const totalShipPoints =
-      shipsToAdd.reduce((total, ship) => total + ship.points, 0) +
-      upgradesToAdd.reduce((total, { upgrade }) => total + upgrade.points, 0);
+    // Calculate total ship points (ships + upgrades)
+    const totalShipPoints = shipsToAdd.reduce((total, ship) => {
+      const shipTotal = ship.points + 
+        upgradesToAdd
+          .filter(u => u.shipId === ship.id)
+          .reduce((upgradeTotal, { upgrade }) => upgradeTotal + upgrade.points, 0);
+      return total + shipTotal;
+    }, 0);
+
+    // Set all point values
     setTotalShipPoints(totalShipPoints);
-    console.log(
-      `Final total points: ${totalPoints}, Squadron points: ${squadronPoints}, Ship points: ${
-        totalPoints - squadronPoints
-      }`
-    );
+    setTotalSquadronPoints(squadronPoints);
+    setPoints(totalShipPoints + squadronPoints);
 
     if (skippedItems.length > 0) {
       alert(
@@ -1613,102 +2003,63 @@ export default function FleetBuilder({
       );
       console.log("Skipped items:", skippedItems);
     }
-  };
-
-  const getAliasKey = (
-    aliases: Record<string, string>,
-    name: string
-  ): string | undefined => {
-    console.log(`Getting alias key for: ${name}`);
-    console.log(`Aliases:`, aliases);
-    const result = aliases[name];
-    console.log(`Alias key result:`, result);
-    return result;
-  };
-
-  const fetchObjective = (key: string): ObjectiveModel | null => {
-    console.log(`Fetching objective for key: ${key}`);
-    for (let i = 0; i < localStorage.length; i++) {
-      const storageKey = localStorage.key(i);
-      // console.log(`Checking localStorage key: ${storageKey}`);
-      if (storageKey && storageKey.includes("objectives")) {
-        try {
-          const data = JSON.parse(localStorage.getItem(storageKey) || "{}");
-          console.log(`Parsed objectives data for ${storageKey}:`, data);
-          const objectivesData = data.objectives || data;
-          if (objectivesData[key]) {
-            console.log(`Found objective in storage:`, objectivesData[key]);
-            return objectivesData[key] as ObjectiveModel;
-          }
-        } catch (error) {
-          console.error(`Error parsing JSON for key ${storageKey}:`, error);
-        }
-      }
-    }
-    console.log(`Objective not found for key: ${key}`);
-    return null;
-  };
-  const fetchFromLocalStorage = (
-    key: string,
-    type: "ships" | "upgrades" | "squadrons"
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ): any | null => {
-    console.log(`Fetching ${type} for key: ${key}`);
-    for (let i = 0; i < localStorage.length; i++) {
-      const storageKey = localStorage.key(i);
-      if (storageKey && storageKey.toLowerCase().includes(type)) {
-        try {
-          const data = JSON.parse(localStorage.getItem(storageKey) || "{}");
-          console.log(`Parsed ${type} data for ${storageKey}:`, data);
-          const itemsData = data[type] || data;
-
-          if (type === "ships") {
-            for (const chassisKey in itemsData) {
-              const models = itemsData[chassisKey].models;
-              if (models && models[key]) {
-                console.log(`Found ${type} in storage:`, models[key]);
-                return models[key];
-              }
-            }
-          } else {
-            if (itemsData[key]) {
-              console.log(`Found ${type} in storage:`, itemsData[key]);
-              return itemsData[key];
-            }
-          }
-        } catch (error) {
-          console.error(`Error parsing JSON for key ${storageKey}:`, error);
-        }
-      }
-    }
-    console.log(
-      `${
-        type.charAt(0).toUpperCase() + type.slice(1)
-      } not found for key: ${key}`
-    );
-    return null;
-  };
-
-  const fetchShip = (key: string): ShipModel | null => {
-    return fetchFromLocalStorage(key, "ships") as ShipModel | null;
-  };
-
-  const fetchUpgrade = (key: string): Upgrade | null => {
-    return fetchFromLocalStorage(key, "upgrades") as Upgrade | null;
-  };
-
-  const fetchSquadron = (key: string): Squadron | null => {
-    return fetchFromLocalStorage(key, "squadrons") as Squadron | null;
-  };
+  }, [
+    fetchShip,
+    fetchUpgrade,
+    fetchSquadron,
+    clearAllShips,
+    clearAllSquadrons,
+    faction,
+    handleAddUpgrade,
+    handleAddingSquadron,
+    handleIncrementSquadron,
+    router,
+    setFleetName,
+    setNotificationMessage,
+    setPoints,
+    setSelectedAssaultObjective,
+    setSelectedDefenseObjective,
+    setSelectedNavigationObjective,
+    setSelectedShips,
+    setShowNotification,
+    setTotalShipPoints,
+    setTotalSquadronPoints
+  ]);
 
   const handlePrint = () => {
+    setShowPrintMenu(true);
+  };
+
+  const handlePrintList = () => {
     const printContent = generatePrintContent();
     const printWindow = window.open("", "_blank");
     if (printWindow) {
       printWindow.document.write(printContent);
       printWindow.document.close();
-      printWindow.print();
+      setTimeout(() => {
+        printWindow.print();
+      }, 2500);
     }
+    setShowPrintMenu(false);
+  };
+
+  const handlePrintnPlay = () => {
+    const printContent = generatePrintnPlayContent();
+    const printWindow = window.open("", "_blank");
+    if (printWindow) {
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      
+      // Add event listener for load
+      printWindow.onload = () => {
+        setTimeout(() => {
+          printWindow.print();
+          // Close the window after printing (optional)
+          // printWindow.close();
+        }, 2000);
+      };
+    }
+    setShowPrintMenu(false);
   };
 
   const generatePrintContent = () => {
@@ -1718,205 +2069,517 @@ export default function FleetBuilder({
     <!DOCTYPE html>
     <html lang="en">
     <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${fleetName}</title>
-    <style>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>${fleetName}</title>
+      <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
         
         body {
-        font-family: 'Roboto', sans-serif;
-        line-height: 1.5;
-        max-width: 800px;
-        margin: 0 auto;
-        padding: 40px 20px;
-        background-color: #f9f9f9;
+          font-family: 'Roboto', sans-serif;
+          line-height: 1.5;
+          max-width: 800px;
+          margin: 0 auto;
+          padding: 40px 20px;
+          background-color: #f9f9f9;
         }
 
         .header {
-        display: grid;
-        grid-template-columns: 1fr 40px 1fr;
-        align-items: center;
-        gap: 20px;
-        margin-bottom: 1.25em;
+          display: grid;
+          grid-template-columns: 1fr 40px 1fr;
+          align-items: center;
+          gap: 20px;
+          margin-bottom: 1.25em;
         }
 
         .fleet-name {
-        font-size: 28px;
-        font-weight: bold;
-        text-align: right;
+          font-size: 28px;
+          font-weight: bold;
+          text-align: right;
         }
 
         .total-points {
-        font-size: 28px;
-        font-weight: bold;
-        text-align: left;
+          font-size: 28px;
+          font-weight: bold;
+          text-align: left;
         }
 
         .logo {
-        width: 40px;
-        height: 40px;
-        object-fit: contain;
+          width: 40px;
+          height: 40px;
+          object-fit: contain;
         }
 
         .grid {
-        border-top: 1px solid #ddd;
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 1em;
-        padding-top: 1.5em;
-        margin-bottom: 1.5em;
+          border-top: 1px solid #ddd;
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1em;
+          padding-top: 1.5em;
+          margin-bottom: 1.5em;
         }
 
         .section {
-        background-color: #fff;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        padding: 1em;
-        }
-
-        .ship, .squadron {
-        margin-bottom: 12px;
-        }
-
-        .upgrade {
-        margin-left: 1em;
-        font-size: 14px;
-        color: #555;
+          background-color: #fff;
+          border: 1px solid #ddd;
+          border-radius: 8px;
+          padding: 1em;
         }
 
         .objectives {
-        display: flex;
-        justify-content: space-between;
-        gap: 1em;
-        margin-top: 1.5em;
-        border-top: 1px solid #ddd;
-        padding-top: 1.5em;
+          display: flex;
+          justify-content: space-between;
+          gap: 1em;
+          margin-top: 1.5em;
+          border-top: 1px solid #ddd;
+          padding-top: 1.5em;
         }
 
         .objective-card {
-        flex: 1;
-        background-color: #fff;
-        border: 1px solid #ddd;
-        border-radius: .5em;
-        padding: .5em;
-        text-align: center;
+          flex: 1;
+          background-color: #fff;
+          border: 1px solid #ddd;
+          border-radius: .5em;
+          padding: .5em;
+          text-align: center;
         }
 
         .objective-card h4 {
-        margin: 0px;
-        font-size: 18px;
-        font-weight: bold;
+          margin: 0px;
+          font-size: 18px;
+          font-weight: bold;
         }
 
         .objective-card p {
-        margin: 0;
-        font-size: 1em;
-        color: #666;
+          margin: 0;
+          font-size: 1em;
+          color: #666;
         }
-    </style>
+
+        .tournament-info {
+          margin-top: 1.5em;
+          border-top: 1px solid #ddd;
+          padding-top: 1.5em;
+        }
+      </style>
     </head>
     <body>
-    <div class="header">
+      <div class="header">
         <div class="fleet-name">${fleetName}</div>
         <img src="${factionLogo}" alt="Faction logo" class="logo">
         <div class="total-points">${points} points</div>
-    </div>
+      </div>
 
-    <div class="grid">
-        ${selectedShips
-          .map(
-            (ship) => `
-        <div class="section">
+      <div class="grid">
+        ${selectedShips.map((ship) => `
+          <div class="section">
             <strong>${ship.name}</strong> (${ship.points} points)
-            ${ship.assignedUpgrades
-              .map(
-                (upgrade) => `
-            <div class="upgrade">
-                <div style="display: flex; align-items: center; gap: 0.25em;"><img src="/icons/${upgrade.type}.svg" style="width: 16px; height: 16px;"/> ${upgrade.name} (${upgrade.points} points)</div>
+            ${ship.assignedUpgrades.map((upgrade) => `
+              <div class="upgrade">
+                <div style="display: flex; align-items: center; gap: 0.25em;">
+                  <img src="/icons/${upgrade.type}.svg" style="width: 16px; height: 16px;"/>
+                  ${upgrade.name} (${upgrade.points} points)
+                </div>
+              </div>
+            `).join("")}
+            <div><strong>Total:</strong> ${ship.points + ship.assignedUpgrades.reduce((total, upgrade) => total + upgrade.points, 0)} points</div>
+          </div>
+        `).join("")}
+      </div>
+
+      ${selectedSquadrons.length > 0 ? `
+        <div class="grid">
+          ${selectedSquadrons.map((squadron) => `
+            <div class="section">
+              <strong>${squadron["ace-name"] || squadron.name}</strong> (${squadron.points} points)${squadron.count > 1 ? ` x${squadron.count}` : ""}
             </div>
-            `
-              )
-              .join("")}
-            <div><strong>Total:</strong> ${
-              ship.points +
-              ship.assignedUpgrades.reduce(
-                (total, upgrade) => total + upgrade.points,
-                0
-              )
-            } points</div>
+          `).join("")}
         </div>
-        `
-          )
-          .join("")}
-    </div>
+      ` : ''}
 
-    <div class="grid">
-        ${selectedSquadrons
-          .map(
-            (squadron) => `
-        <div class="section">
-            <strong>${squadron["ace-name"] || squadron.name}</strong> (${
-              squadron.points
-            } points)${squadron.count > 1 ? ` x${squadron.count}` : ""}
+      ${showPrintObjectives ? `
+        <div class="objectives">
+          <div class="objective-card">
+            <h4>Assault</h4>
+            <p>${selectedAssaultObjective ? selectedAssaultObjective.name : "None"}</p>
+          </div>
+          <div class="objective-card">
+            <h4>Defense</h4>
+            <p>${selectedDefenseObjective ? selectedDefenseObjective.name : "None"}</p>
+          </div>
+          <div class="objective-card">
+            <h4>Navigation</h4>
+            <p>${selectedNavigationObjective ? selectedNavigationObjective.name : "None"}</p>
+          </div>
         </div>
-        `
-          )
-          .join("")}
-    </div>
+      ` : ''}
 
-    <div class="objectives">
-        <div class="objective-card">
-        <h4>Assault</h4>
-        <p>${
-          selectedAssaultObjective ? selectedAssaultObjective.name : "None"
-        }</p>
-        </div>
-        <div class="objective-card">
-        <h4>Defense</h4>
-        <p>${
-          selectedDefenseObjective ? selectedDefenseObjective.name : "None"
-        }</p>
-        </div>
-        <div class="objective-card">
-        <h4>Navigation</h4>
-        <p>${
-          selectedNavigationObjective
-            ? selectedNavigationObjective.name
-            : "None"
-        }</p>
-        </div>
-    </div>
-
-    ${
-      tournamentMode
-        ? `
-      <div class="tournament-info">
-        <h3>Tournament Restrictions:</h3>
-        ${
-          tournamentViolations.length === 0
+      ${tournamentMode && showPrintRestrictions ? `
+        <div class="tournament-info">
+          <h3>Tournament Restrictions:</h3>
+          ${tournamentViolations.length === 0
             ? "<p>This list complies with tournament restrictions.</p>"
             : `
-            <p>This list does not comply with tournament restrictions:</p>
-            <ul>
-              ${tournamentViolations
-                .map((violation) => `<li>${violation}</li>`)
-                .join("")}
-            </ul>
-          `
-        }
-      </div>
-    `
-        : ""
-    }
-
+              <p>This list does not comply with tournament restrictions:</p>
+              <ul>
+                ${tournamentViolations.map((violation) => `<li>${violation}</li>`).join("")}
+              </ul>
+            `}
+        </div>
+      ` : ''}
     </body>
     </html>`;
 
     return content;
   };
 
+  
+  const generatePrintnPlayContent = () => {
+    // Calculate number of pages needed for poker cards
+    const allCards = [
+      ...selectedSquadrons,
+      ...selectedShips.flatMap(ship => ship.assignedUpgrades),
+      ...[selectedAssaultObjective, selectedDefenseObjective, selectedNavigationObjective].filter((obj): obj is Objective => obj !== null)
+    ];
+    
+    const pokerPagesNeeded = Math.ceil(allCards.length / 9); // 9 cards per page
+  
+    // // Define base token sizes
+    // const baseTokenSizes = {
+    //   small: { width: '38.75mm', height: '70.45mm' },
+    //   medium: { width: '58.5mm', height: '101.5mm' },
+    //   large: { width: '73.0mm', height: '128.5mm' }
+    // };
+  
+    // // Function to get base token size
+    // const getBaseTokenSize = (size: string) => {
+    //   switch (size) {
+    //     case 'small':
+    //       return baseTokenSizes.small;
+    //     case 'medium':
+    //       return baseTokenSizes.medium;
+    //     case 'large':
+    //       return baseTokenSizes.large;
+    //     default:
+    //       return baseTokenSizes.small; // Default to small if size is unknown
+    //   }
+    // };
 
+    // // Helper function to calculate optimal layout
+    // const calculateOptimalLayout = (ships: Ship[]) => {
+    //   const margin = 0.5; // inches
+    //   const pageWidth = paperSize === 'letter' ? 8.5 : 210/25.4; // convert mm to inches for A4
+    //   const pageHeight = paperSize === 'letter' ? 11 : 297/25.4;
+    //   const usableWidth = pageWidth - (2 * margin);
+    //   const usableHeight = pageHeight - (2 * margin);
+      
+    //   // Convert mm to inches
+    //   const tokenSizes = {
+    //     small: { width: 38.75/25.4, height: 70.45/25.4 },
+    //     medium: { width: 58.5/25.4, height: 101.5/25.4 },
+    //     large: { width: 73.0/25.4, height: 128.5/25.4 }
+    //   };
+    
+    //   // Sort ships by size (large to small) for better packing
+    //   const sortedShips = [...ships].sort((a, b) => {
+    //     const sizeOrder = { large: 3, medium: 2, small: 1 };
+    //     return sizeOrder[b.size as keyof typeof sizeOrder] - sizeOrder[a.size as keyof typeof sizeOrder];
+    //   });
+    
+    //   const pages: { rows: { ships: Ship[]; height: number }[] }[] }[] = [{ rows: [] }];
+    //   let currentRow: Ship[] = [];
+    //   let currentRowWidth = 0;
+    //   let currentPageHeight = 0;
+    
+    //   sortedShips.forEach(ship => {
+    //     const tokenSize = tokenSizes[ship.size as keyof typeof tokenSizes] || tokenSizes.small;
+        
+    //     if (currentRowWidth + tokenSize.width > usableWidth && currentRow.length > 0) {
+    //       // Calculate height of current row
+    //       const maxHeight = Math.max(...currentRow.map(s => 
+    //         tokenSizes[s.size as keyof typeof tokenSizes]?.height || tokenSizes.small.height
+    //       ));
+    
+    //       // Check if adding this row would exceed usable height
+    //       if (currentPageHeight + maxHeight > usableHeight) {
+    //         // Start new page
+    //         pages.push({ rows: [] });
+    //         currentPageHeight = 0;
+    //       }
+    
+    //       // Add row to current page
+    //       pages[pages.length - 1].rows.push({ ships: currentRow, height: maxHeight });
+    //       currentPageHeight += maxHeight;
+          
+    //       // Start new row
+    //       currentRow = [];
+    //       currentRowWidth = 0;
+    //     }
+        
+    //     currentRow.push(ship);
+    //     currentRowWidth += tokenSize.width;
+    //   });
+    
+    //   // Add remaining ships
+    //   if (currentRow.length > 0) {
+    //     const maxHeight = Math.max(...currentRow.map(s => 
+    //       tokenSizes[s.size as keyof typeof tokenSizes]?.height || tokenSizes.small.height
+    //     ));
+    
+    //     // Check if adding this row would exceed usable height
+    //     if (currentPageHeight + maxHeight > usableHeight) {
+    //       // Start new page
+    //       pages.push({ rows: [] });
+    //     }
+    
+    //     // Add final row to current page
+    //     pages[pages.length - 1].rows.push({ ships: currentRow, height: maxHeight });
+    //   }
+    
+    //   return pages;
+    // };
+  
+    // const baseTokensLayout = calculateOptimalLayout(selectedShips);
+  //   const baseTokensHTML = baseTokensLayout.map(page => `
+  //   <div class="page">
+  //     <div class="base-token-grid" style="
+  //       display: flex;
+  //       flex-direction: column;
+  //       align-items: center;
+  //       margin: 0.5in;
+  //     ">
+  //       ${page.rows.map(row => `
+  //         <div style="display: flex; justify-content: center; margin-bottom: 0;">
+  //           ${row.ships.map(ship => {
+  //             const { width, height } = getBaseTokenSize(ship.size);
+  //             const baseTokenUrl = ship.cardimage.replace('.webp', '-base.webp');
+  //             return `
+  //               <div class="base-token" style="
+  //                 width: ${width};
+  //                 height: ${height};
+  //                 margin: 0;
+  //               ">
+  //                 <img 
+  //                   src="${baseTokenUrl}" 
+  //                   alt="${ship.name} Base Token" 
+  //                   style="width: 100%; height: 100%; object-fit: contain;"
+  //                 />
+  //               </div>
+  //             `;
+  //           }).join('')}
+  //         </div>
+  //       `).join('')}
+  //     </div>
+  //   </div>
+  // `).join('');
+  
+    return `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <title>Print & Play - ${fleetName}</title>
+          <style>
+            @page {
+              size: ${paperSize};
+              margin: 0;
+            }
+
+            body {
+              margin: 0;
+              padding: 0;
+              background: white;
+            }
+
+            .page {
+              position: relative;
+              width: ${paperSize === 'letter' ? '8.5in' : '210mm'};
+              height: ${paperSize === 'letter' ? '11in' : '297mm'};
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              page-break-after: always;
+            }
+
+            .grid {
+              display: grid;
+            }
+
+            .tarot-grid {
+              grid-template-columns: repeat(2, 2.75in);
+              grid-template-rows: repeat(2, 4.75in);
+              font-size: 0; /* Removes any potential whitespace */
+            }
+
+            .poker-grid {
+              grid-template-columns: repeat(3, 2.5in);
+              grid-template-rows: repeat(3, 3.5in);
+              font-size: 0;
+              margin: 0.4in;
+            }
+
+            .tarot-card {
+              width: 2.75in;
+              height: 4.75in;
+              position: relative;
+              overflow: hidden;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+            }
+
+            .poker-card {
+              width: 2.5in;
+              height: 3.5in;
+              position: relative;
+              overflow: hidden;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+            }
+
+            .card-container {
+              position: relative;
+              width: 100%;
+              height: 100%;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+            }
+
+            .card-background {
+              position: absolute;
+              width: 100%;
+              height: 100%;
+              top: 0;
+              left: 0;
+              filter: blur(8px);
+              z-index: 1;
+              object-fit: cover;
+            }
+
+            .card-image {
+              position: absolute;
+              width: 100%;
+              height: 100%;
+              object-fit: fill;
+              z-index: 2;
+            }
+
+          </style>
+      </head>
+      <body>
+        ${selectedShips.length > 0 ? `
+          <!-- Ship Cards Front -->
+          <div class="page">
+            <div class="grid tarot-grid">
+              ${selectedShips.map(ship => `
+                <div class="tarot-card">
+                  <div class="card-container">
+                    <img class="card-background" src="${ship.cardimage}" alt="" />
+                    <img class="card-image" src="${ship.cardimage}" alt="${ship.name}" />
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+          
+          <!-- Ship Cards Back -->
+          <div class="page">
+            <div class="grid tarot-grid">
+              ${selectedShips.slice().reverse().map(ship => `
+                <div class="tarot-card">
+                  <div class="card-container">
+                    <img class="card-image" 
+                        src="https://api.swarmada.wiki/images/${ship.faction}-ship-rear.webp" 
+                        alt="${ship.name} back" />
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        ` : ''}
+
+        ${Array.from({ length: pokerPagesNeeded }).map((_, pageIndex) => {
+          const startIndex = pageIndex * 9;
+          const pageCards = allCards.slice(startIndex, startIndex + 9);
+
+          return pageCards.length > 0 ? `
+            <!-- Poker Cards Front -->
+            <div class="page">
+              <div class="grid poker-grid">
+                ${pageCards.map(card => `
+                  <div class="poker-card">
+                    <div class="card-container">
+                      <img class="card-background" src="${card.cardimage}" alt="" />
+                      <img class="card-image" src="${card.cardimage}" alt="${card.name}" />
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+            
+            <!-- Poker Cards Back -->
+            <div class="page">
+              <div class="grid poker-grid">
+                ${pageCards.map((card, index) => {
+                  // Calculate position in the grid
+                  const row = Math.floor(index / 3); // 3 cards per row
+                  const col = index % 3;
+                  // Reverse the column position while keeping the same row
+                  const reversedCol = 2 - col;
+                  const reversedIndex = (row * 3) + reversedCol;
+                  const reversedCard = pageCards[reversedIndex];
+
+                  if (!reversedCard) return '';
+
+                  let rearImage;
+                  if ('squadron_type' in reversedCard) {
+                    rearImage = `${reversedCard.faction}-squadron-rear`;
+                  } 
+                  else if ('restrictions' in reversedCard) {
+                    rearImage = `${reversedCard.type}-rear`;
+                  }
+                  else {
+                    rearImage = 'objective-rear';
+                  }
+                  
+                  return `
+                    <div class="poker-card">
+                      <div class="card-container">
+                        <img class="card-image" 
+                             src="https://api.swarmada.wiki/images/${rearImage}.webp" 
+                             alt="Card back" />
+                      </div>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+          ` : '';
+        }).join('')}
+        
+      </body>
+      </html>
+    `;
+  };
+
+  //${baseTokensHTML}
+
+  useEffect(() => {
+    const savedFleet = localStorage.getItem(`savedFleet_${faction}`);
+    const retrievedFromList = document.cookie.includes('retrieved-from-list=true');
+  
+    if (!hasLoadedPage && savedFleet && selectedShips.length === 0 && selectedSquadrons.length === 0) {
+      if (retrievedFromList) {
+        handleImportFleet(savedFleet);
+        document.cookie = "retrieved-from-list=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      } else {
+        setShowRecoveryPopup(true);
+      }
+      setHasLoadedPage(true);
+    }
+  }, [faction, selectedShips.length, selectedSquadrons.length, hasLoadedPage, router, handleImportFleet]);
 
   useEffect(() => {
     if (selectedShips.length > 0 || selectedSquadrons.length > 0) {
@@ -1961,7 +2624,7 @@ export default function FleetBuilder({
   };
 
   return (
-    <div className="max-w-[2000px] mx-auto">
+    <div ref={contentRef} className="max-w-[2000px] mx-auto">
       <div className="flex flex-col sm:flex-row items-start sm:items-center mb-4">
         <div className="mb-2 sm:mb-0 flex items-center justify-start space-x-2">
           <TooltipProvider>
@@ -2048,7 +2711,8 @@ export default function FleetBuilder({
             onClearAll={clearAllShips}
             onAdd={handleAddShip}
           />
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 4xl:grid-cols-5 gap-2">
+          <div className="relative">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 4xl:grid-cols-5 gap-4">
               {selectedShips.map((ship) => (
                 <SelectedShip
                   key={ship.id}
@@ -2061,9 +2725,10 @@ export default function FleetBuilder({
                   enabledUpgrades={enabledUpgrades[ship.id] || []}
                   filledSlots={filledSlots[ship.id] || {}}
                   hasCommander={hasCommander}
-                traits={ship.traits || []}
-              />
-            ))}
+                  traits={ship.traits || []}
+                />
+              ))}
+            </div>
           </div>
         </>
       ) : (
@@ -2094,23 +2759,25 @@ export default function FleetBuilder({
             onClearAll={clearAllSquadrons}
             onAdd={handleAddSquadron}
           />
-          <div className="mb-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-2">
-            {selectedSquadrons.map((squadron) => (
-              <SelectedSquadron
-                key={squadron.id}
-                squadron={squadron}
-                onRemove={handleRemoveSquadron}
-                onIncrement={handleIncrementSquadron}
-                onDecrement={handleDecrementSquadron}
-                onSwapSquadron={handleSwapSquadron}
-              />
-            ))}
+          <div className="relative">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
+              {selectedSquadrons.map((squadron) => (
+                <SelectedSquadron
+                  key={squadron.id}
+                  squadron={squadron}
+                  onRemove={handleRemoveSquadron}
+                  onIncrement={handleIncrementSquadron}
+                  onDecrement={handleDecrementSquadron}
+                  onSwapSquadron={handleSwapSquadron}
+                />
+              ))}
+            </div>
           </div>
         </>
       ) : (
         <Card className="mb-4 relative">
           <Button
-            className="w-full justify-between bg-white/30 dark:bg-gray-900/30 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md text-lg py-6"
+            className="w-full justify-between bg-white/30 dark:bg-gray-900/30 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-md text-lg py-6"
             variant="outline"
             onClick={handleAddSquadron}
           >
@@ -2125,37 +2792,39 @@ export default function FleetBuilder({
         </Card>
       )}
 
-      <div className="mb-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-xl">
-        <SwipeableObjective
-          type="assault"
-          selectedObjective={selectedAssaultObjective}
-          onRemove={handleRemoveAssaultObjective}
-          onOpen={() => setShowAssaultObjectiveSelector(true)}
-          color="#EB3F3A"
-        />
-        <SwipeableObjective
-          type="defense"
-          selectedObjective={selectedDefenseObjective}
-          onRemove={handleRemoveDefenseObjective}
-          onOpen={() => setShowDefenseObjectiveSelector(true)}
-          color="#FAEE13"
-        />
-        <SwipeableObjective
-          type="navigation"
-          selectedObjective={selectedNavigationObjective}
-          onRemove={handleRemoveNavigationObjective}
-          onOpen={() => setShowNavigationObjectiveSelector(true)}
-          color="#C2E1F4"
-        />
+      <div className="mb-4 relative">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-xl">
+          <SwipeableObjective
+            type="assault"
+            selectedObjective={selectedAssaultObjective}
+            onRemove={handleRemoveAssaultObjective}
+            onOpen={() => setShowAssaultObjectiveSelector(true)}
+            color="#EB3F3A"
+          />
+          <SwipeableObjective
+            type="defense"
+            selectedObjective={selectedDefenseObjective}
+            onRemove={handleRemoveDefenseObjective}
+            onOpen={() => setShowDefenseObjectiveSelector(true)}
+            color="#FAEE13"
+          />
+          <SwipeableObjective
+            type="navigation"
+            selectedObjective={selectedNavigationObjective}
+            onRemove={handleRemoveNavigationObjective}
+            onOpen={() => setShowNavigationObjectiveSelector(true)}
+            color="#C2E1F4"
+          />
+        </div>
       </div>
 
-      <div className="flex flex-wrap justify-between gap-2">
+      {/* <div className="flex flex-wrap justify-between gap-2">
         <Link href="/">
           <Button variant="outline" className="flex-grow">
             <ArrowLeft className="mr-2 h-4 w-4" /> BACK
           </Button>
         </Link>
-      </div>
+      </div> */}
 
       {showShipSelector && (
         <ShipSelector
@@ -2236,6 +2905,7 @@ export default function FleetBuilder({
         <ExportTextPopup
           text={generateExportText()}
           onClose={() => setShowExportPopup(false)}
+          contentRef={contentRef}
         />
       )}
 
@@ -2260,6 +2930,20 @@ export default function FleetBuilder({
           onDecline={handleDeclineRecovery}
         />
       )}
+
+    {showPrintMenu && (
+      <PrintMenu
+        onPrintList={handlePrintList}
+        onPrintnPlay={handlePrintnPlay}
+        onClose={() => setShowPrintMenu(false)}
+        paperSize={paperSize}
+        setPaperSize={setPaperSize}
+        showRestrictions={showPrintRestrictions}
+        setShowRestrictions={setShowPrintRestrictions}
+        showObjectives={showPrintObjectives}
+        setShowObjectives={setShowPrintObjectives}
+      />
+    )}
     </div>
   );
 }

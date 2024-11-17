@@ -6,7 +6,7 @@ export const checkAndFetchData = async (setIsLoading: (isLoading: boolean) => vo
     const data = await response.json();
     const lastModified = data.lastModified;
     const savedLastModified = Cookies.get('lastModified');
-    const isDataMissing = !localStorage.getItem('ships') || !localStorage.getItem('squadrons') || !localStorage.getItem('objectives') || !localStorage.getItem('upgrades');
+    const isDataMissing = !localStorage.getItem('ships') || !localStorage.getItem('squadrons') || !localStorage.getItem('objectives') || !localStorage.getItem('upgrades') || !localStorage.getItem('imageLinks') || !localStorage.getItem('aliases');
 
     if (savedLastModified !== lastModified || isDataMissing) {
       setIsLoading(true);
@@ -23,6 +23,7 @@ const fetchAndSaveData = async (setLoadingProgress: (progress: number) => void, 
   const enableLegacy = Cookies.get('enableLegacy') === 'true';
   const enableLegends = Cookies.get('enableLegends') === 'true';
   const enableOldLegacy = Cookies.get('enableOldLegacy') === 'true';
+  const enableArc = Cookies.get('enableArc') === 'true';
 
   const endpoints = [
     { name: 'ships', url: '/api/ships/' },
@@ -30,6 +31,8 @@ const fetchAndSaveData = async (setLoadingProgress: (progress: number) => void, 
     { name: 'objectives', url: '/api/objectives/' },
     { name: 'upgrades', url: '/api/upgrades/' },
     { name: 'aliases', url: '/aliases/' },
+    { name: 'imageLinks', url: '/image-links/' },
+    { name: 'errataKeys', url: '/errata-keys/' }
   ];
 
   if (enableLegacy) {
@@ -53,6 +56,15 @@ const fetchAndSaveData = async (setLoadingProgress: (progress: number) => void, 
       { name: 'oldLegacyShips', url: '/old-legacy/ships/' },
       { name: 'oldLegacySquadrons', url: '/old-legacy/squadrons/' },
       { name: 'oldLegacyUpgrades', url: '/old-legacy/upgrades/' }
+    );
+  }
+
+  if (enableArc) {
+    endpoints.push(
+      { name: 'arcShips', url: '/arc/ships/' },
+      { name: 'arcSquadrons', url: '/arc/squadrons/' },
+      { name: 'arcUpgrades', url: '/arc/upgrades/' },
+      { name: 'arcObjectives', url: '/arc/objectives/' }
     );
   }
 
@@ -90,6 +102,7 @@ export const flushCacheAndReload = async (setIsLoading: (isLoading: boolean) => 
   localStorage.removeItem('oldLegacySquadrons');
   localStorage.removeItem('oldLegacyUpgrades');
   localStorage.removeItem('aliases');
+  localStorage.removeItem('imageLinks');
 
   // Reset sorting state cookies
   Cookies.remove('sortState_ships');

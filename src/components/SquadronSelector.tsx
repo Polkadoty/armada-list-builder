@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import Image from 'next/image';
-import { Squadron } from './FleetBuilder';
+import { ContentSource, Squadron } from './FleetBuilder';
 import { useUniqueClassContext } from '../contexts/UniqueClassContext';
 import { SortToggleGroup, SortOption } from '@/components/SortToggleGroup';
 import { Search, X } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import Cookies from 'js-cookie';
+import { OptimizedImage } from '@/components/OptimizedImage';
 
 interface SquadronSelectorProps {
   faction: string;
@@ -41,6 +41,31 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
   });
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [contentSources, setContentSources] = useState({
+    arc: Cookies.get('enableArc') === 'true',
+    legacy: Cookies.get('enableLegacy') === 'true',
+    legends: Cookies.get('enableLegends') === 'true',
+    oldLegacy: Cookies.get('enableOldLegacy') === 'true'
+  });
+
+  useEffect(() => {
+    const checkCookies = () => {
+      const newContentSources = {
+        arc: Cookies.get('enableArc') === 'true',
+        legacy: Cookies.get('enableLegacy') === 'true',
+        legends: Cookies.get('enableLegends') === 'true',
+        oldLegacy: Cookies.get('enableOldLegacy') === 'true'
+      };
+
+      if (JSON.stringify(newContentSources) !== JSON.stringify(contentSources)) {
+        setContentSources(newContentSources);
+      }
+    };
+
+    checkCookies();
+    const interval = setInterval(checkCookies, 1000);
+    return () => clearInterval(interval);
+  }, [contentSources]);
 
   useEffect(() => {
     const fetchSquadrons = () => {
@@ -48,7 +73,8 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
       const cachedLegacySquadrons = localStorage.getItem('legacySquadrons');
       const cachedLegendsSquadrons = localStorage.getItem('legendsSquadrons');
       const cachedOldLegacySquadrons = localStorage.getItem('oldLegacySquadrons');
-      
+      const cachedArcSquadrons = localStorage.getItem('arcSquadrons');
+
       const squadronMap = new Map<string, Squadron>();
 
       const processSquadrons = (data: SquadronData, prefix: string = '') => {
@@ -83,7 +109,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
                 count: 1,
                 ace: squadron.ace || false,
                 'unique-class': squadron['unique-class'] || [],
-                source: (prefix || 'regular') as 'regular' | 'legacy' | 'legends' | 'oldLegacy',
+                source: (prefix || 'regular') as ContentSource,
                 searchableText: JSON.stringify({
                   ...squadron,
                   abilities: abilityText,
@@ -119,9 +145,56 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
         processSquadrons(oldLegacySquadronData, 'oldLegacy');
       }
 
-      const allSquadrons = Array.from(squadronMap.values());
+      if (cachedArcSquadrons) {
+        const arcSquadronData = JSON.parse(cachedArcSquadrons);
+        processSquadrons(arcSquadronData, 'arc');
+      }
 
-      const filteredSquadrons = allSquadrons.filter(squadron => 
+      // Get errata keys from localStorage
+      const errataKeys = JSON.parse(localStorage.getItem('errataKeys') || '{}');
+      const squadronErrataKeys = errataKeys.squadrons || [];
+      console.log('Errata Keys for Squadrons:', squadronErrataKeys);
+
+      let squadronsArray = Array.from(squadronMap.values());
+
+      // Create a Map to group squadrons by their base name
+      const squadronGroups = new Map<string, Squadron[]>();
+
+      squadronsArray.forEach(squadron => {
+        // Extract base name without any prefixes or errata suffixes
+        const baseName = squadron.id.split('-errata-')[0];
+        
+        if (!squadronGroups.has(baseName)) {
+          squadronGroups.set(baseName, []);
+        }
+        squadronGroups.get(baseName)?.push(squadron);
+      });
+
+      // Filter out non-errata versions when errata exists
+      squadronsArray = Array.from(squadronGroups.values()).map(group => {
+        // Check if any squadron in the group has an errata version
+        const hasErrata = squadronErrataKeys.some((errataKey: string) => {
+          const matchingSquadron = group.find(squadron => squadron.id === errataKey);
+          if (!matchingSquadron) return false;
+          
+          // Check if the errata source is enabled
+          const source = matchingSquadron.source;
+          return source ? contentSources[source as keyof typeof contentSources] : true;
+        });
+
+        if (hasErrata) {
+          // Return only the errata version
+          return group.find(squadron => 
+            squadronErrataKeys.includes(squadron.id) && 
+            contentSources[squadron.source as keyof typeof contentSources]
+          );
+        }
+        
+        // If no errata exists, return the first squadron in the group
+        return group[0];
+      }).filter((squadron): squadron is Squadron => squadron !== undefined);
+
+      const filteredSquadrons = squadronsArray.filter(squadron => 
         squadron.faction === faction &&
         squadron.points >= filter.minPoints &&
         squadron.points <= filter.maxPoints
@@ -139,7 +212,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
     };
 
     fetchSquadrons();
-  }, [faction, filter.minPoints, filter.maxPoints]);
+  }, [faction, filter.minPoints, filter.maxPoints, contentSources]);
 
   useEffect(() => {
     const sortAndFilterSquadrons = () => {
@@ -300,24 +373,22 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
         <CardContent className="p-2 sm:p-4 flex-grow overflow-auto">
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-2">
             {displayedSquadrons.map((squadron) => (
-              <div key={squadron.id} className="w-full aspect-[2/3]">
+              <div key={squadron.id} className="w-full aspect-[2.5/3.5]">
                 <Button
                   onClick={() => handleSquadronClick(squadron)}
-                  className={`p-0 overflow-hidden relative w-full h-full rounded-lg ${
+                  className={`p-0 overflow-hidden relative w-full h-full rounded-lg bg-transparent ${
                     isSquadronSelected(squadron) ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
                   disabled={isSquadronSelected(squadron)}
                 >
-                  <div className="absolute inset-0 bg-gray-200 flex items-center justify-center">
-                    <Image
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <OptimizedImage
                       src={squadron.cardimage}
                       alt={squadron.name}
-                      fill
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                      className="object-cover object-center scale-[103%]"
-                      onError={(e) => {
-                        e.currentTarget.src = '/placeholder-squadron.png';
-                      }}
+                      width={250}  // Standard poker card width (2.5 inches * 100)
+                      height={350} // Standard poker card height (3.5 inches * 100)
+                      className="object-cover object-center w-full h-full"
+                      onError={() => {}}
                     />
                   </div>
                   <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-1 sm:p-2 visually-hidden">

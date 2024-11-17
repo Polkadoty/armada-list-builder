@@ -73,7 +73,7 @@ export function SwipeableObjective({ type, selectedObjective, onRemove, onOpen, 
       >
         <Button 
           variant="outline" 
-          className="w-full justify-start transition-colors py-6 text-lg" // Increased height to 6 for more vertical space
+          className="w-full justify-start transition-colors py-6 text-lg bg-white dark:bg-gray-950" // Added background color for light and dark mode
           onClick={onOpen}
         >
           <div className="flex justify-between items-center w-full">
@@ -84,17 +84,17 @@ export function SwipeableObjective({ type, selectedObjective, onRemove, onOpen, 
             {selectedObjective && (
               <button 
                 onClick={(e) => { e.stopPropagation(); onRemove(); }}
-                className="text-red-500 hover:text-red-700"
+                className="text-red-500 hover:text-red-700" // Changed to match current text color
               >
                 ✕
               </button>
             )}
           </div>
         </Button>
-        <div className="absolute left-0 top-0 bottom-0 flex items-center justify-center w-16 text-blue-500 bg-gray-800 bg-opacity-75" style={{ transform: 'translateX(-100%)' }}>
+        <div className="absolute left-0 top-0 bottom-0 flex items-center justify-center w-16 text-blue-500 bg-gray-900 bg-opacity-75" style={{ transform: 'translateX(-100%)' }}>
           <ArrowLeftRight size={20} />
         </div>
-        <div className="absolute right-0 top-0 bottom-0 flex items-center justify-center w-16 text-red-500 bg-gray-800 bg-opacity-75" style={{ transform: 'translateX(100%)' }}>
+        <div className="absolute right-0 top-0 bottom-0 flex items-center justify-center w-16 text-red-500 bg-gray-900 bg-opacity-75" style={{ transform: 'translateX(100%)' }}>
           <X size={20} />
         </div>
       </animated.div>

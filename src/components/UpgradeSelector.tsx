@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Image from 'next/image';
-import { Ship, Upgrade } from './FleetBuilder';
+import { ContentSource, Ship, Upgrade } from './FleetBuilder';
 import { useUniqueClassContext } from '../contexts/UniqueClassContext';
 import { SortToggleGroup, SortOption } from '@/components/SortToggleGroup';
 import { Search, X } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import Cookies from 'js-cookie';
+import { OptimizedImage } from './OptimizedImage';
 
 export interface UpgradeSelectorProps {
   id: string;
@@ -63,6 +64,12 @@ export default function UpgradeSelector({
   });
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [contentSources, setContentSources] = useState({
+    arc: Cookies.get('enableArc') === 'true',
+    legacy: Cookies.get('enableLegacy') === 'true',
+    legends: Cookies.get('enableLegends') === 'true',
+    oldLegacy: Cookies.get('enableOldLegacy') === 'true'
+  });
 
   useEffect(() => {
     const fetchUpgrades = () => {
@@ -71,19 +78,20 @@ export default function UpgradeSelector({
       const cachedLegacyUpgrades = localStorage.getItem('legacyUpgrades');
       const cachedLegendsUpgrades = localStorage.getItem('legendsUpgrades');
       const cachedOldLegacyUpgrades = localStorage.getItem('oldLegacyUpgrades');
-      
+      const cachedArcUpgrades = localStorage.getItem('arcUpgrades');
+
       let allUpgrades: Upgrade[] = [];
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const processUpgrades = (data: UpgradeData, prefix: string = ''): Upgrade[] => {
         if (data && data.upgrades) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          return Object.values(data.upgrades).map((upgrade: any) => {
+          /* eslint-disable @typescript-eslint/no-explicit-any */
+          return Object.entries(data.upgrades).map(([key, upgrade]: [string, any]) => {
             const exhaustType = upgrade.exhaust?.type || '';
             const isModification = upgrade.modification ? 'modification' : '';
             return {
               ...upgrade,
-              id: prefix ? `${prefix}-${upgrade.id || upgrade.name}` : (upgrade.id || upgrade.name),
+              id: prefix ? `${prefix}-${key}` : key,
               alias: upgrade.alias || '',
               faction: Array.isArray(upgrade.faction) ? upgrade.faction : [upgrade.faction],
               "unique-class": upgrade["unique-class"] || [],
@@ -96,7 +104,7 @@ export default function UpgradeSelector({
                 enable_upgrades: upgrade.restrictions?.enable_upgrades || [],
                 disqualify_if: upgrade.restrictions?.disqualify_if || {}
               },
-              source: prefix || 'regular',
+              source: prefix as ContentSource,
               searchableText: JSON.stringify({
                 ...upgrade,
                 name: upgrade.name,
@@ -129,6 +137,65 @@ export default function UpgradeSelector({
         const oldLegacyUpgradeData = JSON.parse(cachedOldLegacyUpgrades);
         allUpgrades = [...allUpgrades, ...processUpgrades(oldLegacyUpgradeData, 'oldLegacy')];
       }
+
+      if (cachedArcUpgrades) {
+        const arcUpgradeData = JSON.parse(cachedArcUpgrades);
+        allUpgrades = [...allUpgrades, ...processUpgrades(arcUpgradeData, 'arc')];
+      }
+
+      // Get errata keys from localStorage
+      const errataKeys = JSON.parse(localStorage.getItem('errataKeys') || '{}');
+      const upgradeErrataKeys = errataKeys.upgrades || [];
+      console.log('Errata Keys for Upgrades:', upgradeErrataKeys);
+
+      // Create a Map to group upgrades by their base name
+      const upgradeGroups = new Map<string, Upgrade[]>();
+
+      allUpgrades.forEach(upgrade => {
+        // Extract base name by removing any source prefixes and errata suffixes
+        const baseName = upgrade.id
+          .replace(/^(legacy|legends|oldLegacy|arc)-/, '') // Remove source prefix
+          .split('-errata-')[0]; // Remove errata suffix
+        
+        if (!upgradeGroups.has(baseName)) {
+          upgradeGroups.set(baseName, []);
+        }
+        upgradeGroups.get(baseName)?.push(upgrade);
+      });
+
+      // Filter out non-errata versions when errata exists
+      allUpgrades = Array.from(upgradeGroups.values()).map(group => {
+        // For each upgrade in the group, get its base ID without source prefix
+        const normalizedIds = group.map(upgrade => ({
+          upgrade,
+          normalizedId: upgrade.id.replace(/^(legacy|legends|oldLegacy|arc)-/, '')
+        }));
+
+        // Check if any normalized ID matches an errata key
+        const hasErrata = upgradeErrataKeys.some((errataKey: string) => 
+          normalizedIds.some(({normalizedId}) => normalizedId === errataKey)
+        );
+
+
+        if (hasErrata) {
+          // Return the upgrade whose normalized ID matches an errata key
+          const errataUpgrade = normalizedIds.find(({normalizedId, upgrade}) => {
+            const isErrataKey = upgradeErrataKeys.includes(normalizedId);
+            if (!isErrataKey) return false;
+            
+            // Check if the errata source is enabled
+            const source = upgrade.source;
+            return source ? contentSources[source as keyof typeof contentSources] : true;
+          });
+          
+          if (errataUpgrade) {
+            return errataUpgrade.upgrade;
+          }
+        }
+        
+        // If no errata exists, return the first upgrade in the group
+        return group[0];
+      }).filter((upgrade): upgrade is Upgrade => upgrade !== undefined);
 
       const filteredUpgrades = allUpgrades.filter(upgrade => {
         const factionMatch = Array.isArray(upgrade.faction) 
@@ -206,6 +273,13 @@ export default function UpgradeSelector({
   }, [allUpgrades, activeSorts, searchQuery]);
 
   const isUpgradeAvailable = (upgrade: Upgrade) => {
+
+        // Huge ships can't have enable_upgrades
+    if (shipSize === 'huge' && upgrade.restrictions?.enable_upgrades && upgrade.restrictions.enable_upgrades.length > 0 && upgrade.restrictions.enable_upgrades.some(upgrade => upgrade.trim() !== '')) {
+      return false;
+    }
+
+    
     if (upgradeType === 'title' || upgradeType === 'super-weapon') {
       // For titles and super-weapons, we'll only check for uniqueness and current ship conflicts
       if (upgrade.unique && selectedUpgrades.some(su => su.name === upgrade.name)) {
@@ -330,6 +404,25 @@ export default function UpgradeSelector({
 
   const getIconPath = (upgradeType: string) => `/icons/${upgradeType}.svg`;
 
+  useEffect(() => {
+    const checkCookies = () => {
+      const newContentSources = {
+        arc: Cookies.get('enableArc') === 'true',
+        legacy: Cookies.get('enableLegacy') === 'true',
+        legends: Cookies.get('enableLegends') === 'true',
+        oldLegacy: Cookies.get('enableOldLegacy') === 'true'
+      };
+
+      if (JSON.stringify(newContentSources) !== JSON.stringify(contentSources)) {
+        setContentSources(newContentSources);
+      }
+    };
+
+    checkCookies();
+    const interval = setInterval(checkCookies, 1000);
+    return () => clearInterval(interval);
+  }, [contentSources]);
+
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-md bg-opacity-30 dark:bg-opacity-30">
       <Card className="w-full h-full sm:w-[95%] sm:h-[90%] lg:w-[85%] lg:h-[85%] flex flex-col">
@@ -380,27 +473,25 @@ export default function UpgradeSelector({
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-2">
               {displayedUpgrades.map((upgrade) => (
-                <div key={upgrade.name} className="w-full aspect-[2/3]">
+                <div key={upgrade.name} className="w-full aspect-[2.5/3.5]">
                   <Button
                     onClick={() => handleUpgradeClick(upgrade)}
-                    className={`p-0 overflow-hidden relative w-full h-full rounded-lg ${
+                    className={`p-0 overflow-hidden relative w-full h-full rounded-lg bg-transparent ${
                       !isUpgradeAvailable(upgrade) || isUpgradeGreyedOut(upgrade) ? 'opacity-50 cursor-not-allowed' : ''
                     }`}
                     disabled={!isUpgradeAvailable(upgrade) || isUpgradeGreyedOut(upgrade)}
                   >
-                    <div className="absolute inset-0 bg-gray-200 flex items-center justify-center">
-                      <Image
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <OptimizedImage
                         src={validateImageUrl(upgrade.cardimage)}
                         alt={upgrade.name}
-                        fill
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                        className="object-cover object-center scale-[103%]"
-                        onError={(e) => {
-                          e.currentTarget.src = '/placeholder-upgrade.png';
-                        }}
+                        width={250}
+                        height={350}
+                        className="object-cover object-center"
+                        onError={() => {}}
                       />
                     </div>
-                    <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-1 sm:p-2 visually-hidden">
+                    <div className="absolute bottom-0 left-0 right-0 text-white p-1 sm:p-2 visually-hidden">
                       <p className="text-xs sm:text-sm font-bold flex items-center justify-center">
                         {upgrade.unique && <span className="mr-1 text-yellow-500 text-xs sm:text-sm">●</span>}
                         <span className="break-words line-clamp-2 text-center">{upgrade.name}</span>

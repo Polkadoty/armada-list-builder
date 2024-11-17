@@ -1,40 +1,160 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Armada Legacy Fleet Builder
+
+A modern web application for building and managing fleets for tabletop fleet combat games, with primary support for Star Wars: Armada and expanding support for other systems.
+
+## Features
+
+### Core Fleet Building
+- Intuitive ship and squadron selection
+- Real-time point calculation
+- Upgrade card management
+- Objective card selection
+- Fleet import/export functionality
+- Local storage fleet saving
+
+### Supported Factions
+- **Star Wars: Armada**
+  - Rebel Alliance
+  - Galactic Empire
+  - Galactic Republic
+  - Separatist Alliance
+- **Legends Content**
+  - UNSC (Halo)
+  - Covenant Empire (Halo)
+  - Colonial Fleet (Battlestar Galactica)
+  - Cylon Alliance (Battlestar Galactica)
+
+### Modern Web Features
+- Dark/Light theme support
+- Responsive design
+- Mobile-friendly interface
+- Print-friendly fleet lists
+- User authentication (via Auth0)
+- Cloud fleet storage (via Supabase)
 
 ## Getting Started
 
-First, run the development server:
-
+1. Install dependencies:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+    npm install
+``` 
+
+2. Start the development server:
+```bash
+    npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+3. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
+## Technology Stack
 
-[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
+- **Framework**: Next.js 14
+- **Styling**: 
+  - Tailwind CSS
+  - shadcn/ui components
+  - Radix UI primitives
+- **Authentication**: Auth0
+- **Database**: Supabase
+- **State Management**: React Hooks
+- **Image Optimization**: Sharp & Blurhash
+- **Analytics**: Vercel Analytics
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
+## Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+```
+.
+├── public/               # Static assets (images, icons, markdown)
+│   ├── icons/           # Faction and upgrade type icons
+│   ├── images/          # Ship and squadron artwork
+│   └── faq.md          # FAQ content
+├── scripts/             # Build and data generation scripts
+├── src/
+│   ├── components/      # React components
+│   │   ├── ui/         # Reusable UI components (shadcn/ui)
+│   │   └── ...         # Feature-specific components
+│   ├── generated/       # Auto-generated files
+│   ├── hooks/          # Custom React hooks
+│   ├── lib/            # Utility functions and shared logic
+│   ├── pages/          # Next.js pages and API routes
+│   └── styles/         # Global styles and Tailwind config
+├── templates/          # JSON templates for data structures
+└── types/             # TypeScript type definitions
+```
 
-## Learn More
+### Key Directories and Files
 
-To learn more about Next.js, take a look at the following resources:
+#### `/src/components`
+- **Feature Components**: Main building blocks of the application
+  - `FleetBuilder.tsx` - Core fleet building interface
+  - `FactionSelection.tsx` - Faction selection component
+  - `StarryBackground.tsx` - Animated background effect
+- **UI Components**: Reusable UI elements built with shadcn/ui
+  - `ui/button.tsx` - Button components
+  - `ui/dialog.tsx` - Modal dialogs
+  - `ui/toast.tsx` - Notification system
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+#### `/src/pages`
+- **Main Routes**:
+  - `index.tsx` - Homepage with faction selection
+  - `[faction]/index.tsx` - Dynamic faction-specific fleet builder
+  - `faq.tsx` - FAQ page
+- **API Routes**: Backend endpoints for data fetching
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+#### `/src/hooks`
+- Custom React hooks for:
+  - Fleet management
+  - Data persistence
+  - Theme switching
+  - Authentication
 
-## Deploy on Vercel
+#### `/public`
+- **Static Assets**:
+  - Faction logos
+  - Ship artwork
+  - Squadron images
+  - Documentation
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+#### `/templates`
+- JSON templates defining:
+  - Ship data structure
+  - Upgrade card format
+  - Squadron specifications
+  - Objective card format
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+#### `/scripts`
+- Build-time scripts:
+  - Image optimization
+  - Data generation
+  - Placeholder generation for images
+
+## Development
+
+The project uses TypeScript for type safety and follows modern React patterns. Key directories:
+
+- `/src/components` - Reusable React components
+- `/src/pages` - Next.js pages and API routes
+- `/src/styles` - Global styles and Tailwind configuration
+- `/public` - Static assets and icons
+- `/templates` - JSON templates for data structures
+
+## Contributing
+
+Contributions are welcome! Please visit our [GitHub repository](https://github.com/Polkadoty/armada-list-builder) to:
+- Report bugs
+- Submit feature requests
+- Create pull requests
+
+## Support
+
+If you find this project helpful, consider:
+- Supporting development on [Ko-fi](https://ko-fi.com/polkadoty)
+- Reporting bugs through GitHub issues
+- Contributing to the codebase
+
+## License
+
+This is a fan-made project and is not officially associated with Star Wars: Armada, Atomic Mass Games, Lucasfilm Limited, or its publishers.
+
+
+
+This structure follows Next.js conventions while organizing feature-specific code into logical groupings. The separation of concerns allows for easy maintenance and scalability of the application.

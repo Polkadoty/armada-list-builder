@@ -6,6 +6,7 @@ import { useSpring, animated } from 'react-spring';
 import UpgradeIconsToolbar from './UpgradeIconsToolbar';
 import { Ship, Upgrade } from "./FleetBuilder";
 import { Copy, Trash2, ArrowLeftRight, X, Eye } from 'lucide-react';
+import { OptimizedImage } from './OptimizedImage';
 
 interface SelectedShipProps {
   ship: Ship;
@@ -91,7 +92,7 @@ export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRem
   const handleImageTouch = (e: React.TouchEvent) => {
     e.preventDefault();
     // Only open modal if not swiping
-    if (!isDragging.current) {
+    if (isDragging.current) {
       setShowImageModal(true);
     }
   };
@@ -108,14 +109,13 @@ export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRem
             onTouchEnd={handleShipTouchEnd}
           >
             <CardContent className="p-0">
-              <div className="relative w-full aspect-[8/3] overflow-hidden group">
-                <Image 
+              <div className="relative w-full aspect-[8/3] overflow-hidden group rounded-t-lg">
+                <OptimizedImage 
                   src={ship.cardimage} 
                   alt={ship.name}
-                  layout="fill"
-                  objectFit="cover"
-                  objectPosition="top"
-                  className="scale-[103%]"
+                  width={800}
+                  height={300}
+                  className="object-cover object-top scale-[103%]" // Added rounded corners
                   onClick={() => setShowImageModal(true)}
                 />
                 <button
@@ -208,17 +208,17 @@ export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRem
         </div>
       </animated.div>
       {showImageModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowImageModal(false)}>
+        <div className="fixed inset-0 flex items-center justify-center z-50" onClick={() => setShowImageModal(false)}>
           <div className="relative">
-            <Image
+            <OptimizedImage
               src={ship.cardimage}
               alt={ship.name}
               width={420}
               height={630}
-              className="rounded-lg w-auto h-[420px] sm:h-[630px] lg:h-[840px]"
+              className="rounded-lg w-auto h-[420px] sm:h-[630px] lg:h-[840px] scale-[1.03]"
             />
             <button
-              className="absolute top-2 right-2 bg-black bg-opacity-50 rounded-full p-1"
+              className="absolute top-2 right-2 rounded-full p-1"
               onClick={() => setShowImageModal(false)}
             >
               <X size={20} className="text-white" />
@@ -327,15 +327,25 @@ function SwipeableUpgrade({ upgrade, onSwipe, onSwap, onRemove }: SwipeableUpgra
             </span>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
-            <span>{upgrade.points} pts</span>
-            <div className="hidden sm:flex items-center gap-1">
-              <Button variant="ghost" size="sm" onClick={onSwap} className="text-blue-500 p-1">
+          <div className="flex items-center gap-1">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={onSwap} 
+                className={`p-1 ${
+                  upgrade.restrictions?.enable_upgrades?.some(upgrade => upgrade.trim() !== '') 
+                    ? 'text-gray-400 cursor-not-allowed' 
+                    : 'text-blue-500'
+                }`}
+                disabled={upgrade.restrictions?.enable_upgrades?.some(upgrade => upgrade.trim() !== '')}
+              >
                 <ArrowLeftRight size={16} />
               </Button>
               <Button variant="ghost" size="sm" onClick={onRemove} className="text-red-500 p-1">
                 <X size={16} />
               </Button>
             </div>
+            <span>{upgrade.points}<span className="hidden sm:inline"> pts</span></span>
           </div>
         </div>
         <div className="absolute left-0 top-0 bottom-0 flex items-center justify-center w-12 text-blue-500 bg-gray-800 bg-opacity-75" style={{ transform: 'translateX(-100%)' }}>
@@ -348,15 +358,15 @@ function SwipeableUpgrade({ upgrade, onSwipe, onSwap, onRemove }: SwipeableUpgra
       {showImageModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowImageModal(false)}>
           <div className="relative">
-            <Image
+            <OptimizedImage
               src={upgrade.cardimage}
               alt={upgrade.name}
               width={300}
               height={420}
-              className="rounded-lg sm:w-[450px] sm:h-[630px] lg:w-[600px] lg:h-[840px]"
+              className="rounded-lg sm:w-[450px] sm:h-[630px] lg:w-[600px] lg:h-[840px] scale-[1.03]"
             />
             <button
-              className="absolute top-2 right-2 bg-black bg-opacity-50 rounded-full p-1"
+              className="absolute top-2 right-2 rounded-full p-1"
               onClick={() => setShowImageModal(false)}
             >
               <X size={20} className="text-white" />
@@ -367,5 +377,6 @@ function SwipeableUpgrade({ upgrade, onSwipe, onSwap, onRemove }: SwipeableUpgra
     </div>
   );
 }
+
 
 
