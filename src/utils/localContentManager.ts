@@ -34,6 +34,7 @@ export const saveLocalContent = (content: ContentData, type: keyof LocalContent)
   localStorage.setItem(storageKey, JSON.stringify(newContent));
 };
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export const getLocalContent = (type: LocalContentType): Record<string, any> => {
   const storageKey = `local${type.charAt(0).toUpperCase() + type.slice(1)}`;
   const content = localStorage.getItem(storageKey);
