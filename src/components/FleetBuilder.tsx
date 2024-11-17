@@ -86,7 +86,7 @@ export interface Squadron {
   searchableText: string;
 }
 
-interface Objective {
+export interface Objective {
   id: string;
   name: string;
   cardimage: string;

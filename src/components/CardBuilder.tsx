@@ -224,7 +224,7 @@ export function CardBuilder() {
     ...initialModelData,
     author: user?.email || "anonymous"
   });
-  const [modelKey, setModelKey] = useState("");
+  const [modelKey] = useState<string>('');
   const [advancedMode, setAdvancedMode] = useState(false);
 
   const factionOptions = [
@@ -323,10 +323,10 @@ export function CardBuilder() {
     
     // Add the calculated number of weapons-team-offensive-retro
     for (let i = 0; i < possibleCombos; i++) {
-      newUpgrades.push('weapons-team-offensive-retro');
+      newUpgradesArray.push('weapons-team-offensive-retro');
     }
     
-    setCurrentModel(prev => ({...prev, upgrades: newUpgrades}));
+    setCurrentModel(prev => ({...prev, upgrades: newUpgradesArray}));
   }, [currentModel.traits, currentModel.upgrades]);
 
   return (

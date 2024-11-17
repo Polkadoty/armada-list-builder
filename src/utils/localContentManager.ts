@@ -1,13 +1,25 @@
+import { ShipModel } from "@/components/ShipSelector";
+import { Upgrade } from "@/components/FleetBuilder";
+import { Squadron } from "@/components/FleetBuilder";
+import { Objective } from "@/components/FleetBuilder";
+
 export type LocalContentType = 'ships' | 'squadrons' | 'upgrades' | 'objectives';
 
-interface LocalContent {
-  ships: Record<string, any>;
-  squadrons: Record<string, any>;
-  upgrades: Record<string, any>;
-  objectives: Record<string, any>;
+interface ContentData {
+  ships?: Record<string, ShipModel>;
+  upgrades?: Record<string, Upgrade>;
+  squadrons?: Record<string, Squadron>;
+  objectives?: Record<string, Objective>;
 }
 
-export const saveLocalContent = (type: LocalContentType, content: any) => {
+interface LocalContent {
+  ships: ContentData['ships'];
+  upgrades: ContentData['upgrades'];
+  squadrons: ContentData['squadrons'];
+  objectives: ContentData['objectives'];
+}
+
+export const saveLocalContent = (content: ContentData, type: keyof LocalContent) => {
   const storageKey = `local${type.charAt(0).toUpperCase() + type.slice(1)}`;
   const existingContent = localStorage.getItem(storageKey);
   let newContent;

@@ -3,7 +3,6 @@ import { getLocalContent, LocalContentType } from './localContentManager';
 
 export const checkAndFetchData = async (setIsLoading: (isLoading: boolean) => void, setLoadingProgress: (progress: number) => void, setLoadingMessage: (message: string) => void) => {
   const contentTypes = ['ships', 'squadrons', 'upgrades', 'objectives'];
-  const sources = ['regular', 'legacy', 'legends', 'oldLegacy', 'arc', 'local', 'AMG'];
   
   for (const type of contentTypes) {
     // Get local content
