@@ -10,7 +10,6 @@ import { Label } from "./ui/label";
 import { Separator } from "./ui/separator";
 import { useUser } from "@auth0/nextjs-auth0/client";
 import { imageDb } from "@/lib/imageDb";
-import { useRouter } from 'next/router';
 type ContentType = "ship" | "squadron" | "upgrade" | "objective";
 
 interface ShipData {
