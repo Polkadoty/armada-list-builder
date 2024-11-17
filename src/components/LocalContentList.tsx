@@ -84,20 +84,22 @@ export function LocalContentList({ isOpen, setIsOpen }: LocalContentListProps) {
       }
 
       return Object.entries(content).map(([id, item]) => ({
+        /* eslint-disable @typescript-eslint/no-explicit-any */
         id: id as string,
         /* eslint-disable @typescript-eslint/no-explicit-any */
         name: (item as any).name || id,
-        /* eslint-enable @typescript-eslint/no-explicit-any */
+        /* eslint-disable @typescript-eslint/no-explicit-any */
         faction: (item as any).faction || 'N/A',
-        /* eslint-enable @typescript-eslint/no-explicit-any */
+        /* eslint-disable @typescript-eslint/no-explicit-any */
         type: contentType,
         /* eslint-disable @typescript-eslint/no-explicit-any */
         points: (item as any).points || 0,
-        /* eslint-enable @typescript-eslint/no-explicit-any */
+        /* eslint-disable @typescript-eslint/no-explicit-any */
         cardimage: (item as any).cardimage || ''
       }));
       /* eslint-enable @typescript-eslint/no-explicit-any */
     } catch (error) {
+      /* eslint-disable @typescript-eslint/no-explicit-any */
       console.error('Error parsing local content:', error);
       return [];
     }
