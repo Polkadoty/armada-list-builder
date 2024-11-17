@@ -51,8 +51,6 @@ export function LocalContentList({ isOpen, setIsOpen }: LocalContentListProps) {
   /* eslint-disable @typescript-eslint/no-explicit-any */
   const [searchQuery, setSearchQuery] = useState('');
   const [factionFilter, setFactionFilter] = useState<string[]>([]);
-  const [showImageModal, setShowImageModal] = useState(false);
-  const [selectedImage, setSelectedImage] = useState<string>('');
   const { theme } = useTheme();
 
   const getContent = () => {
@@ -148,11 +146,6 @@ export function LocalContentList({ isOpen, setIsOpen }: LocalContentListProps) {
     }
   };
 
-  const handleShowImage = (imageUrl: string) => {
-    setSelectedImage(imageUrl);
-    setShowImageModal(true);
-  };
-
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className={`max-w-[95vw] sm:max-w-3xl max-h-[90vh] flex flex-col border backdrop-blur-md ${
@@ -230,17 +223,6 @@ export function LocalContentList({ isOpen, setIsOpen }: LocalContentListProps) {
               <TableBody>
                 {filteredContent.map((item) => (
                   <TableRow key={item.id} className="hover:bg-muted/50">
-                    <TableCell className="flex items-center gap-2">
-                      {item.cardimage && (
-                        <button
-                          className="p-1 hover:bg-muted rounded"
-                          onClick={() => handleShowImage(item.cardimage)}
-                        >
-                          <Eye size={16} />
-                        </button>
-                      )}
-                      {item.name}
-                    </TableCell>
                     <TableCell>{capitalizeFirstLetter(item.faction)}</TableCell>
                     <TableCell>{capitalizeFirstLetter(item.type)}</TableCell>
                     <TableCell className="text-right flex items-center justify-end gap-2">
