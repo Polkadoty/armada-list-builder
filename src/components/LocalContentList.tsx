@@ -8,7 +8,6 @@ import { Button } from './ui/button';
 import { ChevronDown, Eye, MoreVertical } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { useTheme } from 'next-themes';
-import { ImageModal } from './ImageModal';
 
 interface ShipModel {
   name: string;
@@ -92,12 +91,14 @@ export function LocalContentList({ isOpen, setIsOpen }: LocalContentListProps) {
         name: (item as any).name || id,
         /* eslint-enable @typescript-eslint/no-explicit-any */
         faction: (item as any).faction || 'N/A',
+        /* eslint-enable @typescript-eslint/no-explicit-any */
         type: contentType,
         /* eslint-disable @typescript-eslint/no-explicit-any */
         points: (item as any).points || 0,
         /* eslint-enable @typescript-eslint/no-explicit-any */
         cardimage: (item as any).cardimage || ''
       }));
+      /* eslint-enable @typescript-eslint/no-explicit-any */
     } catch (error) {
       console.error('Error parsing local content:', error);
       return [];
@@ -267,12 +268,6 @@ export function LocalContentList({ isOpen, setIsOpen }: LocalContentListProps) {
           </div>
         </div>
       </DialogContent>
-
-      <ImageModal
-        src={selectedImage}
-        alt={selectedImage}
-        onClose={() => setShowImageModal(false)}
-      />
     </Dialog>
   );
 } 
