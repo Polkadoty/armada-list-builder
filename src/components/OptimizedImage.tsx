@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { AlertCircle } from 'lucide-react';
 import { placeholderMap } from '@/generated/placeholderMap';
+import { imageDb } from '@/lib/imageDb';
 
 interface OptimizedImageProps {
   src: string;
@@ -31,10 +32,31 @@ export function OptimizedImage({
   const [hasError, setHasError] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [shouldLoad, setShouldLoad] = useState(priority);
+  const [indexedDBImage, setIndexedDBImage] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const imageKey = src.split('/').pop()?.replace(/\.[^/.]+$/, '');
   const placeholderUrl = imageKey ? placeholderMap[imageKey] : undefined;
+  const isIndexedDBImage = src.startsWith('ship_');
+
+  useEffect(() => {
+    if (isIndexedDBImage) {
+      const loadIndexedDBImage = async () => {
+        try {
+          const imageData = await imageDb.getImage(src);
+          if (imageData) {
+            setIndexedDBImage(imageData);
+          } else {
+            setHasError(true);
+          }
+        } catch (error) {
+          console.error('Error loading image from IndexedDB:', error);
+          setHasError(true);
+        }
+      };
+      loadIndexedDBImage();
+    }
+  }, [src, isIndexedDBImage]);
 
   useEffect(() => {
     if (priority) return;
@@ -73,7 +95,7 @@ export function OptimizedImage({
 
   return (
     <div ref={containerRef} className="relative w-full h-full overflow-hidden">
-      {placeholderUrl && (
+      {placeholderUrl && !isIndexedDBImage && (
         <div 
           className="absolute inset-0 w-full h-full"
           style={{
@@ -92,7 +114,7 @@ export function OptimizedImage({
       )}
       {!hasError && shouldLoad && (
         <img
-          src={src}
+          src={isIndexedDBImage ? indexedDBImage || '' : src}
           alt={alt}
           width={width}
           height={height}

@@ -1,6 +1,21 @@
 import Cookies from 'js-cookie';
+import { getLocalContent, LocalContentType } from './localContentManager';
 
 export const checkAndFetchData = async (setIsLoading: (isLoading: boolean) => void, setLoadingProgress: (progress: number) => void, setLoadingMessage: (message: string) => void) => {
+  const contentTypes = ['ships', 'squadrons', 'upgrades', 'objectives'];
+  const sources = ['regular', 'legacy', 'legends', 'oldLegacy', 'arc', 'local', 'AMG'];
+  
+  for (const type of contentTypes) {
+    // Get local content
+    const localContent = getLocalContent(type as LocalContentType);
+    
+    if (Object.keys(localContent).length > 0) {
+      // Store local content with source identifier
+      const storageKey = `${type}_local`;
+      localStorage.setItem(storageKey, JSON.stringify(localContent));
+    }
+  }
+
   try {
     const response = await fetch('https://api.swarmada.wiki');
     const data = await response.json();

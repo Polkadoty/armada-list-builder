@@ -174,6 +174,15 @@ export default function Home() {
         </div>
         <FactionSelection onHover={setHoveredFaction} />
         <div className="mt-8 flex justify-center space-x-4">
+          <Link href="/cardbuilder">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20"
+            >
+              CARD BUILDER
+            </Button>
+          </Link>
           <Button 
             variant="outline" 
             size="sm" 
@@ -184,7 +193,9 @@ export default function Home() {
             IMPORT
           </Button>
           <Link href="/faq">
-            <Button variant="outline" size="sm" className="text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20">FAQ</Button>
+            <Button variant="outline" size="sm" className="text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20">
+              FAQ
+            </Button>
           </Link>
           <Button
             variant="outline"

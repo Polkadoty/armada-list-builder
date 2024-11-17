@@ -137,7 +137,7 @@ export interface Ship extends ShipModel {
   searchableText: string;
 }
 
-export type ContentSource = "regular" | "legacy" | "legends" | "oldLegacy" | "arc";
+export type ContentSource = "regular" | "legacy" | "legends" | "oldLegacy" | "arc" | "local" | "AMG";
 
 const SectionHeader = ({
   title,
