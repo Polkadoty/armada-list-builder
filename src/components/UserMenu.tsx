@@ -10,9 +10,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User } from 'lucide-react';
 import { FleetList } from './FleetList';
 import { Separator } from "@/components/ui/separator";
+import { LocalContentList } from './LocalContentList';
+import { useState } from 'react';
+import { Database } from 'lucide-react';
 
 export function UserMenu() {
   const { user, error } = useUser();
+  const [showLocalContent, setShowLocalContent] = useState(false);
 
   if (error) {
     return <div>Error: {error.message}</div>;
@@ -46,6 +50,18 @@ export function UserMenu() {
           <div className="px-2 py-2">
             <Button 
               variant="ghost" 
+              size="sm"
+              className="w-full justify-start text-sm font-normal h-9"
+              onClick={() => setShowLocalContent(true)}
+            >
+              <Database className="mr-2 h-4 w-4" />
+              Local Content
+            </Button>
+          </div>
+          <Separator />
+          <div className="px-2 py-2">
+            <Button 
+              variant="ghost" 
               size="sm" 
               asChild
               className="w-full justify-start text-sm font-normal h-9"
@@ -56,6 +72,10 @@ export function UserMenu() {
             </Button>
           </div>
         </div>
+        <LocalContentList 
+          isOpen={showLocalContent}
+          setIsOpen={setShowLocalContent}
+        />
       </PopoverContent>
     </Popover>
   );

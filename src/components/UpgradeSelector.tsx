@@ -68,7 +68,8 @@ export default function UpgradeSelector({
     arc: Cookies.get('enableArc') === 'true',
     legacy: Cookies.get('enableLegacy') === 'true',
     legends: Cookies.get('enableLegends') === 'true',
-    oldLegacy: Cookies.get('enableOldLegacy') === 'true'
+    oldLegacy: Cookies.get('enableOldLegacy') === 'true',
+    local: Cookies.get('enableLocal') === 'true'
   });
 
   useEffect(() => {
@@ -79,7 +80,7 @@ export default function UpgradeSelector({
       const cachedLegendsUpgrades = localStorage.getItem('legendsUpgrades');
       const cachedOldLegacyUpgrades = localStorage.getItem('oldLegacyUpgrades');
       const cachedArcUpgrades = localStorage.getItem('arcUpgrades');
-
+      const cachedLocalUpgrades = localStorage.getItem('localUpgrades');
       let allUpgrades: Upgrade[] = [];
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -141,6 +142,11 @@ export default function UpgradeSelector({
       if (cachedArcUpgrades) {
         const arcUpgradeData = JSON.parse(cachedArcUpgrades);
         allUpgrades = [...allUpgrades, ...processUpgrades(arcUpgradeData, 'arc')];
+      }
+
+      if (cachedLocalUpgrades) {
+        const localUpgradeData = JSON.parse(cachedLocalUpgrades);
+        allUpgrades = [...allUpgrades, ...processUpgrades(localUpgradeData, 'local')];
       }
 
       // Get errata keys from localStorage
@@ -388,6 +394,9 @@ export default function UpgradeSelector({
     if (url.startsWith('http://') || url.startsWith('https://')) {
       return url;
     }
+    if (url.startsWith('ship_') || url.startsWith('squadron_') || url.startsWith('upgrade_') || url.startsWith('objective_')) {
+      return url;
+    }
     return `https://api.swarmada.wiki${url.startsWith('/') ? '' : '/'}${url}`;
   };
 
@@ -410,7 +419,8 @@ export default function UpgradeSelector({
         arc: Cookies.get('enableArc') === 'true',
         legacy: Cookies.get('enableLegacy') === 'true',
         legends: Cookies.get('enableLegends') === 'true',
-        oldLegacy: Cookies.get('enableOldLegacy') === 'true'
+        oldLegacy: Cookies.get('enableOldLegacy') === 'true',
+        local: Cookies.get('enableLocal') === 'true'
       };
 
       if (JSON.stringify(newContentSources) !== JSON.stringify(contentSources)) {

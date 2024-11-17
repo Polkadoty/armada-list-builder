@@ -37,7 +37,7 @@ export function OptimizedImage({
 
   const imageKey = src.split('/').pop()?.replace(/\.[^/.]+$/, '');
   const placeholderUrl = imageKey ? placeholderMap[imageKey] : undefined;
-  const isIndexedDBImage = src.startsWith('ship_');
+  const isIndexedDBImage = src.startsWith('ship_') || src.startsWith('squadron_') || src.startsWith('upgrade_') || src.startsWith('objective_');
 
   useEffect(() => {
     if (isIndexedDBImage) {

@@ -1,17 +1,12 @@
 import Cookies from 'js-cookie';
-import { getLocalContent, LocalContentType } from './localContentManager';
 
 export const checkAndFetchData = async (setIsLoading: (isLoading: boolean) => void, setLoadingProgress: (progress: number) => void, setLoadingMessage: (message: string) => void) => {
-  const contentTypes = ['ships', 'squadrons', 'upgrades', 'objectives'];
+  const contentTypes = ['Ships', 'Squadrons', 'Upgrades', 'Objectives'];
   
   for (const type of contentTypes) {
-    // Get local content
-    const localContent = getLocalContent(type as LocalContentType);
-    
-    if (Object.keys(localContent).length > 0) {
-      // Store local content with source identifier
-      const storageKey = `${type}_local`;
-      localStorage.setItem(storageKey, JSON.stringify(localContent));
+    const localStorageContent = localStorage.getItem(type);
+    if (localStorageContent) {
+      console.log(`Retrieved local content for ${type}:`, localStorageContent);
     }
   }
 

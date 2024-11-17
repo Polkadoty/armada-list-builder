@@ -1223,6 +1223,8 @@ const [showPrintObjectives, setShowPrintObjectives] = useState(true);
         return '[OldLegacy]';
       case 'arc':
         return '[ARC]';
+      case 'local':
+        return '[Local]';
       default:
         return '';
     }
@@ -1711,6 +1713,8 @@ const [showPrintObjectives, setShowPrintObjectives] = useState(true);
             source = "legends";
           } else if (shipName.includes("[ARC]")) {
             source = "arc";
+          } else if (shipName.includes("[Local]")) {
+            source = "local";
           }
           const newShip: Ship = {
             ...shipModel,
@@ -1736,6 +1740,8 @@ const [showPrintObjectives, setShowPrintObjectives] = useState(true);
               source = "legends";
             } else if (shipName.includes("[ARC]")) {
               source = "arc";
+            } else if (shipName.includes("[Local]")) {
+              source = "local";
             }
             const selectedSquadron = {
               ...squadron,
@@ -1884,6 +1890,9 @@ const [showPrintObjectives, setShowPrintObjectives] = useState(true);
                   case 'arc':
                     source = 'arc';
                     break;
+                  case 'local':
+                    source = 'local';
+                    break;
                 }
               }
               console.log(`Source for ${upgradeName}:`, source);
@@ -1945,6 +1954,8 @@ const [showPrintObjectives, setShowPrintObjectives] = useState(true);
                 source = "legends";
               } else if (squadronName.includes("[ARC]")) {
                 source = "arc";
+              } else if (squadronName.includes("[Local]")) {
+                source = "local";
               }
               const selectedSquadron = {
                 ...squadron,

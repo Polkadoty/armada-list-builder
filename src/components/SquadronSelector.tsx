@@ -45,7 +45,8 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
     arc: Cookies.get('enableArc') === 'true',
     legacy: Cookies.get('enableLegacy') === 'true',
     legends: Cookies.get('enableLegends') === 'true',
-    oldLegacy: Cookies.get('enableOldLegacy') === 'true'
+    oldLegacy: Cookies.get('enableOldLegacy') === 'true',
+    local: Cookies.get('enableLocal') === 'true'
   });
 
   useEffect(() => {
@@ -54,7 +55,8 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
         arc: Cookies.get('enableArc') === 'true',
         legacy: Cookies.get('enableLegacy') === 'true',
         legends: Cookies.get('enableLegends') === 'true',
-        oldLegacy: Cookies.get('enableOldLegacy') === 'true'
+        oldLegacy: Cookies.get('enableOldLegacy') === 'true',
+        local: Cookies.get('enableLocal') === 'true'
       };
 
       if (JSON.stringify(newContentSources) !== JSON.stringify(contentSources)) {
@@ -74,6 +76,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
       const cachedLegendsSquadrons = localStorage.getItem('legendsSquadrons');
       const cachedOldLegacySquadrons = localStorage.getItem('oldLegacySquadrons');
       const cachedArcSquadrons = localStorage.getItem('arcSquadrons');
+      const cachedLocalSquadrons = localStorage.getItem('localSquadrons');
 
       const squadronMap = new Map<string, Squadron>();
 
@@ -148,6 +151,11 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
       if (cachedArcSquadrons) {
         const arcSquadronData = JSON.parse(cachedArcSquadrons);
         processSquadrons(arcSquadronData, 'arc');
+      }
+
+      if (cachedLocalSquadrons) {
+        const localSquadronData = JSON.parse(cachedLocalSquadrons);
+        processSquadrons(localSquadronData, 'local');
       }
 
       // Get errata keys from localStorage
@@ -290,6 +298,9 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
 
   const validateImageUrl = (url: string): string => {
     if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    if (url.startsWith('ship_') || url.startsWith('squadron_') || url.startsWith('upgrade_') || url.startsWith('objective_')) {
       return url;
     }
     return `https://api.swarmada.wiki${url.startsWith('/') ? '' : '/'}${url}`;

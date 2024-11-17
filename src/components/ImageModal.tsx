@@ -1,7 +1,8 @@
 // components/ImageModal.tsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { OptimizedImage } from './OptimizedImage';
+import { imageDb } from '@/lib/imageDb';
 
 interface ImageModalProps {
   src: string;
@@ -11,9 +12,39 @@ interface ImageModalProps {
 
 export function ImageModal({ src, alt, onClose }: ImageModalProps) {
   const [isLoading, setIsLoading] = useState(true);
+  const [imageUrl, setImageUrl] = useState<string>('');
 
-  // Create thumbnail version of the URL
-  const thumbnailSrc = src.replace(/\.(png|jpg|jpeg|webp)/, '-thumb.$1');
+  useEffect(() => {
+    const loadImage = async () => {
+      if (!src) return;
+      
+      if (src.startsWith('ship_') || src.startsWith('squadron_') || src.startsWith('upgrade_')) {
+        try {
+          const image = await imageDb.getImage(src);
+          if (image) {
+            setImageUrl(image);
+          }
+        } catch (error) {
+          console.error('Error loading image from IndexedDB:', error);
+        }
+      } else {
+        setImageUrl(src);
+      }
+    };
+
+    loadImage();
+
+    return () => {
+      if (imageUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(imageUrl);
+      }
+    };
+  }, [src]);
+
+  // Create thumbnail version of the URL only if we have an imageUrl
+  const thumbnailSrc = imageUrl ? imageUrl.replace(/\.(png|jpg|jpeg|webp)/, '-thumb.$1') : '';
+
+  if (!imageUrl) return null;
 
   return (
     <div 
@@ -32,7 +63,7 @@ export function ImageModal({ src, alt, onClose }: ImageModalProps) {
           />
         )}
         <OptimizedImage
-          src={src}
+          src={imageUrl}
           alt={alt}
           width={300}
           height={420}

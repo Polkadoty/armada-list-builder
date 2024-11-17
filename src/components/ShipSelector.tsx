@@ -65,7 +65,8 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
     arc: Cookies.get('enableArc') === 'true',
     legacy: Cookies.get('enableLegacy') === 'true',
     legends: Cookies.get('enableLegends') === 'true',
-    oldLegacy: Cookies.get('enableOldLegacy') === 'true'
+    oldLegacy: Cookies.get('enableOldLegacy') === 'true',
+    local: Cookies.get('enableLocal') === 'true'
   });
 
   useEffect(() => {
@@ -74,7 +75,8 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
         arc: Cookies.get('enableArc') === 'true',
         legacy: Cookies.get('enableLegacy') === 'true',
         legends: Cookies.get('enableLegends') === 'true',
-        oldLegacy: Cookies.get('enableOldLegacy') === 'true'
+        oldLegacy: Cookies.get('enableOldLegacy') === 'true',
+        local: Cookies.get('enableLocal') === 'true'
       };
 
       if (JSON.stringify(newContentSources) !== JSON.stringify(contentSources)) {
@@ -160,6 +162,14 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
         allShips = [...allShips, ...processShips(arcShipData, 'arc')];
       }
 
+      if (contentSources.local) {
+        const cachedLocalShips = localStorage.getItem('localShips');
+        if (cachedLocalShips) {
+          const localShipData = JSON.parse(cachedLocalShips);
+          allShips = [...allShips, ...processShips(localShipData, 'local')];
+        }
+      }
+
       // Get errata keys from localStorage
       const errataKeys = JSON.parse(localStorage.getItem('errataKeys') || '{}');
       const shipErrataKeys = errataKeys.ships || [];
@@ -171,7 +181,7 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
       allShips.forEach(ship => {
         // Use chassis name for grouping since errata is chassis-based
         const baseName = ship.chassis
-          .replace(/^(legacy|legends|oldLegacy|arc)-/, '') // Remove source prefix
+          .replace(/^(legacy|legends|oldLegacy|arc|local)-/, '') // Remove source prefix
           .replace(/-errata(-[^-]+)?$/, ''); // Remove errata suffix
         
         if (!shipGroups.has(baseName)) {
@@ -197,8 +207,8 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
             // Find if there's a source-prefixed version of this exact model
             const sourceVersion = group.find(candidate => 
               candidate.id !== ship.id && 
-              candidate.id.match(/^(legacy|legends|oldLegacy|arc)-/) &&
-              ship.id === candidate.id.replace(/^(legacy|legends|oldLegacy|arc)-/, '')
+              candidate.id.match(/^(legacy|legends|oldLegacy|arc|local)-/) &&
+              ship.id === candidate.id.replace(/^(legacy|legends|oldLegacy|arc|local)-/, '')
             );
 
             if (sourceVersion) {
@@ -218,10 +228,10 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
           // Remove duplicates and check content sources
           const uniqueShips = new Map();
           processedShips.forEach(ship => {
-            const normalizedId = ship.id.replace(/^(legacy|legends|oldLegacy|arc)-/, '');
+            const normalizedId = ship.id.replace(/^(legacy|legends|oldLegacy|arc|local)-/, '');
             const isSourceEnabled = ship.source === 'regular' || contentSources[ship.source as keyof typeof contentSources];
             
-            if (isSourceEnabled && (!uniqueShips.has(normalizedId) || ship.id.match(/^(legacy|legends|oldLegacy|arc)-/))) {
+            if (isSourceEnabled && (!uniqueShips.has(normalizedId) || ship.id.match(/^(legacy|legends|oldLegacy|arc|local)-/))) {
               uniqueShips.set(normalizedId, ship);
             }
           });
