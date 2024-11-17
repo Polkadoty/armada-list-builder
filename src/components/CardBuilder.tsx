@@ -6,14 +6,11 @@ import { Input } from "./ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Button } from "./ui/button";
 import { Switch } from "./ui/switch";
-import { v4 as uuidv4 } from 'uuid';
 import { Label } from "./ui/label";
 import { Separator } from "./ui/separator";
 import { useUser } from "@auth0/nextjs-auth0/client";
 import { imageDb } from "@/lib/imageDb";
 import { useRouter } from 'next/router';
-import { ArrowLeft } from 'lucide-react';
-
 type ContentType = "ship" | "squadron" | "upgrade" | "objective";
 
 interface ShipData {
@@ -418,11 +415,9 @@ export function CardBuilder() {
     ...initialModelData,
     author: user?.email || "anonymous"
   });
-  const [modelKey] = useState<string>('');
   const [advancedMode, setAdvancedMode] = useState(false);
   const [squadronData, setSquadronData] = useState<SquadronData>(initialSquadronData);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const router = useRouter();
   const [upgradeData, setUpgradeData] = useState<UpgradeData>(initialUpgradeData);
 
   const factionOptions = [

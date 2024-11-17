@@ -10,7 +10,34 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useTheme } from 'next-themes';
 import { ImageModal } from './ImageModal';
 
-const contentTypes = ['Ships', 'Squadrons', 'Upgrades', 'Objectives'];
+interface ShipModel {
+  name: string;
+  chassis_name?: string;
+  faction: string;
+  points: number;
+  cardimage: string;
+}
+
+interface LocalShip {
+  models: {
+    [key: string]: ShipModel;
+  };
+}
+
+interface LocalContent {
+  ships: {
+    [key: string]: LocalShip;
+  };
+  squadrons: {
+    [key: string]: any; // Replace with proper type if needed
+  };
+  upgrades: {
+    [key: string]: any; // Replace with proper type if needed
+  };
+  objectives: {
+    [key: string]: any; // Replace with proper type if needed
+  };
+}
 
 interface LocalContentListProps {
   isOpen: boolean;
@@ -21,27 +48,27 @@ export function LocalContentList({ isOpen, setIsOpen }: LocalContentListProps) {
   const [contentType, setContentType] = useState<string>('ships');
   const [searchQuery, setSearchQuery] = useState('');
   const [factionFilter, setFactionFilter] = useState<string[]>([]);
-  const { theme } = useTheme();
   const [showImageModal, setShowImageModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string>('');
+  const { theme } = useTheme();
 
   const getContent = () => {
     try {
-      let content;
+      let content: LocalContent[keyof LocalContent];
       switch (contentType.toLowerCase()) {
-        case 'ships':
-          content = JSON.parse(localStorage.getItem('localShips') || '{"ships": {}}').ships;
-          return Object.entries(content).flatMap(([chassisId, ship]) => {
-            const models = (ship as any).models || {};
-            return Object.entries(models).map(([modelId, model]) => ({
+        case 'ships': {
+          const localShips = JSON.parse(localStorage.getItem('localShips') || '{"ships": {}}') as LocalContent;
+          return Object.values(localShips.ships).flatMap(ship => 
+            Object.entries(ship.models).map(([modelId, model]) => ({
               id: modelId,
-              name: (model as any).name || (model as any).chassis_name || modelId,
-              faction: (model as any).faction || 'N/A',
+              name: model.name || model.chassis_name || modelId,
+              faction: model.faction || 'N/A',
               type: contentType,
-              points: (model as any).points || 0,
-              cardimage: (model as any).cardimage || ''
-            }));
-          });
+              points: model.points || 0,
+              cardimage: model.cardimage || ''
+            }))
+          );
+        }
         case 'squadrons':
           content = JSON.parse(localStorage.getItem('localSquadrons') || '{"squadrons": {}}').squadrons;
           break;
@@ -82,11 +109,6 @@ export function LocalContentList({ isOpen, setIsOpen }: LocalContentListProps) {
     return string.charAt(0).toUpperCase() + string.slice(1);
   };
 
-  const handleShowImage = (image: string) => {
-    setSelectedImage(image);
-    setShowImageModal(true);
-  };
-
   const handleRemoveItem = (id: string, type: string) => {
     try {
       if (type === 'ships') {
@@ -115,6 +137,11 @@ export function LocalContentList({ isOpen, setIsOpen }: LocalContentListProps) {
     } catch (error) {
       console.error('Error removing item:', error);
     }
+  };
+
+  const handleShowImage = (imageUrl: string) => {
+    setSelectedImage(imageUrl);
+    setShowImageModal(true);
   };
 
   return (
