@@ -40,6 +40,7 @@ export default function FactionSelection({ onHover }: { onHover: (faction: strin
   const { theme, systemTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [enableLegends, setEnableLegends] = useState(false);
+  const [enableCustomFactions, setEnableCustomFactions] = useState(false);
   const [showLegendsContent, setShowLegendsContent] = useState(false);
 
   useEffect(() => {
@@ -47,18 +48,21 @@ export default function FactionSelection({ onHover }: { onHover: (faction: strin
   }, []);
 
   useEffect(() => {
-    const checkLegendsState = () => {
+    const checkContentState = () => {
       const legendsEnabled = Cookies.get('enableLegends') === 'true';
+      const customFactionsEnabled = Cookies.get('enableCustomFactions') === 'true';
       setEnableLegends(legendsEnabled);
-      if (legendsEnabled) {
+      setEnableCustomFactions(customFactionsEnabled);
+      
+      if (legendsEnabled && customFactionsEnabled) {
         setTimeout(() => setShowLegendsContent(true), 50);
       } else {
         setShowLegendsContent(false);
       }
     };
 
-    checkLegendsState();
-    const intervalId = setInterval(checkLegendsState, 1000);
+    checkContentState();
+    const intervalId = setInterval(checkContentState, 1000);
     return () => clearInterval(intervalId);
   }, []);
 
@@ -69,11 +73,14 @@ export default function FactionSelection({ onHover }: { onHover: (faction: strin
     onHover(faction);
   };
 
-  const allFactions = enableLegends ? [...baseFactions, ...legendsFactions] : baseFactions;
+  const availableFactions = [
+    ...baseFactions,
+    ...(enableLegends && enableCustomFactions ? legendsFactions : [])
+  ];
 
   return (
     <div className="grid grid-cols-2 gap-4 justify-items-center">
-      {allFactions.map((faction, index) => (
+      {availableFactions.map((faction, index) => (
         <>
           {enableLegends && index === baseFactions.length && (
             <>

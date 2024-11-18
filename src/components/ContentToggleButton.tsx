@@ -15,6 +15,7 @@ const CONFIG = {
   showOldLegacyToggle: true,
   showArcToggle: true,
   showLocalToggle: true,
+  showCustomFactionsToggle: true,
 };
 
 export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadingMessage, tournamentMode, setTournamentMode }: {
@@ -29,6 +30,7 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
   const [enableOldLegacy, setEnableOldLegacy] = useState(false);
   const [enableArc, setEnableArc] = useState(false);
   const [enableLocal, setEnableLocal] = useState(false);
+  const [enableCustomFactions, setEnableCustomFactions] = useState(false);
   const { theme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -39,11 +41,13 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
     const oldLegacyCookie = Cookies.get('enableOldLegacy');
     const arcCookie = Cookies.get('enableArc');
     const localCookie = Cookies.get('enableLocal');
+    const customFactionsCookie = Cookies.get('enableCustomFactions');
     setEnableLegacy(CONFIG.showLegacyToggle && legacyCookie === 'true');
     setEnableLegends(CONFIG.showLegendsToggle && legendsCookie === 'true');
     setEnableOldLegacy(CONFIG.showOldLegacyToggle && oldLegacyCookie === 'true');
     setEnableArc(CONFIG.showArcToggle && arcCookie === 'true');
     setEnableLocal(CONFIG.showLocalToggle && localCookie === 'true');
+    setEnableCustomFactions(CONFIG.showCustomFactionsToggle && customFactionsCookie === 'true');
   }, []);
 
   if (!mounted) {
@@ -88,6 +92,14 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
     if (CONFIG.showLocalToggle) {
       setEnableLocal(checked);
       Cookies.set('enableLocal', checked.toString(), { expires: 365 });
+      flushCacheAndReload(() => {}, () => {}, () => {});
+    }
+  };
+
+  const handleCustomFactionsToggle = (checked: boolean) => {
+    if (CONFIG.showCustomFactionsToggle) {
+      setEnableCustomFactions(checked);
+      Cookies.set('enableCustomFactions', checked.toString(), { expires: 365 });
       flushCacheAndReload(() => {}, () => {}, () => {});
     }
   };
@@ -176,6 +188,19 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
                     id="local-toggle"
                     checked={enableLocal}
                     onCheckedChange={handleLocalToggle}
+                    className="custom-switch"
+                  />
+                </div>
+              )}
+              {CONFIG.showCustomFactionsToggle && (
+                <div className="flex items-center justify-between">
+                  <label htmlFor="custom-factions-toggle" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    Enable Custom Factions
+                  </label>
+                  <Switch
+                    id="custom-factions-toggle"
+                    checked={enableCustomFactions}
+                    onCheckedChange={handleCustomFactionsToggle}
                     className="custom-switch"
                   />
                 </div>

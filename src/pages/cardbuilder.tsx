@@ -12,15 +12,16 @@ export default function CardBuilderPage() {
 
   useEffect(() => {
     setMounted(true);
+    return () => {
+      setMounted(false);
+    };
   }, []);
 
-  const handleBack = async () => {
-    // Wait for state cleanup before navigation
-    await new Promise(resolve => setTimeout(resolve, 0));
-    router.push('/').then(() => {
-      // Additional cleanup if needed
-      setMounted(false);
-    });
+  const handleBack = () => {
+    setMounted(false); // Trigger unmount first
+    setTimeout(() => {
+      router.push('/');
+    }, 0);
   };
 
   if (!mounted) return null;
@@ -40,7 +41,7 @@ export default function CardBuilderPage() {
 
         <div className="max-w-6xl mx-auto">
           <h1 className="text-3xl font-bold mb-8 text-center">Card Builder</h1>
-          <CardBuilder />
+          {mounted && <CardBuilder />}
         </div>
       </div>
     </div>
