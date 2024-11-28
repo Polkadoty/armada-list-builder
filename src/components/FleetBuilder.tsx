@@ -2233,7 +2233,16 @@ const [showPrintObjectives, setShowPrintObjectives] = useState(true);
     return content;
   };
 
-  
+  // First, create a helper function to chunk the ships into groups of 4
+  const chunkArray = <T,>(array: T[], size: number): T[][] => {
+    const chunks: T[][] = [];
+    for (let i = 0; i < array.length; i += size) {
+      chunks.push(array.slice(i, i + size));
+    }
+    return chunks;
+  };
+
+  // In the generatePrintnPlayContent function, replace the ship cards section with:
   const generatePrintnPlayContent = () => {
     // Calculate number of pages needed for poker cards
     const allCards = [
@@ -2470,34 +2479,36 @@ const [showPrintObjectives, setShowPrintObjectives] = useState(true);
       </head>
       <body>
         ${selectedShips.length > 0 ? `
-          <!-- Ship Cards Front -->
-          <div class="page">
-            <div class="grid tarot-grid">
-              ${selectedShips.map(ship => `
-                <div class="tarot-card">
-                  <div class="card-container">
-                    <img class="card-background" src="${ship.cardimage}" alt="" />
-                    <img class="card-image" src="${ship.cardimage}" alt="${ship.name}" />
+          ${chunkArray(selectedShips, 4).map(shipGroup => `
+            <!-- Ship Cards Front -->
+            <div class="page">
+              <div class="grid tarot-grid">
+                ${shipGroup.map(ship => `
+                  <div class="tarot-card">
+                    <div class="card-container">
+                      <img class="card-background" src="${ship.cardimage}" alt="" />
+                      <img class="card-image" src="${ship.cardimage}" alt="${ship.name}" />
+                    </div>
                   </div>
-                </div>
-              `).join('')}
+                `).join('')}
+              </div>
             </div>
-          </div>
-          
-          <!-- Ship Cards Back -->
-          <div class="page">
-            <div class="grid tarot-grid">
-              ${selectedShips.slice().reverse().map(ship => `
-                <div class="tarot-card">
-                  <div class="card-container">
-                    <img class="card-image" 
-                        src="https://api.swarmada.wiki/images/${ship.faction}-ship-rear.webp" 
-                        alt="${ship.name} back" />
+            
+            <!-- Ship Cards Back -->
+            <div class="page">
+              <div class="grid tarot-grid">
+                ${shipGroup.slice().reverse().map(ship => `
+                  <div class="tarot-card">
+                    <div class="card-container">
+                      <img class="card-image" 
+                          src="https://api.swarmada.wiki/images/${ship.faction}-ship-rear.webp" 
+                          alt="${ship.name} back" />
+                    </div>
                   </div>
-                </div>
-              `).join('')}
+                `).join('')}
+              </div>
             </div>
-          </div>
+          `).join('')}
         ` : ''}
 
         ${Array.from({ length: pokerPagesNeeded }).map((_, pageIndex) => {
