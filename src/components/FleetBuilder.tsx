@@ -2271,20 +2271,6 @@ const [showPrintObjectives, setShowPrintObjectives] = useState(true);
       medium: { width: '58.5mm', height: '101.5mm' },
       large: { width: '73.0mm', height: '128.5mm' }
     };
-  
-    // Function to get base token size
-    const getBaseTokenSize = (size: string) => {
-      switch (size) {
-        case 'small':
-          return baseTokenSizes.small;
-        case 'medium':
-          return baseTokenSizes.medium;
-        case 'large':
-          return baseTokenSizes.large;
-        default:
-          return baseTokenSizes.small; // Default to small if size is unknown
-      }
-    };
 
     // Helper function to calculate optimal layout
     const calculateOptimalLayout = (ships: Ship[]) => {
