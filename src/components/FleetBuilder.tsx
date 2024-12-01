@@ -257,7 +257,6 @@ export default function FleetBuilder({
   // Add these state variables near the other useState declarations
 const [showPrintRestrictions, setShowPrintRestrictions] = useState(true);
 const [showPrintObjectives, setShowPrintObjectives] = useState(true);
-const [selectedFormat, setSelectedFormat] = useState<FleetFormat>('kingston');
 
 
   const checkTournamentViolations = useMemo(() => {
@@ -1344,7 +1343,7 @@ const [selectedFormat, setSelectedFormat] = useState<FleetFormat>('kingston');
   const handleRecoverFleet = () => {
     const savedFleet = localStorage.getItem(`savedFleet_${faction}`);
     if (savedFleet) {
-      handleImportFleet(savedFleet, selectedFormat);
+      handleImportFleet(savedFleet, 'kingston');
     }
     setShowRecoveryPopup(false);
   };
@@ -1519,7 +1518,7 @@ const [selectedFormat, setSelectedFormat] = useState<FleetFormat>('kingston');
         return line;
       });
     } else if (format === 'warlords') {
-      let processedLines: string[] = [];
+      const processedLines: string[] = [];
       let isProcessingSquadrons = false;
       let foundTotalShipCost = false;
 
