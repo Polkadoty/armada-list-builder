@@ -220,7 +220,6 @@ export default function Home() {
         <TextImportWindow
           onImport={handleImportFleet}
           onClose={() => setShowImportWindow(false)}
-          isIndexPage={true}
         />
       )}
       {showNotification && (
