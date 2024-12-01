@@ -257,6 +257,7 @@ export default function FleetBuilder({
   // Add these state variables near the other useState declarations
 const [showPrintRestrictions, setShowPrintRestrictions] = useState(true);
 const [showPrintObjectives, setShowPrintObjectives] = useState(true);
+const [selectedFormat, setSelectedFormat] = useState<FleetFormat>('kingston');
 
 
   const checkTournamentViolations = useMemo(() => {
@@ -1343,7 +1344,7 @@ const [showPrintObjectives, setShowPrintObjectives] = useState(true);
   const handleRecoverFleet = () => {
     const savedFleet = localStorage.getItem(`savedFleet_${faction}`);
     if (savedFleet) {
-      handleImportFleet(savedFleet);
+      handleImportFleet(savedFleet, selectedFormat);
     }
     setShowRecoveryPopup(false);
   };
@@ -1472,131 +1473,123 @@ const [showPrintObjectives, setShowPrintObjectives] = useState(true);
     return fetchFromLocalStorage(key, "squadrons") as Squadron | null;
   };
 
-  const handleImportFleet = useCallback((importText: string) => {
-    console.log("Starting fleet import...");
-
-    // Load aliases first, before any processing
-    console.log("Loading aliases from localStorage...");
-    const aliases = JSON.parse(localStorage.getItem("aliases") || "{}");
-    console.log("Aliases loaded:", aliases);
+  type FleetFormat = 'kingston' | 'afd' | 'warlords';
 
 
-    const preprocessFleetText = (text: string): string => {
-      // Remove <fleet> tags if present
-      text = text.replace(/<\/?fleet>/g, "");
+  const preprocessFleetText = (text: string, format: FleetFormat): string => {
+    if (format === 'kingston') {
+      return text;
+    }
 
-      // Check if this is DMBorque format by looking for the characteristic patterns
-      const isDMBorqueFormat =
-        text.includes("+") &&
-        text.includes(":") &&
-        text.match(/\(\d+\s*\+\s*\d+\s*:\s*\d+\)/);
+    // Remove HTML tags and normalize line endings
+    text = text.replace(/<[^>]*>/g, '').replace(/\r\n/g, '\n');
+    let lines = text.split('\n').map(line => line.trim()).filter(line => line);
 
-      // Handle DMBorque fleet name format
-      if (isDMBorqueFormat) {
-        const lines = text.split("\n");
-        const firstLine = lines[0];
-        const nameMatch = firstLine.match(/^(.+?)\s*\(\d+\/\d+\/\d+\)/);
-        if (nameMatch) {
-          lines[0] = `Name: ${nameMatch[1]}`;
-          // Remove the line of equals signs if it exists
-          if (lines[1] && lines[1].match(/^=+$/)) {
-            lines.splice(1, 1);
-          }
-          text = lines.join("\n");
+    if (format === 'afd') {
+      // Handle AFD format
+      const firstLine = lines[0];
+      const nameMatch = firstLine.match(/^(.+?)\s*\(\d+\/\d+\/\d+\)/);
+      if (nameMatch) {
+        lines[0] = `Name: ${nameMatch[1]}`;
+        // Remove the line of equals signs if it exists
+        if (lines[1] && lines[1].match(/^=+$/)) {
+          lines.splice(1, 1);
         }
       }
 
-      let lines = text.split("\n").map((line) => {
-        // Replace dashes with bullets at the start of lines
-        line = line.replace(/^\s*-\s*/, "• ");
+      lines = lines.map(line => {
+        // Convert bullet points
+        line = line.replace(/^·\s*/, '• ');
+        
+        // Convert ship points format: (X + Y: Z) -> (X)
+        line = line.replace(/\((\d+)\s*\+[^)]+\)/, '($1)');
+        
+        // Convert squadron format: (N x M) -> (calculated total)
+        line = line.replace(/\((\d+)\s*x\s*(\d+)\)/, (_, count, points) => {
+          const total = parseInt(count) * parseInt(points);
+          return `(${total})`;
+        });
+        
+        // Convert squadron format: N x Squadron (M) -> • N x Squadron (calculated total)
+        line = line.replace(/^(\d+)\s*x\s*([^(]+)\((\d+)\)/, (_, count, name, points) => {
+          const total = parseInt(count) * parseInt(points);
+          return `• ${count} x ${name.trim()}(${total})`;
+        });
 
-        // Replace bullets with bullets at the start of lines
-        line = line.replace(/^\s*·\s*/, "• ");
+        return line;
+      });
+    } else if (format === 'warlords') {
+      let processedLines: string[] = [];
+      let isProcessingSquadrons = false;
+      let foundTotalShipCost = false;
 
-        // Remove [flagship] markers
-        line = line.replace(/\[\s*flagship\s*\]\s*/, "");
+      lines.forEach(line => {
+        // Check for faction and points lines first
+        if (line.match(/^Faction:/i)) {
+          processedLines.push(`Faction: ${line.split(':')[1].trim()}`);
+          return;
+        }
 
-        // Convert "Points: X/Y" format to "Total Points: X"
-        line = line.replace(/^Points:\s*(\d+)\/\d+/, "Total Points: $1");
+        // Check if we've hit a "total ship cost" line
+        if (line.includes('total ship cost')) {
+          foundTotalShipCost = true;
+          processedLines.push(line);
+          return;
+        }
 
-        // Fix point format: ( # points) -> (#) but preserve existing (#) formats
-        line = line.replace(/\(\s*(\d+)\s*points?\)/, "($1)");
+        // Start squadron processing after the last "total ship cost"
+        if (foundTotalShipCost && !isProcessingSquadrons && line.match(/^\d+\s+\w/)) {
+          isProcessingSquadrons = true;
+          processedLines.push('');  // Add blank line before squadrons
+          processedLines.push('Squadrons:');
+        }
 
-        // Handle DMBorques format: (X + Y: Z) -> (X)
-        line = line.replace(/\((\d+)\s*\+[^)]+\)/, "($1)");
-
-        // Handle DMBorques squadron format: (N x M) -> (calculated total)
-        line = line.replace(
-          /\((\d+)\s*x\s*(\d+)\)/,
-          (_match, count, points) => {
-            const total = parseInt(count) * parseInt(points);
-            return `(${total})`;
+        if (isProcessingSquadrons) {
+          // Convert squadron format: "N Squadron Name ( X points)" -> "• N x Squadron Name (X)"
+          if (line.match(/^\d+\s+\w/)) {
+            const match = line.match(/^(\d+)\s+(.+?)\s*\(\s*(\d+)\s*points?\)/);
+            if (match) {
+              const [, count, name, points] = match;
+              const numCount = parseInt(count);
+              if (numCount === 1) {
+                processedLines.push(`• ${name.trim()} (${points})`);
+              } else {
+                // Don't multiply the points - they're already total
+                processedLines.push(`• ${numCount} x ${name.trim()} (${points})`);
+              }
+            }
+          } else if (!line.includes('total squadron cost')) {
+            processedLines.push(line);
           }
-        );
-
-        return line.trim();
+        } else {
+          // Convert other lines (ships and upgrades)
+          line = line
+            .replace(/^-\s+/, '• ')
+            .replace(/\[\s*flagship\s*\]\s*/, '')
+            .replace(/\(\s*(\d+)\s*points?\)/, '($1)')
+            .replace(/^(Assault|Defense|Navigation) Objective:/, '$1:');
+          
+          // Convert objective lines
+          if (line.match(/^(Assault|Defense|Navigation):/)) {
+            processedLines.push('');  // Add blank line before objectives
+          }
+          
+          processedLines.push(line);
+        }
       });
 
-      // Find the first squadron line (line starting with a number)
-      const squadronStartIndex = lines.findIndex(
-        (line) =>
-          /^\d+\s+\S/.test(line) || // matches "1 Squadron Name"
-          /^\d+x\s+\S/.test(line) // matches "1x Squadron Name"
-      );
+      return processedLines.join('\n');
+    }
 
-      if (squadronStartIndex !== -1) {
-        // Insert "Squadrons:" line before processing squadron formats
-        lines.splice(squadronStartIndex, 0, "Squadrons:");
+    return lines.join('\n');
+  };
 
-        // Now process squadron formats for all lines after the "Squadrons:" line
-        lines = lines.map((line, index) => {
-          if (
-            index > squadronStartIndex &&
-            /^\d+\s+.+?\s*\(\d+\)$/.test(line)
-          ) {
-            return line.replace(
-              /^(\d+)\s+(.+?)(\s*\(\d+\))$/,
-              (match, count, name, points) => {
-                const numCount = parseInt(count);
-                if (numCount === 1) {
-                  return `• ${name}${points}`;
-                }
-                return `• ${count} x ${name}${points}`;
-              }
-            );
-          }
-          return line;
-        });
-      }
-
-      // If it's DMBorque format, process the objectives
-      if (isDMBorqueFormat && lines.length >= 3) {
-        const lastThreeLines = lines.slice(-3);
-        lines = lines.slice(0, -3);
-
-        lines.push(
-          `Assault: ${lastThreeLines[0]}`,
-          `Defense: ${lastThreeLines[1]}`,
-          `Navigation: ${lastThreeLines[2]}`
-        );
-      }
-
-      // If it's DMBorque format and we have squadrons without bullets, add them
-      if (isDMBorqueFormat) {
-        const squadronLines = lines.slice(squadronStartIndex);
-        const processedSquadrons = squadronLines.map(line => {
-          if (!line.startsWith('•') && !line.startsWith('=') && line.trim()) {
-            return `• ${line}`;
-          }
-          return line;
-        });
-        lines.splice(squadronStartIndex, squadronLines.length, ...processedSquadrons);
-      }
-
-      return lines.join("\n");
-    };
-
-    const processedText = preprocessFleetText(importText);
+  const handleImportFleet = useCallback((importText: string, format: FleetFormat) => {
+    console.log("Starting fleet import with format:", format);
+    
+    // Load aliases first
+    const aliases = JSON.parse(localStorage.getItem("aliases") || "{}");
+    const processedText = preprocessFleetText(importText, format);
     console.log("Preprocessed fleet text:", processedText);
 
     const lines = processedText.split("\n");
@@ -2592,7 +2585,7 @@ const [showPrintObjectives, setShowPrintObjectives] = useState(true);
   
     if (!hasLoadedPage && savedFleet && selectedShips.length === 0 && selectedSquadrons.length === 0) {
       if (retrievedFromList) {
-        handleImportFleet(savedFleet);
+        handleImportFleet(savedFleet, 'kingston');
         document.cookie = "retrieved-from-list=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
       } else {
         setShowRecoveryPopup(true);
