@@ -14,8 +14,8 @@ const CONFIG = {
   showLegendsToggle: true,
   showOldLegacyToggle: true,
   showArcToggle: true,
-  // showLocalContentToggle: true,
-  showProxyToggle: true,
+  showLocalContentToggle: false,
+  showProxyToggle: false,
   showCustomFactionsToggle: true
 };
 
@@ -31,7 +31,7 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
   const [enableOldLegacy, setEnableOldLegacy] = useState(false);
   const [enableArc, setEnableArc] = useState(false);
   const [enableCustomFactions, setEnableCustomFactions] = useState(false);
-  // const [enableLocalContent, setEnableLocalContent] = useState(false);
+  const [enableLocalContent, setEnableLocalContent] = useState(false);
   const [enableProxy, setEnableProxy] = useState(false);
   const { theme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -43,14 +43,14 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
     const oldLegacyCookie = Cookies.get('enableOldLegacy');
     const arcCookie = Cookies.get('enableArc');
     const customFactionsCookie = Cookies.get('enableCustomFactions');
-    // const localContentCookie = Cookies.get('enableLocalContent');
+    const localContentCookie = Cookies.get('enableLocalContent');
     const proxyCookie = Cookies.get('enableProxy');
     setEnableLegacy(CONFIG.showLegacyToggle && legacyCookie === 'true');
     setEnableLegends(CONFIG.showLegendsToggle && legendsCookie === 'true');
     setEnableOldLegacy(CONFIG.showOldLegacyToggle && oldLegacyCookie === 'true');
     setEnableArc(CONFIG.showArcToggle && arcCookie === 'true');
     setEnableCustomFactions(CONFIG.showCustomFactionsToggle && customFactionsCookie === 'true');
-    // setEnableLocalContent(CONFIG.showLocalContentToggle && localContentCookie === 'true');
+    setEnableLocalContent(CONFIG.showLocalContentToggle && localContentCookie === 'true');
     setEnableProxy(CONFIG.showProxyToggle && proxyCookie === 'true');
   }, []);
 
@@ -92,13 +92,13 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
     }
   };
 
-  // const handleLocalContentToggle = (checked: boolean) => {
-  //   if (CONFIG.showLocalContentToggle) {
-  //     setEnableLocalContent(checked);
-  //     Cookies.set('enableLocalContent', checked.toString(), { expires: 365 });
-  //     flushCacheAndReload(() => {}, () => {}, () => {});
-  //   }
-  // };
+  const handleLocalContentToggle = (checked: boolean) => {
+    if (CONFIG.showLocalContentToggle) {
+      setEnableLocalContent(checked);
+      Cookies.set('enableLocalContent', checked.toString(), { expires: 365 });
+      flushCacheAndReload(() => {}, () => {}, () => {});
+    }
+  };
 
   const handleProxyToggle = (checked: boolean) => {
     if (CONFIG.showProxyToggle) {
@@ -191,7 +191,7 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
                   />
                 </div>
               )}
-              {/* {CONFIG.showLocalContentToggle && (
+              {CONFIG.showLocalContentToggle && (
                 <div className="flex items-center justify-between">
                   <label htmlFor="local-content-toggle" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                     Enable Local Content
@@ -203,8 +203,7 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
                     className="custom-switch"
                   />
                 </div>
-              )} */}
-
+              )}
               {CONFIG.showProxyToggle && (
                 <div className="flex items-center justify-between">
                   <label htmlFor="proxy-toggle" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
