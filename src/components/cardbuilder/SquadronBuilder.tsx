@@ -9,6 +9,8 @@ import { ArrowLeft } from 'lucide-react';
 // import { SquadronCardPreview } from './SquadronCardPreview';
 // import { SquadronBasePreview } from './SquadronBasePreview';
 
+// TODO: Add ability to add squadron cards to fleet
+
 interface SquadronBuilderProps {
   onBack: () => void;
 }
