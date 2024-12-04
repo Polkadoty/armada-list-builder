@@ -183,15 +183,6 @@ export default function Home() {
             <Import className="mr-2 h-4 w-4" />
             IMPORT
           </Button>
-          <Link href="/cardbuilder">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20"
-            >
-              WIP BUILDER
-            </Button>
-          </Link>
           <Link href="/faq">
             <Button variant="outline" size="sm" className="text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20">
               FAQ
