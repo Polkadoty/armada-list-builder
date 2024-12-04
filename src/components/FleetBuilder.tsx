@@ -916,8 +916,16 @@ const [showPrintObjectives, setShowPrintObjectives] = useState(true);
     // Load aliases from localStorage
     const aliases = JSON.parse(localStorage.getItem("aliases") || "{}");
     
-    // Get the ship's alias key
-    const shipKey = getAliasKey(aliases, `${shipToCopy.name} (${shipToCopy.points})`);
+    // Format the ship name with source tag if needed
+    const shipNameWithSource = shipToCopy.source && shipToCopy.source !== "regular" 
+      ? `${shipToCopy.name} [${shipToCopy.source === 'oldLegacy' ? 'OldLegacy' : 
+          shipToCopy.source === 'legacy' ? 'Legacy' : 
+          shipToCopy.source === 'legends' ? 'Legends' : 
+          'ARC'}]`
+      : shipToCopy.name;
+    
+    // Get the ship's alias key with the properly formatted name
+    const shipKey = getAliasKey(aliases, `${shipNameWithSource} (${shipToCopy.points})`);
     
     if (!shipKey) {
       console.error("Could not find ship in aliases");
