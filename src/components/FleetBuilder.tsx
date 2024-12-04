@@ -1963,9 +1963,6 @@ const [showPrintObjectives, setShowPrintObjectives] = useState(true);
                   handleIncrementSquadron(squadronId);
                 }
               }
-            } else {
-              console.log(`Squadron not found: ${squadronName}`);
-              skippedItems.push(squadronName);
             }
           } else {
             console.log(
@@ -2457,17 +2454,19 @@ const [showPrintObjectives, setShowPrintObjectives] = useState(true);
               display: flex;
               justify-content: center;
               align-items: center;
+              overflow: hidden; // Add this to ensure the scaled background stays within bounds
             }
 
             .card-background {
               position: absolute;
-              width: 100%;
-              height: 100%;
-              top: 0;
-              left: 0;
+              width: 105%;  // Increased from 100% to 105%
+              height: 105%; // Increased from 100% to 105%
+              top: -2.5%;   // Center the scaled image
+              left: -2.5%;  // Center the scaled image
               filter: blur(8px);
               z-index: 1;
               object-fit: cover;
+              transform: scale(1.05); // Additional scaling to ensure full coverage
             }
 
             .card-image {
