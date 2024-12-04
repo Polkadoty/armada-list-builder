@@ -2338,6 +2338,8 @@ const [showPrintObjectives, setShowPrintObjectives] = useState(true);
 
       return pages;
     };
+
+    // Generate base tokens
   
     const baseTokensHTML = selectedShips.length > 0 ? calculateOptimalLayout(selectedShips).map(page => `
       <div class="page">
