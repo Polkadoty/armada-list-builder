@@ -4,7 +4,11 @@ import path from 'path';
 import Sharp from 'sharp';
 
 async function fetchImageLinks() {
-  const response = await fetch('https://api.swarmada.wiki/image-links/');
+  const baseUrl = process.env.NEXT_PUBLIC_USE_BACKUP_API === 'true' 
+    ? 'https://api-backup.swarmada.wiki'
+    : 'https://api.swarmada.wiki';
+    
+  const response = await fetch(`${baseUrl}/image-links/`);
   return response.json();
 }
 

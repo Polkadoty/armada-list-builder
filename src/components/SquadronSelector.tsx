@@ -289,13 +289,6 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
     });
   };
 
-  const validateImageUrl = (url: string): string => {
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      return url;
-    }
-    return `https://api.swarmada.wiki${url.startsWith('/') ? '' : '/'}${url}`;
-  };
-
   const isSquadronSelected = (squadron: Squadron) => {
     // Check if this exact squadron is already selected
     const isExactMatch = selectedSquadrons.some(s => 
