@@ -1,12 +1,49 @@
 import Cookies from 'js-cookie';
 
-export const checkAndFetchData = async (setIsLoading: (isLoading: boolean) => void, setLoadingProgress: (progress: number) => void, setLoadingMessage: (message: string) => void) => {
+const getPrimaryApiUrl = () => process.env.NEXT_PUBLIC_PRIMARY_API_URL || 'https://api.swarmada.wiki';
+const getBackupApiUrl = () => process.env.NEXT_PUBLIC_BACKUP_API_URL || 'https://api-backup.swarmada.wiki';
+
+const checkApiHealth = async (url: string): Promise<boolean> => {
   try {
-    const response = await fetch('https://api.swarmada.wiki');
+    const response = await fetch(url, { signal: AbortSignal.timeout(5000) });
+    const data = await response.json();
+    return !!data.lastModified;
+  } catch {
+    return false;
+  }
+};
+
+const getApiUrl = async (): Promise<string> => {
+  const useBackup = process.env.NEXT_PUBLIC_USE_BACKUP_API === 'true';
+  const primaryUrl = getPrimaryApiUrl();
+  const backupUrl = getBackupApiUrl();
+
+  if (useBackup) {
+    return backupUrl;
+  }
+
+  // Check if primary API is healthy
+  const isPrimaryHealthy = await checkApiHealth(primaryUrl);
+  return isPrimaryHealthy ? primaryUrl : backupUrl;
+};
+
+export const checkAndFetchData = async (
+  setIsLoading: (isLoading: boolean) => void,
+  setLoadingProgress: (progress: number) => void,
+  setLoadingMessage: (message: string) => void
+) => {
+  try {
+    const apiUrl = await getApiUrl();
+    const response = await fetch(apiUrl);
     const data = await response.json();
     const lastModified = data.lastModified;
     const savedLastModified = Cookies.get('lastModified');
-    const isDataMissing = !localStorage.getItem('ships') || !localStorage.getItem('squadrons') || !localStorage.getItem('objectives') || !localStorage.getItem('upgrades') || !localStorage.getItem('imageLinks') || !localStorage.getItem('aliases');
+    const isDataMissing = !localStorage.getItem('ships') || 
+      !localStorage.getItem('squadrons') || 
+      !localStorage.getItem('objectives') || 
+      !localStorage.getItem('upgrades') || 
+      !localStorage.getItem('imageLinks') || 
+      !localStorage.getItem('aliases');
 
     if (savedLastModified !== lastModified || isDataMissing) {
       setIsLoading(true);
@@ -19,7 +56,11 @@ export const checkAndFetchData = async (setIsLoading: (isLoading: boolean) => vo
   }
 };
 
-const fetchAndSaveData = async (setLoadingProgress: (progress: number) => void, setLoadingMessage: (message: string) => void) => {
+const fetchAndSaveData = async (
+  setLoadingProgress: (progress: number) => void,
+  setLoadingMessage: (message: string) => void
+) => {
+  const apiUrl = await getApiUrl();
   const enableLegacy = Cookies.get('enableLegacy') === 'true';
   const enableLegends = Cookies.get('enableLegends') === 'true';
   const enableOldLegacy = Cookies.get('enableOldLegacy') === 'true';
@@ -74,7 +115,7 @@ const fetchAndSaveData = async (setLoadingProgress: (progress: number) => void, 
     setLoadingProgress((i / endpoints.length) * 100);
 
     try {
-      const response = await fetch(`https://api.swarmada.wiki${url}`);
+      const response = await fetch(`${apiUrl}${url}`);
       const data = await response.json();
       localStorage.setItem(name, JSON.stringify(data));
     } catch (error) {

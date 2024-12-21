@@ -19,6 +19,10 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'api.swarmada.wiki',
       },
+      {
+        protocol: 'https',
+        hostname: 'api-backup.swarmada.wiki',
+      },
     ],
   },
 };
