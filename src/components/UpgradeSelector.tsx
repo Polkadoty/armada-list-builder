@@ -9,6 +9,7 @@ import { Search, X } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import Cookies from 'js-cookie';
 import { OptimizedImage } from './OptimizedImage';
+import { sanitizeImageUrl } from '../utils/dataFetcher';
 
 export interface UpgradeSelectorProps {
   id: string;
@@ -92,6 +93,7 @@ export default function UpgradeSelector({
             return {
               ...upgrade,
               id: prefix ? `${prefix}-${key}` : key,
+              cardimage: sanitizeImageUrl(upgrade.cardimage),
               alias: upgrade.alias || '',
               faction: Array.isArray(upgrade.faction) ? upgrade.faction : [upgrade.faction],
               "unique-class": upgrade["unique-class"] || [],

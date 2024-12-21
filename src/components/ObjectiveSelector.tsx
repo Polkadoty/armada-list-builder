@@ -7,6 +7,7 @@ import { Search, X } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { SortToggleGroup } from './SortToggleGroup';
 import Cookies from 'js-cookie';
+import { sanitizeImageUrl } from '@/utils/dataFetcher';
 
 export interface ObjectiveModel {
   id: string;
@@ -145,7 +146,7 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose }: Objectiv
                     id: objectiveId,
                     name: objective.name,
                     type: objective.type,
-                    cardimage: validateImageUrl(objective.cardimage),
+                    cardimage: sanitizeImageUrl(objective.cardimage),
                     source: source as ContentSource
                   });
                 }

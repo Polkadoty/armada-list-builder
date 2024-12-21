@@ -8,6 +8,7 @@ import { Search, X } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import Cookies from 'js-cookie';
 import { OptimizedImage } from '@/components/OptimizedImage';
+import { sanitizeImageUrl } from '@/utils/dataFetcher';
 
 interface SquadronSelectorProps {
   faction: string;
@@ -101,7 +102,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
                 'ace-name': aceName,
                 squadron_type: squadron.squadron_type,
                 points: squadron.points,
-                cardimage: validateImageUrl(squadron.cardimage),
+                cardimage: sanitizeImageUrl(squadron.cardimage),
                 faction: squadron.faction,
                 hull: squadron.hull,
                 speed: squadron.speed,

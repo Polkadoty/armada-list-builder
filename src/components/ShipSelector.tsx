@@ -8,6 +8,7 @@ import { Search, X } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import Cookies from 'js-cookie';
 import { ContentSource } from './FleetBuilder';
+import { sanitizeImageUrl } from '@/utils/dataFetcher';
 
 export interface ShipModel {
   id: string;
@@ -121,6 +122,7 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
                   name: model.name.toLowerCase(),
                   speed: speedText,
                   armament: armamentText,
+                  cardimage: sanitizeImageUrl(model.cardimage),
                   upgrades: upgradesText,
                   traits: model.traits?.map(trait => ` ${trait} `).join(' ') || '',
                   tokens: Object.entries(model.tokens || {})

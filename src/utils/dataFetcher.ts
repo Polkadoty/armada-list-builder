@@ -152,3 +152,16 @@ export const flushCacheAndReload = async (setIsLoading: (isLoading: boolean) => 
 
   await checkAndFetchData(setIsLoading, setLoadingProgress, setLoadingMessage);
 };
+
+export const sanitizeImageUrl = (url: string): string => {
+  if (!url) return url;
+  
+  const useBackup = process.env.NEXT_PUBLIC_USE_BACKUP_API === 'true';
+  
+  // If we're using the backup API, replace the URL
+  if (useBackup) {
+    return url.replace('api.swarmada.wiki', 'api-backup.swarmada.wiki');
+  }
+  
+  return url;
+};

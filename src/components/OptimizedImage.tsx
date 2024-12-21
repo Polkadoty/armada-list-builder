@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { AlertCircle } from 'lucide-react';
 import { placeholderMap } from '@/generated/placeholderMap';
+import { sanitizeImageUrl } from '@/utils/dataFetcher';
 
 interface OptimizedImageProps {
   src: string;
@@ -33,7 +34,8 @@ export function OptimizedImage({
   const [shouldLoad, setShouldLoad] = useState(priority);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const imageKey = src.split('/').pop()?.replace(/\.[^/.]+$/, '');
+  const sanitizedSrc = sanitizeImageUrl(src);
+  const imageKey = sanitizedSrc.split('/').pop()?.replace(/\.[^/.]+$/, '');
   const placeholderUrl = imageKey ? placeholderMap[imageKey] : undefined;
 
   useEffect(() => {
@@ -92,7 +94,7 @@ export function OptimizedImage({
       )}
       {!hasError && shouldLoad && (
         <img
-          src={src}
+          src={sanitizedSrc}
           alt={alt}
           width={width}
           height={height}
