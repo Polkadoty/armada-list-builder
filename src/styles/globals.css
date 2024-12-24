@@ -173,3 +173,22 @@ body {
 .animate-fade-slide-up {
   animation: fadeSlideUp 0.8s ease-out forwards;
 }
+
+@font-face {
+  font-family: 'Starjedi';
+  src: url('/fonts/Starjedi.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'TeutonFett';
+  src: url('/fonts/TeutonFett.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+.font-teuton {
+  font-variant: small-caps;
+  text-transform: uppercase;
+}

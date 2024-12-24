@@ -73,6 +73,7 @@ export default function FactionPage() {
   };
 
   return (
+    
   <div className="min-h-screen text-gray-900 dark:text-white relative bg-transparent">
     <StarryBackground show={currentTheme === 'dark'} />
     {isLoading && <LoadingScreen progress={loadingProgress} message={loadingMessage} />}

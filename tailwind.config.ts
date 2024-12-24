@@ -61,6 +61,15 @@ const config: Config = {
   		},
   		transitionProperty: {
   			'transform': 'transform',
+  		},
+  		fontFamily: {
+  			'starjedi': ['Starjedi', 'sans-serif'],
+  			'teuton': ['TeutonFett', 'sans-serif'],
+  		},
+  		fontSize: {
+  			'small-caps': ['1em', {
+  				letterSpacing: '0.05em'
+  			}],
   		}
   	},
   	keyframes: {

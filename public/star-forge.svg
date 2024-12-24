@@ -1,0 +1,13 @@
+<ns0:svg xmlns:ns0="http://www.w3.org/2000/svg" width="620" height="600" viewBox="0 0 620 600">
+  <ns0:rect width="620" height="600" fill="none" />
+  <ns0:mask id="cutouts">
+    <ns0:rect width="620" height="600" fill="#FFF" />
+    <ns0:rect x="29.6168" y="259.0164" width="560.7664" height="81.9672" />
+    <ns0:ellipse cx="310" cy="300" rx="257.4603" ry="245.7341" />
+    <ns0:path d="M233.9973,0l-60.0896,203.2787v81.9671l62.9372,314.7542h146.3102l62.9372,-314.7542v-81.9671l-60.0896,-203.2787Z" fill="#FFF" />
+    <ns0:rect x="170.9077" y="229.5081" width="278.1846" height="22.9508" />
+    <ns0:rect x="272.2876" y="36.0656" width="75.4248" height="527.8688" />
+    <ns0:circle cx="310" cy="242.6229" r="78.1911" stroke="#000" stroke-width="18.0351" fill="#FFF" />
+  </ns0:mask>
+  <ns0:ellipse cx="310" cy="300" rx="310" ry="300" fill="#FFF" mask="url(#cutouts)" />
+</ns0:svg>
