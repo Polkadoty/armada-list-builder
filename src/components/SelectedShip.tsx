@@ -134,7 +134,7 @@ export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRem
               </div>
               <div className="p-4 border-t">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="title-italic text-2xl flex items-center">
+                  <span className="title-font text-2xl flex items-center">
                     {ship.unique && <span className="mr-1 text-yellow-500">●</span>}
                     {ship.name}
                   </span>

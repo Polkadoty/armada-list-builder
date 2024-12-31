@@ -238,8 +238,18 @@ body {
 }
 
 .font-teuton {
-  font-variant: small-caps;
+  font-family: 'TeutonFett', sans-serif;
   text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.font-teuton:not(:is(h1, h2, h3, h4, h5, h6)) {
+  font-size: 1em;
+}
+
+.font-teuton:not(:is(h1, h2, h3, h4, h5, h6)) > *:not(:is(h1, h2, h3, h4, h5, h6)) {
+  font-size: 0.7em;
+  transform: translateY(0.05em);
 }
 
 .fighter-keyword {
