@@ -25,6 +25,7 @@ export const factionLogos = {
   covenant: '/icons/covenant.webp',
   colonial: '/icons/colonial.webp',
   cylon: '/icons/cylon.webp',
+  sandbox: '/icons/sandbox.webp',
 };
 
 const factionColors = {
@@ -91,7 +92,7 @@ export default function FactionPage() {
                 />
               </Link>
             )}
-            <h1 className="text-2xl font-bold mr-4"></h1>
+            <h1 className="text-2xl font-bold mr-4 logo-font"></h1>
             {isEditingName ? (
               <Input
                 value={fleetName}

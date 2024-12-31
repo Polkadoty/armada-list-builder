@@ -1,6 +1,6 @@
-## What is the Armada Legacy Fleet Builder?
+## What is Star Forge?
 
-The Legacy Fleet Builder is a web application designed to help players of Star Wars: Armada create and manage their fleets.
+Star Forge is a web application designed to help players of Star Wars: Armada create and manage their fleets.
 
 ## How do I use the Fleet Builder?
 
@@ -19,8 +19,8 @@ I strive to keep the data up-to-date with the latest releases and errata. Curren
 
 ## I found a bug or have a suggestion. How can I report it?
 
-Please visit our GitHub repository [here](https://github.com/Polkadoty/armada-list-builder) and open an issue. I appreciate your feedback!
+Please visit my GitHub repository [here](https://github.com/Polkadoty/armada-list-builder) and open an issue. I appreciate your feedback!
 
 ## Is my fleet data saved?
 
-Currently, fleet data is saved in your browser's local storage. We recommend exporting your fleet as text for safe-keeping. Login functionality is coming soon.
+Yes. Your fleet data is saved in your browser's local storage. You can export your fleet as text for safe-keeping. Login functionality currently works :)

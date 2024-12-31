@@ -121,7 +121,7 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
                 </button>
               </div>
               <div className="flex-grow p-2"> {/* Added padding here */}
-                <div className="font-bold text-base sm:text-lg flex items-center">
+                <div className="title-font text-xl flex items-center">
                   {squadron.unique && <span className="mr-1 text-yellow-500">●</span>}
                   {count > 1 ? `(${count}) ` : ''}
                   {squadron.unique && squadron['ace-name'] ? squadron['ace-name'] : squadron.name}

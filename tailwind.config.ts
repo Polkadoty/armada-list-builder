@@ -63,6 +63,7 @@ const config: Config = {
   			'transform': 'transform',
   		},
   		fontFamily: {
+  			sans: ['Optima', 'system-ui', '-apple-system', 'sans-serif'],
   			'starjedi': ['Starjedi', 'sans-serif'],
   			'teuton': ['TeutonFett', 'sans-serif'],
   		},

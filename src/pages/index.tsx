@@ -23,7 +23,7 @@ const factionShips = {
   unsc: '/images/unsc-marathon.webp',
   covenant: '/images/covenant-ccs.webp',
   colonial: '/images/colonial-galactica.webp',
-  cylon: '/images/cylon-basestar.webp',
+  cylon: '/images/cylon-basestar.webp'
 };
 
 export default function Home() {
@@ -176,38 +176,32 @@ export default function Home() {
             <Image
               src="star-forge.svg"
               alt="Star Forge"
-              width={200}
-              height={67}
-              className="invert dark:invert-0"
+              width={300}
+              height={100}
+              className="invert-0 dark:invert"
               priority
             />
-            <h1 className="text-4xl mt-4 font-teuton text-gray-900 dark:text-white">
-              STAR FORGE
-            </h1>
-            <h2 className="text-2xl mt-2 font-teuton text-gray-700 dark:text-gray-300">
-              FLEET BUILDER
-            </h2>
           </div>
           <FactionSelection onHover={setHoveredFaction} />
           <div className="mt-8 flex justify-center space-x-4">
             <Button 
               variant="outline" 
               size="sm" 
-              className="text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20"
+              className="text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20 logo-font"
               onClick={() => setShowImportWindow(true)}
             >
               <Import className="mr-2 h-4 w-4" />
               IMPORT
             </Button>
             <Link href="/faq">
-              <Button variant="outline" size="sm" className="text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20">
+              <Button variant="outline" size="sm" className="text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20 logo-font">
                 FAQ
               </Button>
             </Link>
             <Button
               variant="outline"
               size="sm"
-              className="text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20"
+              className="text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20 logo-font"
               onClick={() => window.open('https://ko-fi.com/polkadoty', '_blank')}
             >
               DONATE

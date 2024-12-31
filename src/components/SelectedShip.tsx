@@ -134,7 +134,7 @@ export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRem
               </div>
               <div className="p-4 border-t">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="font-bold text-xl flex items-center">
+                  <span className="title-italic text-2xl flex items-center">
                     {ship.unique && <span className="mr-1 text-yellow-500">●</span>}
                     {ship.name}
                   </span>
@@ -321,7 +321,7 @@ function SwipeableUpgrade({ upgrade, onSwipe, onSwap, onRemove }: SwipeableUpgra
                 <Eye size={16} />
               </Button>
             </div>
-            <span className="font-medium flex items-center ml-2">
+            <span className="title-font text-xl flex items-center ml-2">
               {upgrade.unique && <span className="mr-1 text-yellow-500">●</span>}
               {upgrade.name}
             </span>

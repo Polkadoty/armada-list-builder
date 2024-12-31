@@ -112,7 +112,7 @@ export function ExportTextPopup({ text, onClose, contentRef }: ExportTextPopupPr
     >
       <Card className="w-full max-w-lg md:max-w-2xl bg-white/90 dark:bg-gray-800/90 backdrop-blur-md shadow-lg flex flex-col max-h-[90vh]">
         <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-          <h2 className="text-lg sm:text-xl lg:text-2xl font-bold">Export Fleet</h2>
+          <h2 className="text-lg sm:text-xl lg:text-2xl font-bold logo-font">Export Fleet</h2>
           <Button variant="ghost" size="icon" onClick={onClose}>
             <X className="h-4 w-4" />
           </Button>

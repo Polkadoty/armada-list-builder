@@ -133,7 +133,7 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
         <PopoverContent className="w-80">
           <div className="grid gap-4">
             <div className="space-y-2">
-              <h4 className="font-medium leading-none">Content Settings</h4>
+              <h4 className="font-medium leading-none logo-font">Content Settings</h4>
               <p className="text-sm text-muted-foreground">
                 Toggle additional content for your fleet builder.
               </p>
@@ -142,7 +142,7 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
               {CONFIG.showLegacyToggle && (
                 <div className="flex items-center justify-between">
                   <label htmlFor="legacy-toggle" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                    Enable Legacy Content
+                    Enable Legacy Content (Beta)
                   </label>
                   <Switch
                     id="legacy-toggle"
@@ -165,23 +165,11 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
                   />
                 </div>
               )}
-              {CONFIG.showOldLegacyToggle && (
-                <div className="flex items-center justify-between">
-                  <label htmlFor="old-legacy-toggle" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                    Enable Old Legacy Content
-                  </label>
-                  <Switch
-                    id="old-legacy-toggle"
-                    checked={enableOldLegacy}
-                    onCheckedChange={handleOldLegacyToggle}
-                    className="custom-switch"
-                  />
-                </div>
-              )}
+
               {CONFIG.showArcToggle && (
                 <div className="flex items-center justify-between">
                   <label htmlFor="arc-toggle" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                    Enable Arc Tournament Content
+                    Enable Arc Tournament Content (Beta)
                   </label>
                   <Switch
                     id="arc-toggle"
@@ -227,6 +215,19 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
                     id="custom-factions-toggle"
                     checked={enableCustomFactions}
                     onCheckedChange={handleCustomFactionsToggle}
+                    className="custom-switch"
+                  />
+                </div>
+              )}
+              {CONFIG.showOldLegacyToggle && (
+                <div className="flex items-center justify-between">
+                  <label htmlFor="old-legacy-toggle" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    Enable Deprecated Legacy Content
+                  </label>
+                  <Switch
+                    id="old-legacy-toggle"
+                    checked={enableOldLegacy}
+                    onCheckedChange={handleOldLegacyToggle}
                     className="custom-switch"
                   />
                 </div>

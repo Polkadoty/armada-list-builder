@@ -22,7 +22,7 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Optima', system-ui, -apple-system, Arial, Helvetica, sans-serif;
 }
 
 @layer utilities {
@@ -188,7 +188,84 @@ body {
   font-style: normal;
 }
 
+@font-face {
+  font-family: 'FighterKeyword';
+  src: url('/fonts/fighter-keyword.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Icons';
+  src: url('/fonts/icons.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Logo';
+  src: url('/fonts/logo.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Numbers';
+  src: url('/fonts/numbers.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Title';
+  src: url('/fonts/title.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'TitleItalic';
+  src: url('/fonts/title-italic.otf') format('opentype');
+  font-weight: normal;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Optima';
+  src: url('/fonts/optima.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+
 .font-teuton {
   font-variant: small-caps;
   text-transform: uppercase;
+}
+
+.fighter-keyword {
+  font-family: 'FighterKeyword', sans-serif;
+}
+
+.icons-font {
+  font-family: 'Icons', sans-serif;
+}
+
+.logo-font {
+  font-family: 'Logo', sans-serif;
+}
+
+.numbers-font {
+  font-family: 'Numbers', sans-serif;
+}
+
+.title-font {
+  font-family: 'Title', sans-serif;
+}
+
+.title-italic {
+  font-family: 'TitleItalic', sans-serif;
+}
+
+.optima-font {
+  font-family: 'Optima', system-ui, -apple-system, sans-serif;
 }

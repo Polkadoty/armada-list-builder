@@ -2718,7 +2718,7 @@ const [showPrintObjectives, setShowPrintObjectives] = useState(true);
             </Popover>
           )}
         </div>
-        <div className="flex-grow" />
+        <div className="flex-grow logo-font" />
         <PointsDisplay points={points} previousPoints={previousPoints} />
       </div>
 
