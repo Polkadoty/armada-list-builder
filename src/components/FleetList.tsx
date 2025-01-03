@@ -515,8 +515,8 @@ export function FleetList() {
                               <div className="flex items-center">
                                 <Checkbox
                                   checked={fleet.shared}
-                                  className="mr-2"
-                                  onClick={(e) => e.stopPropagation()}
+                                  className="mr-2 cursor-not-allowed"
+                                  disabled={true}
                                 />
                                 Share Fleet
                               </div>

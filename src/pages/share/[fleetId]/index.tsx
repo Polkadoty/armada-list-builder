@@ -2,18 +2,24 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { LoadingScreen } from '../../../components/LoadingScreen';
+import { checkAndFetchData } from '../../../utils/dataFetcher';
 
 export default function SharedFleetPage() {
   const router = useRouter();
   const { fleetId } = router.query;
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [loadingMessage, setLoadingMessage] = useState('');
 
   useEffect(() => {
     async function loadSharedFleet() {
       if (!fleetId) return;
 
       try {
+        // First check if we need to fetch new data
+        await checkAndFetchData(setIsLoading, setLoadingProgress, setLoadingMessage);
+
         const { data, error } = await supabase
           .from('fleets')
           .select('*')
@@ -56,7 +62,7 @@ export default function SharedFleetPage() {
   }
 
   if (isLoading) {
-    return <LoadingScreen progress={50} message="Loading shared fleet..." />;
+    return <LoadingScreen progress={loadingProgress} message={loadingMessage} />;
   }
 
   return null;

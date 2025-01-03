@@ -1,17 +1,31 @@
 import React, { useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Copy, Share, X, Camera } from 'lucide-react'; // Add Camera icon
+import { Copy, Share2, X, Camera } from 'lucide-react';
 import { NotificationWindow } from './NotificationWindow';
+import { Checkbox } from "./ui/checkbox";
 import domtoimage from 'dom-to-image';
+import { supabase } from '../lib/supabase';
+import { useUser } from '@auth0/nextjs-auth0/client';
 
 interface ExportTextPopupProps {
   text: string;
   onClose: () => void;
-  contentRef?: React.RefObject<HTMLDivElement>; // Add this prop
+  contentRef?: React.RefObject<HTMLDivElement>;
+  fleetId?: string;
+  isShared?: boolean;
+  onShareToggle?: () => void;
 }
 
-export function ExportTextPopup({ text, onClose, contentRef }: ExportTextPopupProps) {
+export function ExportTextPopup({ 
+  text, 
+  onClose, 
+  contentRef,
+  fleetId,
+  isShared = false,
+  onShareToggle
+}: ExportTextPopupProps) {
+  const { user } = useUser();
   const [showNotification, setShowNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState('');
 
@@ -87,21 +101,43 @@ export function ExportTextPopup({ text, onClose, contentRef }: ExportTextPopupPr
     }
   };
 
-  const shareText = () => {
-    const shareData = {
-      title: 'Exported Fleet',
-      text: text,
-    };
-
-    if (navigator.canShare && navigator.canShare(shareData)) {
-      navigator.share(shareData).catch(err => {
-        console.error('Failed to share text: ', err);
-        setNotificationMessage('Failed to share text. Please try again.');
-        setShowNotification(true);
-      });
-    } else {
-      setNotificationMessage('Share not supported on this browser. Try copying the text instead.');
+  const handleShare = async () => {
+    if (!isShared) {
+      setNotificationMessage('Please enable sharing for this fleet first');
       setShowNotification(true);
+      return;
+    }
+
+    const domain = process.env.NEXT_PUBLIC_DOMAIN || window.location.origin;
+    const shareUrl = `${domain}/share/${fleetId}`;
+
+    // Check if running on mobile/tablet
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+    if (isMobile && navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Star Forge Fleet',
+          url: shareUrl
+        });
+      } catch (err) {
+        if (err instanceof Error && err.name !== 'AbortError') {
+          console.error('Error sharing:', err);
+          setNotificationMessage('Failed to share fleet');
+          setShowNotification(true);
+        }
+      }
+    } else {
+      // Desktop behavior - copy to clipboard
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        setNotificationMessage('Share link copied to clipboard!');
+        setShowNotification(true);
+      } catch (err) {
+        console.error('Failed to copy link:', err);
+        setNotificationMessage('Failed to copy link to clipboard');
+        setShowNotification(true);
+      }
     }
   };
 
@@ -118,6 +154,21 @@ export function ExportTextPopup({ text, onClose, contentRef }: ExportTextPopupPr
           </Button>
         </div>
         <CardContent className="p-4 overflow-y-auto flex-grow">
+          {user && onShareToggle && (
+            <div className="flex items-center gap-2 mb-4">
+              <Checkbox
+                id="share-fleet"
+                checked={isShared}
+                onCheckedChange={onShareToggle}
+              />
+              <label 
+                htmlFor="share-fleet" 
+                className="text-sm text-gray-700 dark:text-gray-300 cursor-pointer"
+              >
+                Share Fleet
+              </label>
+            </div>
+          )}
           <pre className="whitespace-pre-wrap font-mono text-sm text-gray-900 dark:text-white">
             {text}
           </pre>
@@ -129,9 +180,15 @@ export function ExportTextPopup({ text, onClose, contentRef }: ExportTextPopupPr
           <Button onClick={exportAsImage} variant="outline">
             <Camera className="mr-2 h-4 w-4" /> Copy as Image
           </Button>
-          <Button onClick={shareText} variant="outline">
-            <Share className="mr-2 h-4 w-4" /> Share
-          </Button>
+          {user && fleetId && (
+            <Button 
+              onClick={handleShare} 
+              variant="outline"
+              disabled={!isShared}
+            >
+              <Share2 className="mr-2 h-4 w-4" /> Share
+            </Button>
+          )}
         </div>
       </Card>
       {showNotification && (
