@@ -11,6 +11,7 @@ import { Input } from '../../components/ui/input';
 import { Pencil } from 'lucide-react';
 import { UserAvatar } from '../../components/UserAvatar';
 import Link from 'next/link';
+import Head from 'next/head';
 
 const shouldInvertImage = (logoPath: string) => {
   return !logoPath.endsWith('.webp');
@@ -76,6 +77,19 @@ export default function FactionPage() {
   return (
     
   <div className="min-h-screen text-gray-900 dark:text-white relative bg-transparent">
+          <Head>
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=2" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=2" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png?v=2" />
+        <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2" />
+        <link rel="mask-icon" href="/safari-pinned-tab.svg?v=2" color="#000000" />
+        <link rel="shortcut icon" href="/favicon.ico?v=2" />
+        <link rel="manifest" href="/site.webmanifest?v=2" />
+        <meta name="msapplication-TileColor" content="#000000" />
+        <meta name="msapplication-config" content="/browserconfig.xml?v=2" />
+        <meta name="theme-color" content="#000000" />
+        <title>Star Forge</title>
+      </Head>
     <StarryBackground show={currentTheme === 'dark'} />
     {isLoading && <LoadingScreen progress={loadingProgress} message={loadingMessage} />}
     <div className="relative z-10 p-4 max-w-[2000px] mx-auto">

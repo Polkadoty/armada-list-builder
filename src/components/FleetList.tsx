@@ -37,6 +37,7 @@ import {
 import { NotificationWindow } from "@/components/NotificationWindow";
 import { useTheme } from 'next-themes';
 import { LoadingScreen } from "@/components/LoadingScreen";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface Fleet {
   id: string;
@@ -50,6 +51,8 @@ interface Fleet {
   legacy?: boolean;
   old_legacy?: boolean;
   arc?: boolean;
+  numerical_id?: string;
+  shared?: boolean;
 }
 
 interface SortableColumn {
@@ -98,6 +101,8 @@ export function FleetList() {
   const [isLoading, setIsLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("");
   const [loadingProgress, setLoadingProgress] = useState(0);
+  const [showNotification, setShowNotification] = useState(false);
+  const [notificationMessage, setNotificationMessage] = useState("");
 
   const fetchFleets = useCallback(async () => {
     setIsLoading(true);
@@ -322,6 +327,52 @@ export function FleetList() {
     }
   };
 
+  const handleToggleShare = async (fleet: Fleet) => {
+    if (!user) return;
+    
+    try {
+      const { error } = await supabase
+        .from('fleets')
+        .update({ shared: !fleet.shared })
+        .eq('id', fleet.id)
+        .eq('user_id', user.sub);
+
+      if (error) throw error;
+      
+      // Show share link if enabled
+      if (!fleet.shared) {
+        setNotificationMessage(`Fleet can now be shared at: ${window.location.origin}/share/${fleet.numerical_id}`);
+        setShowNotification(true);
+      }
+      
+      await fetchFleets();
+    } catch (error) {
+      console.error('Error toggling share status:', error);
+    }
+  };
+
+  const handleCopyLink = async (fleet: Fleet) => {
+    if (!fleet.shared) {
+      setNotificationMessage('Please enable sharing for this fleet first');
+      setShowNotification(true);
+      return;
+    }
+
+    // Use star-forge.tools domain or current domain if in production
+    const domain = process.env.NEXT_PUBLIC_DOMAIN || window.location.origin;
+    const shareUrl = `${domain}/share/${fleet.numerical_id}`;
+    
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setNotificationMessage('Share link copied to clipboard!');
+      setShowNotification(true);
+    } catch (err) {
+      console.error('Failed to copy link:', err);
+      setNotificationMessage('Failed to copy link to clipboard');
+      setShowNotification(true);
+    }
+  };
+
   useEffect(() => {
     if (user) {
       fetchFleets();
@@ -460,6 +511,16 @@ export function FleetList() {
                             <DropdownMenuItem onClick={() => handleFleetSelect(fleet)}>
                               Load Fleet
                             </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleToggleShare(fleet)}>
+                              <div className="flex items-center">
+                                <Checkbox
+                                  checked={fleet.shared}
+                                  className="mr-2"
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                                Share Fleet
+                              </div>
+                            </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => {
                               setFleetToRename(fleet);
                               setNewFleetName(fleet.fleet_name);
@@ -469,6 +530,9 @@ export function FleetList() {
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleFleetCopy(fleet)}>
                               Copy Fleet
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleCopyLink(fleet)}>
+                              Copy Share Link
                             </DropdownMenuItem>
                             <DropdownMenuItem 
                               onClick={() => handleFleetDelete(fleet)}
@@ -589,6 +653,12 @@ export function FleetList() {
                 </DialogFooter>
               </DialogContent>
             </Dialog>
+          )}
+          {showNotification && (
+            <NotificationWindow
+              message={notificationMessage}
+              onClose={() => setShowNotification(false)}
+            />
           )}
         </DialogContent>
       </Dialog>
