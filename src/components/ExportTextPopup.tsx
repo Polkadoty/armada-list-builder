@@ -5,7 +5,6 @@ import { Copy, Share2, X, Camera } from 'lucide-react';
 import { NotificationWindow } from './NotificationWindow';
 import { Checkbox } from "./ui/checkbox";
 import domtoimage from 'dom-to-image';
-import { supabase } from '../lib/supabase';
 import { useUser } from '@auth0/nextjs-auth0/client';
 
 interface ExportTextPopupProps {
