@@ -238,6 +238,9 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
       }).flat();
 
       const filteredShips = allShips.filter(ship => {
+        // Exclude dummy ships
+        if (ship.name.includes('Dummy')) return false;
+
         // For sandbox mode, include ships from all base factions and sandbox faction
         if (faction === 'sandbox') {
           const baseFactions = ['rebel', 'empire', 'republic', 'separatist', 'sandbox'];
