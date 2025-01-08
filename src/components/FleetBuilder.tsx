@@ -2653,19 +2653,71 @@ const [isExpansionMode, setIsExpansionMode] = useState(false);
 // ${baseTokensHTML}
 
   useEffect(() => {
-    const savedFleet = localStorage.getItem(`savedFleet_${faction}`);
-    const retrievedFromList = document.cookie.includes('retrieved-from-list=true');
-  
-    if (!hasLoadedPage && savedFleet && selectedShips.length === 0 && selectedSquadrons.length === 0) {
-      if (retrievedFromList) {
-        handleImportFleet(savedFleet, 'kingston');
-        document.cookie = "retrieved-from-list=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      } else {
-        setShowRecoveryPopup(true);
+    const handleBeforeUnload = () => {
+      if (selectedShips.length > 0 || selectedSquadrons.length > 0) {
+        localStorage.setItem(
+          "fleetRecovery",
+          JSON.stringify({
+            ships: selectedShips,
+            squadrons: selectedSquadrons,
+            objectives: {
+              assault: selectedAssaultObjectives,
+              defense: selectedDefenseObjectives,
+              navigation: selectedNavigationObjectives,
+            },
+            faction,
+            timestamp: new Date().getTime(),
+          })
+        );
       }
+    };
+
+    const checkForRecovery = () => {
+      if (!isExpansionMode && !hasLoadedPage) {
+        const savedFleet = localStorage.getItem(`savedFleet_${faction}`);
+        const retrievedFromList = document.cookie.includes('retrieved-from-list=true');
+        const recovery = localStorage.getItem("fleetRecovery");
+
+        if (retrievedFromList && savedFleet) {
+          handleImportFleet(savedFleet, 'kingston');
+          document.cookie = "retrieved-from-list=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        } else if (recovery && !retrievedFromList) {
+          const data = JSON.parse(recovery);
+          if (
+            data.faction === faction &&
+            (data.ships.length > 0 || data.squadrons.length > 0) &&
+            data.timestamp > new Date().getTime() - 3600000 &&
+            selectedShips.length === 0 &&
+            selectedSquadrons.length === 0
+          ) {
+            setShowRecoveryPopup(true);
+          }
+        }
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    checkForRecovery();
+
+    // Mark page as loaded after initial check
+    if (!hasLoadedPage) {
       setHasLoadedPage(true);
     }
-  }, [faction, selectedShips.length, selectedSquadrons.length, hasLoadedPage, router, handleImportFleet]);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [
+    faction,
+    selectedShips,
+    selectedSquadrons,
+    selectedAssaultObjectives,
+    selectedDefenseObjectives,
+    selectedNavigationObjectives,
+    isExpansionMode,
+    hasLoadedPage,
+    handleImportFleet
+  ]);
 
   useEffect(() => {
     if (selectedShips.length > 0 || selectedSquadrons.length > 0) {
@@ -2711,51 +2763,6 @@ const [isExpansionMode, setIsExpansionMode] = useState(false);
       }, 500);
     }
   }, [isExpansionMode, selectedShips.length, selectedSquadrons.length]);
-
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      if (selectedShips.length > 0 || selectedSquadrons.length > 0) {
-        localStorage.setItem(
-          "fleetRecovery",
-          JSON.stringify({
-            ships: selectedShips,
-            squadrons: selectedSquadrons,
-            objectives: {
-              assault: selectedAssaultObjectives,
-              defense: selectedDefenseObjectives,
-              navigation: selectedNavigationObjectives,
-            },
-            faction,
-            timestamp: new Date().getTime(),
-          })
-        );
-      }
-    };
-
-    const checkForRecovery = () => {
-      if (!isExpansionMode) {  // Add this condition
-        const recovery = localStorage.getItem("fleetRecovery");
-        if (recovery) {
-          const data = JSON.parse(recovery);
-          if (
-            data.faction === faction &&
-            (data.ships.length > 0 || data.squadrons.length > 0) &&
-            data.timestamp > new Date().getTime() - 3600000
-          ) {
-            setShowRecoveryPopup(true);
-          }
-        }
-      }
-    };
-
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    checkForRecovery();
-
-    return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-    };
-  }, [faction, selectedShips, selectedSquadrons, selectedAssaultObjectives, 
-      selectedDefenseObjectives, selectedNavigationObjectives, isExpansionMode]); // Add isExpansionMode here
 
   const generateUniqueSquadronId = (): string => {
     setSquadronIdCounter(prev => prev + 1);
