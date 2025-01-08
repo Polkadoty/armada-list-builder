@@ -30,7 +30,6 @@ export function ExpansionSelector({
   isExpansionMode,
   setExpansionMode
 }: ExpansionSelectorProps) {
-  const [expansions, setExpansions] = useState<Record<string, Expansion>>({});
   const [displayedExpansions, setDisplayedExpansions] = useState<Record<string, Expansion>>({});
   const [showDialog, setShowDialog] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -48,8 +47,6 @@ export function ExpansionSelector({
     if (cachedExpansions) {
       const data = JSON.parse(cachedExpansions);
       if (data?.expansions) {
-        setExpansions(data.expansions);
-        
         const filtered = Object.entries(data.expansions).reduce((acc, [key, expansion]) => {
           const alias = (expansion as Expansion).alias?.toLowerCase();
           
