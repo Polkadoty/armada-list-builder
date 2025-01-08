@@ -4,6 +4,7 @@ import { Card } from "./ui/card";
 import { useEffect, useState } from "react";
 import { Box, Trash2, X } from "lucide-react";
 import { LoadingScreen } from "./LoadingScreen";
+import Cookies from 'js-cookie';
 
 interface Expansion {
   id: string;
@@ -11,6 +12,7 @@ interface Expansion {
   release: string;
   expansion: string;
   fleet?: string;
+  alias?: string;
 }
 
 interface ExpansionSelectorProps {
@@ -29,20 +31,74 @@ export function ExpansionSelector({
   setExpansionMode
 }: ExpansionSelectorProps) {
   const [expansions, setExpansions] = useState<Record<string, Expansion>>({});
+  const [displayedExpansions, setDisplayedExpansions] = useState<Record<string, Expansion>>({});
   const [showDialog, setShowDialog] = useState(false);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [contentSources, setContentSources] = useState({
+    arc: Cookies.get('enableArc') === 'true',
+    legacy: Cookies.get('enableLegacy') === 'true',
+    legends: Cookies.get('enableLegends') === 'true',
+    oldLegacy: Cookies.get('enableOldLegacy') === 'true'
+  });
 
+  // Load and filter expansions
+  const loadExpansions = () => {
+    const cachedExpansions = localStorage.getItem("expansions");
+    if (cachedExpansions) {
+      const data = JSON.parse(cachedExpansions);
+      if (data?.expansions) {
+        setExpansions(data.expansions);
+        
+        const filtered = Object.entries(data.expansions).reduce((acc, [key, expansion]) => {
+          const alias = (expansion as Expansion).alias?.toLowerCase();
+          
+          if (!alias || alias === 'ffg' || alias === 'amg') {
+            acc[key] = expansion as Expansion;
+            return acc;
+          }
+
+          if (alias === 'legacy' && contentSources.legacy) {
+            acc[key] = expansion as Expansion;
+            return acc;
+          }
+
+          if (alias === 'legends' && contentSources.legends) {
+            acc[key] = expansion as Expansion;
+            return acc;
+          }
+
+          return acc;
+        }, {} as Record<string, Expansion>);
+
+        setDisplayedExpansions(filtered);
+      }
+    }
+  };
+
+  // Check cookies and update content sources
   useEffect(() => {
-    const loadExpansions = () => {
-      const cachedExpansions = localStorage.getItem("expansions");
-      if (cachedExpansions) {
-        const data = JSON.parse(cachedExpansions);
-        if (data?.expansions) {
-          setExpansions(data.expansions);
-        }
+    const checkCookies = () => {
+      const newContentSources = {
+        arc: Cookies.get('enableArc') === 'true',
+        legacy: Cookies.get('enableLegacy') === 'true',
+        legends: Cookies.get('enableLegends') === 'true',
+        oldLegacy: Cookies.get('enableOldLegacy') === 'true'
+      };
+
+      if (JSON.stringify(newContentSources) !== JSON.stringify(contentSources)) {
+        setContentSources(newContentSources);
+        loadExpansions(); // Reload expansions when content sources change
       }
     };
+
+    checkCookies();
+    const interval = setInterval(checkCookies, 1000);
+    return () => clearInterval(interval);
+  }, [contentSources]);
+
+  // Initial load of expansions
+  useEffect(() => {
     loadExpansions();
   }, []);
 
@@ -129,7 +185,7 @@ export function ExpansionSelector({
             
             <ScrollArea className="h-[60vh] mb-4">
               <div className="grid grid-cols-1 gap-2">
-                {Object.entries(expansions).map(([key, expansion]) => (
+                {Object.entries(displayedExpansions).map(([key, expansion]) => (
                   <Button
                     key={key}
                     variant="outline"
