@@ -2868,7 +2868,9 @@ const [isExpansionMode, setIsExpansionMode] = useState(false);
           </div>
         )}
         <div className="flex-grow logo-font" />
-        <PointsDisplay points={points} previousPoints={previousPoints} />
+        {(faction !== "sandbox" || (selectedShips.length > 0 || selectedSquadrons.length > 0)) && (
+          <PointsDisplay points={points} previousPoints={previousPoints} />
+        )}
       </div>
 
       {faction === "sandbox" && (

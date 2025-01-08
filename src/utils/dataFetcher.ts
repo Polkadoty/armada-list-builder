@@ -74,7 +74,8 @@ const fetchAndSaveData = async (
     { name: 'aliases', url: '/aliases/' },
     { name: 'imageLinks', url: '/image-links/' },
     { name: 'errataKeys', url: '/errata-keys/' },
-    { name: 'expansions', url: '/expansions/' }
+    { name: 'expansions', url: '/expansions/' },
+    { name: 'releases', url: '/releases/' }
   ];
 
   if (enableLegacy) {
@@ -146,6 +147,7 @@ export const flushCacheAndReload = async (setIsLoading: (isLoading: boolean) => 
   localStorage.removeItem('aliases');
   localStorage.removeItem('imageLinks');
   localStorage.removeItem('expansions');
+  localStorage.removeItem('releases');
 
   // Reset sorting state cookies
   Cookies.remove('sortState_ships');

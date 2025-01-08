@@ -15,6 +15,15 @@ interface Expansion {
   alias?: string;
 }
 
+interface Release {
+  id: string;
+  name: string;
+  release: string;
+  expansion: string;
+  fleet?: string;
+  alias?: string;
+}
+
 interface ExpansionSelectorProps {
   onSelectExpansion: (fleet: string) => void;
   onClearFleet: () => void;
@@ -31,7 +40,9 @@ export function ExpansionSelector({
   setExpansionMode
 }: ExpansionSelectorProps) {
   const [displayedExpansions, setDisplayedExpansions] = useState<Record<string, Expansion>>({});
-  const [showDialog, setShowDialog] = useState(false);
+  const [displayedReleases, setDisplayedReleases] = useState<Record<string, Release>>({});
+  const [showExpansionDialog, setShowExpansionDialog] = useState(false);
+  const [showReleaseDialog, setShowReleaseDialog] = useState(false);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [contentSources, setContentSources] = useState({
@@ -73,6 +84,38 @@ export function ExpansionSelector({
     }
   };
 
+  // Load and filter releases
+  const loadReleases = () => {
+    const cachedReleases = localStorage.getItem("releases");
+    if (cachedReleases) {
+      const data = JSON.parse(cachedReleases);
+      if (data?.releases) {
+        const filtered = Object.entries(data.releases).reduce((acc, [key, release]) => {
+          const alias = (release as Release).alias?.toLowerCase();
+          
+          if (!alias || alias === 'ffg' || alias === 'amg') {
+            acc[key] = release as Release;
+            return acc;
+          }
+
+          if (alias === 'legacy' && contentSources.legacy) {
+            acc[key] = release as Release;
+            return acc;
+          }
+
+          if (alias === 'legends' && contentSources.legends) {
+            acc[key] = release as Release;
+            return acc;
+          }
+
+          return acc;
+        }, {} as Record<string, Release>);
+
+        setDisplayedReleases(filtered);
+      }
+    }
+  };
+
   // Check cookies and update content sources
   useEffect(() => {
     const checkCookies = () => {
@@ -99,9 +142,15 @@ export function ExpansionSelector({
     loadExpansions();
   }, []);
 
-  const handleSelect = async (expansion: Expansion) => {
+  // Initial load of releases
+  useEffect(() => {
+    loadReleases();
+  }, []);
+
+  const handleSelect = async (expansion: Expansion | Release) => {
     if (expansion.fleet) {
-      setShowDialog(false);
+      setShowExpansionDialog(false);
+      setShowReleaseDialog(false);
       setLoading(true);
       setExpansionMode(true);
       
@@ -130,24 +179,39 @@ export function ExpansionSelector({
   const handleClearAll = () => {
     onClearFleet();
     setExpansionMode(false);
-    setShowDialog(false);
+    setShowExpansionDialog(false);
+    setShowReleaseDialog(false);
   };
 
   return (
     <>
       {!isExpansionMode && (
-        <Card className="mb-4">
-          <Button
-            className="w-full justify-between bg-white/30 dark:bg-gray-900/30 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md text-lg py-6"
-            variant="outline"
-            onClick={() => setShowDialog(true)}
-          >
-            <span className="flex items-center gap-2">
-              <Box className="h-5 w-5" />
-              PRINT & PLAY EXPANSION
-            </span>
-          </Button>
-        </Card>
+        <>
+          <Card className="mb-4">
+            <Button
+              className="w-full justify-between bg-white/30 dark:bg-gray-900/30 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md text-lg py-6"
+              variant="outline"
+              onClick={() => setShowExpansionDialog(true)}
+            >
+              <span className="flex items-center gap-2">
+                <Box className="h-5 w-5" />
+                PRINT & PLAY EXPANSION
+              </span>
+            </Button>
+          </Card>
+          <Card className="mb-4">
+            <Button
+              className="w-full justify-between bg-white/30 dark:bg-gray-900/30 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md text-lg py-6"
+              variant="outline"
+              onClick={() => setShowReleaseDialog(true)}
+            >
+              <span className="flex items-center gap-2">
+                <Box className="h-5 w-5" />
+                PRINT & PLAY SHIPS
+              </span>
+            </Button>
+          </Card>
+        </>
       )}
 
       {hasFleet && isExpansionMode && (
@@ -165,7 +229,7 @@ export function ExpansionSelector({
         </Card>
       )}
 
-      {showDialog && (
+      {showExpansionDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <Card className="w-full max-w-lg md:max-w-2xl bg-white/90 dark:bg-gray-800/90 backdrop-blur-md shadow-lg p-6">
             <div className="flex justify-between items-center mb-4">
@@ -173,7 +237,7 @@ export function ExpansionSelector({
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setShowDialog(false)}
+                onClick={() => setShowExpansionDialog(false)}
                 className="rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
               >
                 <X className="h-4 w-4" />
@@ -190,6 +254,39 @@ export function ExpansionSelector({
                     onClick={() => handleSelect(expansion)}
                   >
                     {expansion.expansion}
+                  </Button>
+                ))}
+              </div>
+            </ScrollArea>
+          </Card>
+        </div>
+      )}
+
+      {showReleaseDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <Card className="w-full max-w-lg md:max-w-2xl bg-white/90 dark:bg-gray-800/90 backdrop-blur-md shadow-lg p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Select Ships to Print & Play</h2>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowReleaseDialog(false)}
+                className="rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            <ScrollArea className="h-[60vh] mb-4">
+              <div className="grid grid-cols-1 gap-2">
+                {Object.entries(displayedReleases).map(([key, release]) => (
+                  <Button
+                    key={key}
+                    variant="outline"
+                    className="w-full text-left justify-start"
+                    onClick={() => handleSelect(release)}
+                  >
+                    {release.expansion}
                   </Button>
                 ))}
               </div>
