@@ -207,6 +207,7 @@ export default function FleetBuilder({
   });
   const [totalShipPoints, setTotalShipPoints] = useState(0);
   const [totalSquadronPoints, setTotalSquadronPoints] = useState(0);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [previousShipPoints, setPreviousShipPoints] = useState(0);
   const [previousSquadronPoints, setPreviousSquadronPoints] = useState(0);
   const {} = useTheme();
@@ -2782,17 +2783,6 @@ const [isExpansionMode, setIsExpansionMode] = useState(false);
     setUniqueClassNames([]);
     console.log("clearing fleet state");
   }, [setPoints, setTotalShipPoints, setTotalSquadronPoints]); // Add these dependencies
-
-  useEffect(() => {
-    if (!isExpansionMode) {
-      setPoints(0);
-      setTotalShipPoints(0);
-      setTotalSquadronPoints(0);
-      setPreviousPoints(0);
-      setPreviousShipPoints(0);
-      setPreviousSquadronPoints(0);
-    }
-  }, [isExpansionMode]);
 
   return (
     <div ref={contentRef} className="max-w-[2000px] mx-auto">

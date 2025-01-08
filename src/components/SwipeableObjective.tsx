@@ -69,6 +69,7 @@ export function SwipeableObjective({ type, selectedObjective, selectedObjectives
   return (
     <div className="relative overflow-hidden">
       {objectives.length > 0 ? (
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         objectives.map((objective, index) => (
           <animated.div key={objective.id} style={{ x }} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} className="relative mb-2">
             <Button 
