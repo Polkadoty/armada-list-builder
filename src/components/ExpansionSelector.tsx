@@ -78,6 +78,7 @@ export function ExpansionSelector({
   const handleClearAll = () => {
     onClearFleet();
     setExpansionMode(false);
+    setShowDialog(false);
   };
 
   return (
