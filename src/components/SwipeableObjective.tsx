@@ -7,12 +7,13 @@ import { X, ArrowLeftRight } from 'lucide-react';
 interface SwipeableObjectiveProps {
   type: 'assault' | 'defense' | 'navigation';
   selectedObjective: ObjectiveModel | null;
+  selectedObjectives?: ObjectiveModel[];
   onRemove: () => void;
   onOpen: () => void;
   color: string;
 }
 
-export function SwipeableObjective({ type, selectedObjective, onRemove, onOpen, color }: SwipeableObjectiveProps) {
+export function SwipeableObjective({ type, selectedObjective, selectedObjectives = [], onRemove, onOpen, color }: SwipeableObjectiveProps) {
   const [{ x }, api] = useSpring(() => ({ x: 0 }));
   const isDragging = useRef(false);
   const startX = useRef(0);
@@ -62,42 +63,50 @@ export function SwipeableObjective({ type, selectedObjective, onRemove, onOpen, 
     isHorizontalSwipe.current = false;
   };
 
+  const isSandbox = selectedObjectives.length > 0;
+  const objectives = isSandbox ? selectedObjectives : selectedObjective ? [selectedObjective] : [];
+  
   return (
     <div className="relative overflow-hidden">
-      <animated.div
-        style={{ x }}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-        className="relative"
-      >
-        <Button 
-          variant="outline" 
-          className="w-full justify-start transition-colors py-6 text-lg bg-white dark:bg-gray-950" // Added background color for light and dark mode
+      {objectives.length > 0 ? (
+        objectives.map((objective, index) => (
+          <animated.div key={objective.id} style={{ x }} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} className="relative mb-2">
+            <Button 
+              variant="outline" 
+              className="w-full justify-start transition-colors py-6 text-lg bg-white dark:bg-gray-950" 
+              onClick={onOpen}
+            >
+              <div className="flex justify-between items-center w-full">
+                <div className="flex items-center">
+                  <div style={{ width: '16px', height: '16px', backgroundColor: color, marginRight: '8px' }}></div>
+                  {objective.name}
+                </div>
+                <button 
+                  onClick={(e) => { e.stopPropagation(); onRemove(); }}
+                  className="text-red-500 hover:text-red-700"
+                >
+                  ✕
+                </button>
+              </div>
+            </Button>
+          </animated.div>
+        ))
+      ) : (
+        <Button
           onClick={onOpen}
+          className="w-full py-6"
+          variant="outline"
+          style={{ borderColor: color }}
         >
-          <div className="flex justify-between items-center w-full">
-            <div className="flex items-center">
-              <div style={{ width: '16px', height: '16px', backgroundColor: color, marginRight: '8px' }}></div>
-              {selectedObjective ? selectedObjective.name : `ADD ${type.toUpperCase()}`}
-            </div>
-            {selectedObjective && (
-              <button 
-                onClick={(e) => { e.stopPropagation(); onRemove(); }}
-                className="text-red-500 hover:text-red-700" // Changed to match current text color
-              >
-                ✕
-              </button>
-            )}
-          </div>
+          {`Select ${type.charAt(0).toUpperCase() + type.slice(1)} Objective`}
         </Button>
-        <div className="absolute left-0 top-0 bottom-0 flex items-center justify-center w-16 text-blue-500 bg-gray-900 bg-opacity-75" style={{ transform: 'translateX(-100%)' }}>
-          <ArrowLeftRight size={20} />
-        </div>
-        <div className="absolute right-0 top-0 bottom-0 flex items-center justify-center w-16 text-red-500 bg-gray-900 bg-opacity-75" style={{ transform: 'translateX(100%)' }}>
-          <X size={20} />
-        </div>
-      </animated.div>
+      )}
+      <div className="absolute left-0 top-0 bottom-0 flex items-center justify-center w-16 text-blue-500 bg-gray-900 bg-opacity-75" style={{ transform: 'translateX(-100%)' }}>
+        <ArrowLeftRight size={20} />
+      </div>
+      <div className="absolute right-0 top-0 bottom-0 flex items-center justify-center w-16 text-red-500 bg-gray-900 bg-opacity-75" style={{ transform: 'translateX(100%)' }}>
+        <X size={20} />
+      </div>
     </div>
   );
 }

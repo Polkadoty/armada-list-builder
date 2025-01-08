@@ -238,9 +238,9 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
       }).flat();
 
       const filteredShips = allShips.filter(ship => {
-        // For sandbox mode, include ships from all base factions
+        // For sandbox mode, include ships from all base factions and sandbox faction
         if (faction === 'sandbox') {
-          const baseFactions = ['rebel', 'empire', 'republic', 'separatist'];
+          const baseFactions = ['rebel', 'empire', 'republic', 'separatist', 'sandbox'];
           const allowedFactions = [...baseFactions];
           
           // Include scum faction if custom content is enabled

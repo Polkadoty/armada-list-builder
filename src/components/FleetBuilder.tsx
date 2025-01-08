@@ -41,6 +41,7 @@ import { FleetRecoveryPopup } from "./FleetRecoveryPopup";
 import { SaveFleetButton } from './SaveFleetButton';
 import { useRouter } from 'next/router';
 import { PrintMenu } from "./PrintMenu";
+import { ExpansionSelector } from "./ExpansionSelector";
 
 export interface Ship {
   id: string;
@@ -215,12 +216,9 @@ export default function FleetBuilder({
     useState(false);
   const [showNavigationObjectiveSelector, setShowNavigationObjectiveSelector] =
     useState(false);
-  const [selectedAssaultObjective, setSelectedAssaultObjective] =
-    useState<ObjectiveModel | null>(null);
-  const [selectedDefenseObjective, setSelectedDefenseObjective] =
-    useState<ObjectiveModel | null>(null);
-  const [selectedNavigationObjective, setSelectedNavigationObjective] =
-    useState<ObjectiveModel | null>(null);
+  const [selectedAssaultObjectives, setSelectedAssaultObjectives] = useState<ObjectiveModel[]>([]);
+  const [selectedDefenseObjectives, setSelectedDefenseObjectives] = useState<ObjectiveModel[]>([]);
+  const [selectedNavigationObjectives, setSelectedNavigationObjectives] = useState<ObjectiveModel[]>([]);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [uniqueClassNames, setUniqueClassNames] = useState<string[]>([]);
   const [showUpgradeSelector, setShowUpgradeSelector] = useState(false);
@@ -257,6 +255,7 @@ export default function FleetBuilder({
   // Add these state variables near the other useState declarations
 const [showPrintRestrictions, setShowPrintRestrictions] = useState(true);
 const [showPrintObjectives, setShowPrintObjectives] = useState(true);
+const [isExpansionMode, setIsExpansionMode] = useState(false);
 
 
   const checkTournamentViolations = useMemo(() => {
@@ -285,9 +284,9 @@ const [showPrintObjectives, setShowPrintObjectives] = useState(true);
     }
 
     if (
-      !selectedAssaultObjective ||
-      !selectedDefenseObjective ||
-      !selectedNavigationObjective
+      !selectedAssaultObjectives ||
+      !selectedDefenseObjectives ||
+      !selectedNavigationObjectives
     ) {
       violations.push("Missing objective card(s)");
     }
@@ -305,9 +304,9 @@ const [showPrintObjectives, setShowPrintObjectives] = useState(true);
     totalSquadronPoints,
     selectedShips,
     selectedSquadrons,
-    selectedAssaultObjective,
-    selectedDefenseObjective,
-    selectedNavigationObjective,
+    selectedAssaultObjectives,
+    selectedDefenseObjectives,
+    selectedNavigationObjectives,
   ]);
 
   useEffect(() => {
@@ -1151,30 +1150,42 @@ const [showPrintObjectives, setShowPrintObjectives] = useState(true);
   };
 
   const handleSelectAssaultObjective = (objective: ObjectiveModel) => {
-    setSelectedAssaultObjective(objective);
+    if (faction === "sandbox") {
+      setSelectedAssaultObjectives(prev => [...prev, objective]);
+    } else {
+      setSelectedAssaultObjectives([objective]);
+    }
     setShowAssaultObjectiveSelector(false);
   };
 
   const handleSelectDefenseObjective = (objective: ObjectiveModel) => {
-    setSelectedDefenseObjective(objective);
+    if (faction === "sandbox") {
+      setSelectedDefenseObjectives(prev => [...prev, objective]);
+    } else {
+      setSelectedDefenseObjectives([objective]);
+    }
     setShowDefenseObjectiveSelector(false);
   };
 
   const handleSelectNavigationObjective = (objective: ObjectiveModel) => {
-    setSelectedNavigationObjective(objective);
+    if (faction === "sandbox") {
+      setSelectedNavigationObjectives(prev => [...prev, objective]);
+    } else {
+      setSelectedNavigationObjectives([objective]);
+    }
     setShowNavigationObjectiveSelector(false);
   };
 
   const handleRemoveAssaultObjective = () => {
-    setSelectedAssaultObjective(null);
+    setSelectedAssaultObjectives([]);
   };
 
   const handleRemoveDefenseObjective = () => {
-    setSelectedDefenseObjective(null);
+    setSelectedDefenseObjectives([]);
   };
 
   const handleRemoveNavigationObjective = () => {
-    setSelectedNavigationObjective(null);
+    setSelectedNavigationObjectives([]);
   };
 
   const clearAllShips = () => {
@@ -1259,17 +1270,17 @@ const [showPrintObjectives, setShowPrintObjectives] = useState(true);
     text += '\n';
     
     // Add objectives with source tags
-    if (selectedAssaultObjective) {
-      const sourceTag = formatSource(selectedAssaultObjective.source);
-      text += `Assault: ${selectedAssaultObjective.name}${sourceTag ? ` ${sourceTag}` : ''}\n`;
+    if (selectedAssaultObjectives.length > 0) {
+      const sourceTag = formatSource(selectedAssaultObjectives[0].source);
+      text += `Assault: ${selectedAssaultObjectives.map(obj => obj.name).join(", ")}${sourceTag ? ` ${sourceTag}` : ''}\n`;
     }
-    if (selectedDefenseObjective) {
-      const sourceTag = formatSource(selectedDefenseObjective.source);
-      text += `Defense: ${selectedDefenseObjective.name}${sourceTag ? ` ${sourceTag}` : ''}\n`;
+    if (selectedDefenseObjectives.length > 0) {
+      const sourceTag = formatSource(selectedDefenseObjectives[0].source);
+      text += `Defense: ${selectedDefenseObjectives.map(obj => obj.name).join(", ")}${sourceTag ? ` ${sourceTag}` : ''}\n`;
     }
-    if (selectedNavigationObjective) {
-      const sourceTag = formatSource(selectedNavigationObjective.source);
-      text += `Navigation: ${selectedNavigationObjective.name}${sourceTag ? ` ${sourceTag}` : ''}\n`;
+    if (selectedNavigationObjectives.length > 0) {
+      const sourceTag = formatSource(selectedNavigationObjectives[0].source);
+      text += `Navigation: ${selectedNavigationObjectives.map(obj => obj.name).join(", ")}${sourceTag ? ` ${sourceTag}` : ''}\n`;
     }
 
     if (selectedShips.length > 0) {
@@ -1334,9 +1345,9 @@ const [showPrintObjectives, setShowPrintObjectives] = useState(true);
   }, [
     selectedShips, 
     selectedSquadrons, 
-    selectedAssaultObjective, 
-    selectedDefenseObjective, 
-    selectedNavigationObjective,
+    selectedAssaultObjectives, 
+    selectedDefenseObjectives, 
+    selectedNavigationObjectives,
     faction,
     fleetName,
     points,
@@ -1683,9 +1694,9 @@ const [showPrintObjectives, setShowPrintObjectives] = useState(true);
     console.log("Resetting fleet...");
     clearAllShips();
     clearAllSquadrons();
-    setSelectedAssaultObjective(null);
-    setSelectedDefenseObjective(null);
-    setSelectedNavigationObjective(null);
+    setSelectedAssaultObjectives([]);
+    setSelectedDefenseObjectives([]);
+    setSelectedNavigationObjectives([]);
 
     let processingSquadrons = false;
     let totalPoints = 0;
@@ -1802,43 +1813,60 @@ const [showPrintObjectives, setShowPrintObjectives] = useState(true);
         }
         continue;
       } else if (
-        (line.startsWith("Assault:") || line.startsWith("Defense:") || line.startsWith("Navigation:") || line.startsWith("Assault Objective:") || line.startsWith("Defense Objective:") || line.startsWith("Navigation Objective:")) 
+        (line.startsWith("Assault:") || line.startsWith("Defense:") || line.startsWith("Navigation:") || 
+         line.startsWith("Assault Objective:") || line.startsWith("Defense Objective:") || line.startsWith("Navigation Objective:"))
       ) {
         // Handle objectives
-        const [type, name] = line.split(":");
-        const trimmedName = name?.trim();
+        const [type, namesString] = line.split(":");
+        const objectiveNames = namesString.split(",").map(name => name.trim()).filter(Boolean);
         
         // If there's no name after the colon, skip this line
-        if (!trimmedName) {
+        if (objectiveNames.length === 0) {
           console.log(`Skipping empty objective: ${type}`);
           continue;
         }
-      
-        const objectiveKey = getAliasKey(aliases, trimmedName);
-        console.log(`Found objective: ${type} - ${trimmedName}`);
-        if (objectiveKey) {
-          const objective = fetchObjective(objectiveKey);
-          console.log(`Fetched objective for key: ${objectiveKey}`, objective);
-          if (objective) {
-            console.log(`Setting selected objective: ${type}`);
-            switch (type.toLowerCase()) {
-              case "assault":
-                setSelectedAssaultObjective(objective);
-                break;
-              case "defense":
-                setSelectedDefenseObjective(objective);
-                break;
-              case "navigation":
-                setSelectedNavigationObjective(objective);
-                break;
+
+        for (const objectiveName of objectiveNames) {
+          const objectiveKey = getAliasKey(aliases, objectiveName);
+          console.log(`Found objective: ${type} - ${objectiveName}`);
+          
+          if (objectiveKey) {
+            const objective = fetchObjective(objectiveKey);
+            console.log(`Fetched objective for key: ${objectiveKey}`, objective);
+            
+            if (objective) {
+              console.log(`Setting selected objective: ${type}`);
+              switch (type.toLowerCase()) {
+                case "assault":
+                  if (faction === "sandbox") {
+                    setSelectedAssaultObjectives(prev => [...prev, objective]);
+                  } else {
+                    setSelectedAssaultObjectives([objective]);
+                  }
+                  break;
+                case "defense":
+                  if (faction === "sandbox") {
+                    setSelectedDefenseObjectives(prev => [...prev, objective]);
+                  } else {
+                    setSelectedDefenseObjectives([objective]);
+                  }
+                  break;
+                case "navigation":
+                  if (faction === "sandbox") {
+                    setSelectedNavigationObjectives(prev => [...prev, objective]);
+                  } else {
+                    setSelectedNavigationObjectives([objective]);
+                  }
+                  break;
+              }
+            } else {
+              console.log(`Objective not found: ${objectiveName}`);
+              skippedItems.push(objectiveName);
             }
           } else {
-            console.log(`Objective not found: ${trimmedName}`);
-            skippedItems.push(trimmedName);
+            console.log(`Objective key not found in aliases: ${objectiveName}`);
+            skippedItems.push(objectiveName);
           }
-        } else {
-          console.log(`Objective key not found in aliases: ${trimmedName}`);
-          skippedItems.push(trimmedName);
         }
       } else if (line.startsWith(" Name:") || line.startsWith("Name:")) {
         // Handle fleet name with or without leading space
@@ -2026,9 +2054,9 @@ const [showPrintObjectives, setShowPrintObjectives] = useState(true);
     setFleetName,
     setNotificationMessage,
     setPoints,
-    setSelectedAssaultObjective,
-    setSelectedDefenseObjective,
-    setSelectedNavigationObjective,
+    setSelectedAssaultObjectives,
+    setSelectedDefenseObjectives,
+    setSelectedNavigationObjectives,
     setSelectedShips,
     setShowNotification,
     setTotalShipPoints,
@@ -2210,15 +2238,15 @@ const [showPrintObjectives, setShowPrintObjectives] = useState(true);
         <div class="objectives">
           <div class="objective-card">
             <h4>Assault</h4>
-            <p>${selectedAssaultObjective ? selectedAssaultObjective.name : "None"}</p>
+            <p>${selectedAssaultObjectives.length > 0 ? selectedAssaultObjectives.map(obj => obj.name).join(", ") : "None"}</p>
           </div>
           <div class="objective-card">
             <h4>Defense</h4>
-            <p>${selectedDefenseObjective ? selectedDefenseObjective.name : "None"}</p>
+            <p>${selectedDefenseObjectives.length > 0 ? selectedDefenseObjectives.map(obj => obj.name).join(", ") : "None"}</p>
           </div>
           <div class="objective-card">
             <h4>Navigation</h4>
-            <p>${selectedNavigationObjective ? selectedNavigationObjective.name : "None"}</p>
+            <p>${selectedNavigationObjectives.length > 0 ? selectedNavigationObjectives.map(obj => obj.name).join(", ") : "None"}</p>
           </div>
         </div>
       ` : ''}
@@ -2257,7 +2285,7 @@ const [showPrintObjectives, setShowPrintObjectives] = useState(true);
     const allCards = [
       ...selectedSquadrons,
       ...selectedShips.flatMap(ship => ship.assignedUpgrades),
-      ...[selectedAssaultObjective, selectedDefenseObjective, selectedNavigationObjective].filter((obj): obj is Objective => obj !== null)
+      ...[...selectedAssaultObjectives, ...selectedDefenseObjectives, ...selectedNavigationObjectives].filter((obj): obj is Objective => obj !== null)
     ];
     
     const pokerPagesNeeded = Math.ceil(allCards.length / 9); // 9 cards per page
@@ -2346,49 +2374,54 @@ const [showPrintObjectives, setShowPrintObjectives] = useState(true);
 
     // Generate base tokens
   
-    const baseTokensHTML = selectedShips.length > 0 ? calculateOptimalLayout(selectedShips).map(page => `
-      <div class="page">
-        <div class="base-token-grid" style="
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          height: ${paperSize === 'letter' ? '11in' : '297mm'};
-          width: ${paperSize === 'letter' ? '8.5in' : '210mm'};
-          margin: 0;
-          padding: 0.5in;
-          box-sizing: border-box;
-        ">
-          ${page.rows.map(row => `
-            <div style="
-              display: flex; 
-              justify-content: center; 
+    const baseTokensHTML = selectedShips
+      .filter(ship => !ship.name.includes('Dummy'))  // Filter out dummy ships
+      .length > 0 
+      ? calculateOptimalLayout(selectedShips.filter(ship => !ship.name.includes('Dummy')))
+        .map(page => `
+          <div class="page">
+            <div class="base-token-grid" style="
+              display: flex;
+              flex-direction: column;
               align-items: center;
-              margin-bottom: 10mm;
-              width: 100%;
-              gap: 4mm;  /* Add horizontal spacing between bases */
+              justify-content: center;
+              height: ${paperSize === 'letter' ? '11in' : '297mm'};
+              width: ${paperSize === 'letter' ? '8.5in' : '210mm'};
+              margin: 0;
+              padding: 0.5in;
+              box-sizing: border-box;
             ">
-              ${row.ships.map(ship => {
-                const baseTokenUrl = ship.cardimage.replace('.webp', '-base.webp');
-                return `
-                  <div class="base-token" style="
-                    width: ${baseTokenSizes[ship.size as keyof typeof baseTokenSizes]?.width || baseTokenSizes.small.width};
-                    height: ${baseTokenSizes[ship.size as keyof typeof baseTokenSizes]?.height || baseTokenSizes.small.height};
-                    margin: 0;
-                  ">
-                    <img 
-                      src="${baseTokenUrl}" 
-                      alt="${ship.name} Base Token" 
-                      style="width: 100%; height: 100%; object-fit: contain;"
-                    />
-                  </div>
-                `;
-              }).join('')}
+              ${page.rows.map(row => `
+                <div style="
+                  display: flex; 
+                  justify-content: center; 
+                  align-items: center;
+                  margin-bottom: 10mm;
+                  width: 100%;
+                  gap: 4mm;  /* Add horizontal spacing between bases */
+                ">
+                  ${row.ships.map(ship => {
+                    const baseTokenUrl = ship.cardimage.replace('.webp', '-base.webp');
+                    return `
+                      <div class="base-token" style="
+                        width: ${baseTokenSizes[ship.size as keyof typeof baseTokenSizes]?.width || baseTokenSizes.small.width};
+                        height: ${baseTokenSizes[ship.size as keyof typeof baseTokenSizes]?.height || baseTokenSizes.small.height};
+                        margin: 0;
+                      ">
+                        <img 
+                          src="${baseTokenUrl}" 
+                          alt="${ship.name} Base Token" 
+                          style="width: 100%; height: 100%; object-fit: contain;"
+                        />
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+              `).join('')}
             </div>
-          `).join('')}
-        </div>
-      </div>
-    `).join('') : '';
+          </div>
+        `).join('') 
+      : '';
   
     return `
       <!DOCTYPE html>
@@ -2488,37 +2521,59 @@ const [showPrintObjectives, setShowPrintObjectives] = useState(true);
           </style>
       </head>
       <body>
-        ${selectedShips.length > 0 ? `
-          ${chunkArray(selectedShips, 4).map(shipGroup => `
-            <!-- Ship Cards Front -->
-            <div class="page">
-              <div class="grid tarot-grid">
-                ${shipGroup.map(ship => `
-                  <div class="tarot-card">
-                    <div class="card-container">
-                      <img class="card-background" src="${ship.cardimage}" alt="" />
-                      <img class="card-image" src="${ship.cardimage}" alt="${ship.name}" />
+        ${selectedShips.filter(ship => !ship.name.includes('Dummy')).length > 0 ? `
+          ${chunkArray(selectedShips.filter(ship => !ship.name.includes('Dummy')), 4)
+            .map(shipGroup => `
+              <!-- Ship Cards Front -->
+              <div class="page">
+                <div class="grid tarot-grid">
+                  ${shipGroup.map(ship => `
+                    <div class="tarot-card">
+                      <div class="card-container">
+                        <img class="card-background" src="${ship.cardimage}" alt="" />
+                        <img class="card-image" src="${ship.cardimage}" alt="${ship.name}" />
+                      </div>
                     </div>
-                  </div>
-                `).join('')}
-              </div>
-            </div>
-            
-            <!-- Ship Cards Back -->
-            <div class="page">
-              <div class="grid tarot-grid">
-                ${shipGroup.slice().reverse().map(ship => `
-                  <div class="tarot-card">
-                    <div class="card-container">
-                      <img class="card-image" 
-                          src="https://api.swarmada.wiki/images/${ship.faction}-ship-rear.webp" 
-                          alt="${ship.name} back" />
+                  `).join('')}
+                  ${Array.from({ length: 4 - shipGroup.length }).map(() => `
+                    <div class="tarot-card">
+                      <div class="card-container"></div>
                     </div>
-                  </div>
-                `).join('')}
+                  `).join('')}
+                </div>
               </div>
-            </div>
-          `).join('')}
+              
+              <!-- Ship Cards Back -->
+              <div class="page">
+                <div class="grid tarot-grid">
+                  ${Array.from({ length: 4 }).map((_, index) => {
+                    const row = Math.floor(index / 2);
+                    const col = index % 2;
+                    const reversedCol = 1 - col;
+                    const reversedIndex = (row * 2) + reversedCol;
+                    const reversedShip = reversedIndex < shipGroup.length ? shipGroup[reversedIndex] : null;
+                    
+                    if (!reversedShip) {
+                      return `
+                        <div class="tarot-card">
+                          <div class="card-container"></div>
+                        </div>
+                      `;
+                    }
+                    
+                    return `
+                      <div class="tarot-card" style="transform: scaleX(-1)">
+                        <div class="card-container">
+                          <img class="card-image" 
+                              src="https://api.swarmada.wiki/images/${reversedShip.faction}-ship-rear.webp" 
+                              alt="${reversedShip.name} back" />
+                        </div>
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+              </div>
+            `).join('')}
         ` : ''}
 
         ${Array.from({ length: pokerPagesNeeded }).map((_, pageIndex) => {
@@ -2537,23 +2592,32 @@ const [showPrintObjectives, setShowPrintObjectives] = useState(true);
                     </div>
                   </div>
                 `).join('')}
+                ${Array.from({ length: 9 - pageCards.length }).map(() => `
+                  <div class="poker-card">
+                    <div class="card-container"></div>
+                  </div>
+                `).join('')}
               </div>
             </div>
             
             <!-- Poker Cards Back -->
             <div class="page">
               <div class="grid poker-grid">
-                ${pageCards.map((card, index) => {
-                  // Calculate position in the grid
-                  const row = Math.floor(index / 3); // 3 cards per row
+                ${Array.from({ length: 9 }).map((_, index) => {
+                  const row = Math.floor(index / 3);
                   const col = index % 3;
-                  // Reverse the column position while keeping the same row
                   const reversedCol = 2 - col;
                   const reversedIndex = (row * 3) + reversedCol;
-                  const reversedCard = pageCards[reversedIndex];
-
-                  if (!reversedCard) return '';
-
+                  const reversedCard = reversedIndex < pageCards.length ? pageCards[reversedIndex] : null;
+                  
+                  if (!reversedCard) {
+                    return `
+                      <div class="poker-card">
+                        <div class="card-container"></div>
+                      </div>
+                    `;
+                  }
+                  
                   let rearImage;
                   if ('squadron_type' in reversedCard) {
                     rearImage = `${reversedCard.faction}-squadron-rear`;
@@ -2566,7 +2630,7 @@ const [showPrintObjectives, setShowPrintObjectives] = useState(true);
                   }
                   
                   return `
-                    <div class="poker-card">
+                    <div class="poker-card" style="transform: scaleX(-1)">
                       <div class="card-container">
                         <img class="card-image" 
                              src="https://api.swarmada.wiki/images/${rearImage}.webp" 
@@ -2609,9 +2673,9 @@ const [showPrintObjectives, setShowPrintObjectives] = useState(true);
   }, [
     selectedShips,
     selectedSquadrons,
-    selectedAssaultObjective,
-    selectedDefenseObjective,
-    selectedNavigationObjective,
+    selectedAssaultObjectives,
+    selectedDefenseObjectives,
+    selectedNavigationObjectives,
     saveFleetToLocalStorage,
   ]);
 
@@ -2630,13 +2694,67 @@ const [showPrintObjectives, setShowPrintObjectives] = useState(true);
       setDisabledUpgrades({});
       setEnabledUpgrades({});
       setFilledSlots({});
-      setSelectedAssaultObjective(null);
-      setSelectedDefenseObjective(null);
-      setSelectedNavigationObjective(null);
+      setSelectedAssaultObjectives([]);
+      setSelectedDefenseObjectives([]);
+      setSelectedNavigationObjectives([]);
       setUniqueClassNames([]);
       console.log("clearing state");
     };
   }, []);
+
+  useEffect(() => {
+    if (isExpansionMode && (selectedShips.length > 0 || selectedSquadrons.length > 0)) {
+      // Add a small delay to ensure the fleet is fully loaded
+      setTimeout(() => {
+        handlePrintnPlay();
+      }, 500);
+    }
+  }, [isExpansionMode, selectedShips.length, selectedSquadrons.length]);
+
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (selectedShips.length > 0 || selectedSquadrons.length > 0) {
+        localStorage.setItem(
+          "fleetRecovery",
+          JSON.stringify({
+            ships: selectedShips,
+            squadrons: selectedSquadrons,
+            objectives: {
+              assault: selectedAssaultObjectives,
+              defense: selectedDefenseObjectives,
+              navigation: selectedNavigationObjectives,
+            },
+            faction,
+            timestamp: new Date().getTime(),
+          })
+        );
+      }
+    };
+
+    const checkForRecovery = () => {
+      if (!isExpansionMode) {  // Add this condition
+        const recovery = localStorage.getItem("fleetRecovery");
+        if (recovery) {
+          const data = JSON.parse(recovery);
+          if (
+            data.faction === faction &&
+            (data.ships.length > 0 || data.squadrons.length > 0) &&
+            data.timestamp > new Date().getTime() - 3600000
+          ) {
+            setShowRecoveryPopup(true);
+          }
+        }
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    checkForRecovery();
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [faction, selectedShips, selectedSquadrons, selectedAssaultObjectives, 
+      selectedDefenseObjectives, selectedNavigationObjectives, isExpansionMode]); // Add isExpansionMode here
 
   const generateUniqueSquadronId = (): string => {
     setSquadronIdCounter(prev => prev + 1);
@@ -2644,200 +2762,239 @@ const [showPrintObjectives, setShowPrintObjectives] = useState(true);
     return `squadron_${squadronIdCounter}_${randomPart}`;
   };
 
+  const handleClearFleet = useCallback(() => {
+    // Reset all state when clearing the fleet
+    setSelectedShips([]);
+    setSelectedSquadrons([]);
+    setPoints(0);
+    setTotalShipPoints(0);
+    setTotalSquadronPoints(0);
+    setPreviousPoints(0);
+    setPreviousShipPoints(0);
+    setPreviousSquadronPoints(0);
+    setHasCommander(false);
+    setDisabledUpgrades({});
+    setEnabledUpgrades({});
+    setFilledSlots({});
+    setSelectedAssaultObjectives([]);
+    setSelectedDefenseObjectives([]);
+    setSelectedNavigationObjectives([]);
+    setUniqueClassNames([]);
+    console.log("clearing fleet state");
+  }, []);
+
   return (
     <div ref={contentRef} className="max-w-[2000px] mx-auto">
       <div className="flex flex-col sm:flex-row items-start sm:items-center mb-4">
-        <div className="mb-2 sm:mb-0 flex items-center justify-start space-x-2">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="outline" onClick={handlePrint}>
-                  <Printer className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Print Fleet</p>
-              </TooltipContent>
-            </Tooltip>
+        {(
+          <div className="mb-2 sm:mb-0 flex items-center justify-start space-x-2">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="outline" onClick={handlePrint}>
+                    <Printer className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Print Fleet</p>
+                </TooltipContent>
+              </Tooltip>
 
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="outline" onClick={() => setShowExportPopup(true)}>
-                  <FileText className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Export Fleet</p>
-              </TooltipContent>
-            </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="outline" onClick={() => setShowExportPopup(true)}>
+                    <FileText className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Export Fleet</p>
+                </TooltipContent>
+              </Tooltip>
 
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="outline" onClick={() => setShowImportWindow(true)}>
-                  <Import className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Import Fleet</p>
-              </TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <SaveFleetButton
-                  fleetData={generateExportText()}
-                  faction={faction}
-                  fleetName={fleetName}
-                  commander={selectedShips.find(ship => 
-                    ship.assignedUpgrades.some(upgrade => upgrade.type === "commander"))?.assignedUpgrades
-                      .find(upgrade => upgrade.type === "commander")?.name || ""}
-                  points={points}
-                />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Save Fleet</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          {tournamentMode && tournamentViolations.length > 0 && (
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="ghost" size="icon" className="text-yellow-500">
-                  <TriangleAlert className="h-4 w-4" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-80">
-                <div className="space-y-2">
-                  <h4 className="font-medium">Tournament Violations:</h4>
-                  <ul className="list-disc pl-4 space-y-1">
-                    {tournamentViolations.map((violation, index) => (
-                      <li key={index}>{violation}</li>
-                    ))}
-                  </ul>
-                </div>
-              </PopoverContent>
-            </Popover>
-          )}
-        </div>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="outline" onClick={() => setShowImportWindow(true)}>
+                    <Import className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Import Fleet</p>
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <SaveFleetButton
+                    fleetData={generateExportText()}
+                    faction={faction}
+                    fleetName={fleetName}
+                    commander={selectedShips.find(ship => 
+                      ship.assignedUpgrades.some(upgrade => upgrade.type === "commander"))?.assignedUpgrades
+                        .find(upgrade => upgrade.type === "commander")?.name || ""}
+                    points={points}
+                  />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Save Fleet</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            {tournamentMode && tournamentViolations.length > 0 && (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="ghost" size="icon" className="text-yellow-500">
+                    <TriangleAlert className="h-4 w-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80">
+                  <div className="space-y-2">
+                    <h4 className="font-medium">Tournament Violations:</h4>
+                    <ul className="list-disc pl-4 space-y-1">
+                      {tournamentViolations.map((violation, index) => (
+                        <li key={index}>{violation}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            )}
+          </div>
+        )}
         <div className="flex-grow logo-font" />
         <PointsDisplay points={points} previousPoints={previousPoints} />
       </div>
 
-      {selectedShips.length > 0 ? (
+      {faction === "sandbox" && (
+        <ExpansionSelector 
+          onSelectExpansion={(fleet) => handleImportFleet(fleet, 'kingston')}
+          onClearFleet={handleClearFleet}
+          hasFleet={selectedShips.length > 0 || selectedSquadrons.length > 0}
+          isExpansionMode={isExpansionMode}
+          setExpansionMode={setIsExpansionMode}
+        />
+      )}
+      {!isExpansionMode && (
         <>
-          <SectionHeader
-            title="Ships"
-            points={totalShipPoints}
-            previousPoints={previousShipPoints}
-            show={true}
-            onClearAll={clearAllShips}
-            onAdd={handleAddShip}
-          />
-          <div className="relative">
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 4xl:grid-cols-5 gap-4">
-              {selectedShips.map((ship) => (
-                <SelectedShip
-                  key={ship.id}
-                  ship={ship}
-                  onRemove={handleRemoveShip}
-                  onUpgradeClick={handleUpgradeClick}
-                  onCopy={handleCopyShip}
-                  handleRemoveUpgrade={handleRemoveUpgrade}
-                  disabledUpgrades={disabledUpgrades[ship.id] || []}
-                  enabledUpgrades={enabledUpgrades[ship.id] || []}
-                  filledSlots={filledSlots[ship.id] || {}}
-                  hasCommander={hasCommander}
-                  traits={ship.traits || []}
+          {selectedShips.length > 0 ? (
+            <>
+              <SectionHeader
+                title="Ships"
+                points={totalShipPoints}
+                previousPoints={previousPoints}
+                show={true}
+                onClearAll={clearAllShips}
+                onAdd={handleAddShip}
+              />
+              <div className="relative">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 4xl:grid-cols-5 gap-4">
+                  {selectedShips.map((ship) => (
+                    <SelectedShip
+                      key={ship.id}
+                      ship={ship}
+                      onRemove={handleRemoveShip}
+                      onUpgradeClick={handleUpgradeClick}
+                      onCopy={handleCopyShip}
+                      handleRemoveUpgrade={handleRemoveUpgrade}
+                      disabledUpgrades={disabledUpgrades[ship.id] || []}
+                      enabledUpgrades={enabledUpgrades[ship.id] || []}
+                      filledSlots={filledSlots[ship.id] || {}}
+                      hasCommander={hasCommander}
+                      traits={ship.traits || []}
+                    />
+                  ))}
+                </div>
+              </div>
+            </>
+          ) : (
+            <Card className="mb-4 relative">
+              <Button
+                className="w-full justify-between bg-white/30 dark:bg-gray-900/30 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md text-lg py-6"
+                variant="outline"
+                onClick={handleAddShip}
+              >
+                <span className="text-lg">ADD SHIP</span>
+              </Button>
+              {showFilter && (
+                <ShipFilter
+                  onApplyFilter={setShipFilter}
+                  onClose={() => setShowFilter(false)}
                 />
-              ))}
+              )}
+            </Card>
+          )}
+
+          {selectedSquadrons.length > 0 ? (
+            <>
+              <SectionHeader
+                title="Squadrons"
+                points={totalSquadronPoints}
+                previousPoints={previousSquadronPoints}
+                show={true}
+                onClearAll={clearAllSquadrons}
+                onAdd={handleAddSquadron}
+              />
+              <div className="relative">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
+                  {selectedSquadrons.map((squadron) => (
+                    <SelectedSquadron
+                      key={squadron.id}
+                      squadron={squadron}
+                      onRemove={handleRemoveSquadron}
+                      onIncrement={handleIncrementSquadron}
+                      onDecrement={handleDecrementSquadron}
+                      onSwapSquadron={handleSwapSquadron}
+                    />
+                  ))}
+                </div>
+              </div>
+            </>
+          ) : (
+            <Card className="mb-4 relative">
+              <Button
+                className="w-full justify-between bg-white/30 dark:bg-gray-900/30 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-md text-lg py-6"
+                variant="outline"
+                onClick={handleAddSquadron}
+              >
+                <span className="text-lg">ADD SQUADRON</span>
+              </Button>
+              {showFilter && (
+                <SquadronFilter
+                  onApplyFilter={setSquadronFilter}
+                  onClose={() => setShowFilter(false)}
+                />
+              )}
+            </Card>
+          )}
+
+          <div className="mb-4 relative">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-xl">
+              <SwipeableObjective
+                type="assault"
+                selectedObjective={selectedAssaultObjectives[0]}
+                selectedObjectives={faction === "sandbox" ? selectedAssaultObjectives : undefined}
+                onRemove={handleRemoveAssaultObjective}
+                onOpen={() => setShowAssaultObjectiveSelector(true)}
+                color="#EB3F3A"
+              />
+              <SwipeableObjective
+                type="defense"
+                selectedObjective={selectedDefenseObjectives[0]}
+                selectedObjectives={faction === "sandbox" ? selectedDefenseObjectives : undefined}
+                onRemove={handleRemoveDefenseObjective}
+                onOpen={() => setShowDefenseObjectiveSelector(true)}
+                color="#FAEE13"
+              />
+              <SwipeableObjective
+                type="navigation"
+                selectedObjective={selectedNavigationObjectives[0]}
+                selectedObjectives={faction === "sandbox" ? selectedNavigationObjectives : undefined}
+                onRemove={handleRemoveNavigationObjective}
+                onOpen={() => setShowNavigationObjectiveSelector(true)}
+                color="#C2E1F4"
+              />
             </div>
           </div>
         </>
-      ) : (
-        <Card className="mb-4 relative">
-          <Button
-            className="w-full justify-between bg-white/30 dark:bg-gray-900/30 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md text-lg py-6"
-            variant="outline"
-            onClick={handleAddShip}
-          >
-            <span className="text-lg">ADD SHIP</span>
-          </Button>
-          {showFilter && (
-            <ShipFilter
-              onApplyFilter={setShipFilter}
-              onClose={() => setShowFilter(false)}
-            />
-          )}
-        </Card>
       )}
-
-      {selectedSquadrons.length > 0 ? (
-        <>
-          <SectionHeader
-            title="Squadrons"
-            points={totalSquadronPoints}
-            previousPoints={previousSquadronPoints}
-            show={true}
-            onClearAll={clearAllSquadrons}
-            onAdd={handleAddSquadron}
-          />
-          <div className="relative">
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
-              {selectedSquadrons.map((squadron) => (
-                <SelectedSquadron
-                  key={squadron.id}
-                  squadron={squadron}
-                  onRemove={handleRemoveSquadron}
-                  onIncrement={handleIncrementSquadron}
-                  onDecrement={handleDecrementSquadron}
-                  onSwapSquadron={handleSwapSquadron}
-                />
-              ))}
-            </div>
-          </div>
-        </>
-      ) : (
-        <Card className="mb-4 relative">
-          <Button
-            className="w-full justify-between bg-white/30 dark:bg-gray-900/30 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-md text-lg py-6"
-            variant="outline"
-            onClick={handleAddSquadron}
-          >
-            <span className="text-lg">ADD SQUADRON</span>
-          </Button>
-          {showFilter && (
-            <SquadronFilter
-              onApplyFilter={setSquadronFilter}
-              onClose={() => setShowFilter(false)}
-            />
-          )}
-        </Card>
-      )}
-
-      <div className="mb-4 relative">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-xl">
-          <SwipeableObjective
-            type="assault"
-            selectedObjective={selectedAssaultObjective}
-            onRemove={handleRemoveAssaultObjective}
-            onOpen={() => setShowAssaultObjectiveSelector(true)}
-            color="#EB3F3A"
-          />
-          <SwipeableObjective
-            type="defense"
-            selectedObjective={selectedDefenseObjective}
-            onRemove={handleRemoveDefenseObjective}
-            onOpen={() => setShowDefenseObjectiveSelector(true)}
-            color="#FAEE13"
-          />
-          <SwipeableObjective
-            type="navigation"
-            selectedObjective={selectedNavigationObjective}
-            onRemove={handleRemoveNavigationObjective}
-            onOpen={() => setShowNavigationObjectiveSelector(true)}
-            color="#C2E1F4"
-          />
-        </div>
-      </div>
 
       {/* <div className="flex flex-wrap justify-between gap-2">
         <Link href="/">

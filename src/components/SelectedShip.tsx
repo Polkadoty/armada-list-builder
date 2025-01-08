@@ -34,6 +34,8 @@ export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRem
   const ANGLE_THRESHOLD = 30; // Degrees
   const [showImageModal, setShowImageModal] = useState(false);
 
+  const isDummy = ship.name.includes('Dummy');
+
   const handleShipTouchStart = (e: React.TouchEvent) => {
     isDragging.current = true;
     startX.current = e.touches[0].clientX;
@@ -109,62 +111,94 @@ export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRem
             onTouchEnd={handleShipTouchEnd}
           >
             <CardContent className="p-0">
-              <div className="relative w-full aspect-[8/3] overflow-hidden group rounded-t-lg">
-                <OptimizedImage 
-                  src={ship.cardimage} 
-                  alt={ship.name}
-                  width={800}
-                  height={300}
-                  className="object-cover object-top scale-[103%]" // Added rounded corners
-                  onClick={() => setShowImageModal(true)}
-                />
-                <button
-                  className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    // Only open modal if not swiping
-                    if (!isDragging.current) {
-                      setShowImageModal(true);
-                    }
-                  }}
-                  onTouchEnd={handleImageTouch}
-                >
-                  <Eye size={24} className="text-white cursor-pointer" />
-                </button>
-              </div>
-              <div className="p-4 border-t">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="title-font text-2xl flex items-center">
-                    {ship.unique && <span className="mr-1 text-yellow-500">●</span>}
-                    {ship.name}
-                  </span>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={toggleToolbar}
-                    className="ml-2"
-                  >
-                    <span>{isToolbarVisible ? '▲' : '▼'}</span>
-                  </Button>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>{totalShipPoints} points</span>
-                  <div className="flex items-center gap-1">
+              {!isDummy && (
+                <>
+                  <div className="relative w-full aspect-[8/3] overflow-hidden group rounded-t-lg">
+                    <OptimizedImage 
+                      src={ship.cardimage} 
+                      alt={ship.name}
+                      width={800}
+                      height={300}
+                      className="object-cover object-top scale-[103%]"
+                      onClick={() => setShowImageModal(true)}
+                    />
+                    <button
+                      className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        // Only open modal if not swiping
+                        if (!isDragging.current) {
+                          setShowImageModal(true);
+                        }
+                      }}
+                      onTouchEnd={handleImageTouch}
+                    >
+                      <Eye size={24} className="text-white cursor-pointer" />
+                    </button>
+                  </div>
+                  <div className="p-4 border-t">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="title-font text-2xl flex items-center">
+                        {ship.unique && <span className="mr-1 text-yellow-500">●</span>}
+                        {ship.name}
+                      </span>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={toggleToolbar}
+                        className="ml-2"
+                      >
+                        <span>{isToolbarVisible ? '▲' : '▼'}</span>
+                      </Button>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>{totalShipPoints} points</span>
+                      <div className="flex items-center gap-1">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => onCopy(ship)} 
+                          className={`text-blue-500 p-1 ${ship.unique ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          disabled={ship.unique}
+                        >
+                          <Copy size={16} />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => onRemove(ship.id)} className="text-red-500 p-1">
+                          <Trash2 size={16} />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+              {isDummy && (
+                <div className="p-4">
+                  <div className="flex items-center justify-between">
                     <Button 
                       variant="ghost" 
                       size="sm" 
-                      onClick={() => onCopy(ship)} 
-                      className={`text-blue-500 p-1 ${ship.unique ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      disabled={ship.unique}
+                      onClick={toggleToolbar}
+                      className="ml-2"
                     >
-                      <Copy size={16} />
+                      <span>{isToolbarVisible ? '▲' : '▼'}</span>
                     </Button>
-                    <Button variant="ghost" size="sm" onClick={() => onRemove(ship.id)} className="text-red-500 p-1">
-                      <Trash2 size={16} />
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => onCopy(ship)} 
+                        className={`text-blue-500 p-1 ${ship.unique ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        disabled={ship.unique}
+                      >
+                        <Copy size={16} />
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => onRemove(ship.id)} className="text-red-500 p-1">
+                        <Trash2 size={16} />
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
             </CardContent>
           </div>
           
