@@ -134,7 +134,7 @@ export const OptimizedImage = memo(({
   const handleLoad = () => {
     setTimeout(() => {
       setIsLoading(false);
-    }, 300);
+    }, 50);
     onLoad?.();
   };
 
@@ -171,7 +171,7 @@ export const OptimizedImage = memo(({
           alt={alt}
           width={width}
           height={height}
-          className={`${className} relative w-full h-full transition-opacity duration-666 ease-in-out rounded-lg ${
+          className={`${className} relative w-full h-full transition-opacity duration-150 ease-in rounded-lg ${
             isLoading || !isVisible ? 'opacity-0' : 'opacity-100'
           }`}
           loading={priority ? 'eager' : 'lazy'}
