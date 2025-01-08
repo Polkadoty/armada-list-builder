@@ -28,6 +28,7 @@ export const factionLogos = {
   colonial: '/icons/colonial.webp',
   cylon: '/icons/cylon.webp',
   sandbox: '/icons/sandbox.webp',
+  scum: '/icons/scum.webp',
 };
 
 const factionColors = {
@@ -39,6 +40,8 @@ const factionColors = {
   covenant: '#800080',
   colonial: '#B8860B',
   cylon: '#CC0000',
+  sandbox: '#000000',
+  scum: '#FFF8E1',
 };
 
 export default function FactionPage() {
@@ -104,7 +107,7 @@ export default function FactionPage() {
                   alt={`${faction} logo`}
                   width={32}
                   height={32}
-                  className={`mr-2 ${currentTheme === 'dark' ? shouldInvertImage(factionLogos[faction as keyof typeof factionLogos]) ? 'invert' : '' : ''} cursor-pointer`}
+                  className={`mr-2 ${currentTheme === 'dark' ? (faction === 'sandbox' ? 'invert' : shouldInvertImage(factionLogos[faction as keyof typeof factionLogos]) ? 'invert' : '') : ''} cursor-pointer`}
                 />
               </Link>
             )}

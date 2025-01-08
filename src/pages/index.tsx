@@ -23,7 +23,9 @@ const factionShips = {
   unsc: '/images/unsc-marathon.webp',
   covenant: '/images/covenant-ccs.webp',
   colonial: '/images/colonial-galactica.webp',
-  cylon: '/images/cylon-basestar.webp'
+  cylon: '/images/cylon-basestar.webp',
+  sandbox: '/images/dreadnaught.webp',
+  scum: '/images/action-vi-ship.webp'
 };
 
 export default function Home() {

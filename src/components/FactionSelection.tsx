@@ -13,7 +13,13 @@ const baseFactions = [
   { name: 'Separatist Alliance', logo: '/icons/separatist.svg', slug: 'separatist', shipImage: '/images/lucrehulk.webp' },
 ];
 
+const sandboxFaction = { name: 'Sandbox Mode', logo: '/icons/sandbox.webp', slug: 'sandbox', shipImage: '/images/sandbox.webp' };
+
 const legendsFactions = [
+  { name: 'Scum and Villainy', logo: '/icons/scum.webp', slug: 'scum', shipImage: '/images/action-vi-ship.webp' },
+];
+
+const customFactions = [
   { name: 'United Nations Space Command', logo: '/icons/unsc.webp', slug: 'unsc', shipImage: '/images/unsc-marathon.webp' },
   { name: 'Covenant Empire', logo: '/icons/covenant.webp', slug: 'covenant', shipImage: '/images/covenant-ccs.webp' },
   { name: 'Colonial Fleet', logo: '/icons/colonial.webp', slug: 'colonial', shipImage: '/images/colonial-galactica.webp' },
@@ -29,9 +35,14 @@ const factionColors = {
   covenant: '#800080',
   colonial: '#B8860B',
   cylon: '#CC0000',
+  sandbox: '#4A5568',
+  scum: '#FFD700',
 };
 
 const shouldInvertImage = (logoPath: string) => {
+  if (logoPath === '/icons/sandbox.webp' || logoPath === '/icons/profile.svg') {
+    return true;
+  }
   return !logoPath.endsWith('.webp');
 };
 
@@ -73,16 +84,31 @@ export default function FactionSelection({ onHover }: { onHover: (faction: strin
     onHover(faction);
   };
 
-  const availableFactions = [
-    ...baseFactions,
-    ...(enableLegends && enableCustomFactions ? legendsFactions : [])
-  ];
+  const availableFactions = enableLegends && enableCustomFactions
+    ? [
+        ...baseFactions,
+        sandboxFaction,
+        ...legendsFactions,
+        ...customFactions,
+      ]
+    : enableLegends
+      ? [
+          ...baseFactions,
+          sandboxFaction,
+          ...legendsFactions,
+        ]
+      : enableCustomFactions
+        ? [
+            ...baseFactions,
+            sandboxFaction,
+          ]
+        : [...baseFactions, sandboxFaction];
 
   return (
     <div className="grid grid-cols-2 gap-4 justify-items-center">
       {availableFactions.map((faction, index) => (
         <>
-          {enableLegends && index === baseFactions.length && (
+          {(enableCustomFactions) && index === baseFactions.length + 2 && (
             <>
               <div className={`col-span-2 w-full px-4 my-2 transition-opacity duration-500 ${showLegendsContent ? 'opacity-100' : 'opacity-0'}`}>
                 <Separator className="my-4" />
@@ -96,38 +122,41 @@ export default function FactionSelection({ onHover }: { onHover: (faction: strin
               </div>
             </>
           )}
-          <Tooltip key={faction.slug}>
-            <TooltipTrigger>
-              <Link href={`/${faction.slug}`}>
-                <div 
-                  className={`p-4 transition-all duration-500 rounded-lg ${
-                    enableLegends && index >= baseFactions.length 
-                      ? `transition-all duration-500 ${showLegendsContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`
-                      : ''
-                  }`}
-                  style={{
-                    transitionDelay: enableLegends && index >= baseFactions.length ? `${(index - baseFactions.length) * 100 + 100}ms` : '0ms'
-                  }}
-                  onMouseEnter={() => handleHover(faction.slug)}
-                  onMouseLeave={() => handleHover(null)}
-                >
-                  <Image 
-                    src={faction.logo} 
-                    alt={faction.name} 
-                    width={64} 
-                    height={64} 
-                    className={`transition-all duration-200 ${!mounted || currentTheme === 'dark' ? shouldInvertImage(faction.logo) ? 'invert' : '' : ''}`}
+          
+          <div className={`${!enableLegends && !enableCustomFactions && faction.slug === 'sandbox' ? 'col-span-2 w-full flex justify-center' : ''}`}>
+            <Tooltip key={faction.slug}>
+              <TooltipTrigger>
+                <Link href={`/${faction.slug}`}>
+                  <div 
+                    className={`p-4 transition-all duration-500 rounded-lg ${
+                      enableLegends && index >= baseFactions.length + 2
+                        ? `transition-all duration-500 ${showLegendsContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`
+                        : ''
+                    }`}
                     style={{
-                      filter: hoveredFaction === faction.slug 
-                        ? `drop-shadow(0 0 1.5rem ${factionColors[faction.slug as keyof typeof factionColors]}) ${!mounted || currentTheme === 'dark' ? shouldInvertImage(faction.logo) ? 'invert(1) hue-rotate(180deg)' : '' : ''}`
-                        : !mounted || currentTheme === 'dark' ? shouldInvertImage(faction.logo) ? 'invert(1)' : 'none' : 'none',
+                      transitionDelay: enableLegends && index >= baseFactions.length + 2 ? `${(index - (baseFactions.length + 2)) * 100 + 100}ms` : '0ms'
                     }}
-                  />
-                </div>
-              </Link>
-            </TooltipTrigger>
-            <TooltipContent>{faction.name}</TooltipContent>
-          </Tooltip>
+                    onMouseEnter={() => handleHover(faction.slug)}
+                    onMouseLeave={() => handleHover(null)}
+                  >
+                    <Image 
+                      src={faction.logo} 
+                      alt={faction.name} 
+                      width={64} 
+                      height={64} 
+                      className={`transition-all duration-200 ${!mounted || currentTheme === 'dark' ? shouldInvertImage(faction.logo) ? 'invert' : '' : ''}`}
+                      style={{
+                        filter: hoveredFaction === faction.slug 
+                          ? `drop-shadow(0 0 1.5rem ${factionColors[faction.slug as keyof typeof factionColors]}) ${!mounted || currentTheme === 'dark' ? shouldInvertImage(faction.logo) ? 'invert(1) hue-rotate(180deg)' : '' : ''}`
+                          : !mounted || currentTheme === 'dark' ? shouldInvertImage(faction.logo) ? 'invert(1)' : 'none' : 'none',
+                      }}
+                    />
+                  </div>
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent>{faction.name}</TooltipContent>
+            </Tooltip>
+          </div>
         </>
       ))}
     </div>

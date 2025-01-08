@@ -237,11 +237,23 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
         );
       }).flat();
 
-      const filteredShips = allShips.filter(ship => 
-        ship.faction === faction &&
-        ship.points >= filter.minPoints &&
-        ship.points <= filter.maxPoints
-      );
+      const filteredShips = allShips.filter(ship => {
+        // For sandbox mode, include ships from all base factions
+        if (faction === 'sandbox') {
+          const baseFactions = ['rebel', 'empire', 'republic', 'separatist'];
+          const allowedFactions = [...baseFactions];
+          
+          // Include scum faction if custom content is enabled
+          if (contentSources.legends) {
+            allowedFactions.push('scum');
+          }
+          
+          return allowedFactions.includes(ship.faction);
+        }
+        
+        // Normal faction filtering
+        return ship.faction === faction;
+      });
 
       // Sort ships: non-unique, unique, then huge
       const sortedShips = filteredShips.sort((a, b) => {

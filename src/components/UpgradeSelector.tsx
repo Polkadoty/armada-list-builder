@@ -200,9 +200,21 @@ export default function UpgradeSelector({
       }).filter((upgrade): upgrade is Upgrade => upgrade !== undefined);
 
       const filteredUpgrades = allUpgrades.filter(upgrade => {
-        const factionMatch = Array.isArray(upgrade.faction) 
-          ? upgrade.faction.includes(faction) || upgrade.faction.includes('')
-          : upgrade.faction === faction || upgrade.faction === '';
+        const baseFactions = ['rebel', 'empire', 'republic', 'separatist'];
+        const allowedFactions = [...baseFactions, '']; // Include generic upgrades
+        
+        // Include scum faction if custom content is enabled
+        if (contentSources.legends) {
+          allowedFactions.push('scum');
+        }
+
+        const factionMatch = faction === 'sandbox'
+          ? Array.isArray(upgrade.faction)
+            ? upgrade.faction.some(f => allowedFactions.includes(f))
+            : allowedFactions.includes(upgrade.faction)
+          : Array.isArray(upgrade.faction)
+            ? upgrade.faction.includes(faction) || upgrade.faction.includes('')
+            : upgrade.faction === faction || upgrade.faction === '';
 
         let chassisMatch = true;
         if (upgradeType === 'title') {
@@ -217,9 +229,7 @@ export default function UpgradeSelector({
           }
         }
 
-        return upgrade.type === upgradeType &&
-          factionMatch &&
-          chassisMatch;
+        return upgrade.type === upgradeType && factionMatch && chassisMatch;
       });
 
       setAllUpgrades(filteredUpgrades);

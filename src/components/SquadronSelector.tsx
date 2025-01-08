@@ -195,11 +195,27 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
         return group[0];
       }).filter((squadron): squadron is Squadron => squadron !== undefined);
 
-      const filteredSquadrons = squadronsArray.filter(squadron => 
-        squadron.faction === faction &&
-        squadron.points >= filter.minPoints &&
-        squadron.points <= filter.maxPoints
-      );
+      const filteredSquadrons = squadronsArray.filter(squadron => {
+        // For sandbox mode, include squadrons from all base factions
+        if (faction === 'sandbox') {
+          const baseFactions = ['rebel', 'empire', 'republic', 'separatist'];
+          const allowedFactions = [...baseFactions];
+          
+          // Include scum faction if custom content is enabled
+          if (contentSources.legends) {
+            allowedFactions.push('scum');
+          }
+          
+          return allowedFactions.includes(squadron.faction) &&
+            squadron.points >= filter.minPoints &&
+            squadron.points <= filter.maxPoints;
+        }
+        
+        // Normal faction filtering
+        return squadron.faction === faction &&
+          squadron.points >= filter.minPoints &&
+          squadron.points <= filter.maxPoints;
+      });
 
       const sortedSquadrons = filteredSquadrons.sort((a, b) => {
         if (a.squadron_type !== b.squadron_type) {
