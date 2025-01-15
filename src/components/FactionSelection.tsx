@@ -16,7 +16,7 @@ const baseFactions = [
 const sandboxFaction = { name: 'Sandbox Mode', logo: '/icons/sandbox.webp', slug: 'sandbox', shipImage: '/images/sandbox.webp' };
 
 const legendsFactions = [
-  { name: 'Scum and Villainy', logo: '/icons/scum.webp', slug: 'scum', shipImage: '/images/action-vi-ship.webp' },
+  { name: 'Scum and Villainy', logo: '/icons/scum.svg', slug: 'scum', shipImage: '/images/action-vi-ship.webp' },
 ];
 
 const customFactions = [

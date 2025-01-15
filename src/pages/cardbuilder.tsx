@@ -2,19 +2,38 @@ import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Plus } from 'lucide-react';
 import { SquadronBuilder } from '@/components/cardbuilder/SquadronBuilder';
 import StarryBackground from '@/components/StarryBackground';
+import { useUser } from '@auth0/nextjs-auth0/client';
 
 type CardType = 'ship' | 'squadron' | 'upgrade' | 'objective';
 
 export default function CardBuilder() {
+  const { user } = useUser();
   const [selectedType, setSelectedType] = useState<CardType | null>(null);
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex flex-col relative">
+        <StarryBackground show={true} lightDisabled={true} />
+        <div className="p-8 relative z-10">
+          <div className="container mx-auto">
+            <h1 className="text-2xl font-bold mb-4">Workshop</h1>
+            <p>Please log in to access the workshop.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const renderBuilder = () => {
     switch (selectedType) {
       case 'squadron':
-        return <SquadronBuilder onBack={() => setSelectedType(null)} />;
+        return <SquadronBuilder 
+          onBack={() => setSelectedType(null)} 
+          userId={user.sub as string}
+        />;
       default:
         return null;
     }

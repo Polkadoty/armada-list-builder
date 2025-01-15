@@ -8,14 +8,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft } from 'lucide-react';
 // import { SquadronCardPreview } from './SquadronCardPreview';
 // import { SquadronBasePreview } from './SquadronBasePreview';
+import { supabase } from '@/lib/supabaseClient';
+import { transformSquadronForDB } from '@/utils/squadronDataTransform';
+import { ContentSource } from '@/components/FleetBuilder';
 
 // TODO: Add ability to add squadron cards to fleet
 
 interface SquadronBuilderProps {
   onBack: () => void;
+  userId: string;
 }
 
-export function SquadronBuilder({ onBack }: SquadronBuilderProps) {
+export function SquadronBuilder({ onBack, userId }: SquadronBuilderProps) {
   const [formData, setFormData] = useState({
     name: '',
     faction: 'empire',
@@ -54,18 +58,38 @@ export function SquadronBuilder({ onBack }: SquadronBuilderProps) {
       swarm: false
     },
     armament: {
-      'anti-squadron': [0, 0, 0],
-      'anti-ship': [0, 0, 0]
+      'anti-squadron': [0, 0, 0] as [number, number, number],
+      'anti-ship': [0, 0, 0] as [number, number, number]
     },
-    'unique-class': [''],
+    unique_class: [] as string[],
     ability: '',
     cardimage: ''
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Handle form submission
-    console.log(formData);
+    
+    try {
+      const dbData = transformSquadronForDB(formData);
+      
+      const { data, error } = await supabase
+        .from('custom_squadrons')
+        .insert({
+          ...dbData,
+          user_id: userId,
+          is_public: true // Add UI toggle for this later
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      // Success! Go back or show success message
+      onBack();
+    } catch (error) {
+      console.error('Error saving squadron:', error);
+      // Show error message to user
+    }
   };
 
   return (

@@ -14,6 +14,7 @@ import { useRouter } from 'next/router';
 import { UserAvatar } from '../components/UserAvatar';
 import { NotificationWindow } from "@/components/NotificationWindow";
 import Head from 'next/head';
+import { WorkshopButton } from "@/components/WorkshopButton";
 
 const factionShips = {
   rebel: '/images/cr90.webp',
@@ -25,7 +26,7 @@ const factionShips = {
   colonial: '/images/colonial-galactica.webp',
   cylon: '/images/cylon-basestar.webp',
   sandbox: '/images/dreadnaught.webp',
-  scum: '/images/action-vi-ship.webp'
+  scum: '/images/action-vi-ship.webp' 
 };
 
 export default function Home() {
@@ -213,6 +214,8 @@ export default function Home() {
             >
               DONATE
             </Button>
+            <WorkshopButton />
+            
           </div>
         </div>
         {isWideScreen && mounted && (
