@@ -32,7 +32,6 @@ export default function CardBuilder() {
       case 'squadron':
         return <SquadronBuilder 
           onBack={() => setSelectedType(null)} 
-          userId={user.sub as string}
         />;
       default:
         return null;

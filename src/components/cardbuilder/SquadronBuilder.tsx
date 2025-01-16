@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -6,19 +6,24 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 // import { Card } from "@/components/ui/card";
 import { ArrowLeft, Plus } from 'lucide-react';
-// import { SquadronCardPreview } from './SquadronCardPreview';
+import { SquadronCardPreview } from './SquadronCardPreview';
 // import { SquadronBasePreview } from './SquadronBasePreview';
-import { supabase } from '@/lib/supabaseClient';
-import { transformSquadronForDB } from '@/utils/squadronDataTransform';
-import { ContentSource } from '@/components/FleetBuilder';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { ScrollArea } from "@/components/ui/scroll-area"
-
-// TODO: Add ability to add squadron cards to fleet
+import { supabase } from '@/lib/supabase';
+import { useUser } from '@auth0/nextjs-auth0/client';
+// import { exportCardAsWebP } from '@/utils/cardExport';
+import { ArtworkUploader, type ArtworkTransform } from './ArtworkUploader';
 
 interface SquadronBuilderProps {
   onBack: () => void;
-  userId: string;
+}
+
+type DefenseTokenType = 'scatter' | 'evade' | 'brace';
+
+interface DefenseTokens {
+  first?: DefenseTokenType;
+  second?: DefenseTokenType;
 }
 
 const ABILITY_TEXT_TEMPLATES = {
@@ -36,6 +41,7 @@ const ABILITY_TEXT_TEMPLATES = {
   intel: () => `\`intel\` **Intel.** *(While a friendly squadron is at distance 1 of you, it has **grit**.)*`,
   relay: (value: number) => `\`relay\` **Relay ${value}.** *(When a friendly ship resolves a \`squad\` command, if you are in range to be activated, up to ${value} of the squadrons it activates can be at distance 1-3 of you.)*`,
   rogue: () => `\`rogue\` **Rogue.** *(You can move and attack during the Squadron Phase.)*`,
+  scout: () => `\`scout\` **Scout.** *(While deploying fleets you may be placed outside of the deployment zone and don't have to be placed within distance 1-2 of a friendly ship. You must be placed beyond distance 1-5 of all enemy ships and enemy squadrons.)*`,
   screen: () => `\`screen\` **Screen.** *(While you are defending, for each other friendly squadron the attacker is engaged with that lacks **screen**, up to 3, you gain **dodge 1**.)*`,
   snipe: (value: number) => `\`snipe\` **Snipe ${value}.** *(You can attack squadrons at distance 2 with anti-squadron armament of ${value} blue dice. This attack ignores the **counter** keyword.)*`,
   strategic: () => `\`strategic\` **Strategic.** *(When you end your movement at distance 1 of 1 or more objective tokens, you may move 1 of those tokens so that it is at distance 1 of you.)*`,
@@ -54,22 +60,31 @@ const ensureNonNegative = (value: string | number) => {
   return Math.max(0, num);
 };
 
-export function SquadronBuilder({ onBack, userId }: SquadronBuilderProps) {
+export function SquadronBuilder({ onBack }: Omit<SquadronBuilderProps, 'userId'>) {
+  const { user } = useUser();
   const [formData, setFormData] = useState({
+    // Core squadron data
     name: '',
     faction: 'empire',
-    'ace-name': '',
     squadron_type: '',
+    ace_name: '',  // Changed from 'ace-name' to match DB schema
+    unique_class: [] as string[],
+    irregular: false,
+    
+    // Stats
     hull: 3,
     speed: 3,
     points: 0,
-    unique: false,
-    ace: false,
-    irregular: false,
+    
+    // Complex data
     tokens: {
       def_scatter: 0,
       def_evade: 0,
       def_brace: 0
+    },
+    armament: {
+      'anti-squadron': [0, 0, 0] as [number, number, number],
+      'anti-ship': [0, 0, 0] as [number, number, number]
     },
     abilities: {
       adept: 0,
@@ -92,38 +107,76 @@ export function SquadronBuilder({ onBack, userId }: SquadronBuilderProps) {
       strategic: false,
       swarm: false
     },
-    armament: {
-      'anti-squadron': [0, 0, 0] as [number, number, number],
-      'anti-ship': [0, 0, 0] as [number, number, number]
-    },
-    unique_class: [] as string[],
+    
+    // Additional attributes
     ability: '',
-    cardimage: ''
+    is_unique: false,  // Changed from 'unique' to match DB schema
+    ace: false,
+    
+    // Image paths
+    silhouette: '',
+    artwork: '',
+    cardimage: '',
+    
+    // Optional metadata
+    author: [] as string[],
+    alias: '',
+    team: '',
+    release: '',
+    expansion: '',
+    type: 'squadron',
+    nicknames: [] as string[],
+    artworkTransform: {
+      x: 0,
+      y: 0,
+      scale: 1,
+      rotation: 0,
+      flipped: false
+    } as ArtworkTransform
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!user) {
+      console.error('Not authenticated');
+      return;
+    }
+
     try {
-      const dbData = transformSquadronForDB(formData);
-      
+      // Export card as WebP
+      const cardElement = document.querySelector('.squadron-card-preview');
+      const cardWebP = await exportCardAsWebP(cardElement as HTMLElement);
+
+      // Upload to Supabase storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('squadron-cards')
+        .upload(`${user.sub}/${formData.name}.webp`, cardWebP);
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('squadron-cards')
+        .getPublicUrl(`${user.sub}/${formData.name}.webp`);
+
+      // Save squadron data with image URL
       const { data, error } = await supabase
         .from('custom_squadrons')
         .insert({
-          ...dbData,
-          user_id: userId,
-          is_public: true // Add UI toggle for this later
+          ...formData,
+          cardimage: publicUrl,
+          user_id: user.sub,
+          is_public: true
         })
         .select()
         .single();
 
       if (error) throw error;
       
-      // Success! Go back or show success message
       onBack();
     } catch (error) {
       console.error('Error saving squadron:', error);
-      // Show error message to user
     }
   };
 
@@ -153,7 +206,7 @@ export function SquadronBuilder({ onBack, userId }: SquadronBuilderProps) {
   );
 
   return (
-    <div className="max-w-6xl mx-auto p-6 bg-gray-900">
+    <div className="max-w-6xl mx-auto p-6 bg-gray-900 lg:mr-[432px]">
       <div className="mb-6 flex items-center">
         <Button variant="ghost" onClick={onBack} className="mr-4">
           <ArrowLeft className="mr-2 h-4 w-4" /> Back
@@ -175,9 +228,9 @@ export function SquadronBuilder({ onBack, userId }: SquadronBuilderProps) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="empire">Empire</SelectItem>
-                  <SelectItem value="rebels">Rebels</SelectItem>
+                  <SelectItem value="rebel">Rebels</SelectItem>
                   <SelectItem value="republic">Republic</SelectItem>
-                  <SelectItem value="separatists">Separatists</SelectItem>
+                  <SelectItem value="separatist">Separatists</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -219,11 +272,11 @@ export function SquadronBuilder({ onBack, userId }: SquadronBuilderProps) {
 
         <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6 space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="ace-name">Squadron Ace Name (if any)</Label>
+            <Label htmlFor="ace_name">Squadron Ace Name (if any)</Label>
             <Input
-              id="ace-name"
-              value={formData['ace-name']}
-              onChange={(e) => setFormData({...formData, 'ace-name': e.target.value})}
+              id="ace_name"
+              value={formData.ace_name}
+              onChange={(e) => setFormData({...formData, ace_name: e.target.value})}
             />
           </div>
 
@@ -301,29 +354,64 @@ export function SquadronBuilder({ onBack, userId }: SquadronBuilderProps) {
 
         <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6">
           <h3 className="text-lg font-semibold text-gray-100 mb-4">Defense Tokens</h3>
-          <div className="grid grid-cols-3 gap-4">
-            {[
-              { key: 'def_scatter', label: 'Scatter' },
-              { key: 'def_evade', label: 'Evade' },
-              { key: 'def_brace', label: 'Brace' }
-            ].map(({ key, label }) => (
-              <div key={key} className="space-y-1">
-                <Label className="text-sm">{label}</Label>
-                <Input
-                  type="number"
-                  min="0"
-                  value={formData.tokens[key as keyof typeof formData.tokens]}
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    tokens: {
-                      ...formData.tokens,
-                      [key]: ensureNonNegative(e.target.value)
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>First Defense Token</Label>
+              <Select
+                value={Object.entries(formData.tokens).find(([_, value]) => value === 1)?.[0]?.replace('def_', '') || ''}
+                onValueChange={(value: DefenseTokenType) => {
+                  const newTokens = { ...formData.tokens };
+                  // Reset any existing first token
+                  Object.keys(newTokens).forEach(key => {
+                    if (newTokens[key as keyof typeof newTokens] === 1) {
+                      newTokens[key as keyof typeof newTokens] = 0;
                     }
-                  })}
-                  className="h-8 text-sm"
-                />
+                  });
+                  // Set new first token
+                  if (value) newTokens[`def_${value}`] = 1;
+                  setFormData({ ...formData, tokens: newTokens });
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select defense token" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="scatter">Scatter</SelectItem>
+                  <SelectItem value="evade">Evade</SelectItem>
+                  <SelectItem value="brace">Brace</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {Object.values(formData.tokens).some(v => v === 1) && (
+              <div className="space-y-2">
+                <Label>Second Defense Token</Label>
+                <Select
+                  value={Object.entries(formData.tokens).find(([_, value]) => value === 2)?.[0] || ''}
+                  onValueChange={(value: DefenseTokenType) => {
+                    const newTokens = { ...formData.tokens };
+                    // Reset any existing second token
+                    Object.keys(newTokens).forEach(key => {
+                      if (newTokens[key as keyof typeof newTokens] === 2) {
+                        newTokens[key as keyof typeof newTokens] = 0;
+                      }
+                    });
+                    // Set new second token
+                    if (value) newTokens[`def_${value}`] = 2;
+                    setFormData({ ...formData, tokens: newTokens });
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select defense token" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="scatter">Scatter</SelectItem>
+                    <SelectItem value="evade">Evade</SelectItem>
+                    <SelectItem value="brace">Brace</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-            ))}
+            )}
           </div>
         </div>
 
@@ -399,10 +487,29 @@ export function SquadronBuilder({ onBack, userId }: SquadronBuilderProps) {
           />
         </div>
 
+        <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-gray-100 mb-4">Card Artwork</h3>
+          <ArtworkUploader 
+            onArtworkChange={(artwork, transform) => {
+              setFormData({
+                ...formData,
+                artwork,
+                artworkTransform: transform
+              });
+            }}
+          />
+        </div>
+
         <Button type="submit" className="w-full bg-amber-500 hover:bg-amber-600 text-gray-900">
           Create Squadron
         </Button>
       </form>
+
+      <div className="lg:fixed lg:top-24 lg:right-6 lg:w-[400px] w-full mt-6 lg:mt-0">
+        <div className="sticky top-24">
+          <SquadronCardPreview formData={formData} />
+        </div>
+      </div>
     </div>
   );
 }

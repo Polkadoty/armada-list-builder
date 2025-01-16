@@ -5,6 +5,10 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --icon-scatter: '';  /* Add actual icon character */
+  --icon-evade: '';   /* Add actual icon character */
+  --icon-brace: '';   /* Add actual icon character */
+  /* Add more icon mappings as needed */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -197,7 +201,7 @@ body {
 
 @font-face {
   font-family: 'Icons';
-  src: url('/fonts/icons.otf') format('opentype');
+  src: url('/fonts/icons.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
 }
@@ -235,6 +239,14 @@ body {
   src: url('/fonts/optima.woff') format('woff');
   font-weight: normal;
   font-style: normal;
+}
+
+@font-face {
+  font-family: 'RevengerLiteBB';
+  src: url('/fonts/RevengerLiteBB.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
 }
 
 .font-teuton {

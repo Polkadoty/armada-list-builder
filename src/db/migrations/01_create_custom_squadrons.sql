@@ -1,6 +1,10 @@
+-- Enable UUID extension if not already enabled
+create extension if not exists "uuid-ossp";
+
+-- Create the custom_squadrons table
 create table custom_squadrons (
   id uuid default uuid_generate_v4() primary key,
-  user_id uuid references auth.users(id),
+  user_id text not null,
   created_at timestamp with time zone default timezone('utc'::text, now()),
   modified_at timestamp with time zone default timezone('utc'::text, now()),
   is_public boolean default false,
@@ -63,7 +67,7 @@ create table custom_squadrons (
   
   -- Additional attributes
   ability text,
-  unique boolean default false,
+  is_unique boolean default false,
   ace boolean default false,
   
   -- Image paths
@@ -89,13 +93,21 @@ create policy "Public squadrons are viewable by everyone"
   on custom_squadrons for select
   using (is_public = true);
 
+create policy "Users can view their own squadrons"
+  on custom_squadrons for select
+  using (auth.jwt() ->> 'sub' = user_id);
+
 create policy "Users can insert their own squadrons"
   on custom_squadrons for insert
-  with check (auth.uid() = user_id);
+  with check (auth.jwt() ->> 'sub' = user_id);
 
 create policy "Users can update their own squadrons"
   on custom_squadrons for update
-  using (auth.uid() = user_id);
+  using (auth.jwt() ->> 'sub' = user_id);
+
+create policy "Users can delete their own squadrons"
+  on custom_squadrons for delete
+  using (auth.jwt() ->> 'sub' = user_id);
 
 -- Create indexes
 create index custom_squadrons_search_idx on custom_squadrons using gin(searchable_text);
