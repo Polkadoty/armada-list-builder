@@ -335,7 +335,7 @@ export function SquadronBuilder({ onBack }: Omit<SquadronBuilderProps, 'userId'>
             <div className="space-y-2">
               <Label>First Defense Token</Label>
               <Select
-                value={Object.entries(formData.tokens).find(([_, value]) => value === 1)?.[0]?.replace('def_', '') || ''}
+                value={Object.entries(formData.tokens).find(([key, value]) => value === 1)?.[0]?.replace('def_', '') || ''}
                 onValueChange={(value: DefenseTokenType) => {
                   const newTokens = { ...formData.tokens };
                   // Reset any existing first token
@@ -364,7 +364,7 @@ export function SquadronBuilder({ onBack }: Omit<SquadronBuilderProps, 'userId'>
               <div className="space-y-2">
                 <Label>Second Defense Token</Label>
                 <Select
-                  value={Object.entries(formData.tokens).find(([_, value]) => value === 2)?.[0] || ''}
+                  value={Object.entries(formData.tokens).find(([key, value]) => value === 2)?.[0] || ''}
                   onValueChange={(value: DefenseTokenType) => {
                     const newTokens = { ...formData.tokens };
                     // Reset any existing second token
