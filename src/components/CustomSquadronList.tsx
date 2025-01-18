@@ -83,7 +83,7 @@ export function CustomSquadronList() {
   };
 
   if (isLoading) {
-    return <LoadingScreen />;
+    return <LoadingScreen progress={100} message="Loading squadrons..." />;
   }
 
   return (

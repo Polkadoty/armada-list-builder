@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,11 +20,6 @@ interface SquadronBuilderProps {
 }
 
 type DefenseTokenType = 'scatter' | 'evade' | 'brace';
-
-interface DefenseTokens {
-  first?: DefenseTokenType;
-  second?: DefenseTokenType;
-}
 
 const ABILITY_TEXT_TEMPLATES = {
   adept: (value: number) => `\`adept\` **Adept ${value}.** *(While attacking, you may reroll up to ${value} die.)*`,
@@ -144,28 +139,10 @@ export function SquadronBuilder({ onBack }: Omit<SquadronBuilderProps, 'userId'>
     }
 
     try {
-      // Export card as WebP
-      const cardElement = document.querySelector('.squadron-card-preview');
-      const cardWebP = await exportCardAsWebP(cardElement as HTMLElement);
-
-      // Upload to Supabase storage
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('squadron-cards')
-        .upload(`${user.sub}/${formData.name}.webp`, cardWebP);
-
-      if (uploadError) throw uploadError;
-
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('squadron-cards')
-        .getPublicUrl(`${user.sub}/${formData.name}.webp`);
-
-      // Save squadron data with image URL
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('custom_squadrons')
         .insert({
           ...formData,
-          cardimage: publicUrl,
           user_id: user.sub,
           is_public: true
         })

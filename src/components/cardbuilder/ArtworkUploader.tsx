@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { Button } from "@/components/ui/button";
-import { Upload, Move, RotateCw, FlipHorizontal } from 'lucide-react';
+import { Upload, RotateCw, FlipHorizontal } from 'lucide-react';
 
 interface ArtworkUploaderProps {
   onArtworkChange: (artwork: string, transform: ArtworkTransform) => void;

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import Link from 'next/link';
-import { ArrowLeft, Plus } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { SquadronBuilder } from '@/components/cardbuilder/SquadronBuilder';
 import StarryBackground from '@/components/StarryBackground';
 import { useUser } from '@auth0/nextjs-auth0/client';

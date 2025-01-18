@@ -49,7 +49,7 @@ export function transformSquadronForDB(squadronData: SquadronData) {
 
 export function transformDBToSquadron(dbData: SquadronData): Squadron {
   const abilityText = Object.entries(dbData.abilities)
-    .filter(([_, value]) => value !== 0 && value !== false)
+    .filter(([, value]) => value !== 0 && value !== false)
     .map(([key, value]) => typeof value === 'boolean' ? key : `${key} ${value}`)
     .join(' ');
 
