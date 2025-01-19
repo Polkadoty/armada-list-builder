@@ -13,6 +13,10 @@ interface PrintMenuProps {
   setShowRestrictions: (show: boolean) => void;
   showObjectives: boolean;
   setShowObjectives: (show: boolean) => void;
+  showCardBacks: boolean;
+  setShowCardBacks: (show: boolean) => void;
+  showDamageDeck: boolean;
+  setShowDamageDeck: (show: boolean) => void;
 }
 
 export function PrintMenu({ 
@@ -24,7 +28,11 @@ export function PrintMenu({
   showRestrictions,
   setShowRestrictions,
   showObjectives,
-  setShowObjectives 
+  setShowObjectives,
+  showCardBacks,
+  setShowCardBacks,
+  showDamageDeck,
+  setShowDamageDeck
 }: PrintMenuProps) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
@@ -72,9 +80,49 @@ export function PrintMenu({
           </div>
 
           <div className="space-y-2">
+            <h3 className="text-sm font-medium">Card Backs</h3>
+            <div className="flex gap-2">
+              <Button 
+                variant={showCardBacks ? 'default' : 'outline'}
+                className="flex-1"
+                onClick={() => setShowCardBacks(true)}
+              >
+                Show Backs
+              </Button>
+              <Button 
+                variant={!showCardBacks ? 'default' : 'outline'}
+                className="flex-1"
+                onClick={() => setShowCardBacks(false)}
+              >
+                Hide Backs
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <h3 className="text-sm font-medium">Damage Deck</h3>
+            <div className="flex gap-2">
+              <Button 
+                variant={showDamageDeck ? 'default' : 'outline'}
+                className="flex-1"
+                onClick={() => setShowDamageDeck(true)}
+              >
+                Include
+              </Button>
+              <Button 
+                variant={!showDamageDeck ? 'default' : 'outline'}
+                className="flex-1"
+                onClick={() => setShowDamageDeck(false)}
+              >
+                Exclude
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-2">
             <div className="flex items-center text-yellow-600">
               <span className="mr-2">⚠️</span>
-              <span className="text-sm">Ship bases may not be the right size for Print & Play.</span>
+              <span className="text-sm">Make sure you print at 100% scale to get the right sizing.</span>
             </div>
             <Button 
               className="w-full flex items-center justify-between" 

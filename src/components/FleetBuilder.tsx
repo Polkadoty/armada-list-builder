@@ -43,6 +43,32 @@ import { useRouter } from 'next/router';
 import { PrintMenu } from "./PrintMenu";
 import { ExpansionSelector } from "./ExpansionSelector";
 
+// Add to your imports
+const DAMAGE_DECK = [
+  { name: 'Blinded Gunners', count: 2 },
+  { name: 'Capacitor Failure', count: 2 },
+  { name: 'Compartment Fire', count: 2 },
+  { name: 'Comm Noise', count: 2 },
+  { name: 'Coolant Discharge', count: 2 },
+  { name: 'Crew Panic', count: 2 },
+  { name: 'Damaged Controls', count: 2 },
+  { name: 'Damaged Munitions', count: 2 },
+  { name: 'Depowered Armament', count: 2 },
+  { name: 'Disengaged Fire Control', count: 2 },
+  { name: 'Faulty Countermeasures', count: 2 },
+  { name: 'Injured Crew', count: 4 },
+  { name: 'Life Support Failure', count: 2 },
+  { name: 'Point-Defense Failure', count: 2 },
+  { name: 'Power Failure', count: 2 },
+  { name: 'Projector Misaligned', count: 2 },
+  { name: 'Ruptured Engine', count: 2 },
+  { name: 'Shield Failure', count: 2 },
+  { name: 'Structural Damage', count: 8 },
+  { name: 'Targeter Disruption', count: 2 },
+  { name: 'Thrust-Control Malfunction', count: 2 },
+  { name: 'Thruster Fissure', count: 2 }
+];
+
 export interface Ship {
   id: string;
   name: string;
@@ -177,6 +203,8 @@ const SectionHeader = ({
   </Card>
 );
 
+
+
 export default function FleetBuilder({
   faction,
   fleetName,
@@ -253,11 +281,11 @@ export default function FleetBuilder({
   const contentRef = useRef<HTMLDivElement>(null);
   const [showPrintMenu, setShowPrintMenu] = useState(false);
   const [paperSize, setPaperSize] = useState<'letter' | 'a4'>('letter');
-  // Add these state variables near the other useState declarations
 const [showPrintRestrictions, setShowPrintRestrictions] = useState(true);
 const [showPrintObjectives, setShowPrintObjectives] = useState(true);
 const [isExpansionMode, setIsExpansionMode] = useState(false);
-
+const [showCardBacks, setShowCardBacks] = useState(false);
+const [showDamageDeck, setShowDamageDeck] = useState(false);
 
   const checkTournamentViolations = useMemo(() => {
     const violations: string[] = [];
@@ -2280,7 +2308,79 @@ const [isExpansionMode, setIsExpansionMode] = useState(false);
     return chunks;
   };
 
-  // In the generatePrintnPlayContent function, replace the ship cards section with:
+  // Add this before generatePrintnPlayContent
+  const generateDamageDeckContent = () => {
+    if (!showDamageDeck) return '';
+    
+    const damageDeckCards = DAMAGE_DECK.flatMap(card => 
+      Array(card.count).fill({
+        name: card.name,
+        cardimage: `https://api.swarmada.wiki/images/${card.name.toLowerCase().replace(/ /g, '-')}.webp`
+      })
+    );
+
+    const damagePagesNeeded = Math.ceil(damageDeckCards.length / 9);
+
+    return Array.from({ length: damagePagesNeeded }).map((_, pageIndex) => {
+      const startIndex = pageIndex * 9;
+      const pageCards = damageDeckCards.slice(startIndex, startIndex + 9);
+
+      return pageCards.length > 0 ? `
+        <!-- Damage Cards Front -->
+        <div class="page">
+          <div class="grid poker-grid">
+            ${pageCards.map(card => `
+              <div class="poker-card">
+                <div class="card-container">
+                  <img class="card-background" src="${card.cardimage}" alt="" />
+                  <img class="card-image" src="${card.cardimage}" alt="${card.name}" />
+                </div>
+              </div>
+            `).join('')}
+            ${Array.from({ length: 9 - pageCards.length }).map(() => `
+              <div class="poker-card">
+                <div class="card-container"></div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+        
+        ${showCardBacks ? `
+          <!-- Damage Cards Back -->
+          <div class="page">
+            <div class="grid poker-grid">
+              ${Array.from({ length: 9 }).map((_, index) => {
+                const row = Math.floor(index / 3);
+                const col = index % 3;
+                const reversedCol = 2 - col;
+                const reversedIndex = (row * 3) + reversedCol;
+                const reversedCard = reversedIndex < pageCards.length ? pageCards[reversedIndex] : null;
+                
+                if (!reversedCard) {
+                  return `
+                    <div class="poker-card">
+                      <div class="card-container"></div>
+                    </div>
+                  `;
+                }
+                
+                return `
+                  <div class="poker-card" style="transform: scaleX(-1)">
+                    <div class="card-container">
+                      <img class="card-image" 
+                          src="https://api.swarmada.wiki/images/damage-rear.webp" 
+                          alt="Damage card back" />
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        ` : ''}
+      ` : '';
+    }).join('');
+  };
+
   const generatePrintnPlayContent = () => {
     // Calculate number of pages needed for poker cards
     const allCards = [
@@ -2644,6 +2744,7 @@ const [isExpansionMode, setIsExpansionMode] = useState(false);
             </div>
           ` : '';
         }).join('')}
+        ${generateDamageDeckContent()}
         ${baseTokensHTML}
       </body>
       </html>
@@ -3130,6 +3231,10 @@ const [isExpansionMode, setIsExpansionMode] = useState(false);
         setShowRestrictions={setShowPrintRestrictions}
         showObjectives={showPrintObjectives}
         setShowObjectives={setShowPrintObjectives}
+        showDamageDeck={showDamageDeck}
+        setShowDamageDeck={setShowDamageDeck}
+        showCardBacks={showCardBacks}
+        setShowCardBacks={setShowCardBacks}
       />
     )}
     </div>
