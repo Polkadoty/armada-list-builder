@@ -281,11 +281,11 @@ export default function FleetBuilder({
   const contentRef = useRef<HTMLDivElement>(null);
   const [showPrintMenu, setShowPrintMenu] = useState(false);
   const [paperSize, setPaperSize] = useState<'letter' | 'a4'>('letter');
-const [showPrintRestrictions, setShowPrintRestrictions] = useState(true);
-const [showPrintObjectives, setShowPrintObjectives] = useState(true);
-const [isExpansionMode, setIsExpansionMode] = useState(false);
-const [showCardBacks, setShowCardBacks] = useState(false);
-const [showDamageDeck, setShowDamageDeck] = useState(false);
+  const [showPrintRestrictions, setShowPrintRestrictions] = useState(true);
+  const [showPrintObjectives, setShowPrintObjectives] = useState(true);
+  const [isExpansionMode, setIsExpansionMode] = useState(false);
+  const [showCardBacks, setShowCardBacks] = useState(false);
+  const [showDamageDeck, setShowDamageDeck] = useState(false);
 
   const checkTournamentViolations = useMemo(() => {
     const violations: string[] = [];
@@ -2644,36 +2644,38 @@ const [showDamageDeck, setShowDamageDeck] = useState(false);
                 </div>
               </div>
               
-              <!-- Ship Cards Back -->
-              <div class="page">
-                <div class="grid tarot-grid">
-                  ${Array.from({ length: 4 }).map((_, index) => {
-                    const row = Math.floor(index / 2);
-                    const col = index % 2;
-                    const reversedCol = 1 - col;
-                    const reversedIndex = (row * 2) + reversedCol;
-                    const reversedShip = reversedIndex < shipGroup.length ? shipGroup[reversedIndex] : null;
-                    
-                    if (!reversedShip) {
+              ${showCardBacks ? `
+                <!-- Ship Cards Back -->
+                <div class="page">
+                  <div class="grid tarot-grid">
+                    ${Array.from({ length: 4 }).map((_, index) => {
+                      const row = Math.floor(index / 2);
+                      const col = index % 2;
+                      const reversedCol = 1 - col;
+                      const reversedIndex = (row * 2) + reversedCol;
+                      const reversedShip = reversedIndex < shipGroup.length ? shipGroup[reversedIndex] : null;
+                      
+                      if (!reversedShip) {
+                        return `
+                          <div class="tarot-card">
+                            <div class="card-container"></div>
+                          </div>
+                        `;
+                      }
+                      
                       return `
-                        <div class="tarot-card">
-                          <div class="card-container"></div>
+                        <div class="tarot-card" style="transform: scaleX(-1)">
+                          <div class="card-container">
+                            <img class="card-image" 
+                                src="https://api.swarmada.wiki/images/${reversedShip.faction}-ship-rear.webp" 
+                                alt="${reversedShip.name} back" />
+                          </div>
                         </div>
                       `;
-                    }
-                    
-                    return `
-                      <div class="tarot-card" style="transform: scaleX(-1)">
-                        <div class="card-container">
-                          <img class="card-image" 
-                              src="https://api.swarmada.wiki/images/${reversedShip.faction}-ship-rear.webp" 
-                              alt="${reversedShip.name} back" />
-                        </div>
-                      </div>
-                    `;
-                  }).join('')}
+                    }).join('')}
+                  </div>
                 </div>
-              </div>
+              ` : ''}
             `).join('')}
         ` : ''}
 
@@ -2701,47 +2703,49 @@ const [showDamageDeck, setShowDamageDeck] = useState(false);
               </div>
             </div>
             
-            <!-- Poker Cards Back -->
-            <div class="page">
-              <div class="grid poker-grid">
-                ${Array.from({ length: 9 }).map((_, index) => {
-                  const row = Math.floor(index / 3);
-                  const col = index % 3;
-                  const reversedCol = 2 - col;
-                  const reversedIndex = (row * 3) + reversedCol;
-                  const reversedCard = reversedIndex < pageCards.length ? pageCards[reversedIndex] : null;
-                  
-                  if (!reversedCard) {
+            ${showCardBacks ? `
+              <!-- Poker Cards Back -->
+              <div class="page">
+                <div class="grid poker-grid">
+                  ${Array.from({ length: 9 }).map((_, index) => {
+                    const row = Math.floor(index / 3);
+                    const col = index % 3;
+                    const reversedCol = 2 - col;
+                    const reversedIndex = (row * 3) + reversedCol;
+                    const reversedCard = reversedIndex < pageCards.length ? pageCards[reversedIndex] : null;
+                    
+                    if (!reversedCard) {
+                      return `
+                        <div class="poker-card">
+                          <div class="card-container"></div>
+                        </div>
+                      `;
+                    }
+                    
+                    let rearImage;
+                    if ('squadron_type' in reversedCard) {
+                      rearImage = `${reversedCard.faction}-squadron-rear`;
+                    } 
+                    else if ('restrictions' in reversedCard) {
+                      rearImage = `${reversedCard.type}-rear`;
+                    }
+                    else {
+                      rearImage = 'objective-rear';
+                    }
+                    
                     return `
-                      <div class="poker-card">
-                        <div class="card-container"></div>
+                      <div class="poker-card" style="transform: scaleX(-1)">
+                        <div class="card-container">
+                          <img class="card-image" 
+                               src="https://api.swarmada.wiki/images/${rearImage}.webp" 
+                               alt="Card back" />
+                        </div>
                       </div>
                     `;
-                  }
-                  
-                  let rearImage;
-                  if ('squadron_type' in reversedCard) {
-                    rearImage = `${reversedCard.faction}-squadron-rear`;
-                  } 
-                  else if ('restrictions' in reversedCard) {
-                    rearImage = `${reversedCard.type}-rear`;
-                  }
-                  else {
-                    rearImage = 'objective-rear';
-                  }
-                  
-                  return `
-                    <div class="poker-card" style="transform: scaleX(-1)">
-                      <div class="card-container">
-                        <img class="card-image" 
-                             src="https://api.swarmada.wiki/images/${rearImage}.webp" 
-                             alt="Card back" />
-                      </div>
-                    </div>
-                  `;
-                }).join('')}
+                  }).join('')}
+                </div>
               </div>
-            </div>
+            ` : ''}
           ` : '';
         }).join('')}
         ${generateDamageDeckContent()}
@@ -2858,6 +2862,13 @@ const [showDamageDeck, setShowDamageDeck] = useState(false);
 
   useEffect(() => {
     if (isExpansionMode && (selectedShips.length > 0 || selectedSquadrons.length > 0)) {
+      // Set default print settings for sandbox mode
+      if (faction === 'sandbox') {
+        setShowCardBacks(false);
+        setShowDamageDeck(false);
+        setShowPrintObjectives(false);
+        setShowPrintRestrictions(false);
+      }
       // Add a small delay to ensure the fleet is fully loaded
       setTimeout(() => {
         handlePrintnPlay();
