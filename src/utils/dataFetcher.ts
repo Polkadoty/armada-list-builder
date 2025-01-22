@@ -65,6 +65,7 @@ const fetchAndSaveData = async (
   const enableLegends = Cookies.get('enableLegends') === 'true';
   const enableOldLegacy = Cookies.get('enableOldLegacy') === 'true';
   const enableArc = Cookies.get('enableArc') === 'true';
+  const enableAMG = Cookies.get('enableAMG') === 'true';
 
   const endpoints = [
     { name: 'ships', url: '/api/ships/' },
@@ -77,6 +78,15 @@ const fetchAndSaveData = async (
     { name: 'expansions', url: '/expansions/' },
     { name: 'releases', url: '/releases/' }
   ];
+
+  if (enableAMG) {
+    endpoints.push(
+      { name: 'amgShips', url: '/amg/ships/' },
+      { name: 'amgSquadrons', url: '/amg/squadrons/' },
+      { name: 'amgUpgrades', url: '/amg/upgrades/' },
+      { name: 'amgObjectives', url: '/amg/objectives/' }
+    );
+  }
 
   if (enableLegacy) {
     endpoints.push(
@@ -135,6 +145,10 @@ export const flushCacheAndReload = async (setIsLoading: (isLoading: boolean) => 
   localStorage.removeItem('squadrons');
   localStorage.removeItem('objectives');
   localStorage.removeItem('upgrades');
+  localStorage.removeItem('amgShips');
+  localStorage.removeItem('amgSquadrons');
+  localStorage.removeItem('amgUpgrades');
+  localStorage.removeItem('amgObjectives');
   localStorage.removeItem('legacyShips');
   localStorage.removeItem('legacySquadrons');
   localStorage.removeItem('legacyUpgrades');

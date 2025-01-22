@@ -46,7 +46,8 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
     arc: Cookies.get('enableArc') === 'true',
     legacy: Cookies.get('enableLegacy') === 'true',
     legends: Cookies.get('enableLegends') === 'true',
-    oldLegacy: Cookies.get('enableOldLegacy') === 'true'
+    oldLegacy: Cookies.get('enableOldLegacy') === 'true',
+    amg: Cookies.get('enableAMG') === 'true'
   });
 
   useEffect(() => {
@@ -55,7 +56,8 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
         arc: Cookies.get('enableArc') === 'true',
         legacy: Cookies.get('enableLegacy') === 'true',
         legends: Cookies.get('enableLegends') === 'true',
-        oldLegacy: Cookies.get('enableOldLegacy') === 'true'
+        oldLegacy: Cookies.get('enableOldLegacy') === 'true',
+        amg: Cookies.get('enableAMG') === 'true'
       };
 
       if (JSON.stringify(newContentSources) !== JSON.stringify(contentSources)) {
@@ -75,6 +77,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
       const cachedLegendsSquadrons = localStorage.getItem('legendsSquadrons');
       const cachedOldLegacySquadrons = localStorage.getItem('oldLegacySquadrons');
       const cachedArcSquadrons = localStorage.getItem('arcSquadrons');
+      const cachedAMGSquadrons = localStorage.getItem('amgSquadrons');
 
       const squadronMap = new Map<string, Squadron>();
 
@@ -146,6 +149,11 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
         processSquadrons(oldLegacySquadronData, 'oldLegacy');
       }
 
+      if (cachedAMGSquadrons) {
+        const amgSquadronData = JSON.parse(cachedAMGSquadrons);
+        processSquadrons(amgSquadronData, 'amg');
+      }
+
       if (cachedArcSquadrons) {
         const arcSquadronData = JSON.parse(cachedArcSquadrons);
         processSquadrons(arcSquadronData, 'arc');
@@ -163,7 +171,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
 
       squadronsArray.forEach(squadron => {
         // Extract base name without any prefixes or errata suffixes
-        const baseName = squadron.id.split('-errata-')[0];
+        const baseName = squadron.id.replace(/-errata(-[^-]+)?$/, '');
         
         if (!squadronGroups.has(baseName)) {
           squadronGroups.set(baseName, []);
@@ -180,6 +188,9 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
           
           // Check if the errata source is enabled
           const source = matchingSquadron.source;
+          // For plain -errata (AMG), treat as enabled by default
+          if (errataKey.endsWith('-errata')) return true;
+          // Otherwise check content source settings
           return source ? contentSources[source as keyof typeof contentSources] : true;
         });
 

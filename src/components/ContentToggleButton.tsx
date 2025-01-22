@@ -16,7 +16,8 @@ const CONFIG = {
   showArcToggle: true,
   showLocalContentToggle: false,
   showProxyToggle: false,
-  showCustomFactionsToggle: true
+  showCustomFactionsToggle: true,
+  showAMGToggle: true
 };
 
 export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadingMessage, tournamentMode, setTournamentMode }: {
@@ -33,6 +34,7 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
   const [enableCustomFactions, setEnableCustomFactions] = useState(false);
   const [enableLocalContent, setEnableLocalContent] = useState(false);
   const [enableProxy, setEnableProxy] = useState(false);
+  const [enableAMG, setEnableAMG] = useState(false);
   const { theme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -45,6 +47,7 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
     const customFactionsCookie = Cookies.get('enableCustomFactions');
     const localContentCookie = Cookies.get('enableLocalContent');
     const proxyCookie = Cookies.get('enableProxy');
+    const amgCookie = Cookies.get('enableAMG');
     setEnableLegacy(CONFIG.showLegacyToggle && legacyCookie === 'true');
     setEnableLegends(CONFIG.showLegendsToggle && legendsCookie === 'true');
     setEnableOldLegacy(CONFIG.showOldLegacyToggle && oldLegacyCookie === 'true');
@@ -52,6 +55,7 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
     setEnableCustomFactions(CONFIG.showCustomFactionsToggle && customFactionsCookie === 'true');
     setEnableLocalContent(CONFIG.showLocalContentToggle && localContentCookie === 'true');
     setEnableProxy(CONFIG.showProxyToggle && proxyCookie === 'true');
+    setEnableAMG(CONFIG.showAMGToggle && amgCookie === 'true');
   }, []);
 
   if (!mounted) {
@@ -59,6 +63,14 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
   }
 
   const isDarkTheme = theme === 'dark' || resolvedTheme === 'dark';
+
+  const handleAMGToggle = (checked: boolean) => {
+    if (CONFIG.showAMGToggle) {
+      setEnableAMG(checked);
+      Cookies.set('enableAMG', checked.toString(), { expires: 365 });
+      flushCacheAndReload(() => {}, () => {}, () => {});
+    }
+  };
 
   const handleLegacyToggle = (checked: boolean) => {
     if (CONFIG.showLegacyToggle) {
@@ -116,6 +128,8 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
     }
   };
 
+
+
   const handleFlushCache = async () => {
     await flushCacheAndReload(setIsLoading, setLoadingProgress, setLoadingMessage);
   };
@@ -139,6 +153,19 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
               </p>
             </div>
             <div className="grid gap-2">
+              {CONFIG.showAMGToggle && (
+                <div className="flex items-center justify-between">
+                  <label htmlFor="amg-toggle" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    Enable AMG Errata
+                  </label>
+                  <Switch
+                    id="amg-toggle"
+                    checked={enableAMG}
+                    onCheckedChange={handleAMGToggle}
+                    className="custom-switch"
+                  />
+                </div>
+              )}
               {CONFIG.showLegacyToggle && (
                 <div className="flex items-center justify-between">
                   <label htmlFor="legacy-toggle" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
