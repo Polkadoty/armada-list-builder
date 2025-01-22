@@ -105,60 +105,69 @@ export default function FactionSelection({ onHover }: { onHover: (faction: strin
         : [...baseFactions, sandboxFaction];
 
   return (
-    <div className="grid grid-cols-2 gap-4 justify-items-center">
-      {availableFactions.map((faction, index) => (
-        <>
-          {(enableCustomFactions) && index === baseFactions.length + 2 && (
-            <>
-              <div className={`col-span-2 w-full px-4 my-2 transition-opacity duration-500 ${showLegendsContent ? 'opacity-100' : 'opacity-0'}`}>
-                <Separator className="my-4" />
-              </div>
-              <div className={`col-span-2 w-full px-4 mb-4 transition-opacity duration-500 ${showLegendsContent ? 'opacity-100' : 'opacity-0'}`}>
-                <div className="bg-yellow-100/30 backdrop-blur-md border border-yellow-400 rounded-lg p-4">
-                  <p className="text-yellow-800 dark:text-yellow-200 text-center font-medium">
-                    ⚠️ This content is WIP and is subject to frequent changes.
-                  </p>
+    <>
+      <div className="mb-6 w-full">
+        <div className="bg-blue-100/30 backdrop-blur-md border border-blue-400 rounded-lg p-4">
+          <p className="text-blue-800 dark:text-blue-200 text-center font-medium">
+            The AMG Update is out! Please turn it on using the content addition menu in the top right, your old fleets will be updated to the new points sometime next week!
+          </p>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4 justify-items-center">
+        {availableFactions.map((faction, index) => (
+          <>
+            {(enableCustomFactions) && index === baseFactions.length + 2 && (
+              <>
+                <div className={`col-span-2 w-full px-4 my-2 transition-opacity duration-500 ${showLegendsContent ? 'opacity-100' : 'opacity-0'}`}>
+                  <Separator className="my-4" />
                 </div>
-              </div>
-            </>
-          )}
-          
-          <div className={`${!enableLegends && !enableCustomFactions && faction.slug === 'sandbox' ? 'col-span-2 w-full flex justify-center' : ''}`}>
-            <Tooltip key={faction.slug}>
-              <TooltipTrigger>
-                <Link href={`/${faction.slug}`}>
-                  <div 
-                    className={`p-4 transition-all duration-500 rounded-lg ${
-                      enableLegends && index >= baseFactions.length + 2
-                        ? `transition-all duration-500 ${showLegendsContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`
-                        : ''
-                    }`}
-                    style={{
-                      transitionDelay: enableLegends && index >= baseFactions.length + 2 ? `${(index - (baseFactions.length + 2)) * 100 + 100}ms` : '0ms'
-                    }}
-                    onMouseEnter={() => handleHover(faction.slug)}
-                    onMouseLeave={() => handleHover(null)}
-                  >
-                    <Image 
-                      src={faction.logo} 
-                      alt={faction.name} 
-                      width={64} 
-                      height={64} 
-                      className={`transition-all duration-200 ${!mounted || currentTheme === 'dark' ? shouldInvertImage(faction.logo) ? 'invert' : '' : ''}`}
-                      style={{
-                        filter: hoveredFaction === faction.slug 
-                          ? `drop-shadow(0 0 1.5rem ${factionColors[faction.slug as keyof typeof factionColors]}) ${!mounted || currentTheme === 'dark' ? shouldInvertImage(faction.logo) ? 'invert(1) hue-rotate(180deg)' : '' : ''}`
-                          : !mounted || currentTheme === 'dark' ? shouldInvertImage(faction.logo) ? 'invert(1)' : 'none' : 'none',
-                      }}
-                    />
+                <div className={`col-span-2 w-full px-4 mb-4 transition-opacity duration-500 ${showLegendsContent ? 'opacity-100' : 'opacity-0'}`}>
+                  <div className="bg-yellow-100/30 backdrop-blur-md border border-yellow-400 rounded-lg p-4">
+                    <p className="text-yellow-800 dark:text-yellow-200 text-center font-medium">
+                      ⚠️ This content is WIP and is subject to frequent changes.
+                    </p>
                   </div>
-                </Link>
-              </TooltipTrigger>
-              <TooltipContent>{faction.name}</TooltipContent>
-            </Tooltip>
-          </div>
-        </>
-      ))}
-    </div>
+                </div>
+              </>
+            )}
+            
+            <div className={`${!enableLegends && !enableCustomFactions && faction.slug === 'sandbox' ? 'col-span-2 w-full flex justify-center' : ''}`}>
+              <Tooltip key={faction.slug}>
+                <TooltipTrigger>
+                  <Link href={`/${faction.slug}`}>
+                    <div 
+                      className={`p-4 transition-all duration-500 rounded-lg ${
+                        enableLegends && index >= baseFactions.length + 2
+                          ? `transition-all duration-500 ${showLegendsContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`
+                          : ''
+                      }`}
+                      style={{
+                        transitionDelay: enableLegends && index >= baseFactions.length + 2 ? `${(index - (baseFactions.length + 2)) * 100 + 100}ms` : '0ms'
+                      }}
+                      onMouseEnter={() => handleHover(faction.slug)}
+                      onMouseLeave={() => handleHover(null)}
+                    >
+                      <Image 
+                        src={faction.logo} 
+                        alt={faction.name} 
+                        width={64} 
+                        height={64} 
+                        className={`transition-all duration-200 ${!mounted || currentTheme === 'dark' ? shouldInvertImage(faction.logo) ? 'invert' : '' : ''}`}
+                        style={{
+                          filter: hoveredFaction === faction.slug 
+                            ? `drop-shadow(0 0 1.5rem ${factionColors[faction.slug as keyof typeof factionColors]}) ${!mounted || currentTheme === 'dark' ? shouldInvertImage(faction.logo) ? 'invert(1) hue-rotate(180deg)' : '' : ''}`
+                            : !mounted || currentTheme === 'dark' ? shouldInvertImage(faction.logo) ? 'invert(1)' : 'none' : 'none',
+                        }}
+                      />
+                    </div>
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent>{faction.name}</TooltipContent>
+              </Tooltip>
+            </div>
+          </>
+        ))}
+      </div>
+    </>
   );
 }
