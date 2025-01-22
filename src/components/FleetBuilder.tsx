@@ -83,6 +83,7 @@ export interface Ship {
   traits?: string[];
   source: ContentSource;
   searchableText: string;
+  release?: string;
 }
 
 export interface Squadron {
@@ -156,6 +157,7 @@ export interface Upgrade {
   };
   searchableText: string;
   source: ContentSource;
+  release?: string;
 }
 
 export interface Ship extends ShipModel {
@@ -1278,7 +1280,6 @@ export default function FleetBuilder({
   };
 
   const generateExportText = useCallback(() => {
-
     const allRegularSource = [
       ...selectedShips,
       ...selectedShips.flatMap(ship => ship.assignedUpgrades),
@@ -1288,18 +1289,20 @@ export default function FleetBuilder({
     let text = " Name: " + fleetName + "\n";
     text += "Faction: " + faction.charAt(0).toUpperCase() + faction.slice(1) + "\n";
 
+    // Handle commander
     const commander = selectedShips
       .flatMap((ship) => ship.assignedUpgrades)
       .find((upgrade) => upgrade.type === "commander");
     if (commander) {
+      const sourceSpace = commander.release === "AMG Final Errata" ? "" : " ";
       text += "Commander: " + commander.name + 
-        (commander.source && commander.source !== "regular" ? " " + formatSource(commander.source) : "") + 
+        (commander.source && commander.source !== "regular" ? sourceSpace + formatSource(commander.source) : "") + 
         " (" + commander.points + ")\n";
     }
-    
+
     text += '\n';
-    
-    // Add objectives with source tags
+
+    // Add objectives
     if (selectedAssaultObjectives.length > 0) {
       const sourceTag = formatSource(selectedAssaultObjectives[0].source);
       text += `Assault: ${selectedAssaultObjectives.map(obj => obj.name).join(", ")}${sourceTag ? ` ${sourceTag}` : ''}\n`;
@@ -1313,19 +1316,22 @@ export default function FleetBuilder({
       text += `Navigation: ${selectedNavigationObjectives.map(obj => obj.name).join(", ")}${sourceTag ? ` ${sourceTag}` : ''}\n`;
     }
 
+    // Add ships and their upgrades
     if (selectedShips.length > 0) {
       text += "\n";
       selectedShips.forEach((ship) => {
-        // In the ships forEach loop, change this part:
+        const sourceSpace = ship.release === "AMG Final Errata" ? "" : " ";
         text += ship.name + 
-          (ship.source && ship.source !== "regular" ? " " + formatSource(ship.source) : "") + 
+          (ship.source && ship.source !== "regular" ? sourceSpace + formatSource(ship.source) : "") + 
           " (" + ship.points + ")\n";
+
         ship.assignedUpgrades.forEach((upgrade) => {
-          const sourceSuffix = upgrade.source && upgrade.source !== "regular" 
-            ? " " + formatSource(upgrade.source) 
-            : "";
-          text += "• " + upgrade.name + sourceSuffix + " (" + upgrade.points + ")\n";
+          const sourceSpace = upgrade.release === "AMG Final Errata" ? "" : " ";
+          text += "• " + upgrade.name + 
+            (upgrade.source && upgrade.source !== "regular" ? sourceSpace + formatSource(upgrade.source) : "") + 
+            " (" + upgrade.points + ")\n";
         });
+
         text += "= " + 
           (ship.points + 
           ship.assignedUpgrades.reduce((total, upgrade) => total + upgrade.points, 0)) + 
