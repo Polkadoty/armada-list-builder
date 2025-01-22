@@ -111,6 +111,7 @@ export interface Squadron {
   "unique-class": string[];
   source: ContentSource;
   searchableText: string;
+  release?: string;
 }
 
 interface Objective {
@@ -1335,14 +1336,15 @@ export default function FleetBuilder({
     text += "Squadrons:\n";
     if (selectedSquadrons.length > 0) {
       const groupedSquadrons = selectedSquadrons.reduce((acc, squadron) => {
+        const sourceSpace = squadron.release === "AMG Final Errata" ? "" : " ";
         const key =
           squadron.unique || squadron["ace-name"]
             ? (squadron["ace-name"] || squadron.name) + 
               (squadron["ace-name"] && !allRegularSource ? " - " + squadron.name : "") + 
-              (squadron.source && squadron.source !== "regular" ? " " + formatSource(squadron.source) : "") + 
+              (squadron.source && squadron.source !== "regular" ? sourceSpace + formatSource(squadron.source) : "") + 
               " (" + squadron.points + ")"
             : squadron.name + 
-              (squadron.source && squadron.source !== "regular" ? " " + formatSource(squadron.source) : "") + 
+              (squadron.source && squadron.source !== "regular" ? sourceSpace + formatSource(squadron.source) : "") + 
               " (" + (squadron.points * (squadron.count || 1)) + ")";
         if (!acc[key]) {
           acc[key] = {
@@ -1402,14 +1404,31 @@ export default function FleetBuilder({
   };
 
   const getAliasKey = (
-    aliases: Record<string, string>,
+    aliases: Record<string, string | string[]>,
     name: string
   ): string | undefined => {
     console.log(`Getting alias key for: ${name}`);
     console.log(`Aliases:`, aliases);
-    const result = aliases[name];
-    console.log(`Alias key result:`, result);
-    return result;
+
+    const aliasKeys = aliases[name];
+    
+    // If there's no value or it's a string, return as before
+    if (!aliasKeys || typeof aliasKeys === 'string') {
+      console.log(`Alias key result:`, aliasKeys);
+      return aliasKeys;
+    }
+
+    // Now TypeScript knows aliasKeys is string[]
+    // First try to find a key that ends with just '-errata'
+    const simpleErrata = aliasKeys.find((key: string) => key.endsWith('-errata'));
+    if (simpleErrata) {
+      console.log(`Found simple errata key:`, simpleErrata);
+      return simpleErrata;
+    }
+
+    // If no simple errata found, return the first key
+    console.log(`No simple errata found, using first key:`, aliasKeys[0]);
+    return aliasKeys[0];
   };
 
   const fetchObjective = (key: string): ObjectiveModel | null => {
