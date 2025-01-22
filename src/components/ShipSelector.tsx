@@ -66,7 +66,8 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
     arc: Cookies.get('enableArc') === 'true',
     legacy: Cookies.get('enableLegacy') === 'true',
     legends: Cookies.get('enableLegends') === 'true',
-    oldLegacy: Cookies.get('enableOldLegacy') === 'true'
+    oldLegacy: Cookies.get('enableOldLegacy') === 'true',
+    amg: Cookies.get('enableAMG') === 'true'
   });
 
   useEffect(() => {
@@ -75,7 +76,8 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
         arc: Cookies.get('enableArc') === 'true',
         legacy: Cookies.get('enableLegacy') === 'true',
         legends: Cookies.get('enableLegends') === 'true',
-        oldLegacy: Cookies.get('enableOldLegacy') === 'true'
+        oldLegacy: Cookies.get('enableOldLegacy') === 'true',
+        amg: Cookies.get('enableAMG') === 'true'
       };
 
       if (JSON.stringify(newContentSources) !== JSON.stringify(contentSources)) {
@@ -95,6 +97,7 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
       const cachedLegendsShips = localStorage.getItem('legendsShips');
       const cachedOldLegacyShips = localStorage.getItem('oldLegacyShips');
       const cachedArcShips = localStorage.getItem('arcShips');
+      const cachedAMGShips = localStorage.getItem('amgShips');
       let allShips: ShipModel[] = [];
 
       const processShips = (data: ShipData, prefix: string = '') => {
@@ -142,6 +145,11 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
         allShips = [...allShips, ...processShips(shipData)];
       }
 
+      if (cachedAMGShips) {
+        const amgShipData = JSON.parse(cachedAMGShips);
+        allShips = [...allShips, ...processShips(amgShipData, 'amg')];
+      }
+
       if (cachedLegacyShips) {
         const legacyShipData = JSON.parse(cachedLegacyShips);
         allShips = [...allShips, ...processShips(legacyShipData, 'legacy')];
@@ -173,8 +181,10 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
       allShips.forEach(ship => {
         // Use chassis name for grouping since errata is chassis-based
         const baseName = ship.chassis
-          .replace(/^(legacy|legends|oldLegacy|arc)-/, '') // Remove source prefix
-          .replace(/-errata(-[^-]+)?$/, ''); // Remove errata suffix
+          .replace(/^(legacy|legends|oldLegacy|arc|amg)-/, '') // Remove source prefix
+          .replace(/-errata(-[^-]+)?$/, ''); // Remove both types of errata suffixes
+        
+        console.log(`Processing ship: ${ship.id}, baseName: ${baseName}`);
         
         if (!shipGroups.has(baseName)) {
           shipGroups.set(baseName, []);
@@ -188,15 +198,26 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
       allShips = Array.from(shipGroups.values()).map(group => {
         // First, identify which ships in the group have errata versions
         const shipsWithErrataStatus = group.map(ship => {
-          // Check if this ship's chassis matches any errata keys
-          const hasErrata = shipErrataKeys.some((errataKey: string) => ship.chassis.includes(errataKey));
+          // Check if this ship's chassis matches any errata keys or has -errata suffix
+          const hasErrata = shipErrataKeys.some((errataKey: string) => ship.chassis.includes(errataKey)) ||
+                           ship.chassis.endsWith('-errata');
           return { ship, hasErrata };
         });
 
         // If any ship in this group has errata, process the replacements
         if (shipsWithErrataStatus.some(({ hasErrata }) => hasErrata)) {
           const processedShips = group.map(ship => {
-            // Find if there's a source-prefixed version of this exact model
+            // First check for AMG errata version
+            const amgErrata = group.find(candidate => 
+              candidate.chassis === `${ship.chassis}-errata`
+            );
+            
+            if (amgErrata) {
+              console.log(`Replacing ${ship.id} with AMG errata version ${amgErrata.id}`);
+              return amgErrata;
+            }
+
+            // Then check for source-prefixed version
             const sourceVersion = group.find(candidate => 
               candidate.id !== ship.id && 
               candidate.id.match(/^(legacy|legends|oldLegacy|arc)-/) &&
@@ -220,10 +241,10 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
           // Remove duplicates and check content sources
           const uniqueShips = new Map();
           processedShips.forEach(ship => {
-            const normalizedId = ship.id.replace(/^(legacy|legends|oldLegacy|arc)-/, '');
+            const normalizedId = ship.id.replace(/^(legacy|legends|oldLegacy|arc|amg)-/, '');
             const isSourceEnabled = ship.source === 'regular' || contentSources[ship.source as keyof typeof contentSources];
             
-            if (isSourceEnabled && (!uniqueShips.has(normalizedId) || ship.id.match(/^(legacy|legends|oldLegacy|arc)-/))) {
+            if (isSourceEnabled && (!uniqueShips.has(normalizedId) || ship.id.match(/^(legacy|legends|oldLegacy|arc|amg)-/))) {
               uniqueShips.set(normalizedId, ship);
             }
           });
@@ -231,7 +252,7 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
           return Array.from(uniqueShips.values());
         }
 
-        // If no errata in this group, filter out ships with disabled content sources
+        // If no errata exists, filter by enabled content sources
         return group.filter(ship => 
           ship.source === 'regular' || contentSources[ship.source as keyof typeof contentSources]
         );
