@@ -34,7 +34,7 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
   const [enableCustomFactions, setEnableCustomFactions] = useState(false);
   const [enableLocalContent, setEnableLocalContent] = useState(false);
   const [enableProxy, setEnableProxy] = useState(false);
-  const [enableAMG, setEnableAMG] = useState(false);
+  const [enableAMG, setEnableAMG] = useState(true);
   const { theme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
