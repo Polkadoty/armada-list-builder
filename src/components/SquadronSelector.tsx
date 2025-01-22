@@ -186,11 +186,12 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
           const matchingSquadron = group.find(squadron => squadron.id === errataKey);
           if (!matchingSquadron) return false;
           
-          // Check if the errata source is enabled
-          const source = matchingSquadron.source;
-          // For plain -errata (AMG), treat as enabled by default
-          if (errataKey.endsWith('-errata')) return true;
+          // For AMG errata, check if it's enabled
+          if (errataKey.endsWith('-errata')) {
+            return Cookies.get('enableAMG') === 'true';
+          }
           // Otherwise check content source settings
+          const source = matchingSquadron.source;
           return source ? contentSources[source as keyof typeof contentSources] : true;
         });
 
@@ -198,7 +199,9 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
           // Return only the errata version
           return group.find(squadron => 
             squadronErrataKeys.includes(squadron.id) && 
-            contentSources[squadron.source as keyof typeof contentSources]
+            (squadron.id.endsWith('-errata') ? 
+              Cookies.get('enableAMG') === 'true' : 
+              contentSources[squadron.source as keyof typeof contentSources])
           );
         }
         

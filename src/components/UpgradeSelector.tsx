@@ -181,7 +181,9 @@ export default function UpgradeSelector({
         
         // First try to find an AMG errata version (simple -errata suffix)
         const amgErrata = group.find(upgrade => upgrade.id.endsWith('-errata'));
-        if (amgErrata) {
+        // Only apply AMG errata if the cookie is enabled
+        const enableAMG = Cookies.get('enableAMG') === 'true';
+        if (amgErrata && enableAMG) {
           console.log(`Found AMG errata: ${amgErrata.id} replacing ${group[0].id}`);
           return amgErrata;
         }

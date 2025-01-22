@@ -212,7 +212,9 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
               candidate.chassis === `${ship.chassis}-errata`
             );
             
-            if (amgErrata) {
+            // Only apply AMG errata if the cookie is enabled
+            const enableAMG = Cookies.get('enableAMG') === 'true';
+            if (amgErrata && enableAMG) {
               console.log(`Replacing ${ship.id} with AMG errata version ${amgErrata.id}`);
               return amgErrata;
             }
