@@ -55,7 +55,7 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
     setEnableCustomFactions(CONFIG.showCustomFactionsToggle && customFactionsCookie === 'true');
     setEnableLocalContent(CONFIG.showLocalContentToggle && localContentCookie === 'true');
     setEnableProxy(CONFIG.showProxyToggle && proxyCookie === 'true');
-    setEnableAMG(CONFIG.showAMGToggle && amgCookie === 'true');
+    setEnableAMG(CONFIG.showAMGToggle && amgCookie !== 'false');
   }, []);
 
   if (!mounted) {
