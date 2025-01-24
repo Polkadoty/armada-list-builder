@@ -948,11 +948,14 @@ export default function FleetBuilder({
     const aliases = JSON.parse(localStorage.getItem("aliases") || "{}");
     
     // Format the ship name with source tag if needed
-    const shipNameWithSource = shipToCopy.source && shipToCopy.source !== "regular" 
-      ? `${shipToCopy.name} [${shipToCopy.source === 'oldLegacy' ? 'OldLegacy' : 
+    const shipNameWithSource = shipToCopy.source && shipToCopy.source !== "regular" && shipToCopy.source !== "amg"
+      ? `${shipToCopy.name} [${
+          shipToCopy.source === 'oldLegacy' ? 'OldLegacy' : 
           shipToCopy.source === 'legacy' ? 'Legacy' : 
           shipToCopy.source === 'legends' ? 'Legends' : 
-          'ARC'}]`
+          shipToCopy.source === 'arc' ? 'ARC' : 
+          ''
+        }]`
       : shipToCopy.name;
     
     // Get the ship's alias key with the properly formatted name
