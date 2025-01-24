@@ -38,12 +38,17 @@ export const checkAndFetchData = async (
     const data = await response.json();
     const lastModified = data.lastModified;
     const savedLastModified = Cookies.get('lastModified');
-    const isDataMissing = !localStorage.getItem('ships') || 
-      !localStorage.getItem('squadrons') || 
-      !localStorage.getItem('objectives') || 
-      !localStorage.getItem('upgrades') || 
-      !localStorage.getItem('imageLinks') || 
-      !localStorage.getItem('aliases');
+    const isDataMissing =
+      !localStorage.getItem("ships") ||
+      !localStorage.getItem("squadrons") ||
+      !localStorage.getItem("objectives") ||
+      !localStorage.getItem("upgrades") ||
+      !localStorage.getItem("imageLinks") ||
+      !localStorage.getItem("aliases") ||
+      !localStorage.getItem("amgShips") ||
+      !localStorage.getItem("amgSquadrons") ||
+      !localStorage.getItem("amgUpgrades") ||
+      !localStorage.getItem("amgObjectives");
 
     if (savedLastModified !== lastModified || isDataMissing) {
       setIsLoading(true);
