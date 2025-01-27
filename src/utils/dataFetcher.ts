@@ -44,11 +44,7 @@ export const checkAndFetchData = async (
       !localStorage.getItem("objectives") ||
       !localStorage.getItem("upgrades") ||
       !localStorage.getItem("imageLinks") ||
-      !localStorage.getItem("aliases") ||
-      !localStorage.getItem("amgShips") ||
-      !localStorage.getItem("amgSquadrons") ||
-      !localStorage.getItem("amgUpgrades") ||
-      !localStorage.getItem("amgObjectives");
+      !localStorage.getItem("aliases")
 
     if (savedLastModified !== lastModified || isDataMissing) {
       setIsLoading(true);
@@ -70,7 +66,7 @@ const fetchAndSaveData = async (
   const enableLegends = Cookies.get('enableLegends') === 'true';
   const enableOldLegacy = Cookies.get('enableOldLegacy') === 'true';
   const enableArc = Cookies.get('enableArc') === 'true';
-  const enableAMG = Cookies.get('enableAMG') === 'true';
+  // const enableAMG = Cookies.get('enableAMG') === 'true';
 
   const endpoints = [
     { name: 'ships', url: '/api/ships/' },
@@ -83,15 +79,6 @@ const fetchAndSaveData = async (
     { name: 'expansions', url: '/expansions/' },
     { name: 'releases', url: '/releases/' }
   ];
-
-  if (enableAMG) {
-    endpoints.push(
-      { name: 'amgShips', url: '/amg/ships/' },
-      { name: 'amgSquadrons', url: '/amg/squadrons/' },
-      { name: 'amgUpgrades', url: '/amg/upgrades/' },
-      { name: 'amgObjectives', url: '/amg/objectives/' }
-    );
-  }
 
   if (enableLegacy) {
     endpoints.push(
@@ -154,15 +141,30 @@ export const flushCacheAndReload = async (setIsLoading: (isLoading: boolean) => 
     }
   }
   
+  // Remove AMG cookie
+  Cookies.remove('enableAMG');
+  
+  // Remove lastModified to force refresh
   Cookies.remove('lastModified');
+
+  // Remove all localStorage items
   localStorage.removeItem('ships');
   localStorage.removeItem('squadrons');
   localStorage.removeItem('objectives');
   localStorage.removeItem('upgrades');
+  localStorage.removeItem('imageLinks');
+  localStorage.removeItem('aliases');
+  localStorage.removeItem('errataKeys');
+  localStorage.removeItem('expansions');
+  localStorage.removeItem('releases');
+
+  // Remove AMG-specific items
   localStorage.removeItem('amgShips');
   localStorage.removeItem('amgSquadrons');
   localStorage.removeItem('amgUpgrades');
   localStorage.removeItem('amgObjectives');
+
+  // Remove other variant items
   localStorage.removeItem('legacyShips');
   localStorage.removeItem('legacySquadrons');
   localStorage.removeItem('legacyUpgrades');
@@ -172,10 +174,10 @@ export const flushCacheAndReload = async (setIsLoading: (isLoading: boolean) => 
   localStorage.removeItem('oldLegacyShips');
   localStorage.removeItem('oldLegacySquadrons');
   localStorage.removeItem('oldLegacyUpgrades');
-  localStorage.removeItem('aliases');
-  localStorage.removeItem('imageLinks');
-  localStorage.removeItem('expansions');
-  localStorage.removeItem('releases');
+  localStorage.removeItem('arcShips');
+  localStorage.removeItem('arcSquadrons');
+  localStorage.removeItem('arcUpgrades');
+  localStorage.removeItem('arcObjectives');
 
   // Reset sorting state cookies
   Cookies.remove('sortState_ships');
