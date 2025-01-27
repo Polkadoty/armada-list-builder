@@ -34,7 +34,7 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
   const [enableCustomFactions, setEnableCustomFactions] = useState(false);
   const [enableLocalContent, setEnableLocalContent] = useState(false);
   const [enableProxy, setEnableProxy] = useState(false);
-  const [enableAMG, setEnableAMG] = useState(false);
+  // const [enableAMG, setEnableAMG] = useState(false);
   const { theme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -47,7 +47,7 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
     const customFactionsCookie = Cookies.get('enableCustomFactions');
     const localContentCookie = Cookies.get('enableLocalContent');
     const proxyCookie = Cookies.get('enableProxy');
-    const amgCookie = Cookies.get('enableAMG');
+    // const amgCookie = Cookies.get('enableAMG');
     setEnableLegacy(CONFIG.showLegacyToggle && legacyCookie === 'true');
     setEnableLegends(CONFIG.showLegendsToggle && legendsCookie === 'true');
     setEnableOldLegacy(CONFIG.showOldLegacyToggle && oldLegacyCookie === 'true');
@@ -55,7 +55,7 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
     setEnableCustomFactions(CONFIG.showCustomFactionsToggle && customFactionsCookie === 'true');
     setEnableLocalContent(CONFIG.showLocalContentToggle && localContentCookie === 'true');
     setEnableProxy(CONFIG.showProxyToggle && proxyCookie === 'true');
-    setEnableAMG(CONFIG.showAMGToggle && amgCookie !== 'false');
+    // setEnableAMG(CONFIG.showAMGToggle && amgCookie !== 'false');
   }, []);
 
   if (!mounted) {

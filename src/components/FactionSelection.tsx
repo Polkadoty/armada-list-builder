@@ -109,7 +109,7 @@ export default function FactionSelection({ onHover }: { onHover: (faction: strin
       <div className="mb-6 w-full">
         <div className="bg-blue-100/30 backdrop-blur-md border border-blue-400 rounded-lg p-4">
           <p className="text-blue-800 dark:text-blue-200 text-center font-medium">
-            The AMG Update is out! Please turn it on using the content addition menu in the top right, your old fleets will be updated to the new points sometime next week!
+            The AMG Update is out! All points are updated and your old fleets are being updated to the new points right now!
           </p>
         </div>
       </div>
