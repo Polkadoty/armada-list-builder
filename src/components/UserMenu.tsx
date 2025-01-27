@@ -10,9 +10,26 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User } from 'lucide-react';
 import { FleetList } from './FleetList';
 import { Separator } from "@/components/ui/separator";
+import { useState, useEffect } from 'react';
+import Cookies from 'js-cookie';
+import { Switch } from "@/components/ui/switch";
+import { flushCacheAndReload } from '@/utils/dataFetcher';
 
 export function UserMenu() {
   const { user, error } = useUser();
+  const [useLowRes, setUseLowRes] = useState(false);
+
+  useEffect(() => {
+    const lowResCookie = Cookies.get('useLowResImages');
+    setUseLowRes(lowResCookie === 'true');
+  }, []);
+
+  const handleLowResToggle = (checked: boolean) => {
+    setUseLowRes(checked);
+    Cookies.set('useLowResImages', checked.toString(), { expires: 365 });
+    // Flush cache to reload images
+    flushCacheAndReload(() => {}, () => {}, () => {});
+  };
 
   if (error) {
     return <div>Error: {error.message}</div>;
@@ -41,6 +58,20 @@ export function UserMenu() {
           )}
           <div className="px-2 py-2">
             <FleetList />
+          </div>
+          <Separator />
+          <div className="px-3 py-2">
+            <div className="flex items-center justify-between">
+              <label htmlFor="low-res-toggle" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                Low Resolution Mode
+              </label>
+              <Switch
+                id="low-res-toggle"
+                checked={useLowRes}
+                onCheckedChange={handleLowResToggle}
+                className="custom-switch"
+              />
+            </div>
           </div>
           <Separator />
           <div className="px-2 py-2">

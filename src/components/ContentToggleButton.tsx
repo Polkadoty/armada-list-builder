@@ -17,7 +17,7 @@ const CONFIG = {
   showLocalContentToggle: false,
   showProxyToggle: false,
   showCustomFactionsToggle: true,
-  showAMGToggle: true
+  showAMGToggle: false
 };
 
 export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadingMessage, tournamentMode, setTournamentMode }: {
@@ -34,7 +34,7 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
   const [enableCustomFactions, setEnableCustomFactions] = useState(false);
   const [enableLocalContent, setEnableLocalContent] = useState(false);
   const [enableProxy, setEnableProxy] = useState(false);
-  const [enableAMG, setEnableAMG] = useState(true);
+  const [enableAMG, setEnableAMG] = useState(false);
   const { theme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -64,13 +64,13 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
 
   const isDarkTheme = theme === 'dark' || resolvedTheme === 'dark';
 
-  const handleAMGToggle = (checked: boolean) => {
-    if (CONFIG.showAMGToggle) {
-      setEnableAMG(checked);
-      Cookies.set('enableAMG', checked.toString(), { expires: 365 });
-      flushCacheAndReload(() => {}, () => {}, () => {});
-    }
-  };
+  // const handleAMGToggle = (checked: boolean) => {
+  //   if (CONFIG.showAMGToggle) {
+  //     setEnableAMG(checked);
+  //     Cookies.set('enableAMG', checked.toString(), { expires: 365 });
+  //     flushCacheAndReload(() => {}, () => {}, () => {});
+  //   }
+  // };
 
   const handleLegacyToggle = (checked: boolean) => {
     if (CONFIG.showLegacyToggle) {
@@ -153,7 +153,7 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
               </p>
             </div>
             <div className="grid gap-2">
-              {CONFIG.showAMGToggle && (
+              {/* {CONFIG.showAMGToggle && (
                 <div className="flex items-center justify-between">
                   <label htmlFor="amg-toggle" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                     Enable AMG Errata
@@ -165,7 +165,7 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
                     className="custom-switch"
                   />
                 </div>
-              )}
+              )} */}
               {CONFIG.showLegacyToggle && (
                 <div className="flex items-center justify-between">
                   <label htmlFor="legacy-toggle" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">

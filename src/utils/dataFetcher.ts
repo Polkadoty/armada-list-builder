@@ -145,6 +145,15 @@ const fetchAndSaveData = async (
 };
 
 export const flushCacheAndReload = async (setIsLoading: (isLoading: boolean) => void, setLoadingProgress: (progress: number) => void, setLoadingMessage: (message: string) => void) => {
+  // Clear existing caches
+  if ('caches' in window) {
+    try {
+      await caches.delete('optimized-images');
+    } catch (error) {
+      console.error('Error clearing image cache:', error);
+    }
+  }
+  
   Cookies.remove('lastModified');
   localStorage.removeItem('ships');
   localStorage.removeItem('squadrons');
@@ -180,11 +189,19 @@ export const sanitizeImageUrl = (url: string): string => {
   if (!url) return url;
   
   const useBackup = process.env.NEXT_PUBLIC_USE_BACKUP_API === 'true';
+  const useLowRes = Cookies.get('useLowResImages') === 'true';
+  
+  let sanitizedUrl = url;
   
   // If we're using the backup API, replace the URL
   if (useBackup) {
-    return url.replace('api.swarmada.wiki', 'api-backup.swarmada.wiki');
+    sanitizedUrl = url.replace('api.swarmada.wiki', 'api-backup.swarmada.wiki');
   }
   
-  return url;
+  // If low res mode is enabled, modify the URL
+  if (useLowRes && sanitizedUrl.includes('/images/')) {
+    sanitizedUrl = sanitizedUrl.replace('/images/', '/jpeg-images/').replace('.webp', '.jpg');
+  }
+  
+  return sanitizedUrl;
 };
