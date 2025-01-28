@@ -1,7 +1,4 @@
-import Image from 'next/image';
-import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { useTheme } from 'next-themes';
 import { Separator } from "@/components/ui/separator";
 import Cookies from 'js-cookie';
@@ -28,33 +25,36 @@ const customFactions = [
   { name: 'Cylon Alliance', logo: '/icons/cylon.webp', slug: 'cylon', shipImage: '/images/cylon-basestar.webp' },
 ];
 
-const factionColors = {
-  rebel: '#D82B2B',
-  empire: '#197c27',
-  republic: '#880606',
-  separatist: '#161FDA',
-  unsc: '#2B579A',
-  covenant: '#800080',
-  colonial: '#B8860B',
-  cylon: '#CC0000',
-  sandbox: '#4A5568',
-  scum: '#FFD700',
-  'new-republic': '#b35605'
-};
+// const factionColors = {
+//   rebel: '#D82B2B',
+//   empire: '#197c27',
+//   republic: '#880606',
+//   separatist: '#161FDA',
+//   unsc: '#2B579A',
+//   covenant: '#800080',
+//   colonial: '#B8860B',
+//   cylon: '#CC0000',
+//   sandbox: '#4A5568',
+//   scum: '#FFD700',
+//   'new-republic': '#b35605'
+// };
 
-const shouldInvertImage = (logoPath: string) => {
-  if (logoPath === '/icons/sandbox.webp' || logoPath === '/icons/profile.svg' || logoPath === '/icons/new-republic.webp') {
-    return true;
-  }
-  return !logoPath.endsWith('.webp');
-};
+// const shouldInvertImage = (logoPath: string) => {
+//   if (logoPath === '/icons/sandbox.webp' || logoPath === '/icons/profile.svg' || logoPath === '/icons/new-republic.webp') {
+//     return true;
+//   }
+//   return !logoPath.endsWith('.webp');
+// };
 
 export default function FactionSelection({ onHover }: { onHover: (faction: string | null) => void }) {
+  /* eslint-disable no-unused-vars */
   const [hoveredFaction, setHoveredFaction] = useState<string | null>(null);
   const { theme, systemTheme } = useTheme();
+    /* eslint-disable no-unused-vars */
   const [mounted, setMounted] = useState(false);
   const [enableLegends, setEnableLegends] = useState(false);
   const [enableCustomFactions, setEnableCustomFactions] = useState(false);
+    /* eslint-disable no-unused-vars */
   const [showLegendsContent, setShowLegendsContent] = useState(false);
 
   useEffect(() => {
@@ -80,7 +80,7 @@ export default function FactionSelection({ onHover }: { onHover: (faction: strin
     return () => clearInterval(intervalId);
   }, []);
 
-  const currentTheme = theme === 'system' ? systemTheme : theme;
+  // const currentTheme = theme === 'system' ? systemTheme : theme;
 
   const handleHover = (faction: string | null) => {
     setHoveredFaction(faction);
