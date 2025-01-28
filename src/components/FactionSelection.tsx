@@ -14,7 +14,7 @@ const sandboxFaction = { name: 'Sandbox Mode', logo: '/icons/sandbox.webp', slug
 
 const legendsFactions = [
   { name: 'Scum and Villainy', logo: '/icons/scum.svg', slug: 'scum', shipImage: '/images/action-vi-ship.webp' },
-  { name: 'New Republic', logo: '/icons/new-republic.webp', slug: 'new-republic', shipImage: '/images/nebula.webp' },
+  { name: 'New Republic', logo: '/icons/new-republic.svg', slug: 'new-republic', shipImage: '/images/nebula.webp' },
 ];
 
 const customFactions = [

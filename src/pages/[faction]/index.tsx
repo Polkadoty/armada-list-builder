@@ -29,7 +29,7 @@ export const factionLogos = {
   cylon: '/icons/cylon.webp',
   sandbox: '/icons/sandbox.webp',
   scum: '/icons/scum.webp',
-  'new-republic': '/icons/new-republic.webp',
+  'new-republic': '/icons/new-republic.svg',
 };
 
 const factionColors = {
