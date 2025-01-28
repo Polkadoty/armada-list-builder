@@ -29,6 +29,7 @@ export const factionLogos = {
   cylon: '/icons/cylon.webp',
   sandbox: '/icons/sandbox.webp',
   scum: '/icons/scum.webp',
+  'new-republic': '/icons/new-republic.webp',
 };
 
 const factionColors = {
@@ -42,6 +43,7 @@ const factionColors = {
   cylon: '#CC0000',
   sandbox: '#000000',
   scum: '#FFF8E1',
+  'new-republic': '#b35605'
 };
 
 export default function FactionPage() {

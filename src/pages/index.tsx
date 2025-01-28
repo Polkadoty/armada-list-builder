@@ -26,7 +26,8 @@ const factionShips = {
   colonial: '/images/colonial-galactica.webp',
   cylon: '/images/cylon-basestar.webp',
   sandbox: '/images/dreadnaught.webp',
-  scum: '/images/action-vi-ship.webp' 
+  scum: '/images/action-vi-ship.webp',
+  'new-republic': '/images/nebula.webp',
 };
 
 export default function Home() {
@@ -100,6 +101,8 @@ export default function Home() {
           ? "republic"
           : importedFaction === "separatist alliance"
           ? "separatist"
+          : importedFaction === "new republic" || importedFaction === "new-republic"
+          ? "new-republic"
           : importedFaction;
     } else {
       // Try to determine faction from first ship or squadron

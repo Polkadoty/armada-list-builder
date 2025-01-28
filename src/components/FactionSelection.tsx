@@ -5,6 +5,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { useTheme } from 'next-themes';
 import { Separator } from "@/components/ui/separator";
 import Cookies from 'js-cookie';
+import { FactionIcon } from "@/components/FactionIcon";
 
 const baseFactions = [
   { name: 'Rebel Alliance', logo: '/icons/rebel.svg', slug: 'rebel', shipImage: '/images/cr90.webp' },
@@ -17,6 +18,7 @@ const sandboxFaction = { name: 'Sandbox Mode', logo: '/icons/sandbox.webp', slug
 
 const legendsFactions = [
   { name: 'Scum and Villainy', logo: '/icons/scum.svg', slug: 'scum', shipImage: '/images/action-vi-ship.webp' },
+  { name: 'New Republic', logo: '/icons/new-republic.webp', slug: 'new-republic', shipImage: '/images/nebula.webp' },
 ];
 
 const customFactions = [
@@ -37,10 +39,11 @@ const factionColors = {
   cylon: '#CC0000',
   sandbox: '#4A5568',
   scum: '#FFD700',
+  'new-republic': '#b35605'
 };
 
 const shouldInvertImage = (logoPath: string) => {
-  if (logoPath === '/icons/sandbox.webp' || logoPath === '/icons/profile.svg') {
+  if (logoPath === '/icons/sandbox.webp' || logoPath === '/icons/profile.svg' || logoPath === '/icons/new-republic.webp') {
     return true;
   }
   return !logoPath.endsWith('.webp');
@@ -85,24 +88,32 @@ export default function FactionSelection({ onHover }: { onHover: (faction: strin
   };
 
   const availableFactions = enableLegends && enableCustomFactions
-    ? [
-        ...baseFactions,
-        sandboxFaction,
-        ...legendsFactions,
-        ...customFactions,
-      ]
+    ? {
+        base: baseFactions,
+        legends: legendsFactions,
+        sandbox: [sandboxFaction],
+        custom: customFactions
+      }
     : enableLegends
-      ? [
-          ...baseFactions,
-          sandboxFaction,
-          ...legendsFactions,
-        ]
+      ? {
+          base: baseFactions,
+          legends: legendsFactions,
+          sandbox: [sandboxFaction],
+          custom: []
+        }
       : enableCustomFactions
-        ? [
-            ...baseFactions,
-            sandboxFaction,
-          ]
-        : [...baseFactions, sandboxFaction];
+        ? {
+            base: baseFactions,
+            legends: [],
+            sandbox: [sandboxFaction],
+            custom: customFactions
+          }
+        : {
+            base: baseFactions,
+            legends: [],
+            sandbox: [sandboxFaction],
+            custom: []
+          };
 
   return (
     <>
@@ -113,60 +124,40 @@ export default function FactionSelection({ onHover }: { onHover: (faction: strin
           </p>
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-4 justify-items-center">
-        {availableFactions.map((faction, index) => (
+      <div className="flex flex-col gap-8">
+        <div className="grid grid-cols-2 gap-4 justify-items-center">
+          {availableFactions.base.map((faction) => (
+            <FactionIcon key={faction.slug} faction={faction} />
+          ))}
+        </div>
+
+        {enableLegends && availableFactions.legends.length > 0 && (
           <>
-            {(enableCustomFactions) && index === baseFactions.length + 2 && (
-              <>
-                <div className={`col-span-2 w-full px-4 my-2 transition-opacity duration-500 ${showLegendsContent ? 'opacity-100' : 'opacity-0'}`}>
-                  <Separator className="my-4" />
-                </div>
-                <div className={`col-span-2 w-full px-4 mb-4 transition-opacity duration-500 ${showLegendsContent ? 'opacity-100' : 'opacity-0'}`}>
-                  <div className="bg-yellow-100/30 backdrop-blur-md border border-yellow-400 rounded-lg p-4">
-                    <p className="text-yellow-800 dark:text-yellow-200 text-center font-medium">
-                      ⚠️ This content is WIP and is subject to frequent changes.
-                    </p>
-                  </div>
-                </div>
-              </>
-            )}
-            
-            <div className={`${!enableLegends && !enableCustomFactions && faction.slug === 'sandbox' ? 'col-span-2 w-full flex justify-center' : ''}`}>
-              <Tooltip key={faction.slug}>
-                <TooltipTrigger>
-                  <Link href={`/${faction.slug}`}>
-                    <div 
-                      className={`p-4 transition-all duration-500 rounded-lg ${
-                        enableLegends && index >= baseFactions.length + 2
-                          ? `transition-all duration-500 ${showLegendsContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`
-                          : ''
-                      }`}
-                      style={{
-                        transitionDelay: enableLegends && index >= baseFactions.length + 2 ? `${(index - (baseFactions.length + 2)) * 100 + 100}ms` : '0ms'
-                      }}
-                      onMouseEnter={() => handleHover(faction.slug)}
-                      onMouseLeave={() => handleHover(null)}
-                    >
-                      <Image 
-                        src={faction.logo} 
-                        alt={faction.name} 
-                        width={64} 
-                        height={64} 
-                        className={`transition-all duration-200 ${!mounted || currentTheme === 'dark' ? shouldInvertImage(faction.logo) ? 'invert' : '' : ''}`}
-                        style={{
-                          filter: hoveredFaction === faction.slug 
-                            ? `drop-shadow(0 0 1.5rem ${factionColors[faction.slug as keyof typeof factionColors]}) ${!mounted || currentTheme === 'dark' ? shouldInvertImage(faction.logo) ? 'invert(1) hue-rotate(180deg)' : '' : ''}`
-                            : !mounted || currentTheme === 'dark' ? shouldInvertImage(faction.logo) ? 'invert(1)' : 'none' : 'none',
-                        }}
-                      />
-                    </div>
-                  </Link>
-                </TooltipTrigger>
-                <TooltipContent>{faction.name}</TooltipContent>
-              </Tooltip>
+            <Separator />
+            <div className="grid grid-cols-2 gap-4 justify-items-center">
+              {availableFactions.legends.map((faction) => (
+                <FactionIcon key={faction.slug} faction={faction} />
+              ))}
             </div>
           </>
-        ))}
+        )}
+
+        <div className="flex justify-center">
+          {availableFactions.sandbox.map((faction) => (
+            <FactionIcon key={faction.slug} faction={faction} />
+          ))}
+        </div>
+
+        {enableCustomFactions && availableFactions.custom.length > 0 && (
+          <>
+            <Separator />
+            <div className="grid grid-cols-2 gap-4 justify-items-center">
+              {availableFactions.custom.map((faction) => (
+                <FactionIcon key={faction.slug} faction={faction} />
+              ))}
+            </div>
+          </>
+        )}
       </div>
     </>
   );

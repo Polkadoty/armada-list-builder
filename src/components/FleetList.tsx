@@ -155,7 +155,7 @@ export function FleetList() {
 
   const handleFleetSelect = (fleet: Fleet) => {
     // Clear any existing fleet data for all factions
-    const factions = ['rebel', 'empire', 'republic', 'separatist'];
+    const factions = ['rebel', 'empire', 'republic', 'separatist', 'unsc', 'covenant', 'colonial', 'cylon', 'sandbox', 'scum', 'new-republic'];
     factions.forEach(faction => {
       localStorage.removeItem(`savedFleet_${faction}`);
     });

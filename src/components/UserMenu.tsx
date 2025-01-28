@@ -40,8 +40,8 @@ export function UserMenu() {
       <PopoverTrigger asChild>
         <Avatar className="cursor-pointer hover:opacity-80 transition-opacity">
           <AvatarImage src={user?.picture || undefined} alt={user?.name || 'User'} />
-          <AvatarFallback className="bg-background/10 backdrop-blur-sm">
-            <User className="h-5 w-5 text-foreground" />
+          <AvatarFallback className="bg-accent">
+            <User className="h-5 w-5 text-muted-foreground" />
           </AvatarFallback>
         </Avatar>
       </PopoverTrigger>
