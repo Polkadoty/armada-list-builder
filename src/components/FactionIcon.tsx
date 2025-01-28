@@ -23,7 +23,7 @@ export function FactionIcon({ faction, onHover }: FactionIconProps) {
   }, []);
 
   const shouldInvertImage = (logoPath: string) => {
-    if (logoPath === '/icons/sandbox.svg' || logoPath === '/icons/profile.svg') {
+    if (logoPath === '/icons/sandbox.webp' || logoPath === '/icons/profile.svg') {
       return true;
     }
     return !logoPath.endsWith('.webp');
