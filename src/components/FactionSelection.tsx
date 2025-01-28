@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useTheme } from 'next-themes';
 import { Separator } from "@/components/ui/separator";
 import Cookies from 'js-cookie';
 import { FactionIcon } from "@/components/FactionIcon";
