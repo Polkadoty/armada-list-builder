@@ -47,19 +47,8 @@ const customFactions = [
 // };
 
 export default function FactionSelection({ onHover }: { onHover: (faction: string | null) => void }) {
-  /* eslint-disable no-unused-vars */
-  const [hoveredFaction, setHoveredFaction] = useState<string | null>(null);
-  const { theme, systemTheme } = useTheme();
-    /* eslint-disable no-unused-vars */
-  const [mounted, setMounted] = useState(false);
   const [enableLegends, setEnableLegends] = useState(false);
   const [enableCustomFactions, setEnableCustomFactions] = useState(false);
-    /* eslint-disable no-unused-vars */
-  const [showLegendsContent, setShowLegendsContent] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     const checkContentState = () => {
@@ -67,12 +56,6 @@ export default function FactionSelection({ onHover }: { onHover: (faction: strin
       const customFactionsEnabled = Cookies.get('enableCustomFactions') === 'true';
       setEnableLegends(legendsEnabled);
       setEnableCustomFactions(customFactionsEnabled);
-      
-      if (legendsEnabled && customFactionsEnabled) {
-        setTimeout(() => setShowLegendsContent(true), 50);
-      } else {
-        setShowLegendsContent(false);
-      }
     };
 
     checkContentState();
@@ -80,10 +63,7 @@ export default function FactionSelection({ onHover }: { onHover: (faction: strin
     return () => clearInterval(intervalId);
   }, []);
 
-  // const currentTheme = theme === 'system' ? systemTheme : theme;
-
   const handleHover = (faction: string | null) => {
-    setHoveredFaction(faction);
     onHover(faction);
   };
 
