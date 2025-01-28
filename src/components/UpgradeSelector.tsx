@@ -166,7 +166,7 @@ export default function UpgradeSelector({
           .replace(/^(legacy|legends|oldLegacy|arc|amg)-/, '') // Remove source prefix
           .replace(/-errata(-[^-]+)?$/, ''); // Remove both types of errata suffixes
         
-        console.log(`Processing upgrade: ${upgrade.id}, baseName: ${baseName}`);
+        // console.log(`Processing upgrade: ${upgrade.id}, baseName: ${baseName}`);
         
         if (!upgradeGroups.has(baseName)) {
           upgradeGroups.set(baseName, []);
@@ -177,7 +177,7 @@ export default function UpgradeSelector({
       // Filter out non-errata versions when errata exists
       allUpgrades = Array.from(upgradeGroups.values()).map(group => {
         // Log group contents for debugging
-        console.log('Processing group:', group.map(u => u.id));
+        // console.log('Processing group:', group.map(u => u.id));
         
         // First try to find an AMG errata version (simple -errata suffix)
         const amgErrata = group.find(upgrade => upgrade.id.endsWith('-errata'));

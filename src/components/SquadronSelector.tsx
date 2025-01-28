@@ -162,7 +162,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
       // Get errata keys from localStorage
       const errataKeys = JSON.parse(localStorage.getItem('errataKeys') || '{}');
       const squadronErrataKeys = errataKeys.squadrons || [];
-      console.log('Errata Keys for Squadrons:', squadronErrataKeys);
+      // console.log('Errata Keys for Squadrons:', squadronErrataKeys);
 
       let squadronsArray = Array.from(squadronMap.values());
 
@@ -218,6 +218,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
           // Include scum faction if custom content is enabled
           if (contentSources.legends) {
             allowedFactions.push('scum');
+            allowedFactions.push('new-republic');
           }
           
           return allowedFactions.includes(squadron.faction) &&

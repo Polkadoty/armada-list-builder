@@ -173,7 +173,7 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
       // Get errata keys from localStorage
       const errataKeys = JSON.parse(localStorage.getItem('errataKeys') || '{}');
       const shipErrataKeys = errataKeys.ships || [];
-      console.log('Retrieved errata keys:', shipErrataKeys);
+      // console.log('Retrieved errata keys:', shipErrataKeys);
       
       // Create a Map to group ships by their base name
       const shipGroups = new Map<string, ShipModel[]>();
@@ -184,7 +184,7 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
           .replace(/^(legacy|legends|oldLegacy|arc|amg)-/, '') // Remove source prefix
           .replace(/-errata(-[^-]+)?$/, ''); // Remove both types of errata suffixes
         
-        console.log(`Processing ship: ${ship.id}, baseName: ${baseName}`);
+        // console.log(`Processing ship: ${ship.id}, baseName: ${baseName}`);
         
         if (!shipGroups.has(baseName)) {
           shipGroups.set(baseName, []);
@@ -192,7 +192,7 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
         shipGroups.get(baseName)?.push(ship);
       });
 
-      console.log('Grouped ships by base name:', Array.from(shipGroups.entries()));
+      // console.log('Grouped ships by base name:', Array.from(shipGroups.entries()));
 
       // Filter out non-errata versions when errata exists
       allShips = Array.from(shipGroups.values()).map(group => {
