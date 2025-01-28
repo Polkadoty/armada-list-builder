@@ -10,9 +10,10 @@ interface FactionIconProps {
     logo: string;
     slug: string;
   };
+  onHover?: (faction: string | null) => void;
 }
 
-export function FactionIcon({ faction }: FactionIconProps) {
+export function FactionIcon({ faction, onHover }: FactionIconProps) {
   const [mounted, setMounted] = useState(false);
   const { theme, systemTheme } = useTheme();
   const currentTheme = theme === 'system' ? systemTheme : theme;
@@ -32,7 +33,11 @@ export function FactionIcon({ faction }: FactionIconProps) {
     <Tooltip>
       <TooltipTrigger>
         <Link href={`/${faction.slug}`}>
-          <div className="p-4 transition-all duration-200 rounded-lg">
+          <div 
+            className="p-4 transition-all duration-200 rounded-lg"
+            onMouseEnter={() => onHover?.(faction.slug)}
+            onMouseLeave={() => onHover?.(null)}
+          >
             <Image 
               src={faction.logo} 
               alt={faction.name} 

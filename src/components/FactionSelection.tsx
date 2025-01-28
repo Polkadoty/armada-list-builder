@@ -127,7 +127,7 @@ export default function FactionSelection({ onHover }: { onHover: (faction: strin
       <div className="flex flex-col gap-8">
         <div className="grid grid-cols-2 gap-4 justify-items-center">
           {availableFactions.base.map((faction) => (
-            <FactionIcon key={faction.slug} faction={faction} />
+            <FactionIcon key={faction.slug} faction={faction} onHover={handleHover} />
           ))}
         </div>
 
@@ -136,7 +136,7 @@ export default function FactionSelection({ onHover }: { onHover: (faction: strin
             <Separator />
             <div className="grid grid-cols-2 gap-4 justify-items-center">
               {availableFactions.legends.map((faction) => (
-                <FactionIcon key={faction.slug} faction={faction} />
+                <FactionIcon key={faction.slug} faction={faction} onHover={handleHover} />
               ))}
             </div>
           </>
@@ -144,7 +144,7 @@ export default function FactionSelection({ onHover }: { onHover: (faction: strin
 
         <div className="flex justify-center">
           {availableFactions.sandbox.map((faction) => (
-            <FactionIcon key={faction.slug} faction={faction} />
+            <FactionIcon key={faction.slug} faction={faction} onHover={handleHover} />
           ))}
         </div>
 
@@ -153,7 +153,7 @@ export default function FactionSelection({ onHover }: { onHover: (faction: strin
             <Separator />
             <div className="grid grid-cols-2 gap-4 justify-items-center">
               {availableFactions.custom.map((faction) => (
-                <FactionIcon key={faction.slug} faction={faction} />
+                <FactionIcon key={faction.slug} faction={faction} onHover={handleHover} />
               ))}
             </div>
           </>
