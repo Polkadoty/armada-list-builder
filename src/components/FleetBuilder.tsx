@@ -1548,7 +1548,7 @@ export default function FleetBuilder({
     return fetchFromLocalStorage(key, "squadrons") as Squadron | null;
   };
 
-  type FleetFormat = 'kingston' | 'afd' | 'warlords';
+  type FleetFormat = 'kingston' | 'afd' | 'warlords' | 'starforge';
 
 
   const preprocessFleetText = (text: string, format: FleetFormat): string => {

@@ -7,11 +7,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 
-type FleetFormat = 'kingston' | 'afd' | 'warlords';
+type FleetFormat = 'kingston' | 'afd' | 'warlords' | 'starforge';
 
 export function TextImportWindow({ onImport, onClose }: { onImport: (text: string, format: FleetFormat) => void; onClose: () => void }) {
   const [importText, setImportText] = useState("");
-  const [selectedFormat, setSelectedFormat] = useState<FleetFormat>("kingston");
+  const [selectedFormat, setSelectedFormat] = useState<FleetFormat>("starforge");
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
@@ -39,7 +39,8 @@ export function TextImportWindow({ onImport, onClose }: { onImport: (text: strin
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="kingston">Ryan Kingston Format</SelectItem>
+                <SelectItem value="starforge">Star Forge</SelectItem>
+                <SelectItem value="kingston">Ryan Kingston</SelectItem>
                 <SelectItem value="afd">Armada Fleet Designer</SelectItem>
                 <SelectItem value="warlords">Armada Warlords</SelectItem>
               </SelectContent>
