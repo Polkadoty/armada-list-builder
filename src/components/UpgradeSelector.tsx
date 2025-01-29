@@ -229,12 +229,14 @@ export default function UpgradeSelector({
         if (upgradeType === 'title') {
           if (upgrade.bound_shiptype) {
             chassisMatch = upgrade.bound_shiptype === chassis;
-          } else if (upgrade.restrictions?.traits?.includes('star-dreadnought')) {
-            chassisMatch = shipTraits?.includes('star-dreadnought') || false;
-          } else if (upgrade.restrictions?.traits?.includes('MC')) {
-            chassisMatch = shipTraits?.includes('MC') || false;
-          } else {
-            chassisMatch = upgrade.bound_shiptype === '' || upgrade.bound_shiptype === chassis;
+          }
+
+          // If the title has trait restrictions, check if the ship has at least one of the required traits
+          if (chassisMatch && upgrade.restrictions?.traits && upgrade.restrictions.traits.length > 0) {
+            const validTraits = upgrade.restrictions.traits.filter(trait => trait.trim() !== '');
+            if (validTraits.length > 0) {
+              chassisMatch = shipTraits?.some(trait => validTraits.includes(trait)) ?? false;
+            }
           }
         }
 
