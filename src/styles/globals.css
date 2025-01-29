@@ -20,6 +20,21 @@
   }
 }
 
+@media (dynamic-range: high) {
+  :root {
+    --star-brightness: 2.0;
+    --nebula-intensity: 1.8;
+    color-scheme: dark light;
+  }
+}
+
+@media (color-gamut: p3) {
+  :root {
+    --star-brightness: 2.0;
+    --nebula-intensity: 1.8;
+  }
+}
+
 body {
   color: var(--foreground);
   background: var(--background);

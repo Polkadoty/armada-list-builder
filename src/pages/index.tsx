@@ -172,6 +172,8 @@ export default function Home() {
         <meta name="msapplication-TileColor" content="#000000" />
         <meta name="msapplication-config" content="/browserconfig.xml?v=2" />
         <meta name="theme-color" content="#000000" />
+        <meta name="color-scheme" content="dark light" />
+        <meta name="supported-color-schemes" content="srgb p3" />
         <title>Star Forge</title>
       </Head>
       <div className="min-h-screen flex flex-col lg:flex-row relative">

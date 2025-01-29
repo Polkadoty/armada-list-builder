@@ -11,6 +11,27 @@ interface FractalStreak {
   opacity: number;
 }
 
+const supportsHDR = () => {
+  if (typeof window === 'undefined') return false;
+  return window.matchMedia('(dynamic-range: high)').matches;
+};
+
+const getHDRColors = (color: string, intensity = 1) => {
+  if (!supportsHDR()) return color;
+  
+  // Convert regular colors to HDR-compatible values
+  // For HDR, we can go beyond sRGB 1.0 values
+  if (color.startsWith('rgba')) {
+    return color.replace(/rgba\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)/, (_, r, g, b, a) => {
+      const hdrR = Math.min(255, r * 1.5) * intensity;
+      const hdrG = Math.min(255, g * 1.5) * intensity;
+      const hdrB = Math.min(255, b * 1.5) * intensity;
+      return `color(display-p3 ${hdrR/255} ${hdrG/255} ${hdrB/255} ${a})`;
+    });
+  }
+  return color;
+};
+
 const StarryBackground: React.FC<{ show: boolean, lightDisabled?: boolean }> = ({ show, lightDisabled }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const offscreenCanvasRef = useRef<OffscreenCanvas | null>(null);
@@ -283,7 +304,7 @@ const StarryBackground: React.FC<{ show: boolean, lightDisabled?: boolean }> = (
       offscreenCtx.moveTo(star.x, star.y);
       offscreenCtx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
     });
-    offscreenCtx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    offscreenCtx.fillStyle = getHDRColors('rgba(255, 255, 255, 0.9)', 1.4);
     offscreenCtx.fill();
     offscreenCtx.restore();
 
@@ -305,8 +326,8 @@ const StarryBackground: React.FC<{ show: boolean, lightDisabled?: boolean }> = (
         cloud.x, cloud.y, 0,
         cloud.x, cloud.y, cloud.radius
       );
-      gradient.addColorStop(0, `hsla(${currentHue}, 80%, 50%, 0.3)`);
-      gradient.addColorStop(0.5, `hsla(${currentHue}, 80%, 30%, 0.1)`);
+      gradient.addColorStop(0, getHDRColors(`hsla(${currentHue}, 80%, 50%, 0.3)`, 2.0));
+      gradient.addColorStop(0.5, getHDRColors(`hsla(${currentHue}, 80%, 30%, 0.1)`, 1.5));
       gradient.addColorStop(1, 'transparent');
       
       offscreenCtx.fillStyle = gradient;
