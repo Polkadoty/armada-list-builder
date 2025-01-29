@@ -189,7 +189,7 @@ export default function Home() {
               alt="Star Forge"
               width={300}
               height={100}
-              className="invert-0 dark:invert"
+              className="invert-0 dark:invert h-auto"
               priority
             />
           </div>

@@ -418,7 +418,11 @@ export default function UpgradeSelector({
         ...prevSorts,
         [option]: prevSorts[option] === null ? 'asc' : prevSorts[option] === 'asc' ? 'desc' : null
       };
-      Cookies.set(`sortState_upgrades`, JSON.stringify(newSorts), { expires: 365 });
+      Cookies.set(`sortState_upgrades`, JSON.stringify(newSorts), { 
+        expires: 365,
+        sameSite: 'Lax',
+        secure: process.env.NODE_ENV === 'production'
+      });
       return newSorts;
     });
   };

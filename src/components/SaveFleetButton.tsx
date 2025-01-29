@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, forwardRef } from 'react';
 import { useUser } from '@auth0/nextjs-auth0/client';
 import { Button } from "@/components/ui/button";
 import { supabase } from '../lib/supabase';
@@ -14,89 +14,94 @@ interface SaveFleetButtonProps {
     points: number;
 }
 
-export function SaveFleetButton({ fleetData, faction, fleetName, commander, points }: SaveFleetButtonProps) {
-  const { user } = useUser();
-  const [isSaving, setIsSaving] = useState(false);
-  const [showNotification, setShowNotification] = useState(false);
-  const [notificationMessage, setNotificationMessage] = useState("");
+export const SaveFleetButton = forwardRef<HTMLButtonElement, SaveFleetButtonProps>(
+  ({ fleetData, faction, fleetName, commander, points }, ref) => {
+    const { user } = useUser();
+    const [isSaving, setIsSaving] = useState(false);
+    const [showNotification, setShowNotification] = useState(false);
+    const [notificationMessage, setNotificationMessage] = useState("");
 
-  const handleSaveFleet = async () => {
-    if (!user) {
-      setNotificationMessage('Please sign in to save your fleet');
-      setShowNotification(true);
-      return;
-    }
-
-    setIsSaving(true);
-
-    try {
-      const contentTypes = getContentTypes(fleetData);
-      const { data } = await supabase
-        .from('fleets')
-        .select('id')
-        .eq('user_id', user.sub)
-        .eq('fleet_name', fleetName)
-        .single();
-
-      if (data) {
-        // Update existing fleet
-        const { error } = await supabase
-          .from('fleets')
-          .update({ 
-            fleet_data: fleetData, 
-            faction, 
-            commander, 
-            points,
-            legends: contentTypes.legends,
-            legacy: contentTypes.legacy,
-            old_legacy: contentTypes.old_legacy
-          })
-          .eq('id', data.id);
-        if (error) throw error;
-      } else {
-        // Insert new fleet
-        const { error } = await supabase
-          .from('fleets')
-          .insert({ 
-            user_id: user.sub,
-            fleet_name: fleetName,
-            fleet_data: fleetData,
-            faction,
-            commander,
-            points,
-            legends: contentTypes.legends,
-            legacy: contentTypes.legacy,
-            old_legacy: contentTypes.old_legacy
-          });
-        if (error) throw error;
+    const handleSaveFleet = async () => {
+      if (!user) {
+        setNotificationMessage('Please sign in to save your fleet');
+        setShowNotification(true);
+        return;
       }
 
-      setNotificationMessage('Fleet saved successfully!');
-      setShowNotification(true);
-    } catch (error) {
-      console.error('Error saving fleet:', error);
-      setNotificationMessage('Failed to save fleet. Please try again.');
-      setShowNotification(true);
-    } finally {
-      setIsSaving(false);
-    }
-  };
+      setIsSaving(true);
 
-  return (
-    <>
-      <Button 
-        onClick={handleSaveFleet} 
-        disabled={isSaving || !user}
-        variant="outline"
-      >
-        <Save className="h-4 w-4" />
-      </Button>
-      {showNotification && (
-        <NotificationWindow
-          message={notificationMessage}
-          onClose={() => setShowNotification(false)}
-        />
-      )}
-    </>
-  );
-}
+      try {
+        const contentTypes = getContentTypes(fleetData);
+        const { data } = await supabase
+          .from('fleets')
+          .select('id')
+          .eq('user_id', user.sub)
+          .eq('fleet_name', fleetName)
+          .single();
+
+        if (data) {
+          // Update existing fleet
+          const { error } = await supabase
+            .from('fleets')
+            .update({ 
+              fleet_data: fleetData, 
+              faction, 
+              commander, 
+              points,
+              legends: contentTypes.legends,
+              legacy: contentTypes.legacy,
+              old_legacy: contentTypes.old_legacy
+            })
+            .eq('id', data.id);
+          if (error) throw error;
+        } else {
+          // Insert new fleet
+          const { error } = await supabase
+            .from('fleets')
+            .insert({ 
+              user_id: user.sub,
+              fleet_name: fleetName,
+              fleet_data: fleetData,
+              faction,
+              commander,
+              points,
+              legends: contentTypes.legends,
+              legacy: contentTypes.legacy,
+              old_legacy: contentTypes.old_legacy
+            });
+          if (error) throw error;
+        }
+
+        setNotificationMessage('Fleet saved successfully!');
+        setShowNotification(true);
+      } catch (error) {
+        console.error('Error saving fleet:', error);
+        setNotificationMessage('Failed to save fleet. Please try again.');
+        setShowNotification(true);
+      } finally {
+        setIsSaving(false);
+      }
+    };
+
+    return (
+      <>
+        <Button 
+          ref={ref}
+          onClick={handleSaveFleet} 
+          disabled={isSaving || !user}
+          variant="outline"
+        >
+          <Save className="h-4 w-4" />
+        </Button>
+        {showNotification && (
+          <NotificationWindow
+            message={notificationMessage}
+            onClose={() => setShowNotification(false)}
+          />
+        )}
+      </>
+    );
+  }
+);
+
+SaveFleetButton.displayName = 'SaveFleetButton';
