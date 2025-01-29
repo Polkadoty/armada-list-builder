@@ -2904,54 +2904,54 @@ export default function FleetBuilder({
     }
   }, [isExpansionMode, selectedShips.length, selectedSquadrons.length]);
 
-  useEffect(() => {
-    // Initialize unique class names when component mounts or ships/squadrons change
-    const initializeUniqueClasses = () => {
-      // First clear all existing unique class names
-      resetUniqueClassNames();
+  // First, create a memoized initialization function
+  const initializeUniqueClasses = useCallback(() => {
+    // First clear all existing unique class names
+    resetUniqueClassNames();
 
-      // Then add all current unique class names
-      selectedShips.forEach(ship => {
-        if (ship.unique) {
-          addUniqueClassName(ship.name);
+    // Then add all current unique class names
+    selectedShips.forEach(ship => {
+      if (ship.unique) {
+        addUniqueClassName(ship.name);
+      }
+      ship.assignedUpgrades.forEach(upgrade => {
+        if (upgrade.unique) {
+          addUniqueClassName(upgrade.name);
         }
-        ship.assignedUpgrades.forEach(upgrade => {
-          if (upgrade.unique) {
-            addUniqueClassName(upgrade.name);
-          }
-          if (upgrade["unique-class"]) {
-            upgrade["unique-class"]
-              .filter(uc => uc !== "") // Filter out empty strings
-              .forEach(uc => addUniqueClassName(uc));
-          }
-        });
-      });
-      
-      selectedSquadrons.forEach(squadron => {
-        if (squadron.unique) {
-          addUniqueClassName(squadron.name);
-        }
-        if (squadron["unique-class"]) {
-          squadron["unique-class"]
-            .filter(uc => uc !== "")
+        if (upgrade["unique-class"]) {
+          upgrade["unique-class"]
+            .filter(uc => uc !== "") // Filter out empty strings
             .forEach(uc => addUniqueClassName(uc));
         }
       });
-    };
+    });
+    
+    selectedSquadrons.forEach(squadron => {
+      if (squadron.unique) {
+        addUniqueClassName(squadron.name);
+      }
+      if (squadron["unique-class"]) {
+        squadron["unique-class"]
+          .filter(uc => uc !== "")
+          .forEach(uc => addUniqueClassName(uc));
+      }
+    });
+  }, [
+    selectedShips, 
+    selectedSquadrons, 
+    addUniqueClassName, 
+    resetUniqueClassNames
+  ]);
 
+  // Then use it in the effect
+  useEffect(() => {
     initializeUniqueClasses();
 
     // Cleanup function
     return () => {
       resetUniqueClassNames();
     };
-  }, [
-    selectedShips, 
-    selectedSquadrons, 
-    addUniqueClassName, 
-    removeUniqueClassName, 
-    resetUniqueClassNames
-  ]);
+  }, [initializeUniqueClasses, resetUniqueClassNames]);
 
   const generateUniqueSquadronId = (): string => {
     setSquadronIdCounter(prev => prev + 1);
