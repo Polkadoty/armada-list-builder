@@ -13,7 +13,7 @@ const baseFactions = [
 const sandboxFaction = { name: 'Sandbox Mode', logo: '/icons/sandbox.webp', slug: 'sandbox', shipImage: '/images/sandbox.webp' };
 
 const legendsFactions = [
-  { name: 'Scum and Villainy', logo: '/icons/scum.svg', slug: 'scum', shipImage: '/images/action-vi-ship.webp' },
+  { name: 'Scum and Villainy', logo: '/icons/scum.svg', slug: 'scum', shipImage: '/images/action-vi.webp' },
   { name: 'New Republic', logo: '/icons/new-republic.svg', slug: 'new-republic', shipImage: '/images/nebula.webp' },
 ];
 
@@ -24,19 +24,7 @@ const customFactions = [
   { name: 'Cylon Alliance', logo: '/icons/cylon.webp', slug: 'cylon', shipImage: '/images/cylon-basestar.webp' },
 ];
 
-// const factionColors = {
-//   rebel: '#D82B2B',
-//   empire: '#197c27',
-//   republic: '#880606',
-//   separatist: '#161FDA',
-//   unsc: '#2B579A',
-//   covenant: '#800080',
-//   colonial: '#B8860B',
-//   cylon: '#CC0000',
-//   sandbox: '#4A5568',
-//   scum: '#FFD700',
-//   'new-republic': '#b35605'
-// };
+
 
 // const shouldInvertImage = (logoPath: string) => {
 //   if (logoPath === '/icons/sandbox.webp' || logoPath === '/icons/profile.svg' || logoPath === '/icons/new-republic.webp') {

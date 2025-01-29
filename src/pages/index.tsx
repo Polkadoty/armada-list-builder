@@ -26,7 +26,7 @@ const factionShips = {
   colonial: '/images/colonial-galactica.webp',
   cylon: '/images/cylon-basestar.webp',
   sandbox: '/images/dreadnaught.webp',
-  scum: '/images/action-vi-ship.webp',
+  scum: '/images/action-vi.webp',
   'new-republic': '/images/nebula.webp',
 };
 
