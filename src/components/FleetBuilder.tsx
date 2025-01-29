@@ -289,6 +289,9 @@ export default function FleetBuilder({
   const [isExpansionMode, setIsExpansionMode] = useState(false);
   const [showCardBacks, setShowCardBacks] = useState(false);
   const [showDamageDeck, setShowDamageDeck] = useState(false);
+  const [showDeleteShipsConfirmation, setShowDeleteShipsConfirmation] = useState(false);
+  const [showDeleteSquadronsConfirmation, setShowDeleteSquadronsConfirmation] = useState(false);
+
 
   const checkTournamentViolations = useMemo(() => {
     const violations: string[] = [];
@@ -1221,6 +1224,15 @@ export default function FleetBuilder({
 
   const handleRemoveNavigationObjective = () => {
     setSelectedNavigationObjectives([]);
+  };
+
+    // Modify the SectionHeader click handlers
+  const handleClearAllShips = () => {
+    setShowDeleteShipsConfirmation(true);
+  };
+
+  const handleClearAllSquadrons = () => {
+    setShowDeleteSquadronsConfirmation(true);
   };
 
   const clearAllShips = () => {
@@ -3080,7 +3092,7 @@ export default function FleetBuilder({
                 points={totalShipPoints}
                 previousPoints={previousPoints}
                 show={true}
-                onClearAll={clearAllShips}
+                onClearAll={() => setShowDeleteShipsConfirmation(true)}
                 onAdd={handleAddShip}
               />
               <div className="relative">
@@ -3128,7 +3140,7 @@ export default function FleetBuilder({
                 points={totalSquadronPoints}
                 previousPoints={previousSquadronPoints}
                 show={true}
-                onClearAll={clearAllSquadrons}
+                onClearAll={() => setShowDeleteSquadronsConfirmation(true)}
                 onAdd={handleAddSquadron}
               />
               <div className="relative">
@@ -3323,6 +3335,32 @@ export default function FleetBuilder({
         setShowDamageDeck={setShowDamageDeck}
         showCardBacks={showCardBacks}
         setShowCardBacks={setShowCardBacks}
+      />
+    )}
+
+    {showDeleteShipsConfirmation && (
+      <NotificationWindow
+        title="Delete All Ships"
+        message="Are you sure you want to delete all ships?"
+        onClose={() => setShowDeleteShipsConfirmation(false)}
+        showConfirmButton={true}
+        onConfirm={() => {
+          clearAllShips();
+          setShowDeleteShipsConfirmation(false);
+        }}
+      />
+    )}
+
+    {showDeleteSquadronsConfirmation && (
+      <NotificationWindow
+        title="Delete All Squadrons"
+        message="Are you sure you want to delete all squadrons?"
+        onClose={() => setShowDeleteSquadronsConfirmation(false)}
+        showConfirmButton={true}
+        onConfirm={() => {
+          clearAllSquadrons();
+          setShowDeleteSquadronsConfirmation(false);
+        }}
       />
     )}
     </div>
