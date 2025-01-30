@@ -3090,9 +3090,9 @@ export default function FleetBuilder({
               <SectionHeader
                 title="Ships"
                 points={totalShipPoints}
-                previousPoints={previousPoints}
+                previousPoints={previousShipPoints}
                 show={true}
-                onClearAll={() => setShowDeleteShipsConfirmation(true)}
+                onClearAll={handleClearAllShips}
                 onAdd={handleAddShip}
               />
               <div className="relative">
@@ -3140,7 +3140,7 @@ export default function FleetBuilder({
                 points={totalSquadronPoints}
                 previousPoints={previousSquadronPoints}
                 show={true}
-                onClearAll={() => setShowDeleteSquadronsConfirmation(true)}
+                onClearAll={handleClearAllSquadrons}
                 onAdd={handleAddSquadron}
               />
               <div className="relative">
