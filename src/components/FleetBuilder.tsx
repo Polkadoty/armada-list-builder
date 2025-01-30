@@ -1295,12 +1295,6 @@ export default function FleetBuilder({
   };
 
   const generateExportText = useCallback(() => {
-    const allRegularSource = [
-      ...selectedShips,
-      ...selectedShips.flatMap(ship => ship.assignedUpgrades),
-      ...selectedSquadrons
-    ].every(item => !item.source || item.source === 'regular');
-
     let text = " Name: " + fleetName + "\n";
     text += "Faction: " + faction.charAt(0).toUpperCase() + faction.slice(1) + "\n";
 
