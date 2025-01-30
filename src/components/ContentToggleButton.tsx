@@ -16,7 +16,7 @@ const CONFIG = {
   showArcToggle: true,
   showLocalContentToggle: false,
   showProxyToggle: false,
-  showCustomFactionsToggle: true,
+  showCustomFactionsToggle: false,
   showAMGToggle: false
 };
 
@@ -84,6 +84,10 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
     if (CONFIG.showLegendsToggle) {
       setEnableLegends(checked);
       Cookies.set('enableLegends', checked.toString(), { expires: 365 });
+      if (!checked) {
+        setEnableCustomFactions(false);
+        Cookies.set('enableCustomFactions', 'false', { expires: 365 });
+      }
       flushCacheAndReload(() => {}, () => {}, () => {});
     }
   };
@@ -233,10 +237,10 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
                 </div>
               )}
 
-              {CONFIG.showCustomFactionsToggle && (
+              {enableLegends && (
                 <div className="flex items-center justify-between">
                   <label htmlFor="custom-factions-toggle" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                    Enable Custom Factions
+                    Enable Non-SW Factions
                   </label>
                   <Switch
                     id="custom-factions-toggle"
