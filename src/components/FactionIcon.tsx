@@ -27,6 +27,13 @@ const factionColors = {
   'new-republic': '#b35605'
 };
 
+const customFactionIcons = [
+  '/icons/unsc.webp',
+  '/icons/covenant.webp',
+  '/icons/colonial.webp',
+  '/icons/cylon.webp'
+];
+
 export function FactionIcon({ faction, onHover }: FactionIconProps) {
   const [mounted, setMounted] = useState(false);
   const { theme, systemTheme } = useTheme();
@@ -37,9 +44,24 @@ export function FactionIcon({ faction, onHover }: FactionIconProps) {
   }, []);
 
   const shouldInvertImage = (logoPath: string) => {
+    // Special cases that should always be inverted in dark mode
     if (logoPath === '/icons/sandbox.webp' || logoPath === '/icons/profile.svg') {
       return true;
     }
+    
+    // Custom faction webp icons that should be inverted in light mode
+    const customFactionIcons = [
+      '/icons/unsc.webp',
+      '/icons/covenant.webp',
+      '/icons/colonial.webp',
+      '/icons/cylon.webp'
+    ];
+    
+    if (customFactionIcons.includes(logoPath)) {
+      return currentTheme === 'light';
+    }
+    
+    // Default behavior for other icons
     return !logoPath.endsWith('.webp');
   };
 
@@ -63,11 +85,14 @@ export function FactionIcon({ faction, onHover }: FactionIconProps) {
               width={64} 
               height={64} 
               className={`transition-all duration-200 hover:drop-shadow-[0_0_8px_var(--glow-color)] ${
-                !mounted || currentTheme === 'dark' 
-                  ? shouldInvertImage(faction.logo)
+                !mounted ? '' : 
+                customFactionIcons.includes(faction.logo)
+                  ? currentTheme === 'light' 
                     ? 'invert'
                     : ''
-                  : ''
+                  : currentTheme === 'dark' && shouldInvertImage(faction.logo)
+                    ? 'invert'
+                    : ''
               }`}
             />
           </div>
