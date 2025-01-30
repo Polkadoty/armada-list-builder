@@ -44,7 +44,8 @@ export const checkAndFetchData = async (
       !localStorage.getItem("objectives") ||
       !localStorage.getItem("upgrades") ||
       !localStorage.getItem("imageLinks") ||
-      !localStorage.getItem("aliases")
+      !localStorage.getItem("aliases") ||
+      !localStorage.getItem("updates")
 
     if (savedLastModified !== lastModified || isDataMissing) {
       setIsLoading(true);
@@ -77,7 +78,8 @@ const fetchAndSaveData = async (
     { name: 'imageLinks', url: '/image-links/' },
     { name: 'errataKeys', url: '/errata-keys/' },
     { name: 'expansions', url: '/expansions/' },
-    { name: 'releases', url: '/releases/' }
+    { name: 'releases', url: '/releases/' },
+    { name: 'updates', url: '/updates/' }
   ];
 
   if (enableLegacy) {
@@ -157,6 +159,7 @@ export const flushCacheAndReload = async (setIsLoading: (isLoading: boolean) => 
   localStorage.removeItem('errataKeys');
   localStorage.removeItem('expansions');
   localStorage.removeItem('releases');
+  localStorage.removeItem('updates');
 
   // Remove AMG-specific items
   localStorage.removeItem('amgShips');
