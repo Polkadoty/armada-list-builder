@@ -1361,11 +1361,15 @@ export default function FleetBuilder({
         const key =
           squadron.unique || squadron["ace-name"]
             ? (squadron["ace-name"] || squadron.name) + 
-              (squadron["ace-name"] && !allRegularSource ? " - " + squadron.name : "") + 
-              (squadron.source && squadron.source !== "regular" ? sourceSpace + formatSource(squadron.source) : "") + 
+              " - " + squadron.name + 
+              (squadron.source && squadron.source !== "regular" && squadron.source !== "amg" 
+                ? sourceSpace + formatSource(squadron.source) 
+                : "") + 
               " (" + squadron.points + ")"
             : squadron.name + 
-              (squadron.source && squadron.source !== "regular" ? sourceSpace + formatSource(squadron.source) : "") + 
+              (squadron.source && squadron.source !== "regular" && squadron.source !== "amg"
+                ? sourceSpace + formatSource(squadron.source) 
+                : "") + 
               " (" + (squadron.points * (squadron.count || 1)) + ")";
         if (!acc[key]) {
           acc[key] = {
