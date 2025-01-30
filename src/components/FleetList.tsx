@@ -373,6 +373,18 @@ export function FleetList() {
     }
   };
 
+  const handleCopyText = async (fleet: Fleet) => {
+    try {
+      await navigator.clipboard.writeText(fleet.fleet_data);
+      setNotificationMessage('Fleet text copied to clipboard!');
+      setShowNotification(true);
+    } catch (err) {
+      console.error('Failed to copy fleet text:', err);
+      setNotificationMessage('Failed to copy fleet text to clipboard');
+      setShowNotification(true);
+    }
+  };
+
   useEffect(() => {
     if (user) {
       fetchFleets();
@@ -533,6 +545,9 @@ export function FleetList() {
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleCopyLink(fleet)}>
                               Copy Share Link
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleCopyText(fleet)}>
+                              Copy Fleet Text
                             </DropdownMenuItem>
                             <DropdownMenuItem 
                               onClick={() => handleFleetDelete(fleet)}
