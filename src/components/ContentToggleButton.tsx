@@ -16,7 +16,7 @@ const CONFIG = {
   showArcToggle: true,
   showLocalContentToggle: false,
   showProxyToggle: false,
-  showCustomFactionsToggle: false,
+  showCustomFactionsToggle: true,
   showAMGToggle: false
 };
 
@@ -237,7 +237,7 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
                 </div>
               )}
 
-              {enableLegends && (
+              {CONFIG.showCustomFactionsToggle && enableLegends && (
                 <div className="flex items-center justify-between">
                   <label htmlFor="custom-factions-toggle" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                     Enable Non-SW Factions

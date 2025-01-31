@@ -100,7 +100,7 @@ export default function FactionSelection({ onHover }: { onHover: (faction: strin
 
         {enableLegends && availableFactions.legends.length > 0 && (
           <>
-            <Separator />
+            <Separator className="bg-gray-200 dark:bg-gray-700 h-[2px]" />
             <div className="grid grid-cols-2 gap-4 justify-items-center">
               {availableFactions.legends.map((faction) => (
                 <FactionIcon key={faction.slug} faction={faction} onHover={handleHover} />
@@ -117,7 +117,7 @@ export default function FactionSelection({ onHover }: { onHover: (faction: strin
 
         {enableCustomFactions && availableFactions.custom.length > 0 && (
           <>
-            <Separator />
+            <Separator className="bg-gray-200 dark:bg-gray-700 h-[2px]" />
             <div className="grid grid-cols-2 gap-4 justify-items-center">
               {availableFactions.custom.map((faction) => (
                 <FactionIcon key={faction.slug} faction={faction} onHover={handleHover} />
