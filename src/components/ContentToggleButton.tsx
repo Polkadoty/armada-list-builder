@@ -13,7 +13,7 @@ const CONFIG = {
   showLegacyToggle: true,
   showLegendsToggle: true,
   showOldLegacyToggle: true,
-  showArcToggle: true,
+  showArcToggle: false,
   showLocalContentToggle: false,
   showProxyToggle: false,
   showCustomFactionsToggle: true,
