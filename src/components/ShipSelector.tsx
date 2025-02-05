@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { OptimizedImage } from '@/components/OptimizedImage';
@@ -62,13 +62,16 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
   });
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [contentSources, setContentSources] = useState({
+  const [contentSources, setContentSources] = useState(() => ({
     arc: Cookies.get('enableArc') === 'true',
     legacy: Cookies.get('enableLegacy') === 'true',
     legends: Cookies.get('enableLegends') === 'true',
     oldLegacy: Cookies.get('enableOldLegacy') === 'true',
     amg: Cookies.get('enableAMG') === 'true'
-  });
+  }));
+
+  // Use a ref to track the previous state
+  const previousContentSources = useRef(contentSources);
 
   useEffect(() => {
     const checkCookies = () => {
@@ -80,15 +83,16 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
         amg: Cookies.get('enableAMG') === 'true'
       };
 
-      if (JSON.stringify(newContentSources) !== JSON.stringify(contentSources)) {
+      // Only update if there are actual changes
+      if (JSON.stringify(newContentSources) !== JSON.stringify(previousContentSources.current)) {
+        previousContentSources.current = newContentSources;
         setContentSources(newContentSources);
       }
     };
 
-    checkCookies();
-    const interval = setInterval(checkCookies, 1000);
+    const interval = setInterval(checkCookies, 2000); // Check every 2 seconds instead of every second
     return () => clearInterval(interval);
-  }, [contentSources]);
+  }, []); // Empty dependency array since we're using refs
 
   useEffect(() => {
     const fetchShips = () => {
@@ -297,61 +301,68 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
     fetchShips();
   }, [faction, filter.minPoints, filter.maxPoints, contentSources]);
 
-  useEffect(() => {
-    const sortAndFilterShips = () => {
-      let sortedShips = [...allShips];
+  // Add useMemo for filtered and sorted ships
+  const processedShips = useMemo(() => {
+    let sortedShips = [...allShips];
 
-      // Filter ships based on search query
-      if (searchQuery) {
-        sortedShips = sortedShips.filter(ship => {
-          const searchLower = searchQuery.toLowerCase();
-          return ship.searchableText.includes(searchLower);
-        });
+    // Filter ships based on search query
+    if (searchQuery) {
+      sortedShips = sortedShips.filter(ship => {
+        const searchLower = searchQuery.toLowerCase();
+        return ship.searchableText.includes(searchLower);
+      });
+    }
+
+    // Apply sorting
+    sortedShips.sort((a, b) => {
+      // Always keep huge ships at the end
+      if (a.size === 'huge' && b.size !== 'huge') return 1;
+      if (a.size !== 'huge' && b.size === 'huge') return -1;
+
+      // If no active sorts, use default sorting
+      if (Object.values(activeSorts).every(sort => sort === null)) {
+        if (a.unique && !b.unique) return 1;
+        if (!a.unique && b.unique) return -1;
+        return a.name.localeCompare(b.name);
       }
 
-      const sortFunctions: Record<SortOption, (a: ShipModel, b: ShipModel) => number> = {
-        custom: (a, b) => {
-          if (a.source === b.source) return 0;
-          if (a.source !== 'regular' && b.source === 'regular') return -1;
-          if (a.source === 'regular' && b.source !== 'regular') return 1;
-          return 0;
-        },
-        unique: (a, b) => (a.unique === b.unique ? 0 : a.unique ? -1 : 1),
-        points: (a, b) => a.points - b.points,
-        alphabetical: (a, b) => a.name.localeCompare(b.name),
-      };
+      // Apply active sorts in priority order
+      for (const option of ['custom', 'unique', 'points', 'alphabetical'] as SortOption[]) {
+        if (activeSorts[option] !== null) {
+          let result = 0;
+          
+          switch (option) {
+            case 'custom':
+              if (a.source === b.source) result = 0;
+              else if (a.source !== 'regular' && b.source === 'regular') result = -1;
+              else if (a.source === 'regular' && b.source !== 'regular') result = 1;
+              break;
+            case 'unique':
+              result = (a.unique === b.unique ? 0 : a.unique ? -1 : 1);
+              break;
+            case 'points':
+              result = a.points - b.points;
+              break;
+            case 'alphabetical':
+              result = a.name.localeCompare(b.name);
+              break;
+          }
 
-      const sortPriority: SortOption[] = ['custom', 'unique', 'points', 'alphabetical'];
-
-      sortedShips.sort((a, b) => {
-        // Always keep huge ships at the end
-        if (a.size === 'huge' && b.size !== 'huge') return 1;
-        if (a.size !== 'huge' && b.size === 'huge') return -1;
-
-        // If no active sorts, use default sorting (alphabetical with unique at bottom)
-        if (Object.values(activeSorts).every(sort => sort === null)) {
-          if (a.unique && !b.unique) return 1;
-          if (!a.unique && b.unique) return -1;
-          return a.name.localeCompare(b.name);
-        }
-
-        // Apply active sorts
-        for (const option of sortPriority) {
-          if (activeSorts[option] !== null) {
-            const result = sortFunctions[option](a, b);
-            if (result !== 0) {
-              return activeSorts[option] === 'asc' ? result : -result;
-            }
+          if (result !== 0) {
+            return activeSorts[option] === 'asc' ? result : -result;
           }
         }
-        return 0;
-      });
+      }
+      return 0;
+    });
 
-      setDisplayedShips(sortedShips);
-    };
-
-    sortAndFilterShips();
+    return sortedShips;
   }, [allShips, activeSorts, searchQuery]);
+
+  // Update the useEffect to use the memoized value
+  useEffect(() => {
+    setDisplayedShips(processedShips);
+  }, [processedShips]);
 
   const handleSortToggle = (option: SortOption) => {
     setActiveSorts(prevSorts => {

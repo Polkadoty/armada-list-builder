@@ -47,18 +47,14 @@ const StarryBackground: React.FC<{ show: boolean, lightDisabled?: boolean }> = (
       canvasRef.current.width = width;
       canvasRef.current.height = height;
       
-      // Create new offscreen canvas when dimensions change
-      offscreenCanvasRef.current = new OffscreenCanvas(width, height);
+      if (offscreenCanvasRef.current) {
+        offscreenCanvasRef.current.width = width;
+        offscreenCanvasRef.current.height = height;
+      }
       
       setDimensions({ width, height });
     }
   }, []);
-
-  // Throttle resize handler
-  const throttledResize = useMemo(
-    () => throttle(() => updateDimensions(), 100),
-    [updateDimensions]
-  );
 
   const getElementCounts = useCallback((width: number, height: number) => {
     const pixelCount = width * height;
@@ -271,23 +267,28 @@ const StarryBackground: React.FC<{ show: boolean, lightDisabled?: boolean }> = (
     return stars;
   }, [getElementCounts]);
 
-  const stars = useMemo(() => generateStars(dimensions.width, dimensions.height), [dimensions, generateStars]);
-  const nebulaClouds = useMemo(() => generateNebulaClouds(dimensions.width, dimensions.height), [dimensions, generateNebulaClouds]);
-  const centralStars = useMemo(() => generateCentralStars(dimensions.width, dimensions.height), [dimensions, generateCentralStars]);
+  const stars = useMemo(() => generateStars(dimensions.width, dimensions.height), [dimensions.width, dimensions.height]);
+  const nebulaClouds = useMemo(() => generateNebulaClouds(dimensions.width, dimensions.height), [dimensions.width, dimensions.height]);
+  const centralStars = useMemo(() => generateCentralStars(dimensions.width, dimensions.height), [dimensions.width, dimensions.height]);
   const fractalStreaks = useMemo(
     () => generateFractalStreaks(dimensions.width, dimensions.height),
-    [dimensions, generateFractalStreaks]
+    [dimensions.width, dimensions.height]
   );
 
-  const drawBackground = useCallback(() => {
-    if (!show || !offscreenCanvasRef.current || !canvasRef.current) return;
+  const animate = useCallback(() => {
+    if (!show || !canvasRef.current) return;
     
-    const offscreenCtx = offscreenCanvasRef.current.getContext('2d', { alpha: false });
-    const ctx = canvasRef.current.getContext('2d', { alpha: false });
+    // Use offscreen canvas for better performance
+    if (!offscreenCanvasRef.current) {
+      offscreenCanvasRef.current = new OffscreenCanvas(dimensions.width, dimensions.height);
+    }
+
+    const offscreenCtx = offscreenCanvasRef.current.getContext('2d');
+    const ctx = canvasRef.current.getContext('2d');
     
     if (!offscreenCtx || !ctx) return;
 
-    // Clear with black
+    // Clear with black background
     offscreenCtx.fillStyle = 'rgb(0, 0, 0)';
     offscreenCtx.fillRect(0, 0, dimensions.width, dimensions.height);
 
@@ -337,30 +338,34 @@ const StarryBackground: React.FC<{ show: boolean, lightDisabled?: boolean }> = (
       offscreenCtx.restore();
     });
 
-    // Copy from offscreen canvas to main canvas
-    ctx.clearRect(0, 0, dimensions.width, dimensions.height);
-    ctx.drawImage(offscreenCanvasRef.current, 0, 0);
-
-    animationFrameRef.current = requestAnimationFrame(drawBackground);
-  }, [show, dimensions, stars, nebulaClouds, centralStars, fractalStreaks, drawFractalStreak]);
+    // Batch draw operations
+    requestAnimationFrame(() => {
+      if (ctx) {
+        ctx.clearRect(0, 0, dimensions.width, dimensions.height);
+        ctx.drawImage(offscreenCanvasRef.current!, 0, 0);
+      }
+      animationFrameRef.current = requestAnimationFrame(animate);
+    });
+  }, [show, dimensions, stars, centralStars, fractalStreaks, nebulaClouds]);
 
   useEffect(() => {
     updateDimensions();
-    window.addEventListener('resize', throttledResize);
-    return () => window.removeEventListener('resize', throttledResize);
-  }, [updateDimensions, throttledResize]);
+    const handleResize = throttle(updateDimensions, 100);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [updateDimensions]);
 
   useEffect(() => {
     if (!show) return;
     
-    drawBackground();
+    animate();
     
     return () => {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [show, drawBackground]);
+  }, [show, animate]);
 
   useEffect(() => {
     const canvas = canvasRef.current;

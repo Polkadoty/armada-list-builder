@@ -42,6 +42,8 @@ import { SaveFleetButton } from './SaveFleetButton';
 import { useRouter } from 'next/router';
 import { PrintMenu } from "./PrintMenu";
 import { ExpansionSelector } from "./ExpansionSelector";
+import Cookies from 'js-cookie';
+import { debounce } from 'lodash';
 
 // Add to your imports
 const DAMAGE_DECK = [
@@ -291,7 +293,7 @@ export default function FleetBuilder({
   const [showDamageDeck, setShowDamageDeck] = useState(false);
   const [showDeleteShipsConfirmation, setShowDeleteShipsConfirmation] = useState(false);
   const [showDeleteSquadronsConfirmation, setShowDeleteSquadronsConfirmation] = useState(false);
-
+  const [searchTerm, setSearchTerm] = useState("");
 
   const checkTournamentViolations = useMemo(() => {
     const violations: string[] = [];
@@ -1558,11 +1560,10 @@ export default function FleetBuilder({
     return null;
   };
   
-  const fetchFromLocalStorage = (
+  const fetchFromLocalStorage = useCallback((
     key: string,
     type: "ships" | "upgrades" | "squadrons"
-    /* eslint-disable @typescript-eslint/no-explicit-any */
-  ): any | null => {
+  ) => {
     console.log(`Fetching ${type} for key: ${key}`);
     for (let i = 0; i < localStorage.length; i++) {
       const storageKey = localStorage.key(i);
@@ -1614,11 +1615,28 @@ export default function FleetBuilder({
       }
     }
     return null;
-  };
+  }, []);
 
-  const fetchShip = (key: string): ShipModel | null => {
-    return fetchFromLocalStorage(key, "ships") as ShipModel | null;
-  };
+  // Cache the results
+  const cachedResults = useMemo(() => {
+    return {
+      ships: new Map(),
+      upgrades: new Map(),
+      squadrons: new Map()
+    };
+  }, []);
+
+  // Use the cache in your fetch functions
+  const fetchShip = useCallback((key: string): ShipModel | null => {
+    if (cachedResults.ships.has(key)) {
+      return cachedResults.ships.get(key);
+    }
+    const result = fetchFromLocalStorage(key, "ships");
+    if (result) {
+      cachedResults.ships.set(key, result);
+    }
+    return result;
+  }, [fetchFromLocalStorage, cachedResults]);
 
   const fetchUpgrade = (key: string): Upgrade | null => {
     return fetchFromLocalStorage(key, "upgrades") as Upgrade | null;
@@ -3061,6 +3079,49 @@ export default function FleetBuilder({
   }, [setPoints, setTotalShipPoints, setTotalSquadronPoints]); // Add these dependencies
 
 
+
+  // Add debounced search
+  const debouncedSearch = useCallback(
+    debounce((term: string) => {
+      setSearchTerm(term);
+    }, 300),
+    []
+  );
+
+  // Memoize content source checking
+  const contentSourcesEnabled = useMemo(() => {
+    return {
+      arc: Cookies.get('enableArc') === 'true',
+      legacy: Cookies.get('enableLegacy') === 'true',
+      legends: Cookies.get('enableLegends') === 'true',
+      oldLegacy: Cookies.get('enableOldLegacy') === 'true',
+      amg: Cookies.get('enableAMG') === 'true'
+    };
+  }, []); // Empty dependency array as this should only run once on mount
+
+  // Use a ref to track changes
+  const previousContentSources = useRef(contentSourcesEnabled);
+
+  // Check for changes less frequently
+  useEffect(() => {
+    const checkContentSources = () => {
+      const newSources = {
+        arc: Cookies.get('enableArc') === 'true',
+        legacy: Cookies.get('enableLegacy') === 'true',
+        legends: Cookies.get('enableLegends') === 'true',
+        oldLegacy: Cookies.get('enableOldLegacy') === 'true',
+        amg: Cookies.get('enableAMG') === 'true'
+      };
+
+      if (JSON.stringify(newSources) !== JSON.stringify(previousContentSources.current)) {
+        previousContentSources.current = newSources;
+        // Update your content
+      }
+    };
+
+    const interval = setInterval(checkContentSources, 2000); // Check every 2 seconds instead of every second
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div ref={contentRef} className="max-w-[2000px] mx-auto">

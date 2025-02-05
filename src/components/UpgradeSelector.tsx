@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Image from 'next/image';
@@ -251,48 +251,57 @@ export default function UpgradeSelector({
     fetchUpgrades();
   }, [upgradeType, faction, shipType, chassis, shipSize, shipTraits, currentShipUpgrades, disqualifiedUpgrades, disabledUpgrades]);
 
-  useEffect(() => {
-    const sortAndFilterUpgrades = () => {
-      let sortedUpgrades = [...allUpgrades];
+  const processedUpgrades = useMemo(() => {
+    let sortedUpgrades = [...allUpgrades];
 
-      // Filter upgrades based on search query
-      if (searchQuery) {
+    // Filter upgrades based on search query
+    if (searchQuery) {
+      sortedUpgrades = sortedUpgrades.filter(upgrade => {
         const searchLower = searchQuery.toLowerCase();
-        sortedUpgrades = sortedUpgrades.filter(upgrade => {
-          return upgrade.searchableText.includes(searchLower);
-        });
+        return upgrade.searchableText.includes(searchLower);
+      });
+    }
+
+    // Apply sorting
+    sortedUpgrades.sort((a, b) => {
+      // If no active sorts, use default sorting
+      if (Object.values(activeSorts).every(sort => sort === null)) {
+        if (a.unique && !b.unique) return -1;
+        if (!a.unique && b.unique) return 1;
+        return a.name.localeCompare(b.name);
       }
 
-      const sortFunctions: Record<SortOption, (a: Upgrade, b: Upgrade) => number> = {
-        custom: (a, b) => {
-          if (a.id.startsWith('legacy') === b.id.startsWith('legacy')) return 0;
-          if (a.id.startsWith('legacy')) return -1;
-          if (b.id.startsWith('legacy')) return 1;
-          return 0;
-        },
-        unique: (a, b) => (a.unique === b.unique ? 0 : a.unique ? -1 : 1),
-        points: (a, b) => a.points - b.points,
-        alphabetical: (a, b) => a.name.localeCompare(b.name),
-      };
+      // Apply active sorts in priority order
+      for (const option of ['custom', 'unique', 'points', 'alphabetical'] as SortOption[]) {
+        if (activeSorts[option] !== null) {
+          let result = 0;
+          
+          switch (option) {
+            case 'custom':
+              if (a.source === b.source) result = 0;
+              else if (a.source !== 'regular' && b.source === 'regular') result = -1;
+              else if (a.source === 'regular' && b.source !== 'regular') result = 1;
+              break;
+            case 'unique':
+              result = (a.unique === b.unique ? 0 : a.unique ? -1 : 1);
+              break;
+            case 'points':
+              result = a.points - b.points;
+              break;
+            case 'alphabetical':
+              result = a.name.localeCompare(b.name);
+              break;
+          }
 
-      const sortPriority: SortOption[] = ['custom', 'unique', 'points', 'alphabetical'];
-
-      sortedUpgrades.sort((a, b) => {
-        for (const option of sortPriority) {
-          if (activeSorts[option] !== null) {
-            const result = sortFunctions[option](a, b);
-            if (result !== 0) {
-              return activeSorts[option] === 'asc' ? result : -result;
-            }
+          if (result !== 0) {
+            return activeSorts[option] === 'asc' ? result : -result;
           }
         }
-        return 0;
-      });
+      }
+      return 0;
+    });
 
-      setDisplayedUpgrades(sortedUpgrades);
-    };
-
-    sortAndFilterUpgrades();
+    return sortedUpgrades;
   }, [allUpgrades, activeSorts, searchQuery]);
 
   const isUpgradeAvailable = (upgrade: Upgrade) => {
@@ -500,7 +509,7 @@ export default function UpgradeSelector({
             <p>Loading upgrades...</p>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-2">
-              {displayedUpgrades.map((upgrade) => (
+              {processedUpgrades.map((upgrade) => (
                 <div key={upgrade.id} className="w-full aspect-[2.5/3.5]">
                   <Button
                     onClick={() => handleUpgradeClick(upgrade)}

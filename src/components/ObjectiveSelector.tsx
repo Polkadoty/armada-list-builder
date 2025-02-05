@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { OptimizedImage } from './OptimizedImage';
@@ -168,49 +168,50 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose }: Objectiv
     fetchObjectives();
   }, [type, contentSources]);
 
-  // Add new useEffect for sorting and filtering
-  useEffect(() => {
-    const sortAndFilterObjectives = () => {
-      let sortedObjectives = [...objectives];
+  // Add useMemo for filtered and sorted objectives
+  const processedObjectives = useMemo(() => {
+    let sortedObjectives = [...objectives];
 
-      // Filter objectives based on search query
-      if (searchQuery) {
+    // Filter objectives based on search query
+    if (searchQuery) {
+      sortedObjectives = sortedObjectives.filter(objective => {
         const searchLower = searchQuery.toLowerCase();
-        sortedObjectives = sortedObjectives.filter(objective => 
-          objective.name.toLowerCase().includes(searchLower)
-        );
+        return objective.name.toLowerCase().includes(searchLower);
+      });
+    }
+
+    // Apply sorting
+    sortedObjectives.sort((a, b) => {
+      // If no active sorts, use default sorting
+      if (Object.values(activeSorts).every(sort => sort === null)) {
+        return a.name.localeCompare(b.name);
       }
 
-      const sortFunctions: Record<SortOption, (a: ObjectiveModel, b: ObjectiveModel) => number> = {
-        custom: (a, b) => {
-          if (a.source === b.source) return 0;
-          if (a.source !== 'regular' && b.source === 'regular') return -1;
-          if (a.source === 'regular' && b.source !== 'regular') return 1;
-          return 0;
-        },
-        alphabetical: (a, b) => a.name.localeCompare(b.name),
-        points: () => 0,  // No-op for objectives
-        unique: () => 0,  // No-op for objectives
-      };
+      // Apply active sorts in priority order
+      for (const option of ['custom', 'alphabetical'] as SortOption[]) {
+        if (activeSorts[option] !== null) {
+          let result = 0;
+          
+          switch (option) {
+            case 'custom':
+              if (a.source === b.source) result = 0;
+              else if (a.source !== 'regular' && b.source === 'regular') result = -1;
+              else if (a.source === 'regular' && b.source !== 'regular') result = 1;
+              break;
+            case 'alphabetical':
+              result = a.name.localeCompare(b.name);
+              break;
+          }
 
-      const sortPriority: SortOption[] = ['custom', 'alphabetical', 'points', 'unique'];
-
-      sortedObjectives.sort((a, b) => {
-        for (const option of sortPriority) {
-          if (activeSorts[option] !== null) {
-            const result = sortFunctions[option](a, b);
-            if (result !== 0) {
-              return activeSorts[option] === 'asc' ? result : -result;
-            }
+          if (result !== 0) {
+            return activeSorts[option] === 'asc' ? result : -result;
           }
         }
-        return 0;
-      });
+      }
+      return 0;
+    });
 
-      setDisplayedObjectives(sortedObjectives);
-    };
-
-    sortAndFilterObjectives();
+    return sortedObjectives;
   }, [objectives, activeSorts, searchQuery]);
 
   const handleSortToggle = (option: SortOption) => {
@@ -270,7 +271,7 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose }: Objectiv
             <p>Loading objectives...</p>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-2">
-              {displayedObjectives.map((objective) => (
+              {processedObjectives.map((objective) => (
                 <div key={objective.id} className="w-full aspect-[2.5/3.5]">
                   <Button
                     onClick={() => onSelectObjective(objective)}

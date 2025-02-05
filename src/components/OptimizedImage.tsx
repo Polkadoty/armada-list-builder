@@ -1,6 +1,6 @@
 // components/OptimizedImage.tsx
 /* eslint-disable @next/next/no-img-element */
-import { useState, useEffect, useRef, memo } from 'react';
+import { useState, useEffect, useRef, memo, useMemo, useCallback } from 'react';
 import { AlertCircle } from 'lucide-react';
 import { placeholderMap } from '@/generated/placeholderMap';
 import { sanitizeImageUrl } from '@/utils/dataFetcher';
@@ -50,6 +50,14 @@ export const OptimizedImage = memo(({
   onLoad,
   debug = false
 }: OptimizedImageProps) => {
+  // Memoize the processed source URL
+  const processedImageSrc = useMemo(() => sanitizeImageUrl(src), [src]);
+  
+  // Memoize the placeholder URL lookup
+  const placeholderUrl = useMemo(() => placeholderMap[src], [src]);
+  
+  // Use a ref for tracking loading state to prevent unnecessary rerenders
+  const loadingRef = useRef(true);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
@@ -57,9 +65,39 @@ export const OptimizedImage = memo(({
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const sanitizedSrc = sanitizeImageUrl(src);
-  const imageKey = sanitizedSrc.split('/').pop()?.replace(/\.[^/.]+$/, '');
-  const placeholderUrl = imageKey ? placeholderMap[imageKey] : undefined;
+  // Batch visibility updates
+  const handleVisibilityChange = useCallback((isVisible: boolean) => {
+    requestAnimationFrame(() => {
+      setIsVisible(isVisible);
+    });
+  }, []);
+
+  // Optimize intersection observer
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          handleVisibilityChange(entry.isIntersecting);
+        });
+      },
+      { rootMargin: '50px' }
+    );
+
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [handleVisibilityChange]);
+
+  // Batch loading state updates
+  const handleLoad = useCallback(() => {
+    requestAnimationFrame(() => {
+      loadingRef.current = false;
+      setIsLoading(false);
+      onLoad?.();
+    });
+  }, [onLoad]);
 
   // Calculate dynamic rootMargin based on viewport height
   const getRootMargin = () => {
@@ -71,18 +109,18 @@ export const OptimizedImage = memo(({
 
   useEffect(() => {
     if (priority) {
-      cacheImage(sanitizedSrc).then(setImageSrc);
+      cacheImage(processedImageSrc).then(setImageSrc);
       return;
     }
 
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          setIsVisible(entry.isIntersecting);
+          handleVisibilityChange(entry.isIntersecting);
           if (entry.isIntersecting && !shouldLoad) {
             setShouldLoad(true);
             // Only cache and set image source when the image comes into view
-            cacheImage(sanitizedSrc).then(setImageSrc);
+            cacheImage(processedImageSrc).then(setImageSrc);
           }
         });
       },
@@ -99,7 +137,7 @@ export const OptimizedImage = memo(({
     return () => {
       observer.disconnect();
     };
-  }, [priority, shouldLoad, sanitizedSrc]);
+  }, [priority, shouldLoad, processedImageSrc, handleVisibilityChange]);
 
   // Update rootMargin on window resize
   useEffect(() => {
@@ -110,10 +148,10 @@ export const OptimizedImage = memo(({
         const observer = new IntersectionObserver(
           (entries) => {
             entries.forEach((entry) => {
-              setIsVisible(entry.isIntersecting);
+              handleVisibilityChange(entry.isIntersecting);
               if (entry.isIntersecting && !shouldLoad) {
                 setShouldLoad(true);
-                cacheImage(sanitizedSrc).then(setImageSrc);
+                cacheImage(processedImageSrc).then(setImageSrc);
               }
             });
           },
@@ -129,14 +167,12 @@ export const OptimizedImage = memo(({
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [priority, shouldLoad, sanitizedSrc]);
+  }, [priority, shouldLoad, processedImageSrc, handleVisibilityChange]);
 
-  const handleLoad = () => {
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 50);
-    onLoad?.();
-  };
+  // Add loading priority for visible images
+  const shouldPrioritize = useMemo(() => {
+    return isVisible || priority;
+  }, [isVisible, priority]);
 
   return (
     <div ref={containerRef} className="relative w-full h-full overflow-hidden">
@@ -167,14 +203,15 @@ export const OptimizedImage = memo(({
       
       {!hasError && shouldLoad && imageSrc && (
         <img
-          src={imageSrc}
+          src={processedImageSrc}
           alt={alt}
           width={width}
           height={height}
           className={`${className} relative w-full h-full transition-opacity duration-150 ease-in rounded-lg ${
             isLoading || !isVisible ? 'opacity-0' : 'opacity-100'
           }`}
-          loading={priority ? 'eager' : 'lazy'}
+          loading={shouldPrioritize ? "eager" : "lazy"}
+          decoding="async"
           onLoad={handleLoad}
           onError={() => {
             setHasError(true);
@@ -193,6 +230,11 @@ export const OptimizedImage = memo(({
       )}
     </div>
   );
+}, (prevProps, nextProps) => {
+  // Custom memo comparison to prevent unnecessary rerenders
+  return prevProps.src === nextProps.src && 
+         prevProps.className === nextProps.className &&
+         prevProps.priority === nextProps.priority;
 });
 
 OptimizedImage.displayName = 'OptimizedImage';
