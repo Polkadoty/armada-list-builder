@@ -14,10 +14,12 @@ import { useState, useEffect } from 'react';
 import Cookies from 'js-cookie';
 import { Switch } from "@/components/ui/switch";
 import { flushCacheAndReload } from '@/utils/dataFetcher';
+import { NotificationWindow } from "@/components/NotificationWindow";
 
 export function UserMenu() {
   const { user, error } = useUser();
   const [useLowRes, setUseLowRes] = useState(false);
+  const [showSignOutConfirmation, setShowSignOutConfirmation] = useState(false);
 
   useEffect(() => {
     const lowResCookie = Cookies.get('useLowResImages');
@@ -29,6 +31,11 @@ export function UserMenu() {
     Cookies.set('useLowResImages', checked.toString(), { expires: 365 });
     // Flush cache to reload images
     flushCacheAndReload(() => {}, () => {}, () => {});
+  };
+
+  const handleSignOutClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setShowSignOutConfirmation(true);
   };
 
   if (error) {
@@ -81,13 +88,31 @@ export function UserMenu() {
               asChild
               className="w-full justify-start text-sm font-normal h-9"
             >
-              <Link href={user ? "/api/auth/logout" : "/api/auth/login"}>
-                {user ? "Log out" : "Sign in"}
-              </Link>
+              {user ? (
+                <Link href="/api/auth/logout" onClick={handleSignOutClick}>
+                  Log out
+                </Link>
+              ) : (
+                <Link href="/api/auth/login">
+                  Sign in
+                </Link>
+              )}
             </Button>
           </div>
         </div>
       </PopoverContent>
+
+      {showSignOutConfirmation && (
+        <NotificationWindow
+          title="Sign Out"
+          message="Are you sure you want to sign out?"
+          onClose={() => setShowSignOutConfirmation(false)}
+          showConfirmButton={true}
+          onConfirm={() => {
+            window.location.href = "/api/auth/logout";
+          }}
+        />
+      )}
     </Popover>
   );
 }
