@@ -1348,35 +1348,6 @@ export default function FleetBuilder({
     });
   };
 
-  const insertSquadronInOrder = (newSquadron: Squadron, currentSquadrons: Squadron[]) => {
-    if (!newSquadron.unique) {
-      return [...currentSquadrons, newSquadron];
-    }
-
-    // Find where to insert the new unique squadron
-    const uniqueSquadrons = currentSquadrons.filter(s => s.unique);
-    const regularSquadrons = currentSquadrons.filter(s => !s.unique);
-    
-    const insertIndex = uniqueSquadrons.findIndex(s => {
-      const currentName = s['ace-name'] || s.name;
-      const newName = newSquadron['ace-name'] || newSquadron.name;
-      return currentName.localeCompare(newName) > 0;
-    });
-
-    if (insertIndex === -1) {
-      // Add to end of unique squadrons
-      return [...uniqueSquadrons, newSquadron, ...regularSquadrons];
-    }
-
-    // Insert at the correct position
-    return [
-      ...uniqueSquadrons.slice(0, insertIndex),
-      newSquadron,
-      ...uniqueSquadrons.slice(insertIndex),
-      ...regularSquadrons
-    ];
-  };
-
   // Add this helper function to format the objective source
   const formatSource = (source: ContentSource) => {
     switch (source) {
