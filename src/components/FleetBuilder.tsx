@@ -640,6 +640,17 @@ export default function FleetBuilder({
 
     if (upgrade.type === "commander") {
       setHasCommander(true);
+      // Move ship with commander to the front
+      setSelectedShips(prevShips => {
+        const shipIndex = prevShips.findIndex(ship => ship.id === currentShipId);
+        if (shipIndex > 0) {
+          const newShips = [...prevShips];
+          const [shipWithCommander] = newShips.splice(shipIndex, 1);
+          newShips.unshift(shipWithCommander);
+          return newShips;
+        }
+        return prevShips;
+      });
     }
 
     setShowUpgradeSelector(false);
@@ -1076,13 +1087,42 @@ export default function FleetBuilder({
       count: 1,
       source: squadron.source,
     };
-    setSelectedSquadrons((prevSquadrons) => [...prevSquadrons, newSquadron]);
+
+    setSelectedSquadrons((prevSquadrons) => {
+      if (!squadron.unique) {
+        return [...prevSquadrons, newSquadron];
+      }
+
+      // Find where to insert the new unique squadron
+      const uniqueSquadrons = prevSquadrons.filter(s => s.unique);
+      const regularSquadrons = prevSquadrons.filter(s => !s.unique);
+      
+      const insertIndex = uniqueSquadrons.findIndex(s => {
+        const currentName = s['ace-name'] || s.name;
+        const newName = newSquadron['ace-name'] || newSquadron.name;
+        return currentName.localeCompare(newName) > 0;
+      });
+
+      if (insertIndex === -1) {
+        // Add to end of unique squadrons
+        return [...uniqueSquadrons, newSquadron, ...regularSquadrons];
+      }
+
+      // Insert at the correct position
+      return [
+        ...uniqueSquadrons.slice(0, insertIndex),
+        newSquadron,
+        ...uniqueSquadrons.slice(insertIndex),
+        ...regularSquadrons
+      ];
+    });
+
     setPreviousPoints(points);
     setPreviousSquadronPoints(totalSquadronPoints);
     const newPoints = points + squadron.points;
     setPoints(newPoints);
     setTotalSquadronPoints(totalSquadronPoints + squadron.points);
-  
+
     // Add unique class names for the new squadron
     if (squadron.unique) {
       addUniqueClassName(squadron.name);
@@ -1276,6 +1316,65 @@ export default function FleetBuilder({
     setTotalSquadronPoints(0);
     setSelectedSquadrons([]);
     localStorage.removeItem(`savedFleet_${faction}`);
+  };
+
+  const handleMoveShip = (id: string, direction: 'up' | 'down') => {
+    setSelectedShips(prevShips => {
+      const index = prevShips.findIndex(ship => ship.id === id);
+      if (index === -1) return prevShips;
+      
+      const newShips = [...prevShips];
+      if (direction === 'up' && index > 0) {
+        [newShips[index - 1], newShips[index]] = [newShips[index], newShips[index - 1]];
+      } else if (direction === 'down' && index < newShips.length - 1) {
+        [newShips[index], newShips[index + 1]] = [newShips[index + 1], newShips[index]];
+      }
+      return newShips;
+    });
+  };
+
+  const handleMoveSquadron = (id: string, direction: 'up' | 'down') => {
+    setSelectedSquadrons(prevSquadrons => {
+      const index = prevSquadrons.findIndex(squadron => squadron.id === id);
+      if (index === -1) return prevSquadrons;
+      
+      const newSquadrons = [...prevSquadrons];
+      if (direction === 'up' && index > 0) {
+        [newSquadrons[index - 1], newSquadrons[index]] = [newSquadrons[index], newSquadrons[index - 1]];
+      } else if (direction === 'down' && index < newSquadrons.length - 1) {
+        [newSquadrons[index], newSquadrons[index + 1]] = [newSquadrons[index + 1], newSquadrons[index]];
+      }
+      return newSquadrons;
+    });
+  };
+
+  const insertSquadronInOrder = (newSquadron: Squadron, currentSquadrons: Squadron[]) => {
+    if (!newSquadron.unique) {
+      return [...currentSquadrons, newSquadron];
+    }
+
+    // Find where to insert the new unique squadron
+    const uniqueSquadrons = currentSquadrons.filter(s => s.unique);
+    const regularSquadrons = currentSquadrons.filter(s => !s.unique);
+    
+    const insertIndex = uniqueSquadrons.findIndex(s => {
+      const currentName = s['ace-name'] || s.name;
+      const newName = newSquadron['ace-name'] || newSquadron.name;
+      return currentName.localeCompare(newName) > 0;
+    });
+
+    if (insertIndex === -1) {
+      // Add to end of unique squadrons
+      return [...uniqueSquadrons, newSquadron, ...regularSquadrons];
+    }
+
+    // Insert at the correct position
+    return [
+      ...uniqueSquadrons.slice(0, insertIndex),
+      newSquadron,
+      ...uniqueSquadrons.slice(insertIndex),
+      ...regularSquadrons
+    ];
   };
 
   // Add this helper function to format the objective source
@@ -2990,6 +3089,8 @@ export default function FleetBuilder({
     console.log("clearing fleet state");
   }, [setPoints, setTotalShipPoints, setTotalSquadronPoints]); // Add these dependencies
 
+
+
   return (
     <div ref={contentRef} className="max-w-[2000px] mx-auto">
       <div className="flex flex-col sm:flex-row items-start sm:items-center mb-4">
@@ -3108,9 +3209,15 @@ export default function FleetBuilder({
                       filledSlots={filledSlots[ship.id] || {}}
                       hasCommander={hasCommander}
                       traits={ship.traits || []}
+                      onMoveUp={() => handleMoveShip(ship.id, 'up')}
+                      onMoveDown={() => handleMoveShip(ship.id, 'down')}
+                      isFirst={ship.id === selectedShips[0].id}
+                      isLast={ship.id === selectedShips[selectedShips.length - 1].id}
+
                     />
                   ))}
                 </div>
+
               </div>
             </>
           ) : (
@@ -3151,9 +3258,14 @@ export default function FleetBuilder({
                       onIncrement={handleIncrementSquadron}
                       onDecrement={handleDecrementSquadron}
                       onSwapSquadron={handleSwapSquadron}
+                      onMoveUp={() => handleMoveSquadron(squadron.id, 'up')}
+                      onMoveDown={() => handleMoveSquadron(squadron.id, 'down')}
+                      isFirst={squadron.id === selectedSquadrons[0].id}
+                      isLast={squadron.id === selectedSquadrons[selectedSquadrons.length - 1].id}
                     />
                   ))}
                 </div>
+
               </div>
             </>
           ) : (

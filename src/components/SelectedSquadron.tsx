@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { useSpring, animated } from 'react-spring';
 import { Squadron } from './FleetBuilder';
-import { Plus, Minus, ArrowLeftRight, Trash2, Eye, X } from 'lucide-react';
+import { Plus, Minus, ArrowLeftRight, Trash2, Eye, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { OptimizedImage } from './OptimizedImage';
 
@@ -15,9 +15,13 @@ interface SelectedSquadronProps {
   onIncrement: (id: string) => void;
   onDecrement: (id: string) => void;
   onSwapSquadron: (id: string) => void;
+  onMoveUp: (id: string) => void;
+  onMoveDown: (id: string) => void;
+  isFirst: boolean;
+  isLast: boolean;
 }
 
-export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement, onSwapSquadron }: SelectedSquadronProps) {
+export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement, onSwapSquadron, onMoveUp, onMoveDown, isFirst, isLast }: SelectedSquadronProps) {
   const [{ x }, api] = useSpring(() => ({ x: 0 }));
   const isDragging = useRef(false);
   const startX = useRef(0);
@@ -133,7 +137,9 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-1">
-                    <div className="text-sm sm:text-base">{totalPoints} points</div>
+                    <div className="text-sm sm:text-base">
+                      {totalPoints} {!squadron.unique ? 'pts' : 'points'}
+                    </div>
                     {!squadron.unique && (
                       <>
                         <Button variant="ghost" size="sm" onClick={() => onDecrement(squadron.id)} className="text-red-500 p-1">
@@ -146,9 +152,31 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
                       </>
                     )}
                   </div>
-                  <Button variant="ghost" size="sm" onClick={() => onRemove(squadron.id)} className="text-red-500 p-1">
-                    <Trash2 size={16} />
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    <div className="flex flex-row sm:flex-row items-center gap-1 mr-1">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => onMoveUp(squadron.id)} 
+                        className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-1"
+                        disabled={isFirst}
+                      >
+                        <ChevronLeft className="h-4 w-4 rotate-90 sm:rotate-0" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => onMoveDown(squadron.id)} 
+                        className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-1"
+                        disabled={isLast}
+                      >
+                        <ChevronRight className="h-4 w-4 rotate-90 sm:rotate-0" />
+                      </Button>
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={() => onRemove(squadron.id)} className="text-red-500 p-1">
+                      <Trash2 size={16} />
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>

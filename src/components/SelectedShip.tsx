@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useSpring, animated } from 'react-spring';
 import UpgradeIconsToolbar from './UpgradeIconsToolbar';
 import { Ship, Upgrade } from "./FleetBuilder";
-import { Copy, Trash2, ArrowLeftRight, X, Eye } from 'lucide-react';
+import { Copy, Trash2, ArrowLeftRight, X, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 import { OptimizedImage } from './OptimizedImage';
 
 interface SelectedShipProps {
@@ -19,9 +19,13 @@ interface SelectedShipProps {
   filledSlots: Record<string, number[]>;
   hasCommander: boolean;
   traits: string[];
+  onMoveUp: (id: string) => void;
+  onMoveDown: (id: string) => void;
+  isFirst: boolean;
+  isLast: boolean;
 }
 
-export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRemoveUpgrade, disabledUpgrades, enabledUpgrades, filledSlots, hasCommander }: SelectedShipProps) {
+export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRemoveUpgrade, disabledUpgrades, enabledUpgrades, filledSlots, hasCommander, onMoveUp, onMoveDown, isFirst, isLast }: SelectedShipProps) {
   const [isToolbarVisible, setIsToolbarVisible] = useState(true);
   const [{ x }, api] = useSpring(() => ({ x: 0 }));
   
@@ -154,6 +158,26 @@ export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRem
                     <div className="flex items-center justify-between">
                       <span>{totalShipPoints} points</span>
                       <div className="flex items-center gap-1">
+                        <div className="flex flex-row sm:flex-row items-center gap-1 mr-1">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => onMoveUp(ship.id)} 
+                            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-1"
+                            disabled={isFirst}
+                          >
+                            <ChevronLeft className="h-4 w-4 rotate-90 sm:rotate-0" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => onMoveDown(ship.id)} 
+                            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-1"
+                            disabled={isLast}
+                          >
+                            <ChevronRight className="h-4 w-4 rotate-90 sm:rotate-0" />
+                          </Button>
+                        </div>
                         <Button 
                           variant="ghost" 
                           size="sm" 
