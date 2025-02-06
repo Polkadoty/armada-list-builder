@@ -39,7 +39,9 @@ async function generatePlaceholderMap() {
   await Promise.all(
     Object.entries(imageLinks).map(async ([key, value]: [string, any]) => {
       if (value.blurhash) {
-        placeholderMap[key] = await decodeBlurhash(value.blurhash, 32, 32);
+        // Store with just the filename, no extension
+        const imageKey = key.split('/').pop()?.split('.')[0] || key;
+        placeholderMap[imageKey] = await decodeBlurhash(value.blurhash, 32, 32);
       }
     })
   );

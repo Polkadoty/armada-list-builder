@@ -38,6 +38,12 @@ async function cacheImage(src: string): Promise<string> {
   }
 }
 
+// Extract just the filename from the path
+const getImageKey = (src: string) => {
+  // Remove file extension and get just the base filename
+  return src.split('/').pop()?.split('.')[0] || src;
+};
+
 export const OptimizedImage = memo(({ 
   src, 
   alt, 
@@ -54,7 +60,10 @@ export const OptimizedImage = memo(({
   const processedImageSrc = useMemo(() => sanitizeImageUrl(src), [src]);
   
   // Memoize the placeholder URL lookup
-  const placeholderUrl = useMemo(() => placeholderMap[src], [src]);
+  const placeholderUrl = useMemo(() => {
+    const imageKey = getImageKey(src);
+    return placeholderMap[imageKey];
+  }, [src]);
   
   // Use a ref for tracking loading state to prevent unnecessary rerenders
   const loadingRef = useRef(true);
@@ -64,6 +73,9 @@ export const OptimizedImage = memo(({
   const [shouldLoad, setShouldLoad] = useState(priority);
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Add a new state for placeholder visibility
+  const [showPlaceholder, setShowPlaceholder] = useState(true);
 
   // Batch visibility updates
   const handleVisibilityChange = useCallback((isVisible: boolean) => {
@@ -90,11 +102,15 @@ export const OptimizedImage = memo(({
     return () => observer.disconnect();
   }, [handleVisibilityChange]);
 
-  // Batch loading state updates
+  // Modify the handleLoad callback
   const handleLoad = useCallback(() => {
     requestAnimationFrame(() => {
       loadingRef.current = false;
       setIsLoading(false);
+      // Add a small delay before hiding placeholder for smooth transition
+      setTimeout(() => {
+        setShowPlaceholder(false);
+      }, 300);
       onLoad?.();
     });
   }, [onLoad]);
@@ -184,7 +200,9 @@ export const OptimizedImage = memo(({
       
       {placeholderUrl && (
         <div 
-          className="absolute inset-0 w-full h-full"
+          className={`absolute inset-0 w-full h-full transition-opacity duration-100 ${
+            showPlaceholder ? 'opacity-100' : 'opacity-0'
+          }`}
           style={{
             backgroundImage: `url(${placeholderUrl})`,
             backgroundSize: 'cover',
@@ -207,7 +225,7 @@ export const OptimizedImage = memo(({
           alt={alt}
           width={width}
           height={height}
-          className={`${className} relative w-full h-full transition-opacity duration-150 ease-in rounded-lg ${
+          className={`${className} relative w-full h-full transition-opacity duration-100 ease-in rounded-lg ${
             isLoading || !isVisible ? 'opacity-0' : 'opacity-100'
           }`}
           loading={shouldPrioritize ? "eager" : "lazy"}
@@ -216,6 +234,7 @@ export const OptimizedImage = memo(({
           onError={() => {
             setHasError(true);
             setIsLoading(false);
+            setShowPlaceholder(false);
             onError?.();
           }}
           onClick={onClick}

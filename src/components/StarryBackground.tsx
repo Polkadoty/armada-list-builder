@@ -40,20 +40,21 @@ const StarryBackground: React.FC<{ show: boolean, lightDisabled?: boolean }> = (
   const animationFrameRef = useRef<number>();
 
   const updateDimensions = useCallback(() => {
-    if (canvasRef.current) {
-      const width = window.innerWidth;
-      const height = window.innerHeight;
-      
-      canvasRef.current.width = width;
-      canvasRef.current.height = height;
-      
-      if (offscreenCanvasRef.current) {
-        offscreenCanvasRef.current.width = width;
-        offscreenCanvasRef.current.height = height;
-      }
-      
-      setDimensions({ width, height });
+    if (!canvasRef.current) return;
+    
+    const dpr = window.devicePixelRatio || 1;
+    const width = window.innerWidth * dpr;
+    const height = window.innerHeight * dpr;
+    
+    canvasRef.current.width = width;
+    canvasRef.current.height = height;
+    
+    if (offscreenCanvasRef.current) {
+      offscreenCanvasRef.current.width = width;
+      offscreenCanvasRef.current.height = height;
     }
+    
+    setDimensions({ width, height });
   }, []);
 
   const getElementCounts = useCallback((width: number, height: number) => {
@@ -347,14 +348,14 @@ const StarryBackground: React.FC<{ show: boolean, lightDisabled?: boolean }> = (
 
   useEffect(() => {
     updateDimensions();
+    
     const handleResize = throttle(updateDimensions, 100);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [updateDimensions]);
 
   useEffect(() => {
-    if (!show) return;
-    
+    if (!show || dimensions.width === 0) return;
     animate();
     
     return () => {
@@ -362,7 +363,7 @@ const StarryBackground: React.FC<{ show: boolean, lightDisabled?: boolean }> = (
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [show, animate]);
+  }, [show, animate, dimensions.width]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -410,7 +411,13 @@ const StarryBackground: React.FC<{ show: boolean, lightDisabled?: boolean }> = (
         className={`fixed inset-0 z-[-1] transition-opacity duration-300 
           ${show ? 'opacity-100' : 'opacity-0'} 
           ${lightDisabled ? '' : 'hidden dark:block'}`}
-        style={{ width: '100%', height: '100%' }}
+        style={{ 
+          width: '100%', 
+          height: '100%',
+          position: 'fixed',
+          top: 0,
+          left: 0
+        }}
       />
     </>
   );
