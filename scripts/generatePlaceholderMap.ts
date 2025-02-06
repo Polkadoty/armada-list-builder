@@ -16,7 +16,7 @@ async function decodeBlurhash(blurhash: string, width: number, height: number): 
   const pixels = decode(blurhash, width, height);
   
   // Create a raw RGB buffer from the pixels
-  const raw = Buffer.from(pixels);
+  const raw = Buffer.from(new Uint8Array(pixels.buffer));
   
   // Use Sharp to convert the raw buffer to a base64 PNG
   const image = Sharp(raw, {

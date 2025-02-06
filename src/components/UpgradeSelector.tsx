@@ -50,7 +50,6 @@ export default function UpgradeSelector({
   const [loading, setLoading] = useState(true);
   const { uniqueClassNames, addUniqueClassName } = useUniqueClassContext();
   const [allUpgrades, setAllUpgrades] = useState<Upgrade[]>([]);
-  const [displayedUpgrades, setDisplayedUpgrades] = useState<Upgrade[]>([]);
   const [activeSorts, setActiveSorts] = useState<Record<SortOption, 'asc' | 'desc' | null>>(() => {
     const savedSorts = Cookies.get(`sortState_upgrades`);
     if (savedSorts) {
@@ -244,26 +243,24 @@ export default function UpgradeSelector({
       });
 
       setAllUpgrades(filteredUpgrades);
-      setDisplayedUpgrades(filteredUpgrades);
       setLoading(false);
     };
 
     fetchUpgrades();
-  }, [upgradeType, faction, shipType, chassis, shipSize, shipTraits, currentShipUpgrades, disqualifiedUpgrades, disabledUpgrades]);
+  }, [upgradeType, faction, shipType, chassis, shipSize, shipTraits, currentShipUpgrades, disqualifiedUpgrades, disabledUpgrades, contentSources]);
 
   const processedUpgrades = useMemo(() => {
-    let sortedUpgrades = [...allUpgrades];
-
-    // Filter upgrades based on search query
+    let filtered = allUpgrades;
+    
+    // Apply search filter if needed
     if (searchQuery) {
-      sortedUpgrades = sortedUpgrades.filter(upgrade => {
-        const searchLower = searchQuery.toLowerCase();
-        return upgrade.searchableText.includes(searchLower);
-      });
+      filtered = filtered.filter(upgrade => 
+        upgrade.searchableText.includes(searchQuery.toLowerCase())
+      );
     }
 
     // Apply sorting
-    sortedUpgrades.sort((a, b) => {
+    filtered.sort((a, b) => {
       // If no active sorts, use default sorting
       if (Object.values(activeSorts).every(sort => sort === null)) {
         if (a.unique && !b.unique) return -1;
@@ -301,8 +298,8 @@ export default function UpgradeSelector({
       return 0;
     });
 
-    return sortedUpgrades;
-  }, [allUpgrades, activeSorts, searchQuery]);
+    return filtered;
+  }, [allUpgrades, searchQuery, activeSorts]);
 
   const isUpgradeAvailable = (upgrade: Upgrade) => {
 

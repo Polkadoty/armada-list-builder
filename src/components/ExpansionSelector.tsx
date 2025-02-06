@@ -140,12 +140,12 @@ export function ExpansionSelector({
   // Initial load of expansions
   useEffect(() => {
     loadExpansions();
-  }, []);
+  }, [loadExpansions]);
 
   // Initial load of releases
   useEffect(() => {
     loadReleases();
-  }, []);
+  }, [loadReleases]);
 
   const handleSelect = async (expansion: Expansion | Release) => {
     if (expansion.fleet) {

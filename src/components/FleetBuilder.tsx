@@ -43,7 +43,6 @@ import { useRouter } from 'next/router';
 import { PrintMenu } from "./PrintMenu";
 import { ExpansionSelector } from "./ExpansionSelector";
 import Cookies from 'js-cookie';
-import { debounce } from 'lodash';
 
 // Add to your imports
 const DAMAGE_DECK = [
@@ -293,7 +292,6 @@ export default function FleetBuilder({
   const [showDamageDeck, setShowDamageDeck] = useState(false);
   const [showDeleteShipsConfirmation, setShowDeleteShipsConfirmation] = useState(false);
   const [showDeleteSquadronsConfirmation, setShowDeleteSquadronsConfirmation] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
 
   const checkTournamentViolations = useMemo(() => {
     const violations: string[] = [];
@@ -2988,19 +2986,17 @@ export default function FleetBuilder({
 
   useEffect(() => {
     if (isExpansionMode && (selectedShips.length > 0 || selectedSquadrons.length > 0)) {
-      // Set default print settings for sandbox mode
       if (faction === 'sandbox') {
         setShowCardBacks(false);
         setShowDamageDeck(false);
         setShowPrintObjectives(false);
         setShowPrintRestrictions(false);
       }
-      // Add a small delay to ensure the fleet is fully loaded
       setTimeout(() => {
         handlePrintnPlay();
       }, 500);
     }
-  }, [isExpansionMode, selectedShips.length, selectedSquadrons.length]);
+  }, [isExpansionMode, selectedShips.length, selectedSquadrons.length, faction, handlePrintnPlay]);
 
   // First, create a memoized initialization function
   const initializeUniqueClasses = useCallback(() => {
@@ -3077,16 +3073,6 @@ export default function FleetBuilder({
     setUniqueClassNames([]);
     console.log("clearing fleet state");
   }, [setPoints, setTotalShipPoints, setTotalSquadronPoints]); // Add these dependencies
-
-
-
-  // Add debounced search
-  const debouncedSearch = useCallback(
-    debounce((term: string) => {
-      setSearchTerm(term);
-    }, 300),
-    []
-  );
 
   // Memoize content source checking
   const contentSourcesEnabled = useMemo(() => {

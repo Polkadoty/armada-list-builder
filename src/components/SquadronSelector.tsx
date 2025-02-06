@@ -24,7 +24,6 @@ interface SquadronData {
 
 export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, selectedSquadrons }: SquadronSelectorProps) {
   const [allSquadrons, setAllSquadrons] = useState<Squadron[]>([]);
-  const [displayedSquadrons, setDisplayedSquadrons] = useState<Squadron[]>([]);
   const [showPopup, setShowPopup] = useState(false);
   const [popupMessage, setPopupMessage] = useState('');
   const { uniqueClassNames, addUniqueClassName } = useUniqueClassContext();
@@ -240,25 +239,29 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
       });
 
       setAllSquadrons(sortedSquadrons);
-      setDisplayedSquadrons(sortedSquadrons);
     };
 
     fetchSquadrons();
   }, [faction, filter.minPoints, filter.maxPoints, contentSources]);
 
   const processedSquadrons = useMemo(() => {
-    let sortedSquadrons = [...allSquadrons];
-
-    // Filter squadrons based on search query
+    let filtered = allSquadrons;
+    
+    // Apply search filter if needed
     if (searchQuery) {
-      sortedSquadrons = sortedSquadrons.filter(squadron => {
-        const searchLower = searchQuery.toLowerCase();
-        return squadron.searchableText.includes(searchLower);
-      });
+      filtered = filtered.filter(squadron =>
+        squadron.name.toLowerCase().includes(searchQuery.toLowerCase())
+      );
     }
 
+    // Apply points filter
+    filtered = filtered.filter(squadron => 
+      squadron.points >= filter.minPoints && 
+      squadron.points <= filter.maxPoints
+    );
+
     // Apply sorting
-    sortedSquadrons.sort((a, b) => {
+    filtered.sort((a, b) => {
       // If no active sorts, use default sorting
       if (Object.values(activeSorts).every(sort => sort === null)) {
         if (a.unique && !b.unique) return -1;
@@ -296,8 +299,8 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
       return 0;
     });
 
-    return sortedSquadrons;
-  }, [allSquadrons, activeSorts, searchQuery]);
+    return filtered;
+  }, [allSquadrons, searchQuery, filter, activeSorts]);
 
   const handleSortToggle = (option: SortOption) => {
     setActiveSorts(prevSorts => {

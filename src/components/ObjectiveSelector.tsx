@@ -27,7 +27,6 @@ type SortOption = 'alphabetical' | 'points' | 'unique' | 'custom';
 
 export function ObjectiveSelector({ type, onSelectObjective, onClose }: ObjectiveSelectorProps) {
   const [objectives, setObjectives] = useState<ObjectiveModel[]>([]);
-  const [displayedObjectives, setDisplayedObjectives] = useState<ObjectiveModel[]>([]);
   const [loading, setLoading] = useState(true);
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -158,7 +157,6 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose }: Objectiv
         });
 
         setObjectives(Array.from(objectiveMap.values()));
-        setDisplayedObjectives(Array.from(objectiveMap.values()));
         setLoading(false);
       } catch (error) {
         console.error('Error fetching objectives:', error);
@@ -170,18 +168,17 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose }: Objectiv
 
   // Add useMemo for filtered and sorted objectives
   const processedObjectives = useMemo(() => {
-    let sortedObjectives = [...objectives];
-
-    // Filter objectives based on search query
+    let filtered = objectives;
+    
+    // Apply search filter if needed
     if (searchQuery) {
-      sortedObjectives = sortedObjectives.filter(objective => {
-        const searchLower = searchQuery.toLowerCase();
-        return objective.name.toLowerCase().includes(searchLower);
-      });
+      filtered = filtered.filter(objective =>
+        objective.name.toLowerCase().includes(searchQuery.toLowerCase())
+      );
     }
 
     // Apply sorting
-    sortedObjectives.sort((a, b) => {
+    filtered.sort((a, b) => {
       // If no active sorts, use default sorting
       if (Object.values(activeSorts).every(sort => sort === null)) {
         return a.name.localeCompare(b.name);
@@ -211,7 +208,7 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose }: Objectiv
       return 0;
     });
 
-    return sortedObjectives;
+    return filtered;
   }, [objectives, activeSorts, searchQuery]);
 
   const handleSortToggle = (option: SortOption) => {
