@@ -287,8 +287,9 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
 
       // Sort ships: non-unique, unique, then huge
       const sortedShips = filteredShips.sort((a, b) => {
-        if (a.size === 'huge' && b.size !== 'huge') return 1;
-        if (a.size !== 'huge' && b.size === 'huge') return -1;
+        // Put both huge and 280-huge ships at the end
+        if ((a.size === 'huge' || a.size === '280-huge') && (b.size !== 'huge' && b.size !== '280-huge')) return 1;
+        if ((a.size !== 'huge' && a.size !== '280-huge') && (b.size === 'huge' || b.size === '280-huge')) return -1;
         if (a.unique && !b.unique) return 1;
         if (!a.unique && b.unique) return -1;
         return a.name.localeCompare(b.name);
@@ -316,8 +317,8 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
     // Apply sorting
     sortedShips.sort((a, b) => {
       // Always keep huge ships at the end
-      if (a.size === 'huge' && b.size !== 'huge') return 1;
-      if (a.size !== 'huge' && b.size === 'huge') return -1;
+      if ((a.size === 'huge' || a.size === '280-huge') && (b.size !== 'huge' && b.size !== '280-huge')) return 1;
+      if ((a.size !== 'huge' && a.size !== '280-huge') && (b.size === 'huge' || b.size === '280-huge')) return -1;
 
       // If no active sorts, use default sorting
       if (Object.values(activeSorts).every(sort => sort === null)) {
@@ -388,7 +389,7 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
     }
   };
 
-  const isHugeShip = (ship: ShipModel) => ship.size === 'huge';
+  const isHugeShip = (ship: ShipModel) => ship.size === 'huge' || ship.size === '280-huge';
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-md bg-opacity-30 dark:bg-opacity-30">

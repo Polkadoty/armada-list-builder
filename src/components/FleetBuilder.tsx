@@ -207,8 +207,6 @@ const SectionHeader = ({
   </Card>
 );
 
-
-
 export default function FleetBuilder({
   faction,
   fleetName,
@@ -2505,6 +2503,40 @@ export default function FleetBuilder({
     }).join('');
   };
 
+  const isHugeShip = (ship: Ship) => ship.size === 'huge' || ship.size === '280-huge';
+
+  // Add this helper function near the top of the file
+  const chunkShipsForLayout = (ships: Ship[]) => {
+    const chunks: Ship[][] = [];
+    let currentChunk: Ship[] = [];
+
+    ships.forEach(ship => {
+      if (isHugeShip(ship)) {
+        // If we have normal ships pending, add them as a chunk
+        if (currentChunk.length > 0) {
+          chunks.push([...currentChunk]);
+          currentChunk = [];
+        }
+        // Add huge ship as its own chunk
+        chunks.push([ship]);
+      } else {
+        currentChunk.push(ship);
+        // If we have 4 normal ships, create a chunk
+        if (currentChunk.length === 4) {
+          chunks.push([...currentChunk]);
+          currentChunk = [];
+        }
+      }
+    });
+
+    // Add any remaining ships
+    if (currentChunk.length > 0) {
+      chunks.push(currentChunk);
+    }
+
+    return chunks;
+  };
+
   const generatePrintnPlayContent = () => {
     // Calculate number of pages needed for poker cards
     const allCards = [
@@ -2519,7 +2551,9 @@ export default function FleetBuilder({
     const baseTokenSizes = {
       small: { width: '38.75mm', height: '70.45mm' },
       medium: { width: '58.5mm', height: '101.5mm' },
-      large: { width: '73.0mm', height: '128.5mm' }
+      large: { width: '73.0mm', height: '128.5mm' },
+      huge: { width: '73mm', height: '355mm' },
+      '280-huge': { width: '73mm', height: '280mm' }
     };
 
     // Helper function to calculate optimal layout
@@ -2534,8 +2568,11 @@ export default function FleetBuilder({
       const tokenSizes = {
         small: { width: 38.75/25.4, height: 70.45/25.4 },
         medium: { width: 58.5/25.4, height: 101.5/25.4 },
-        large: { width: 73.0/25.4, height: 128.5/25.4 }
+        large: { width: 73.0/25.4, height: 128.5/25.4 },
+        huge: { width: 73/25.4, height: 355/25.4 },
+        '280-huge': { width: 73/25.4, height: 280/25.4 }
       };
+
 
       // Add spacing between tokens (10mm = ~0.394 inches)
       const tokenSpacing = 10/25.4;
@@ -2627,6 +2664,60 @@ export default function FleetBuilder({
                 ">
                   ${row.ships.map(ship => {
                     const baseTokenUrl = ship.cardimage.replace('.webp', '-base.webp');
+                    
+                    // Handle huge and 280-huge ships differently
+                    if (ship.size === 'huge' || ship.size === '280-huge') {
+                      const baseHeight = ship.size === 'huge' ? '355mm' : '280mm';
+                      const halfHeight = Math.floor(parseInt(baseHeight) / 2) + 'mm';
+                      return `
+                        <div style="display: flex; flex-direction: row; gap: 4mm;">
+                          <!-- Top half -->
+                          <div class="base-token" style="
+                            width: 73mm;
+                            height: ${halfHeight};
+                            overflow: hidden;
+                            position: relative;
+                          ">
+                            <img 
+                              src="${baseTokenUrl}" 
+                              alt="${ship.name} Base Token Top" 
+                              style="
+                                position: absolute;
+                                top: 0;
+                                left: 0;
+                                width: 73mm;
+                                height: ${baseHeight};
+                                object-fit: cover;
+                                object-position: top;
+                              "
+                            />
+                          </div>
+                          <!-- Bottom half -->
+                          <div class="base-token" style="
+                            width: 73mm;
+                            height: ${halfHeight};
+                            overflow: hidden;
+                            position: relative;
+                          ">
+                            <img 
+                              src="${baseTokenUrl}" 
+                              alt="${ship.name} Base Token Bottom" 
+                              style="
+                                position: absolute;
+                                bottom: 0;
+                                left: 0;
+                                width: 73mm;
+                                height: ${baseHeight};
+                                object-fit: cover;
+                                object-position: bottom;
+                              "
+                            />
+                          </div>
+                        </div>
+                      `;
+                    }
+                    
+                    // Regular base token rendering for other ships
                     return `
                       <div class="base-token" style="
                         width: ${baseTokenSizes[ship.size as keyof typeof baseTokenSizes]?.width || baseTokenSizes.small.width};
@@ -2747,24 +2838,42 @@ export default function FleetBuilder({
       </head>
       <body>
         ${selectedShips.filter(ship => !ship.name.includes('Dummy')).length > 0 ? `
-          ${chunkArray(selectedShips.filter(ship => !ship.name.includes('Dummy')), 4)
+          ${chunkShipsForLayout(selectedShips.filter(ship => !ship.name.includes('Dummy')))
             .map(shipGroup => `
               <!-- Ship Cards Front -->
               <div class="page">
                 <div class="grid tarot-grid">
-                  ${shipGroup.map(ship => `
-                    <div class="tarot-card">
-                      <div class="card-container">
-                        <img class="card-background" src="${ship.cardimage}" alt="" />
-                        <img class="card-image" src="${ship.cardimage}" alt="${ship.name}" />
+                  ${shipGroup.length === 1 && isHugeShip(shipGroup[0]) 
+                    ? `
+                      <div class="tarot-card" style="
+                        width: 5in;
+                        height: 4in;
+                        grid-column: 1 / span 2;
+                        justify-self: center;
+                      ">
+                        <div class="card-container">
+                          <img class="card-background" src="${shipGroup[0].cardimage}" alt="" />
+                          <img class="card-image" src="${shipGroup[0].cardimage}" alt="${shipGroup[0].name}" />
+                        </div>
                       </div>
-                    </div>
-                  `).join('')}
-                  ${Array.from({ length: 4 - shipGroup.length }).map(() => `
-                    <div class="tarot-card">
-                      <div class="card-container"></div>
-                    </div>
-                  `).join('')}
+                    `
+                    : shipGroup.map(ship => `
+                      <div class="tarot-card" style="width: 2.75in; height: 4.75in;">
+                        <div class="card-container">
+                          <img class="card-background" src="${ship.cardimage}" alt="" />
+                          <img class="card-image" src="${ship.cardimage}" alt="${ship.name}" />
+                        </div>
+                      </div>
+                    `).join('')
+                  }
+                  ${shipGroup.length < 4 && !isHugeShip(shipGroup[0]) 
+                    ? Array.from({ length: 4 - shipGroup.length }).map(() => `
+                      <div class="tarot-card">
+                        <div class="card-container"></div>
+                      </div>
+                    `).join('')
+                    : ''
+                  }
                 </div>
               </div>
               
@@ -2772,31 +2881,48 @@ export default function FleetBuilder({
                 <!-- Ship Cards Back -->
                 <div class="page">
                   <div class="grid tarot-grid">
-                    ${Array.from({ length: 4 }).map((_, index) => {
-                      const row = Math.floor(index / 2);
-                      const col = index % 2;
-                      const reversedCol = 1 - col;
-                      const reversedIndex = (row * 2) + reversedCol;
-                      const reversedShip = reversedIndex < shipGroup.length ? shipGroup[reversedIndex] : null;
-                      
-                      if (!reversedShip) {
-                        return `
-                          <div class="tarot-card">
-                            <div class="card-container"></div>
-                          </div>
-                        `;
-                      }
-                      
-                      return `
-                        <div class="tarot-card" style="transform: scaleX(-1)">
+                    ${shipGroup.length === 1 && isHugeShip(shipGroup[0])
+                      ? `
+                        <div class="tarot-card" style="
+                          transform: scaleX(-1);
+                          width: 5in;
+                          height: 4in;
+                          grid-column: 1 / span 2;
+                          justify-self: center;
+                        ">
                           <div class="card-container">
                             <img class="card-image" 
-                                src="https://api.swarmada.wiki/images/${reversedShip.faction}-ship-rear.webp" 
-                                alt="${reversedShip.name} back" />
+                                src="https://api.swarmada.wiki/images/${shipGroup[0].faction}-ship-huge-rear.webp" 
+                                alt="${shipGroup[0].name} back" />
                           </div>
                         </div>
-                      `;
-                    }).join('')}
+                      `
+                      : Array.from({ length: 4 }).map((_, index) => {
+                        const row = Math.floor(index / 2);
+                        const col = index % 2;
+                        const reversedCol = 1 - col;
+                        const reversedIndex = (row * 2) + reversedCol;
+                        const reversedShip = reversedIndex < shipGroup.length ? shipGroup[reversedIndex] : null;
+                        
+                        if (!reversedShip) {
+                          return `
+                            <div class="tarot-card">
+                              <div class="card-container"></div>
+                            </div>
+                          `;
+                        }
+                        
+                        return `
+                          <div class="tarot-card" style="transform: scaleX(-1)">
+                            <div class="card-container">
+                              <img class="card-image" 
+                                  src="https://api.swarmada.wiki/images/${reversedShip.faction}-ship-rear.webp" 
+                                  alt="${reversedShip.name} back" />
+                            </div>
+                          </div>
+                        `;
+                      }).join('')
+                    }
                   </div>
                 </div>
               ` : ''}
