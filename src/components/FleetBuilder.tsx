@@ -2421,15 +2421,6 @@ export default function FleetBuilder({
     return content;
   };
 
-  // First, create a helper function to chunk the ships into groups of 4
-  const chunkArray = <T,>(array: T[], size: number): T[][] => {
-    const chunks: T[][] = [];
-    for (let i = 0; i < array.length; i += size) {
-      chunks.push(array.slice(i, i + size));
-    }
-    return chunks;
-  };
-
   // Add this before generatePrintnPlayContent
   const generateDamageDeckContent = () => {
     if (!showDamageDeck) return '';
