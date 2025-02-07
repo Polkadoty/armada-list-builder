@@ -87,7 +87,7 @@ export default function FactionSelection({ onHover }: { onHover: (faction: strin
       <div className="mb-6 w-full">
         <div className="bg-blue-100/30 backdrop-blur-md border border-blue-400 rounded-lg p-4">
           <p className="text-blue-800 dark:text-blue-200 text-center font-medium">
-            If you are having issues logging into Facebook, send me a message on discord @polkadoty03 or to my email here so I can help you out!
+            If you are having issues logging into Facebook, send me a message on discord @polkadoty03 or to the github page in the faq so I can help you out!
           </p>
         </div>
       </div>
