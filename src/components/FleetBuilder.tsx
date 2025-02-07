@@ -2549,6 +2549,27 @@ export default function FleetBuilder({
 
     // Helper function to calculate optimal layout
     const calculateOptimalLayout = (ships: Ship[]) => {
+      // Separate huge ships and regular ships
+      const hugeShips = ships.filter(ship => isHugeShip(ship));
+      const regularShips = ships.filter(ship => !isHugeShip(ship));
+
+      // Create individual pages for huge ships
+      const hugePages = hugeShips.map(ship => ({
+        rows: [{
+          ships: [ship],
+          height: baseTokenSizes[ship.size as keyof typeof baseTokenSizes].height
+        }]
+      }));
+
+      // Process regular ships with existing logic
+      const regularPages = processRegularShips(regularShips);
+
+      // Combine huge ship pages with regular ship pages
+      return [...hugePages, ...regularPages];
+    };
+
+    // Helper function to process regular ships using existing logic
+    const processRegularShips = (ships: Ship[]) => {
       const margin = 0.5; // inches
       const pageWidth = paperSize === 'letter' ? 8.5 : 210/25.4; // convert mm to inches for A4
       const pageHeight = paperSize === 'letter' ? 11 : 297/25.4;
