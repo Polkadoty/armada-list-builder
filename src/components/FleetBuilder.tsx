@@ -790,14 +790,19 @@ export default function FleetBuilder({
         setHasCommander(false);
       }
 
-      // Find and remove all flagship upgrades from the ship
-      const flagshipUpgrades = shipToUpdate?.assignedUpgrades.filter(
-        upgrade => upgrade.restrictions?.flagship === true
-      ) || [];
-      
-      flagshipUpgrades.forEach(flagshipUpgrade => {
-        handleRemoveUpgrade(shipId, flagshipUpgrade.type, flagshipUpgrade.slotIndex || 0);
-      });
+      // Find and remove all flagship upgrades from the ship, but only if the current upgrade is not itself a flagship upgrade
+      const currentUpgradeIsFlagship = upgradeToRemove?.restrictions?.flagship === true;
+      if (!currentUpgradeIsFlagship) {
+        const flagshipUpgrades = shipToUpdate?.assignedUpgrades.filter(
+          upgrade => upgrade.restrictions?.flagship === true
+        ) || [];
+        
+        flagshipUpgrades.forEach(flagshipUpgrade => {
+          if (flagshipUpgrade.type !== upgradeType || flagshipUpgrade.slotIndex !== upgradeIndex) {
+            handleRemoveUpgrade(shipId, flagshipUpgrade.type, flagshipUpgrade.slotIndex || 0);
+          }
+        });
+      }
 
       console.log("Before removal:", selectedShips);
       setSelectedShips((prevShips) =>
