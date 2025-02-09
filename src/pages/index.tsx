@@ -196,31 +196,32 @@ export default function Home() {
             />
           </div>
           <FactionSelection onHover={setHoveredFaction} />
-          <div className="mt-8 flex justify-center space-x-4">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20 logo-font"
-              onClick={() => setShowImportWindow(true)}
-            >
-              <Import className="mr-2 h-4 w-4" />
-              IMPORT
-            </Button>
-            <Link href="/faq">
-              <Button variant="outline" size="sm" className="text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20 logo-font">
-                FAQ
+          <div className="mt-8 flex flex-col items-center space-y-4">
+            <div className="flex justify-center space-x-4">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20 logo-font"
+                onClick={() => setShowImportWindow(true)}
+              >
+                <Import className="mr-2 h-4 w-4" />
+                IMPORT
               </Button>
-            </Link>
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20 logo-font"
-              onClick={() => window.open('https://ko-fi.com/polkadoty', '_blank')}
-            >
-              DONATE
-            </Button>
+              <Link href="/faq">
+                <Button variant="outline" size="sm" className="text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20 logo-font">
+                  FAQ
+                </Button>
+              </Link>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20 logo-font"
+                onClick={() => window.open('https://ko-fi.com/polkadoty', '_blank')}
+              >
+                DONATE
+              </Button>
+            </div>
             <WorkshopButton />
-            
           </div>
         </div>
         {isWideScreen && mounted && (
