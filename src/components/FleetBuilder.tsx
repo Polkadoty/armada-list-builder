@@ -3046,9 +3046,9 @@ export default function FleetBuilder({
 
     const checkForRecovery = () => {
       if (!isExpansionMode && !hasLoadedPage) {
-        const savedFleet = localStorage.getItem(`savedFleet_${faction}`);
         const retrievedFromList = document.cookie.includes('retrieved-from-list=true');
         const recovery = localStorage.getItem("fleetRecovery");
+        const savedFleet = localStorage.getItem(`savedFleet_${faction}`);
 
         if (retrievedFromList && savedFleet) {
           handleImportFleet(savedFleet, 'kingston');
@@ -3065,6 +3065,7 @@ export default function FleetBuilder({
             setShowRecoveryPopup(true);
           }
         }
+        setHasLoadedPage(true);
       }
     };
 
