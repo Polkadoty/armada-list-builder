@@ -2202,6 +2202,7 @@ export default function FleetBuilder({
     fetchSquadron,
     clearAllShips,
     clearAllSquadrons,
+    preprocessFleetText,
     faction,
     handleAddUpgrade,
     handleAddingSquadron,
@@ -2236,8 +2237,8 @@ export default function FleetBuilder({
     setShowPrintMenu(false);
   };
 
-  const handlePrintnPlay = () => {
-    const printContent = generatePrintContent();
+  const handlePrintnPlay = useCallback(() => {
+    const printContent = generatePrintnPlayContent();
     const printWindow = window.open('', 'print_window');
     if (printWindow) {
       printWindow.document.write(printContent);
@@ -2247,7 +2248,7 @@ export default function FleetBuilder({
       }, 2500);
     }
     setShowPrintMenu(false);
-  };
+  }, [showPrintMenu]);
 
   const generatePrintContent = () => {
     const factionLogo = factionLogos[faction as keyof typeof factionLogos];
