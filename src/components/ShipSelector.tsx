@@ -302,7 +302,7 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
     fetchShips();
   }, [faction, filter.minPoints, filter.maxPoints, contentSources]);
 
-  // Add useMemo for filtered and sorted ships
+  // Update the useMemo for filtered and sorted ships
   const processedShips = useMemo(() => {
     let sortedShips = [...allShips];
 
@@ -314,13 +314,28 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
       });
     }
 
+    // Define sort functions
+    const sortFunctions: Record<SortOption, (a: ShipModel, b: ShipModel) => number> = {
+      custom: (a, b) => {
+        if (a.source === b.source) return 0;
+        if (a.source !== 'regular' && b.source === 'regular') return -1;
+        if (a.source === 'regular' && b.source !== 'regular') return 1;
+        return 0;
+      },
+      unique: (a, b) => (a.unique === b.unique ? 0 : a.unique ? -1 : 1),
+      points: (a, b) => a.points - b.points,
+      alphabetical: (a, b) => a.name.localeCompare(b.name),
+    };
+
+    const sortPriority: SortOption[] = ['custom', 'unique', 'points', 'alphabetical'];
+
     // Apply sorting
     sortedShips.sort((a, b) => {
       // Always keep huge ships at the end
       if ((a.size === 'huge' || a.size === '280-huge') && (b.size !== 'huge' && b.size !== '280-huge')) return 1;
       if ((a.size !== 'huge' && a.size !== '280-huge') && (b.size === 'huge' || b.size === '280-huge')) return -1;
 
-      // If no active sorts, use default sorting
+      // If no active sorts, use default sorting (non-unique first, then unique)
       if (Object.values(activeSorts).every(sort => sort === null)) {
         if (a.unique && !b.unique) return 1;
         if (!a.unique && b.unique) return -1;
@@ -328,27 +343,9 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
       }
 
       // Apply active sorts in priority order
-      for (const option of ['custom', 'unique', 'points', 'alphabetical'] as SortOption[]) {
+      for (const option of sortPriority) {
         if (activeSorts[option] !== null) {
-          let result = 0;
-          
-          switch (option) {
-            case 'custom':
-              if (a.source === b.source) result = 0;
-              else if (a.source !== 'regular' && b.source === 'regular') result = -1;
-              else if (a.source === 'regular' && b.source !== 'regular') result = 1;
-              break;
-            case 'unique':
-              result = (a.unique === b.unique ? 0 : a.unique ? -1 : 1);
-              break;
-            case 'points':
-              result = a.points - b.points;
-              break;
-            case 'alphabetical':
-              result = a.name.localeCompare(b.name);
-              break;
-          }
-
+          const result = sortFunctions[option](a, b);
           if (result !== 0) {
             return activeSorts[option] === 'asc' ? result : -result;
           }

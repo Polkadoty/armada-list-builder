@@ -260,37 +260,45 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
       squadron.points <= filter.maxPoints
     );
 
+    // Define sort functions
+    const sortFunctions: Record<SortOption, (a: Squadron, b: Squadron) => number> = {
+      custom: (a, b) => {
+        if (a.source === b.source) return 0;
+        if (a.source !== 'regular' && b.source === 'regular') return -1;
+        if (a.source === 'regular' && b.source !== 'regular') return 1;
+        return 0;
+      },
+      unique: (a, b) => (a.unique === b.unique ? 0 : a.unique ? -1 : 1),
+      points: (a, b) => a.points - b.points,
+      alphabetical: (a, b) => {
+        if (a['ace-name'] && b['ace-name']) {
+          return a['ace-name'].localeCompare(b['ace-name']);
+        } else if (a['ace-name']) {
+          return a['ace-name'].localeCompare(b.name);
+        } else if (b['ace-name']) {
+          return a.name.localeCompare(b['ace-name']);
+        } else {
+          return a.name.localeCompare(b.name);
+        }
+      },
+    };
+
+    const sortPriority: SortOption[] = ['custom', 'unique', 'points', 'alphabetical'];
+
     // Apply sorting
     filtered.sort((a, b) => {
-      // If no active sorts, use default sorting
+      // If no active sorts, use default sorting (by squadron_type, then alphabetical)
       if (Object.values(activeSorts).every(sort => sort === null)) {
-        if (a.unique && !b.unique) return -1;
-        if (!a.unique && b.unique) return 1;
+        if (a.squadron_type !== b.squadron_type) {
+          return a.squadron_type.localeCompare(b.squadron_type);
+        }
         return a.name.localeCompare(b.name);
       }
 
       // Apply active sorts in priority order
-      for (const option of ['custom', 'unique', 'points', 'alphabetical'] as SortOption[]) {
+      for (const option of sortPriority) {
         if (activeSorts[option] !== null) {
-          let result = 0;
-          
-          switch (option) {
-            case 'custom':
-              if (a.source === b.source) result = 0;
-              else if (a.source !== 'regular' && b.source === 'regular') result = -1;
-              else if (a.source === 'regular' && b.source !== 'regular') result = 1;
-              break;
-            case 'unique':
-              result = (a.unique === b.unique ? 0 : a.unique ? -1 : 1);
-              break;
-            case 'points':
-              result = a.points - b.points;
-              break;
-            case 'alphabetical':
-              result = a.name.localeCompare(b.name);
-              break;
-          }
-
+          const result = sortFunctions[option](a, b);
           if (result !== 0) {
             return activeSorts[option] === 'asc' ? result : -result;
           }
@@ -300,7 +308,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
     });
 
     return filtered;
-  }, [allSquadrons, searchQuery, filter, activeSorts]);
+  }, [allSquadrons, activeSorts, searchQuery, filter.minPoints, filter.maxPoints]);
 
   const handleSortToggle = (option: SortOption) => {
     setActiveSorts(prevSorts => {

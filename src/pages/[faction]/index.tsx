@@ -81,6 +81,16 @@ export default function FactionPage() {
     setIsEditingName(false);
   };
 
+  const handleLogoClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    // Clear any existing fleet data
+    // localStorage.removeItem(`savedFleet_${faction}`);
+    
+    // Navigate to home page
+    router.push('/');
+  };
+
   return (
     
   <div className="min-h-screen text-gray-900 dark:text-white relative bg-transparent">
@@ -103,7 +113,7 @@ export default function FactionPage() {
         <div className="flex justify-between items-center mb-4">
           <div className="flex items-center">
             {faction && (
-              <Link href="/">
+              <Link href="/" onClick={handleLogoClick}>
                 <Image
                   src={factionLogos[faction as keyof typeof factionLogos]}
                   alt={`${faction} logo`}
