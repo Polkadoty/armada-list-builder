@@ -12,7 +12,6 @@ import { TextImportWindow } from '../components/TextImportWindow';
 import { Import } from 'lucide-react';
 import { useRouter } from 'next/router';
 import { UserAvatar } from '../components/UserAvatar';
-import { NotificationWindow } from "@/components/NotificationWindow";
 import Head from 'next/head';
 import { WorkshopButton } from "@/components/WorkshopButton";
 
@@ -41,7 +40,6 @@ export default function Home() {
   const [showImportWindow, setShowImportWindow] = useState(false);
   const router = useRouter();
   const [showNotification, setShowNotification] = useState(false);
-  const [notificationMessage, setNotificationMessage] = useState("");
 
   useEffect(() => {
     setMounted(true);
@@ -150,12 +148,6 @@ export default function Home() {
           <TextImportWindow
             onImport={handleImportFleet}
             onClose={() => setShowImportWindow(false)}
-          />
-        )}
-        {showNotification && (
-          <NotificationWindow
-            message={notificationMessage}
-            onClose={() => setShowNotification(false)}
           />
         )}
       </div>
