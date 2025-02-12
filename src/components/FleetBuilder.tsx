@@ -2237,18 +2237,7 @@ export default function FleetBuilder({
     setShowPrintMenu(false);
   };
 
-  const handlePrintnPlay = useCallback(() => {
-    const printContent = generatePrintnPlayContent();
-    const printWindow = window.open('', 'print_window');
-    if (printWindow) {
-      printWindow.document.write(printContent);
-      printWindow.document.close();
-      setTimeout(() => {
-        printWindow.print();
-      }, 2500);
-    }
-    setShowPrintMenu(false);
-  }, [showPrintMenu]);
+
 
   const generatePrintContent = () => {
     const factionLogo = factionLogos[faction as keyof typeof factionLogos];
@@ -3016,6 +3005,35 @@ export default function FleetBuilder({
       </html>
     `;
   };
+
+  const handlePrintnPlay = useCallback(() => {
+    const printContent = generatePrintnPlayContent();
+    
+    const printWindow = window.open('', 'print_window');
+    if (printWindow) {
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      setTimeout(() => {
+        printWindow.print();
+      }, 2500);
+    }
+    setShowPrintMenu(false);
+  }, [
+    generatePrintContent,
+    selectedShips,
+    selectedSquadrons,
+    selectedAssaultObjectives,
+    selectedDefenseObjectives,
+    selectedNavigationObjectives,
+    faction,
+    fleetName,
+    points,
+    showPrintRestrictions,
+    showPrintObjectives,
+    showCardBacks,
+    showDamageDeck,
+    paperSize
+  ]);
 
 // ${baseTokensHTML}
 
