@@ -1,7 +1,7 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { Box, Trash2, X } from "lucide-react";
 import { LoadingScreen } from "./LoadingScreen";
 import Cookies from 'js-cookie';

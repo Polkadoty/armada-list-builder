@@ -41,6 +41,7 @@ export default function Home() {
   const [showImportWindow, setShowImportWindow] = useState(false);
   const router = useRouter();
   const [showNotification, setShowNotification] = useState(false);
+  const [notificationMessage, setNotificationMessage] = useState("");
 
   useEffect(() => {
     setMounted(true);
@@ -149,6 +150,12 @@ export default function Home() {
           <TextImportWindow
             onImport={handleImportFleet}
             onClose={() => setShowImportWindow(false)}
+          />
+        )}
+        {showNotification && (
+          <NotificationWindow
+            message={notificationMessage}
+            onClose={() => setShowNotification(false)}
           />
         )}
       </div>
