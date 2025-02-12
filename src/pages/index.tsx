@@ -39,7 +39,6 @@ export default function Home() {
   const [tournamentMode, setTournamentMode] = useState(true);
   const [showImportWindow, setShowImportWindow] = useState(false);
   const router = useRouter();
-  const [showNotification, setShowNotification] = useState(false);
 
   useEffect(() => {
     setMounted(true);
