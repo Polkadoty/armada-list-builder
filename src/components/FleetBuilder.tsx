@@ -1765,8 +1765,8 @@ export default function FleetBuilder({
     const aliases = JSON.parse(localStorage.getItem("aliases") || "{}");
     const processedText = preprocessFleetText(importText, format);
     console.log("Preprocessed fleet text:", processedText);
-
-    const lines = processedText.split("\n");
+    const updatedFleetText = applyUpdates(importText);
+    const lines = updatedFleetText.split("\n");
 
 
     // const lines = importText.split("\n");
@@ -2237,20 +2237,14 @@ export default function FleetBuilder({
   };
 
   const handlePrintnPlay = () => {
-    const printContent = generatePrintnPlayContent();
-    const printWindow = window.open("", "_blank");
+    const printContent = generatePrintContent();
+    const printWindow = window.open('', 'print_window');
     if (printWindow) {
       printWindow.document.write(printContent);
       printWindow.document.close();
-      
-      // Add event listener for load
-      printWindow.onload = () => {
-        setTimeout(() => {
-          printWindow.print();
-          // Close the window after printing (optional)
-          // printWindow.close();
-        }, 2000);
-      };
+      setTimeout(() => {
+        printWindow.print();
+      }, 2500);
     }
     setShowPrintMenu(false);
   };
@@ -3051,7 +3045,8 @@ export default function FleetBuilder({
         const savedFleet = localStorage.getItem(`savedFleet_${faction}`);
 
         if (retrievedFromList && savedFleet) {
-          handleImportFleet(savedFleet, 'kingston');
+          const updatedFleet = applyUpdates(savedFleet);
+          handleImportFleet(updatedFleet, 'kingston');
           document.cookie = "retrieved-from-list=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
         } else if (recovery && !retrievedFromList) {
           const data = JSON.parse(recovery);
@@ -3135,6 +3130,11 @@ export default function FleetBuilder({
         setShowDamageDeck(false);
         setShowPrintObjectives(false);
         setShowPrintRestrictions(false);
+      }
+      // Add a check to prevent multiple windows
+      const existingPrintWindow = window.open('', 'print_window');
+      if (existingPrintWindow && !existingPrintWindow.closed) {
+        existingPrintWindow.close();
       }
       setTimeout(() => {
         handlePrintnPlay();
@@ -3251,6 +3251,38 @@ export default function FleetBuilder({
 
     const interval = setInterval(checkContentSources, 2000); // Check every 2 seconds instead of every second
     return () => clearInterval(interval);
+  }, []);
+
+  const applyUpdates = (fleetData: string): string => {
+    try {
+      // Get updates from localStorage
+      const updates = JSON.parse(localStorage.getItem('updates') || '{}');
+      
+      // Replace each occurrence of outdated names
+      Object.entries(updates).forEach(([oldName, newName]) => {
+        if (typeof newName === 'string') {
+          // Create regex that matches the old name without the colon
+          const oldNameWithoutColon = oldName.replace(/:\s*$/, '');
+          fleetData = fleetData.replace(new RegExp(oldNameWithoutColon, 'g'), newName);
+        }
+      });
+
+      return fleetData;
+    } catch (error) {
+      console.error('Error applying updates:', error);
+      return fleetData;
+    }
+  };
+
+  // Add this near the other useEffect blocks
+  useEffect(() => {
+    const pendingImport = localStorage.getItem('pendingImport');
+    if (pendingImport) {
+      // Clear the pending import first to prevent loops
+      localStorage.removeItem('pendingImport');
+      // Open import window with the text
+      setShowImportWindow(true);
+    }
   }, []);
 
   return (

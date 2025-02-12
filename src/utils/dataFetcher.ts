@@ -79,7 +79,7 @@ const fetchAndSaveData = async (
     { name: 'errataKeys', url: '/errata-keys/' },
     { name: 'expansions', url: '/expansions/' },
     { name: 'releases', url: '/releases/' },
-    // { name: 'updates', url: '/updates/' }
+    { name: 'updates', url: '/updates/' },
   ];
 
   if (enableLegacy) {
