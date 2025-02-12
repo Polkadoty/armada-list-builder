@@ -3150,16 +3150,19 @@ export default function FleetBuilder({
         setShowPrintObjectives(false);
         setShowPrintRestrictions(false);
       }
-      // Add a check to prevent multiple windows
-      const existingPrintWindow = window.open('', 'print_window');
-      if (existingPrintWindow && !existingPrintWindow.closed) {
-        existingPrintWindow.close();
-      }
-      setTimeout(() => {
-        handlePrintnPlay();
-      }, 500);
+      // Show print menu instead of directly printing
+      setShowPrintMenu(true);
     }
-  }, [isExpansionMode, selectedShips.length, selectedSquadrons.length, faction, handlePrintnPlay]);
+  }, [
+    isExpansionMode, 
+    selectedShips.length, 
+    selectedSquadrons.length, 
+    faction,
+    setShowCardBacks,
+    setShowDamageDeck,
+    setShowPrintObjectives,
+    setShowPrintRestrictions
+  ]);
 
   // First, create a memoized initialization function
   const initializeUniqueClasses = useCallback(() => {
