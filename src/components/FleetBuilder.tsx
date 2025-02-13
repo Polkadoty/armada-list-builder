@@ -586,15 +586,28 @@ export default function FleetBuilder({
             const enabledTypes = upgrade.restrictions.enable_upgrades
               .filter(enabledUpgrade => enabledUpgrade.trim() !== "");
             
+            console.log('Before adding enabled upgrades:', {
+              shipAvailableUpgrades: ship.availableUpgrades,
+              enabledUpgrades: newEnabledUpgrades,
+              enabledTypes
+            });
+            
             enabledTypes.forEach(enabledType => {
               // Only add if it's not already in availableUpgrades
               if (!ship.availableUpgrades.includes(enabledType)) {
+                console.log('Adding to availableUpgrades:', enabledType);
                 updatedAvailableUpgrades.push(enabledType);
               }
               // Only add to enabledUpgrades if it's not already there
               if (!newEnabledUpgrades.includes(enabledType)) {
+                console.log('Adding to enabledUpgrades:', enabledType);
                 newEnabledUpgrades.push(enabledType);
               }
+            });
+
+            console.log('After adding enabled upgrades:', {
+              updatedAvailableUpgrades,
+              newEnabledUpgrades
             });
           }
           setEnabledUpgrades({
@@ -766,15 +779,28 @@ export default function FleetBuilder({
             const enabledTypes = upgrade.restrictions.enable_upgrades
               .filter(enabledUpgrade => enabledUpgrade.trim() !== "");
             
+            console.log('handleAddUpgrade - Before adding enabled upgrades:', {
+              shipAvailableUpgrades: ship.availableUpgrades,
+              enabledUpgrades: newEnabledUpgrades,
+              enabledTypes
+            });
+            
             enabledTypes.forEach(enabledType => {
               // Only add if it's not already in availableUpgrades
               if (!ship.availableUpgrades.includes(enabledType)) {
+                console.log('handleAddUpgrade - Adding to availableUpgrades:', enabledType);
                 updatedAvailableUpgrades.push(enabledType);
               }
               // Only add to enabledUpgrades if it's not already there
               if (!newEnabledUpgrades.includes(enabledType)) {
+                console.log('handleAddUpgrade - Adding to enabledUpgrades:', enabledType);
                 newEnabledUpgrades.push(enabledType);
               }
+            });
+
+            console.log('handleAddUpgrade - After adding enabled upgrades:', {
+              updatedAvailableUpgrades,
+              newEnabledUpgrades
             });
           }
           setEnabledUpgrades({
