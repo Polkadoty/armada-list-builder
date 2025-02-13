@@ -85,9 +85,6 @@ export interface Ship {
   source: ContentSource;
   searchableText: string;
   release?: string;
-  disabledUpgrades: string[];
-  enabledUpgrades: string[];
-  filledSlots: Record<string, number[]>;
 }
 
 export interface Squadron {
@@ -169,9 +166,6 @@ export interface Ship extends ShipModel {
   availableUpgrades: string[];
   assignedUpgrades: Upgrade[];
   searchableText: string;
-  disabledUpgrades: string[];
-  enabledUpgrades: string[];
-  filledSlots: Record<string, number[]>;
 }
 
 export type ContentSource = "regular" | "legacy" | "legends" | "oldLegacy" | "arc" | "community" | "amg";
@@ -381,49 +375,22 @@ export default function FleetBuilder({
     };
   }, [tournamentMode, checkTournamentViolations, selectedShips, selectedSquadrons, removeUniqueClassName]);
 
-  function generateUniqueShipId(): string {
-    const timestamp = Date.now();
-    const random = Math.floor(Math.random() * 1000000);
-    return `ship_${timestamp}_${random}`;
-  }
-
-  function initializeShipUpgradeState(shipModel: ShipModel): Ship {
-    return {
-      ...shipModel,
-      id: generateUniqueShipId(),
-      availableUpgrades: shipModel.upgrades ? [...shipModel.upgrades] : [],
-      assignedUpgrades: [],
-      searchableText: shipModel.searchableText || "",
-      disabledUpgrades: [],
-      enabledUpgrades: [],
-      filledSlots: {},
-      size: shipModel.size || "small",
-      traits: shipModel.traits || [],
-      source: shipModel.source || "regular",
-    };
-  }
-
   const handleAddShip = () => {
     setShowShipSelector(true);
   };
 
   const handleSelectShip = (ship: ShipModel) => {
-    const newShip = initializeShipUpgradeState(ship);
-    
+    const newShip: Ship = {
+      ...ship,
+      id: Date.now().toString(),
+      availableUpgrades: ship.upgrades || [],
+      assignedUpgrades: [],
+      chassis: ship.chassis,
+      size: ship.size || "",
+      traits: ship.traits || [],
+      source: ship.source || "regular",
+    };
     setSelectedShips([...selectedShips, newShip]);
-    setDisabledUpgrades(prev => ({
-      ...prev,
-      [newShip.id]: []
-    }));
-    setEnabledUpgrades(prev => ({
-      ...prev,
-      [newShip.id]: []
-    }));
-    setFilledSlots(prev => ({
-      ...prev,
-      [newShip.id]: {}
-    }));
-
     setPreviousPoints(points);
     setPreviousShipPoints(totalShipPoints);
     const newPoints = points + ship.points;
@@ -516,30 +483,37 @@ export default function FleetBuilder({
 
           let pointDifference = upgrade.points;
 
-          // If an upgrade already exists in this slot, remove it and its enabled slots
+          // Remove old upgrade if it exists
           if (existingUpgradeIndex !== -1) {
             const oldUpgrade = updatedAssignedUpgrades[existingUpgradeIndex];
 
+            // Remove enabled upgrades and slots
             if (oldUpgrade.restrictions?.enable_upgrades) {
               oldUpgrade.restrictions.enable_upgrades.forEach((enabledType) => {
                 const enabledUpgradeIndices = updatedAssignedUpgrades
                   .map((u, index) => (u.type === enabledType ? index : -1))
                   .filter((index) => index !== -1);
+
                 if (enabledUpgradeIndices.length > 0) {
-                  const lastEnabledUpgradeIndex = Math.max(...enabledUpgradeIndices);
-                  const enabledUpgrade = updatedAssignedUpgrades[lastEnabledUpgradeIndex];
+                  const lastEnabledUpgradeIndex = Math.max(
+                    ...enabledUpgradeIndices
+                  );
+                  const enabledUpgrade =
+                    updatedAssignedUpgrades[lastEnabledUpgradeIndex];
                   pointDifference -= enabledUpgrade.points;
-                  // Remove the enabled upgrade via the handler to keep state in sync
-                  handleRemoveUpgrade(ship.id, enabledUpgrade.type, enabledUpgrade.slotIndex || 0);
+                  handleRemoveUpgrade(
+                    ship.id,
+                    enabledUpgrade.type,
+                    enabledUpgrade.slotIndex || 0
+                  );
                   updatedAssignedUpgrades.splice(lastEnabledUpgradeIndex, 1);
 
-                  // Remove the enabled slot from availableUpgrades using a cloned array
-                  const updatedAvailable = [...ship.availableUpgrades];
-                  const slotIndex = updatedAvailable.lastIndexOf(enabledType);
+                  // Remove the slot from availableUpgrades
+                  const slotIndex =
+                    ship.availableUpgrades.lastIndexOf(enabledType);
                   if (slotIndex !== -1) {
-                    updatedAvailable.splice(slotIndex, 1);
+                    ship.availableUpgrades.splice(slotIndex, 1);
                   }
-                  ship.availableUpgrades = updatedAvailable;
                 }
               });
             }
@@ -547,7 +521,9 @@ export default function FleetBuilder({
               removeUniqueClassName(oldUpgrade.name);
             }
             if (oldUpgrade["unique-class"]) {
-              oldUpgrade["unique-class"].forEach((uc) => removeUniqueClassName(uc));
+              oldUpgrade["unique-class"].forEach((uc) =>
+                removeUniqueClassName(uc)
+              );
             }
             pointDifference = upgrade.points - oldUpgrade.points;
             updatedAssignedUpgrades[existingUpgradeIndex] = newUpgrade;
@@ -557,7 +533,7 @@ export default function FleetBuilder({
 
           totalPointDifference += pointDifference;
 
-          // Add unique class names if necessary
+          // Add new unique class
           if (upgrade.unique) {
             addUniqueClassName(upgrade.name);
           }
@@ -565,7 +541,7 @@ export default function FleetBuilder({
             upgrade["unique-class"].forEach((uc) => addUniqueClassName(uc));
           }
 
-          // Handle disabled upgrades by cloning the current array
+          // Handle disabled upgrades
           const newDisabledUpgrades = [...(disabledUpgrades[ship.id] || [])];
           if (upgrade.restrictions?.disable_upgrades) {
             newDisabledUpgrades.push(...upgrade.restrictions.disable_upgrades);
@@ -578,52 +554,29 @@ export default function FleetBuilder({
             [ship.id]: newDisabledUpgrades,
           });
 
-          // Process enabled upgrades without duplicating slots: clone the arrays first
+          // Handle enabled upgrades
           const newEnabledUpgrades = [...(enabledUpgrades[ship.id] || [])];
-          const updatedAvailableUpgrades = [...ship.availableUpgrades];
-
           if (upgrade.restrictions?.enable_upgrades) {
-            const enabledTypes = upgrade.restrictions.enable_upgrades
-              .filter(enabledUpgrade => enabledUpgrade.trim() !== "");
-            
-            console.log('Before adding enabled upgrades:', {
-              shipAvailableUpgrades: ship.availableUpgrades,
-              enabledUpgrades: newEnabledUpgrades,
-              enabledTypes
-            });
-            
-            enabledTypes.forEach(enabledType => {
-              // Only add if it's not already in availableUpgrades
-              if (!ship.availableUpgrades.includes(enabledType)) {
-                console.log('Adding to availableUpgrades:', enabledType);
-                updatedAvailableUpgrades.push(enabledType);
-              }
-              // Only add to enabledUpgrades if it's not already there
-              if (!newEnabledUpgrades.includes(enabledType)) {
-                console.log('Adding to enabledUpgrades:', enabledType);
-                newEnabledUpgrades.push(enabledType);
-              }
-            });
-
-            console.log('After adding enabled upgrades:', {
-              updatedAvailableUpgrades,
-              newEnabledUpgrades
-            });
+            upgrade.restrictions.enable_upgrades
+              .filter((enabledUpgrade) => enabledUpgrade.trim() !== "")
+              .forEach((enabledUpgrade) => {
+                if (!newEnabledUpgrades.includes(enabledUpgrade)) {
+                  ship.availableUpgrades.push(enabledUpgrade);
+                }
+              });
           }
           setEnabledUpgrades({
             ...enabledUpgrades,
             [ship.id]: newEnabledUpgrades,
           });
 
-          // Update filledSlots for the upgrade type
+          // Update filledSlots
           setFilledSlots((prevFilledSlots) => {
             const shipSlots = prevFilledSlots[ship.id] || {};
             const upgradeTypeSlots = shipSlots[currentUpgradeType] || [];
-            // Only add the slot if it's not already there
             const updatedSlots = upgradeTypeSlots.includes(currentUpgradeIndex)
               ? upgradeTypeSlots
-              : [...upgradeTypeSlots, currentUpgradeIndex].sort((a, b) => a - b);
-            
+              : [...upgradeTypeSlots, currentUpgradeIndex];
             return {
               ...prevFilledSlots,
               [ship.id]: {
@@ -662,8 +615,8 @@ export default function FleetBuilder({
 
           // Sort the upgrades based on the order of availableUpgrades
           const sortedUpgrades = [...updatedAssignedUpgrades].sort((a, b) => {
-            const aIndex = updatedAvailableUpgrades.indexOf(a.type);
-            const bIndex = updatedAvailableUpgrades.indexOf(b.type);
+            const aIndex = ship.availableUpgrades.indexOf(a.type);
+            const bIndex = ship.availableUpgrades.indexOf(b.type);
             return aIndex - bIndex;
           });
 
@@ -671,7 +624,7 @@ export default function FleetBuilder({
             ...ship,
             points: ship.points,
             assignedUpgrades: sortedUpgrades,
-            availableUpgrades: updatedAvailableUpgrades,
+            availableUpgrades: ship.availableUpgrades,
           };
         }
         return ship;
@@ -685,9 +638,9 @@ export default function FleetBuilder({
 
     if (upgrade.type === "commander") {
       setHasCommander(true);
-      // Optional: move the ship with the commander upgrade to the front
-      setSelectedShips((prevShips) => {
-        const shipIndex = prevShips.findIndex((ship) => ship.id === currentShipId);
+      // Move ship with commander to the front
+      setSelectedShips(prevShips => {
+        const shipIndex = prevShips.findIndex(ship => ship.id === currentShipId);
         if (shipIndex > 0) {
           const newShips = [...prevShips];
           const [shipWithCommander] = newShips.splice(shipIndex, 1);
@@ -703,7 +656,7 @@ export default function FleetBuilder({
 
   const handleAddUpgrade = (shipId: string, upgrade: Upgrade) => {
     setSelectedShips((prevShips) =>
-      prevShips.map((ship: Ship) => {
+      prevShips.map((ship) => {
         if (ship.id === shipId) {
           const exhaustType = upgrade.exhaust?.type || "";
           const isModification = upgrade.modification ? "modification" : "";
@@ -724,10 +677,7 @@ export default function FleetBuilder({
 
           const newUpgrade: Upgrade = {
             ...upgrade,
-            slotIndex:
-              upgrade.slotIndex !== undefined
-                ? upgrade.slotIndex
-                : ship.assignedUpgrades.length,
+            slotIndex: upgrade.slotIndex !== undefined ? upgrade.slotIndex : ship.assignedUpgrades.length,
             source: source,
             searchableText: JSON.stringify({
               ...upgrade,
@@ -740,9 +690,7 @@ export default function FleetBuilder({
 
           const updatedAssignedUpgrades = [...ship.assignedUpgrades];
           const existingUpgradeIndex = updatedAssignedUpgrades.findIndex(
-            (u) =>
-              u.type === upgrade.type &&
-              u.slotIndex === newUpgrade.slotIndex
+            (u) => u.type === upgrade.type && u.slotIndex === newUpgrade.slotIndex
           );
 
           if (existingUpgradeIndex !== -1) {
@@ -751,7 +699,7 @@ export default function FleetBuilder({
             updatedAssignedUpgrades.push(newUpgrade);
           }
 
-          // Add new unique class if applicable
+          // Add new unique class
           if (upgrade.unique) {
             addUniqueClassName(upgrade.name);
           }
@@ -772,52 +720,30 @@ export default function FleetBuilder({
             [ship.id]: newDisabledUpgrades,
           });
 
-          // Update enabled upgrades without duplicating slots
+          // Handle enabled upgrades
           const newEnabledUpgrades = [...(enabledUpgrades[ship.id] || [])];
-          const updatedAvailableUpgrades = [...ship.availableUpgrades];
           if (upgrade.restrictions?.enable_upgrades) {
-            const enabledTypes = upgrade.restrictions.enable_upgrades
-              .filter(enabledUpgrade => enabledUpgrade.trim() !== "");
-            
-            console.log('handleAddUpgrade - Before adding enabled upgrades:', {
-              shipAvailableUpgrades: ship.availableUpgrades,
-              enabledUpgrades: newEnabledUpgrades,
-              enabledTypes
-            });
-            
-            enabledTypes.forEach(enabledType => {
-              // Only add if it's not already in availableUpgrades
-              if (!ship.availableUpgrades.includes(enabledType)) {
-                console.log('handleAddUpgrade - Adding to availableUpgrades:', enabledType);
-                updatedAvailableUpgrades.push(enabledType);
-              }
-              // Only add to enabledUpgrades if it's not already there
-              if (!newEnabledUpgrades.includes(enabledType)) {
-                console.log('handleAddUpgrade - Adding to enabledUpgrades:', enabledType);
-                newEnabledUpgrades.push(enabledType);
-              }
-            });
-
-            console.log('handleAddUpgrade - After adding enabled upgrades:', {
-              updatedAvailableUpgrades,
-              newEnabledUpgrades
-            });
+            upgrade.restrictions.enable_upgrades
+              .filter((enabledUpgrade) => enabledUpgrade.trim() !== "")
+              .forEach((enabledUpgrade) => {
+                if (!newEnabledUpgrades.includes(enabledUpgrade)) {
+                  ship.availableUpgrades.push(enabledUpgrade);
+                }
+              });
           }
           setEnabledUpgrades({
             ...enabledUpgrades,
             [ship.id]: newEnabledUpgrades,
           });
 
-          // Update filledSlots for this ship
+          // Update filledSlots
           setFilledSlots((prevFilledSlots) => {
             const shipSlots = prevFilledSlots[ship.id] || {};
             const upgradeTypeSlots = shipSlots[upgrade.type] || [];
-            // Only add the slot if it's not already there
-            const slotIndex = ship.assignedUpgrades.length;
-            const updatedSlots = upgradeTypeSlots.includes(slotIndex)
-              ? upgradeTypeSlots
-              : [...upgradeTypeSlots, slotIndex].sort((a, b) => a - b);
-            
+            const updatedSlots = [
+              ...upgradeTypeSlots,
+              ship.assignedUpgrades.length,
+            ];
             return {
               ...prevFilledSlots,
               [ship.id]: {
@@ -827,10 +753,10 @@ export default function FleetBuilder({
             };
           });
 
-          // Sort the assigned upgrades based on the order in availableUpgrades
+          // Sort the upgrades based on the order of availableUpgrades
           const sortedUpgrades = [...updatedAssignedUpgrades].sort((a, b) => {
-            const aIndex = updatedAvailableUpgrades.indexOf(a.type);
-            const bIndex = updatedAvailableUpgrades.indexOf(b.type);
+            const aIndex = ship.availableUpgrades.indexOf(a.type);
+            const bIndex = ship.availableUpgrades.indexOf(b.type);
             return aIndex - bIndex;
           });
 
@@ -841,14 +767,14 @@ export default function FleetBuilder({
           return {
             ...ship,
             assignedUpgrades: sortedUpgrades,
-            availableUpgrades: updatedAvailableUpgrades,
+            availableUpgrades: ship.availableUpgrades,
           };
         }
         return ship;
       })
     );
 
-    // Update points (avoiding double-counting)
+    // Update points separately to avoid double-counting
     setPoints((prevPoints) => prevPoints + upgrade.points);
     setTotalShipPoints((prevTotal) => prevTotal + upgrade.points);
   };
@@ -1067,15 +993,12 @@ export default function FleetBuilder({
     // Create new ship with fresh upgrade slots
     const newShip: Ship = {
       ...freshShipModel,
-      id: generateUniqueShipId(),
+      id: Date.now().toString(),
       assignedUpgrades: [],
-      availableUpgrades: freshShipModel.upgrades ? [...freshShipModel.upgrades] : [],
+      availableUpgrades: freshShipModel.upgrades || [],
       size: freshShipModel.size || "unknown",
       searchableText: freshShipModel.searchableText || "",
-      source: shipToCopy.source,
-      disabledUpgrades: [],
-      enabledUpgrades: [],
-      filledSlots: {},
+      source: shipToCopy.source
     };
   
     let pointsToAdd = newShip.points;
@@ -1938,7 +1861,20 @@ export default function FleetBuilder({
     const upgradesToAdd: { shipId: string; upgrade: Upgrade }[] = [];
     let currentShipId: string | null = null;
 
-    const addShipToFleet = (shipName: string, shipPoints: string): Ship | null => {
+    let shipIdCounter = 0;
+
+    const generateUniqueShipId = (): string => {
+      shipIdCounter++;
+      const randomPart = Math.floor(Math.random() * 10000)
+        .toString()
+        .padStart(4, "0");
+      return `ship_${shipIdCounter}_${randomPart}`;
+    };
+
+    const addShipToFleet = (
+      shipName: string,
+      shipPoints: string
+    ): Ship | null => {
       const shipKey = getAliasKey(aliases, `${shipName} (${shipPoints})`);
       if (shipKey) {
         const shipModel = fetchShip(shipKey);
@@ -1955,29 +1891,44 @@ export default function FleetBuilder({
             source = "arc";
           }
 
-          const newShip = initializeShipUpgradeState(shipModel);
-
-          // Initialize upgrade states for the new ship with empty arrays/objects
-          setDisabledUpgrades(prev => ({
-            ...prev,
-            [newShip.id]: [] // Reset to empty array
-          }));
-          setEnabledUpgrades(prev => ({
-            ...prev,
-            [newShip.id]: [] // Reset to empty array
-          }));
-          setFilledSlots(prev => ({
-            ...prev,
-            [newShip.id]: {} // Reset to empty object
-          }));
-
-          return {
-            ...newShip,
-            source,
-            enabledUpgrades: [], // Explicitly set empty enabled upgrades
-            disabledUpgrades: [], // Explicitly set empty disabled upgrades
-            filledSlots: {} // Explicitly set empty filled slots
+          const newShip: Ship = {
+            ...shipModel,
+            id: generateUniqueShipId(),
+            assignedUpgrades: [],
+            availableUpgrades: shipModel.upgrades || [],
+            size: shipModel.size || "small",
+            searchableText: shipModel.searchableText || "",
+            source: source,
           };
+          return newShip;
+        } else {
+          // If ship not found, try to find a squadron
+          const squadron = fetchSquadron(shipKey);
+          if (squadron) {
+            console.log(`Found squadron instead of ship:`, squadron);
+            let source: ContentSource = "regular";
+            if (shipName.includes("[OldLegacy]")) {
+              source = "oldLegacy";
+            } else if (shipName.includes("[Legacy]")) {
+              source = "legacy";
+            } else if (shipName.includes("[Legends]")) {
+              source = "legends";
+            } else if (shipName.includes("[ARC]")) {
+              source = "arc";
+            }
+            const selectedSquadron = {
+              ...squadron,
+              source,
+              points: parseInt(shipPoints) // Add this line to ensure points are set correctly
+            };
+            handleAddingSquadron(selectedSquadron);
+            // Add to squadron points total
+            squadronPoints += parseInt(shipPoints); // Add this line to update total squadron points
+            return null;
+          } else {
+            console.log(`Neither ship nor squadron found: ${shipName}`);
+            skippedItems.push(shipName);
+          }
         }
       } else {
         console.log(`Ship/Squadron key not found in aliases: ${shipName}`);
@@ -2220,27 +2171,7 @@ export default function FleetBuilder({
 
     // Add upgrades to ships
     upgradesToAdd.forEach(({ shipId, upgrade }) => {
-      // Initialize the states for this specific ship
-      setDisabledUpgrades(prev => ({
-        ...prev,
-        [shipId]: prev[shipId] || []
-      }));
-      
-      setEnabledUpgrades(prev => ({
-        ...prev,
-        [shipId]: prev[shipId] || []
-      }));
-      
-      setFilledSlots(prev => ({
-        ...prev,
-        [shipId]: prev[shipId] || {}
-      }));
-
-      // Add the upgrade with its specific state
-      handleAddUpgrade(shipId, {
-        ...upgrade,
-        id: generateUniqueShipId(), // Ensure unique ID for each upgrade
-      });
+      handleAddUpgrade(shipId, upgrade);
     });
 
     // Calculate total ship points (ships + upgrades)
@@ -3460,9 +3391,7 @@ export default function FleetBuilder({
 
       {faction === "sandbox" && (
         <ExpansionSelector 
-          onSelectExpansion={(fleetText: string) => {
-            handleImportFleet(fleetText, 'kingston');
-          }}
+          onSelectExpansion={(fleet) => handleImportFleet(fleet, 'kingston')}
           onClearFleet={handleClearFleet}
           hasFleet={selectedShips.length > 0 || selectedSquadrons.length > 0}
           isExpansionMode={isExpansionMode}
