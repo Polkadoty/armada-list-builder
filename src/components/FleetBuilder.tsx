@@ -586,7 +586,8 @@ export default function FleetBuilder({
             upgrade.restrictions.enable_upgrades
               .filter((enabledUpgrade) => enabledUpgrade.trim() !== "")
               .forEach((enabledUpgrade) => {
-                if (!newEnabledUpgrades.includes(enabledUpgrade)) {
+                // Only add if it's not already in either array
+                if (!newEnabledUpgrades.includes(enabledUpgrade) && !ship.availableUpgrades.includes(enabledUpgrade)) {
                   updatedAvailableUpgrades.push(enabledUpgrade);
                   newEnabledUpgrades.push(enabledUpgrade);
                 }
@@ -759,7 +760,8 @@ export default function FleetBuilder({
             upgrade.restrictions.enable_upgrades
               .filter((enabledUpgrade) => enabledUpgrade.trim() !== "")
               .forEach((enabledUpgrade) => {
-                if (!newEnabledUpgrades.includes(enabledUpgrade)) {
+                // Only add if it's not already in either array
+                if (!newEnabledUpgrades.includes(enabledUpgrade) && !ship.availableUpgrades.includes(enabledUpgrade)) {
                   updatedAvailableUpgrades.push(enabledUpgrade);
                   newEnabledUpgrades.push(enabledUpgrade);
                 }
