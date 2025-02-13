@@ -1917,23 +1917,26 @@ export default function FleetBuilder({
 
           const newShip = initializeShipUpgradeState(shipModel);
 
-          // Initialize upgrade states for the new ship
+          // Initialize upgrade states for the new ship with empty arrays/objects
           setDisabledUpgrades(prev => ({
             ...prev,
-            [newShip.id]: newShip.disabledUpgrades
+            [newShip.id]: [] // Reset to empty array
           }));
           setEnabledUpgrades(prev => ({
             ...prev,
-            [newShip.id]: newShip.enabledUpgrades
+            [newShip.id]: [] // Reset to empty array
           }));
           setFilledSlots(prev => ({
             ...prev,
-            [newShip.id]: newShip.filledSlots
+            [newShip.id]: {} // Reset to empty object
           }));
 
           return {
             ...newShip,
-            source
+            source,
+            enabledUpgrades: [], // Explicitly set empty enabled upgrades
+            disabledUpgrades: [], // Explicitly set empty disabled upgrades
+            filledSlots: {} // Explicitly set empty filled slots
           };
         }
       } else {
@@ -2177,6 +2180,13 @@ export default function FleetBuilder({
 
     // Add upgrades to ships
     upgradesToAdd.forEach(({ shipId, upgrade }) => {
+      // First, ensure the ship's enabled upgrades state is initialized
+      setEnabledUpgrades(prev => ({
+        ...prev,
+        [shipId]: prev[shipId] || []
+      }));
+      
+      // Then add the upgrade
       handleAddUpgrade(shipId, upgrade);
     });
 
