@@ -290,7 +290,6 @@ export default function FleetBuilder({
   const [showDamageDeck, setShowDamageDeck] = useState(false);
   const [showDeleteShipsConfirmation, setShowDeleteShipsConfirmation] = useState(false);
   const [showDeleteSquadronsConfirmation, setShowDeleteSquadronsConfirmation] = useState(false);
-  const [shipIdCounter, setShipIdCounter] = useState(0);
 
   const checkTournamentViolations = useMemo(() => {
     const violations: string[] = [];
@@ -1867,10 +1866,6 @@ export default function FleetBuilder({
     const shipsToAdd: Ship[] = [];
     const upgradesToAdd: { shipId: string; upgrade: Upgrade }[] = [];
     let currentShipId: string | null = null;
-
-    let shipIdCounter = 0;
-
-
 
     const addShipToFleet = (
       shipName: string,
