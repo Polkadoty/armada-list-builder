@@ -376,6 +376,12 @@ export default function FleetBuilder({
     };
   }, [tournamentMode, checkTournamentViolations, selectedShips, selectedSquadrons, removeUniqueClassName]);
 
+  function generateUniqueShipId(): string {
+    const timestamp = Date.now();
+    const random = Math.floor(Math.random() * 1000000);
+    return `ship_${timestamp}_${random}`;
+  }
+
   const handleAddShip = () => {
     setShowShipSelector(true);
   };
@@ -383,7 +389,7 @@ export default function FleetBuilder({
   const handleSelectShip = (ship: ShipModel) => {
     const newShip: Ship = {
       ...ship,
-      id: Date.now().toString(),
+      id: generateUniqueShipId(),
       availableUpgrades: ship.upgrades || [],
       assignedUpgrades: [],
       chassis: ship.chassis,
@@ -994,7 +1000,7 @@ export default function FleetBuilder({
     // Create new ship with fresh upgrade slots
     const newShip: Ship = {
       ...freshShipModel,
-      id: Date.now().toString(),
+      id: generateUniqueShipId(),
       assignedUpgrades: [],
       availableUpgrades: freshShipModel.upgrades || [],
       size: freshShipModel.size || "unknown",
@@ -1864,13 +1870,7 @@ export default function FleetBuilder({
 
     let shipIdCounter = 0;
 
-    const generateUniqueShipId = (): string => {
-      setShipIdCounter(prev => prev + 1);
-      const randomPart = Math.floor(Math.random() * 10000)
-        .toString()
-        .padStart(4, "0");
-      return `ship_${shipIdCounter}_${randomPart}`;
-    };
+
 
     const addShipToFleet = (
       shipName: string,
