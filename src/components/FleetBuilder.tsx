@@ -2180,14 +2180,27 @@ export default function FleetBuilder({
 
     // Add upgrades to ships
     upgradesToAdd.forEach(({ shipId, upgrade }) => {
-      // First, ensure the ship's enabled upgrades state is initialized
+      // Initialize the states for this specific ship
+      setDisabledUpgrades(prev => ({
+        ...prev,
+        [shipId]: prev[shipId] || []
+      }));
+      
       setEnabledUpgrades(prev => ({
         ...prev,
         [shipId]: prev[shipId] || []
       }));
       
-      // Then add the upgrade
-      handleAddUpgrade(shipId, upgrade);
+      setFilledSlots(prev => ({
+        ...prev,
+        [shipId]: prev[shipId] || {}
+      }));
+
+      // Add the upgrade with its specific state
+      handleAddUpgrade(shipId, {
+        ...upgrade,
+        id: generateUniqueShipId(), // Ensure unique ID for each upgrade
+      });
     });
 
     // Calculate total ship points (ships + upgrades)
