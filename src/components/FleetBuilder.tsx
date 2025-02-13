@@ -1931,7 +1931,10 @@ export default function FleetBuilder({
             [newShip.id]: newShip.filledSlots
           }));
 
-          return newShip;
+          return {
+            ...newShip,
+            source
+          };
         }
       } else {
         console.log(`Ship/Squadron key not found in aliases: ${shipName}`);
