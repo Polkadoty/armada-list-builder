@@ -85,6 +85,9 @@ export interface Ship {
   source: ContentSource;
   searchableText: string;
   release?: string;
+  disabledUpgrades: string[];
+  enabledUpgrades: string[];
+  filledSlots: Record<string, number[]>;
 }
 
 export interface Squadron {
@@ -166,6 +169,9 @@ export interface Ship extends ShipModel {
   availableUpgrades: string[];
   assignedUpgrades: Upgrade[];
   searchableText: string;
+  disabledUpgrades: string[];
+  enabledUpgrades: string[];
+  filledSlots: Record<string, number[]>;
 }
 
 export type ContentSource = "regular" | "legacy" | "legends" | "oldLegacy" | "arc" | "community" | "amg";
@@ -381,22 +387,44 @@ export default function FleetBuilder({
     return `ship_${timestamp}_${random}`;
   }
 
+  function initializeShipUpgradeState(shipModel: ShipModel): Ship {
+    const id = generateUniqueShipId();
+    return {
+      ...shipModel,
+      id,
+      availableUpgrades: shipModel.upgrades || [],
+      assignedUpgrades: [],
+      searchableText: shipModel.searchableText || "",
+      disabledUpgrades: [],
+      enabledUpgrades: [],
+      filledSlots: {},
+      size: shipModel.size || "small",
+      traits: shipModel.traits || [],
+      source: shipModel.source || "regular",
+    };
+  }
+
   const handleAddShip = () => {
     setShowShipSelector(true);
   };
 
   const handleSelectShip = (ship: ShipModel) => {
-    const newShip: Ship = {
-      ...ship,
-      id: generateUniqueShipId(),
-      availableUpgrades: ship.upgrades || [],
-      assignedUpgrades: [],
-      chassis: ship.chassis,
-      size: ship.size || "",
-      traits: ship.traits || [],
-      source: ship.source || "regular",
-    };
+    const newShip = initializeShipUpgradeState(ship);
+    
     setSelectedShips([...selectedShips, newShip]);
+    setDisabledUpgrades(prev => ({
+      ...prev,
+      [newShip.id]: []
+    }));
+    setEnabledUpgrades(prev => ({
+      ...prev,
+      [newShip.id]: []
+    }));
+    setFilledSlots(prev => ({
+      ...prev,
+      [newShip.id]: {}
+    }));
+
     setPreviousPoints(points);
     setPreviousShipPoints(totalShipPoints);
     const newPoints = points + ship.points;
@@ -1004,7 +1032,10 @@ export default function FleetBuilder({
       availableUpgrades: freshShipModel.upgrades || [],
       size: freshShipModel.size || "unknown",
       searchableText: freshShipModel.searchableText || "",
-      source: shipToCopy.source
+      source: shipToCopy.source,
+      disabledUpgrades: [],
+      enabledUpgrades: [],
+      filledSlots: {},
     };
   
     let pointsToAdd = newShip.points;
@@ -1867,10 +1898,7 @@ export default function FleetBuilder({
     const upgradesToAdd: { shipId: string; upgrade: Upgrade }[] = [];
     let currentShipId: string | null = null;
 
-    const addShipToFleet = (
-      shipName: string,
-      shipPoints: string
-    ): Ship | null => {
+    const addShipToFleet = (shipName: string, shipPoints: string): Ship | null => {
       const shipKey = getAliasKey(aliases, `${shipName} (${shipPoints})`);
       if (shipKey) {
         const shipModel = fetchShip(shipKey);
@@ -1887,43 +1915,23 @@ export default function FleetBuilder({
             source = "arc";
           }
 
-          const newShip: Ship = {
-            ...shipModel,
-            id: generateUniqueShipId(),
-            assignedUpgrades: [],
-            availableUpgrades: shipModel.upgrades || [],
-            size: shipModel.size || "small",
-            searchableText: shipModel.searchableText || "",
-            source: source,
-          };
+          const newShip = initializeShipUpgradeState(shipModel);
+
+          // Initialize upgrade states for the new ship
+          setDisabledUpgrades(prev => ({
+            ...prev,
+            [newShip.id]: newShip.disabledUpgrades
+          }));
+          setEnabledUpgrades(prev => ({
+            ...prev,
+            [newShip.id]: newShip.enabledUpgrades
+          }));
+          setFilledSlots(prev => ({
+            ...prev,
+            [newShip.id]: newShip.filledSlots
+          }));
+
           return newShip;
-        } else {
-          // If ship not found, try to find a squadron
-          const squadron = fetchSquadron(shipKey);
-          if (squadron) {
-            console.log(`Found squadron instead of ship:`, squadron);
-            let source: ContentSource = "regular";
-            if (shipName.includes("[OldLegacy]")) {
-              source = "oldLegacy";
-            } else if (shipName.includes("[Legacy]")) {
-              source = "legacy";
-            } else if (shipName.includes("[Legends]")) {
-              source = "legends";
-            } else if (shipName.includes("[ARC]")) {
-              source = "arc";
-            }
-            const selectedSquadron = {
-              ...squadron,
-              source,
-              points: parseInt(shipPoints)
-            };
-            handleAddingSquadron(selectedSquadron);
-            squadronPoints += parseInt(shipPoints);
-            return null;
-          } else {
-            console.log(`Neither ship nor squadron found: ${shipName}`);
-            skippedItems.push(shipName);
-          }
         }
       } else {
         console.log(`Ship/Squadron key not found in aliases: ${shipName}`);
@@ -3386,7 +3394,9 @@ export default function FleetBuilder({
 
       {faction === "sandbox" && (
         <ExpansionSelector 
-          onSelectExpansion={(fleet) => handleImportFleet(fleet, 'kingston')}
+          onSelectExpansion={(fleetText: string) => {
+            handleImportFleet(fleetText, 'kingston');
+          }}
           onClearFleet={handleClearFleet}
           hasFleet={selectedShips.length > 0 || selectedSquadrons.length > 0}
           isExpansionMode={isExpansionMode}
