@@ -290,6 +290,7 @@ export default function FleetBuilder({
   const [showDamageDeck, setShowDamageDeck] = useState(false);
   const [showDeleteShipsConfirmation, setShowDeleteShipsConfirmation] = useState(false);
   const [showDeleteSquadronsConfirmation, setShowDeleteSquadronsConfirmation] = useState(false);
+  const [shipIdCounter, setShipIdCounter] = useState(0);
 
   const checkTournamentViolations = useMemo(() => {
     const violations: string[] = [];
@@ -1864,7 +1865,7 @@ export default function FleetBuilder({
     let shipIdCounter = 0;
 
     const generateUniqueShipId = (): string => {
-      shipIdCounter++;
+      setShipIdCounter(prev => prev + 1);
       const randomPart = Math.floor(Math.random() * 10000)
         .toString()
         .padStart(4, "0");
@@ -1919,11 +1920,10 @@ export default function FleetBuilder({
             const selectedSquadron = {
               ...squadron,
               source,
-              points: parseInt(shipPoints) // Add this line to ensure points are set correctly
+              points: parseInt(shipPoints)
             };
             handleAddingSquadron(selectedSquadron);
-            // Add to squadron points total
-            squadronPoints += parseInt(shipPoints); // Add this line to update total squadron points
+            squadronPoints += parseInt(shipPoints);
             return null;
           } else {
             console.log(`Neither ship nor squadron found: ${shipName}`);
