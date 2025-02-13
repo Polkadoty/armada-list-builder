@@ -757,12 +757,14 @@ export default function FleetBuilder({
 
           // Handle enabled upgrades
           const newEnabledUpgrades = [...(enabledUpgrades[ship.id] || [])];
+          const updatedAvailableUpgrades = [...ship.availableUpgrades];
           if (upgrade.restrictions?.enable_upgrades) {
             upgrade.restrictions.enable_upgrades
               .filter((enabledUpgrade) => enabledUpgrade.trim() !== "")
               .forEach((enabledUpgrade) => {
                 if (!newEnabledUpgrades.includes(enabledUpgrade)) {
-                  ship.availableUpgrades.push(enabledUpgrade);
+                  updatedAvailableUpgrades.push(enabledUpgrade);
+                  newEnabledUpgrades.push(enabledUpgrade);
                 }
               });
           }
@@ -802,7 +804,7 @@ export default function FleetBuilder({
           return {
             ...ship,
             assignedUpgrades: sortedUpgrades,
-            availableUpgrades: ship.availableUpgrades,
+            availableUpgrades: updatedAvailableUpgrades,
           };
         }
         return ship;
