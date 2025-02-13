@@ -583,15 +583,19 @@ export default function FleetBuilder({
           const updatedAvailableUpgrades = [...ship.availableUpgrades];
 
           if (upgrade.restrictions?.enable_upgrades) {
-            upgrade.restrictions.enable_upgrades
-              .filter((enabledUpgrade) => enabledUpgrade.trim() !== "")
-              .forEach((enabledUpgrade) => {
-                // Only add if it's not already in either array
-                if (!newEnabledUpgrades.includes(enabledUpgrade) && !ship.availableUpgrades.includes(enabledUpgrade)) {
-                  updatedAvailableUpgrades.push(enabledUpgrade);
-                  newEnabledUpgrades.push(enabledUpgrade);
-                }
-              });
+            const enabledTypes = upgrade.restrictions.enable_upgrades
+              .filter(enabledUpgrade => enabledUpgrade.trim() !== "");
+            
+            enabledTypes.forEach(enabledType => {
+              // Only add if it's not already in availableUpgrades
+              if (!ship.availableUpgrades.includes(enabledType)) {
+                updatedAvailableUpgrades.push(enabledType);
+              }
+              // Only add to enabledUpgrades if it's not already there
+              if (!newEnabledUpgrades.includes(enabledType)) {
+                newEnabledUpgrades.push(enabledType);
+              }
+            });
           }
           setEnabledUpgrades({
             ...enabledUpgrades,
@@ -759,15 +763,19 @@ export default function FleetBuilder({
           const newEnabledUpgrades = [...(enabledUpgrades[ship.id] || [])];
           const updatedAvailableUpgrades = [...ship.availableUpgrades];
           if (upgrade.restrictions?.enable_upgrades) {
-            upgrade.restrictions.enable_upgrades
-              .filter((enabledUpgrade) => enabledUpgrade.trim() !== "")
-              .forEach((enabledUpgrade) => {
-                // Only add if it's not already in either array
-                if (!newEnabledUpgrades.includes(enabledUpgrade) && !ship.availableUpgrades.includes(enabledUpgrade)) {
-                  updatedAvailableUpgrades.push(enabledUpgrade);
-                  newEnabledUpgrades.push(enabledUpgrade);
-                }
-              });
+            const enabledTypes = upgrade.restrictions.enable_upgrades
+              .filter(enabledUpgrade => enabledUpgrade.trim() !== "");
+            
+            enabledTypes.forEach(enabledType => {
+              // Only add if it's not already in availableUpgrades
+              if (!ship.availableUpgrades.includes(enabledType)) {
+                updatedAvailableUpgrades.push(enabledType);
+              }
+              // Only add to enabledUpgrades if it's not already there
+              if (!newEnabledUpgrades.includes(enabledType)) {
+                newEnabledUpgrades.push(enabledType);
+              }
+            });
           }
           setEnabledUpgrades({
             ...enabledUpgrades,
