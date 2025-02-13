@@ -602,9 +602,11 @@ export default function FleetBuilder({
           setFilledSlots((prevFilledSlots) => {
             const shipSlots = prevFilledSlots[ship.id] || {};
             const upgradeTypeSlots = shipSlots[currentUpgradeType] || [];
+            // Only add the slot if it's not already there
             const updatedSlots = upgradeTypeSlots.includes(currentUpgradeIndex)
               ? upgradeTypeSlots
-              : [...upgradeTypeSlots, currentUpgradeIndex];
+              : [...upgradeTypeSlots, currentUpgradeIndex].sort((a, b) => a - b);
+            
             return {
               ...prevFilledSlots,
               [ship.id]: {
@@ -776,7 +778,12 @@ export default function FleetBuilder({
           setFilledSlots((prevFilledSlots) => {
             const shipSlots = prevFilledSlots[ship.id] || {};
             const upgradeTypeSlots = shipSlots[upgrade.type] || [];
-            const updatedSlots = [...upgradeTypeSlots, ship.assignedUpgrades.length];
+            // Only add the slot if it's not already there
+            const slotIndex = ship.assignedUpgrades.length;
+            const updatedSlots = upgradeTypeSlots.includes(slotIndex)
+              ? upgradeTypeSlots
+              : [...upgradeTypeSlots, slotIndex].sort((a, b) => a - b);
+            
             return {
               ...prevFilledSlots,
               [ship.id]: {
