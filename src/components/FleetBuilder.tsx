@@ -388,11 +388,10 @@ export default function FleetBuilder({
   }
 
   function initializeShipUpgradeState(shipModel: ShipModel): Ship {
-    const id = generateUniqueShipId();
     return {
       ...shipModel,
-      id,
-      availableUpgrades: shipModel.upgrades || [],
+      id: generateUniqueShipId(),
+      availableUpgrades: shipModel.upgrades ? [...shipModel.upgrades] : [],
       assignedUpgrades: [],
       searchableText: shipModel.searchableText || "",
       disabledUpgrades: [],
@@ -588,14 +587,16 @@ export default function FleetBuilder({
             [ship.id]: newDisabledUpgrades,
           });
 
-          // Handle enabled upgrades
           const newEnabledUpgrades = [...(enabledUpgrades[ship.id] || [])];
+          const updatedAvailableUpgrades = [...ship.availableUpgrades];
+          
           if (upgrade.restrictions?.enable_upgrades) {
             upgrade.restrictions.enable_upgrades
               .filter((enabledUpgrade) => enabledUpgrade.trim() !== "")
               .forEach((enabledUpgrade) => {
                 if (!newEnabledUpgrades.includes(enabledUpgrade)) {
-                  ship.availableUpgrades.push(enabledUpgrade);
+                  updatedAvailableUpgrades.push(enabledUpgrade);
+                  newEnabledUpgrades.push(enabledUpgrade);
                 }
               });
           }
@@ -658,7 +659,7 @@ export default function FleetBuilder({
             ...ship,
             points: ship.points,
             assignedUpgrades: sortedUpgrades,
-            availableUpgrades: ship.availableUpgrades,
+            availableUpgrades: updatedAvailableUpgrades,
           };
         }
         return ship;
@@ -1029,7 +1030,7 @@ export default function FleetBuilder({
       ...freshShipModel,
       id: generateUniqueShipId(),
       assignedUpgrades: [],
-      availableUpgrades: freshShipModel.upgrades || [],
+      availableUpgrades: freshShipModel.upgrades ? [...freshShipModel.upgrades] : [],
       size: freshShipModel.size || "unknown",
       searchableText: freshShipModel.searchableText || "",
       source: shipToCopy.source,
