@@ -375,6 +375,13 @@ export default function FleetBuilder({
     };
   }, [tournamentMode, checkTournamentViolations, selectedShips, selectedSquadrons, removeUniqueClassName]);
 
+
+  const generateUniqueShipId = (): string => {
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substring(2, 8);
+    return `ship_${timestamp}_${random}`;
+  };
+
   const handleAddShip = () => {
     setShowShipSelector(true);
   };
@@ -382,8 +389,8 @@ export default function FleetBuilder({
   const handleSelectShip = (ship: ShipModel) => {
     const newShip: Ship = {
       ...ship,
-      id: Date.now().toString(),
-      availableUpgrades: ship.upgrades || [],
+      id: generateUniqueShipId(),
+      availableUpgrades: [...(ship.upgrades || [])], // Create new array
       assignedUpgrades: [],
       chassis: ship.chassis,
       size: ship.size || "",
@@ -561,7 +568,8 @@ export default function FleetBuilder({
               .filter((enabledUpgrade) => enabledUpgrade.trim() !== "")
               .forEach((enabledUpgrade) => {
                 if (!newEnabledUpgrades.includes(enabledUpgrade)) {
-                  ship.availableUpgrades.push(enabledUpgrade);
+                  // Create a new array instead of modifying the existing one
+                  ship.availableUpgrades = [...ship.availableUpgrades, enabledUpgrade];
                 }
               });
           }
@@ -699,12 +707,14 @@ export default function FleetBuilder({
             updatedAssignedUpgrades.push(newUpgrade);
           }
 
-          // Add new unique class
+          // Add new unique class names using setTimeout to avoid React state updates during render
           if (upgrade.unique) {
-            addUniqueClassName(upgrade.name);
+            setTimeout(() => addUniqueClassName(upgrade.name), 0);
           }
           if (upgrade["unique-class"]) {
-            upgrade["unique-class"].forEach((uc) => addUniqueClassName(uc));
+            upgrade["unique-class"].forEach((uc) => {
+              setTimeout(() => addUniqueClassName(uc), 0);
+            });
           }
 
           // Handle disabled upgrades
@@ -722,15 +732,21 @@ export default function FleetBuilder({
 
           // Handle enabled upgrades
           const newEnabledUpgrades = [...(enabledUpgrades[ship.id] || [])];
+          let updatedAvailableUpgrades = [...ship.availableUpgrades];
           if (upgrade.restrictions?.enable_upgrades) {
             upgrade.restrictions.enable_upgrades
               .filter((enabledUpgrade) => enabledUpgrade.trim() !== "")
               .forEach((enabledUpgrade) => {
-                if (!newEnabledUpgrades.includes(enabledUpgrade)) {
-                  ship.availableUpgrades.push(enabledUpgrade);
+                // Only add if it's not already in the available upgrades
+                if (!ship.availableUpgrades.includes(enabledUpgrade)) {
+                  updatedAvailableUpgrades.push(enabledUpgrade);
+                  if (!newEnabledUpgrades.includes(enabledUpgrade)) {
+                    newEnabledUpgrades.push(enabledUpgrade);
+                  }
                 }
               });
           }
+
           setEnabledUpgrades({
             ...enabledUpgrades,
             [ship.id]: newEnabledUpgrades,
@@ -767,14 +783,13 @@ export default function FleetBuilder({
           return {
             ...ship,
             assignedUpgrades: sortedUpgrades,
-            availableUpgrades: ship.availableUpgrades,
+            availableUpgrades: updatedAvailableUpgrades,
           };
         }
         return ship;
       })
     );
 
-    // Update points separately to avoid double-counting
     setPoints((prevPoints) => prevPoints + upgrade.points);
     setTotalShipPoints((prevTotal) => prevTotal + upgrade.points);
   };
@@ -1863,13 +1878,7 @@ export default function FleetBuilder({
 
     let shipIdCounter = 0;
 
-    const generateUniqueShipId = (): string => {
-      shipIdCounter++;
-      const randomPart = Math.floor(Math.random() * 10000)
-        .toString()
-        .padStart(4, "0");
-      return `ship_${shipIdCounter}_${randomPart}`;
-    };
+
 
     const addShipToFleet = (
       shipName: string,
@@ -2093,7 +2102,6 @@ export default function FleetBuilder({
               while (usedSlots.includes(nextSlot)) {
                 nextSlot++;
               }
-      
               upgradesToAdd.push({
                 shipId: currentShipId,
                 upgrade: { ...upgrade, source, slotIndex: nextSlot },
