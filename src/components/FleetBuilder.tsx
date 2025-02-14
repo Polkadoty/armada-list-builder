@@ -662,7 +662,7 @@ export default function FleetBuilder({
     setShowUpgradeSelector(false);
   };
 
-  const handleAddUpgrade = (shipId: string, upgrade: Upgrade) => {
+  const handleAddUpgrade = useCallback((shipId: string, upgrade: Upgrade) => {
     setSelectedShips((prevShips) =>
       prevShips.map((ship) => {
         if (ship.id === shipId) {
@@ -732,7 +732,7 @@ export default function FleetBuilder({
 
           // Handle enabled upgrades
           const newEnabledUpgrades = [...(enabledUpgrades[ship.id] || [])];
-          let updatedAvailableUpgrades = [...ship.availableUpgrades];
+          const updatedAvailableUpgrades = [...ship.availableUpgrades];
           if (upgrade.restrictions?.enable_upgrades) {
             upgrade.restrictions.enable_upgrades
               .filter((enabledUpgrade) => enabledUpgrade.trim() !== "")
@@ -793,7 +793,7 @@ export default function FleetBuilder({
 
     setPoints((prevPoints) => prevPoints + upgrade.points);
     setTotalShipPoints((prevTotal) => prevTotal + upgrade.points);
-  };
+  }, [enabledUpgrades, setEnabledUpgrades, setFilledSlots, setHasCommander]);
 
   const handleRemoveUpgrade = useCallback(
     (shipId: string, upgradeType: string, upgradeIndex: number) => {
@@ -1098,7 +1098,7 @@ export default function FleetBuilder({
     setShowSquadronSelector(false);
   };
 
-  const handleAddingSquadron = (squadron: Squadron) => {
+  const handleAddingSquadron = useCallback((squadron: Squadron) => {
     const squadronId = generateUniqueSquadronId();
     const newSquadron: Squadron = {
       ...squadron,
@@ -1151,7 +1151,7 @@ export default function FleetBuilder({
     }
     
     return squadronId;
-  };
+  }, [addUniqueClassName, points, selectedSquadrons, setPoints, setSelectedSquadrons, setTotalSquadronPoints, totalSquadronPoints]);
 
   const handleRemoveSquadron = (id: string) => {
     const squadronToRemove = selectedSquadrons.find(
@@ -1184,7 +1184,7 @@ export default function FleetBuilder({
     }
   };
 
-  const handleIncrementSquadron = (id: string) => {
+  const handleIncrementSquadron = useCallback((id: string) => {
     setSelectedSquadrons((squadrons) =>
       squadrons.map((squadron) =>
         squadron.id === id
@@ -1200,7 +1200,7 @@ export default function FleetBuilder({
       setPoints(newPoints);
       setTotalSquadronPoints(totalSquadronPoints + squadron.points);
     }
-  };
+  }, [points, selectedSquadrons, setPoints, setSelectedSquadrons, setTotalSquadronPoints, totalSquadronPoints]);
 
   const handleDecrementSquadron = (id: string) => {
     setSelectedSquadrons((prevSquadrons) => {
@@ -1294,7 +1294,7 @@ export default function FleetBuilder({
     setShowDeleteSquadronsConfirmation(true);
   };
 
-  const clearAllShips = () => {
+  const clearAllShips = useCallback(() => {
     selectedShips.forEach((ship) => {
       if (ship.unique) {
         removeUniqueClassName(ship.name);
@@ -1317,9 +1317,9 @@ export default function FleetBuilder({
     setTotalShipPoints(0);
     setHasCommander(false); // Add this line
     localStorage.removeItem(`savedFleet_${faction}`);
-  };
+  }, [removeUniqueClassName, setPoints, setSelectedShips, setTotalShipPoints]);
 
-  const clearAllSquadrons = () => {
+  const clearAllSquadrons = useCallback(() => {
     selectedSquadrons.forEach((squadron) => {
       if (squadron.unique) {
         removeUniqueClassName(squadron.name);
@@ -1335,7 +1335,7 @@ export default function FleetBuilder({
     setTotalSquadronPoints(0);
     setSelectedSquadrons([]);
     localStorage.removeItem(`savedFleet_${faction}`);
-  };
+  }, [removeUniqueClassName, setPoints, setSelectedSquadrons, setTotalSquadronPoints]);
 
   const handleMoveShip = (id: string, direction: 'up' | 'down') => {
     setSelectedShips(prevShips => {
@@ -1655,18 +1655,18 @@ export default function FleetBuilder({
     return result;
   }, [fetchFromLocalStorage, cachedResults]);
 
-  const fetchUpgrade = (key: string): Upgrade | null => {
+  const fetchUpgrade = useCallback((key: string): Upgrade | null => {
     return fetchFromLocalStorage(key, "upgrades") as Upgrade | null;
-  };
+  }, [fetchFromLocalStorage]);
 
-  const fetchSquadron = (key: string): Squadron | null => {
+  const fetchSquadron = useCallback((key: string): Squadron | null => {
     return fetchFromLocalStorage(key, "squadrons") as Squadron | null;
-  };
+  }, [fetchFromLocalStorage]);
 
   type FleetFormat = 'kingston' | 'afd' | 'warlords' | 'starforge';
 
 
-  const preprocessFleetText = (text: string, format: FleetFormat): string => {
+  const preprocessFleetText = useCallback((text: string, format: FleetFormat): string => {
     if (format === 'kingston') {
       return text;
     }
@@ -1772,7 +1772,7 @@ export default function FleetBuilder({
     }
 
     return lines.join('\n');
-  };
+  }, []);
 
   const handleImportFleet = useCallback((importText: string, format: FleetFormat) => {
     console.log("Starting fleet import with format:", format);
@@ -3028,7 +3028,7 @@ export default function FleetBuilder({
     }
     setShowPrintMenu(false);
   }, [
-    generatePrintContent,
+    generatePrintnPlayContent,
     selectedShips,
     selectedSquadrons,
     selectedAssaultObjectives,
