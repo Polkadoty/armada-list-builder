@@ -1877,10 +1877,6 @@ export default function FleetBuilder({
     const upgradesToAdd: { shipId: string; upgrade: Upgrade }[] = [];
     let currentShipId: string | null = null;
 
-    let shipIdCounter = 0;
-
-
-
     const addShipToFleet = (
       shipName: string,
       shipPoints: string
