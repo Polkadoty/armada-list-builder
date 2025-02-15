@@ -1774,6 +1774,38 @@ export default function FleetBuilder({
     return lines.join('\n');
   }, []);
 
+  const applyUpdates = useCallback((fleetData: string): string => {
+    try {
+      // Get updates from localStorage
+      const updates = JSON.parse(localStorage.getItem('updates') || '{}');
+      
+      // Split the fleet data into lines for more precise replacement
+      let lines = fleetData.split('\n');
+      
+      lines = lines.map(line => {
+        // Try to match each update pattern
+        Object.entries(updates).forEach(([oldName, newName]) => {
+          if (typeof newName === 'string') {
+            // Create a more precise regex that matches the exact upgrade string
+            // This handles the case with or without a bullet point
+            const regex = new RegExp(`^(•\\s*)?${oldName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`);
+            if (regex.test(line.trim())) {
+              // If bullet point exists, preserve it
+              const bulletPoint = line.startsWith('•') ? '• ' : '';
+              line = `${bulletPoint}${newName}`;
+            }
+          }
+        });
+        return line;
+      });
+
+      return lines.join('\n');
+    } catch (error) {
+      console.error('Error applying updates:', error);
+      return fleetData;
+    }
+  }, []);
+
   const handleImportFleet = useCallback((importText: string, format: FleetFormat) => {
     console.log("Starting fleet import with format:", format);
     
@@ -1781,11 +1813,13 @@ export default function FleetBuilder({
     const aliases = JSON.parse(localStorage.getItem("aliases") || "{}");
     const processedText = preprocessFleetText(importText, format);
     console.log("Preprocessed fleet text:", processedText);
-    const updatedFleetText = applyUpdates(importText);
+    
+    // Then apply any card updates
+    const updatedFleetText = applyUpdates(processedText);
+    console.log("Updated fleet text:", updatedFleetText);
+    
+    // Use the updated text for the rest of the import process
     const lines = updatedFleetText.split("\n");
-
-
-    // const lines = importText.split("\n");
 
     // Check faction first
     const factionLine = lines.find((line) => line.startsWith("Faction:"));
@@ -3278,38 +3312,6 @@ export default function FleetBuilder({
 
     const interval = setInterval(checkContentSources, 2000); // Check every 2 seconds instead of every second
     return () => clearInterval(interval);
-  }, []);
-
-  const applyUpdates = (fleetData: string): string => {
-    try {
-      // Get updates from localStorage
-      const updates = JSON.parse(localStorage.getItem('updates') || '{}');
-      
-      // Replace each occurrence of outdated names
-      Object.entries(updates).forEach(([oldName, newName]) => {
-        if (typeof newName === 'string') {
-          // Create regex that matches the old name without the colon
-          const oldNameWithoutColon = oldName.replace(/:\s*$/, '');
-          fleetData = fleetData.replace(new RegExp(oldNameWithoutColon, 'g'), newName);
-        }
-      });
-
-      return fleetData;
-    } catch (error) {
-      console.error('Error applying updates:', error);
-      return fleetData;
-    }
-  };
-
-  // Add this near the other useEffect blocks
-  useEffect(() => {
-    const pendingImport = localStorage.getItem('pendingImport');
-    if (pendingImport) {
-      // Clear the pending import first to prevent loops
-      localStorage.removeItem('pendingImport');
-      // Open import window with the text
-      setShowImportWindow(true);
-    }
   }, []);
 
   return (
