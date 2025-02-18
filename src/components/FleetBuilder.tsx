@@ -1312,12 +1312,11 @@ export default function FleetBuilder({
     setSelectedShips([]);
     setPreviousPoints(points);
     setPreviousShipPoints(totalShipPoints);
-    const newPoints = points - totalShipPoints;
-    setPoints(newPoints);
+    setPoints(totalSquadronPoints); // Set points to just squadron points
     setTotalShipPoints(0);
-    setHasCommander(false); // Add this line
+    setHasCommander(false);
     localStorage.removeItem(`savedFleet_${faction}`);
-  }, [removeUniqueClassName, setPoints, setSelectedShips, setTotalShipPoints]);
+  }, [points, totalShipPoints, totalSquadronPoints, removeUniqueClassName, faction, selectedShips]);
 
   const clearAllSquadrons = useCallback(() => {
     selectedSquadrons.forEach((squadron) => {
@@ -1331,11 +1330,11 @@ export default function FleetBuilder({
 
     setPreviousPoints(points);
     setPreviousSquadronPoints(totalSquadronPoints);
-    setPoints(points - totalSquadronPoints);
+    setPoints(totalShipPoints); // Set points to just ship points
     setTotalSquadronPoints(0);
     setSelectedSquadrons([]);
     localStorage.removeItem(`savedFleet_${faction}`);
-  }, [removeUniqueClassName, setPoints, setSelectedSquadrons, setTotalSquadronPoints]);
+  }, [points, totalShipPoints, totalSquadronPoints, removeUniqueClassName, faction, selectedSquadrons]);
 
   const handleMoveShip = (id: string, direction: 'up' | 'down') => {
     setSelectedShips(prevShips => {
