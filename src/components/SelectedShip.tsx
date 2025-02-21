@@ -23,9 +23,10 @@ interface SelectedShipProps {
   onMoveDown: (id: string) => void;
   isFirst: boolean;
   isLast: boolean;
+  greyUpgrades: string[];
 }
 
-export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRemoveUpgrade, disabledUpgrades, enabledUpgrades, filledSlots, hasCommander, onMoveUp, onMoveDown, isFirst, isLast }: SelectedShipProps) {
+export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRemoveUpgrade, disabledUpgrades, enabledUpgrades, filledSlots, hasCommander, onMoveUp, onMoveDown, isFirst, isLast, greyUpgrades }: SelectedShipProps) {
   const [isToolbarVisible, setIsToolbarVisible] = useState(true);
   const [{ x }, api] = useSpring(() => ({ x: 0 }));
   
@@ -237,6 +238,7 @@ export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRem
                 filledSlots={filledSlots}
                 hasCommander={hasCommander}
                 traits={ship.traits || []}
+                greyUpgrades={greyUpgrades}
               />
               <div className="p-2 space-y-2">
                 {ship.assignedUpgrades.map((upgrade, index) => (

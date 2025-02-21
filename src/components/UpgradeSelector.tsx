@@ -105,7 +105,8 @@ export default function UpgradeSelector({
                 disqual_upgrades: upgrade.restrictions?.disqual_upgrades || [],
                 disable_upgrades: upgrade.restrictions?.disable_upgrades || [],
                 enable_upgrades: upgrade.restrictions?.enable_upgrades || [],
-                disqualify_if: upgrade.restrictions?.disqualify_if || {}
+                disqualify_if: upgrade.restrictions?.disqualify_if || {},
+                grey_upgrades: upgrade.restrictions?.grey_upgrades || [],
               },
               source: prefix as ContentSource,
               searchableText: JSON.stringify({
@@ -305,6 +306,10 @@ export default function UpgradeSelector({
       return false;
     }
 
+    if (upgrade["unique-class"]?.some(uc => uniqueClassNames.includes(uc))) {
+      return false;
+    }
+
     if (shipSize === '280-huge' && upgrade.restrictions?.enable_upgrades && upgrade.restrictions.enable_upgrades.length > 0 && upgrade.restrictions.enable_upgrades.some(upgrade => upgrade.trim() !== '')) {
       return false;
     }
@@ -339,6 +344,7 @@ export default function UpgradeSelector({
 
     // Common checks for all upgrade types
     if (upgrade.restrictions) {
+
       const disqualOrDisable = [...(upgrade.restrictions.disqual_upgrades || []), ...(upgrade.restrictions.disable_upgrades || [])];
       if (currentShipUpgrades.some(su => disqualOrDisable.includes(su.type))) {
         return false;

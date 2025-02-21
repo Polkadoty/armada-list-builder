@@ -143,6 +143,7 @@ export interface Upgrade {
     disable_upgrades?: string[];
     enable_upgrades?: string[];
     disqual_upgrades?: string[];
+    grey_upgrades?: string[]; // Add this new property
     size?: string[];
     traits?: string[];
     disqualify_if?: {
@@ -290,6 +291,7 @@ export default function FleetBuilder({
   const [showDamageDeck, setShowDamageDeck] = useState(false);
   const [showDeleteShipsConfirmation, setShowDeleteShipsConfirmation] = useState(false);
   const [showDeleteSquadronsConfirmation, setShowDeleteSquadronsConfirmation] = useState(false);
+  const [greyUpgrades, setGreyUpgrades] = useState<Record<string, string[]>>({});
 
   const checkTournamentViolations = useMemo(() => {
     const violations: string[] = [];
@@ -660,6 +662,16 @@ export default function FleetBuilder({
     }
 
     setShowUpgradeSelector(false);
+
+    // Handle grey upgrades
+    const newGreyUpgrades = [...(greyUpgrades[currentShipId] || [])];
+    if (upgrade.restrictions?.grey_upgrades) {
+      newGreyUpgrades.push(...upgrade.restrictions.grey_upgrades);
+    }
+    setGreyUpgrades({
+      ...greyUpgrades,
+      [currentShipId]: newGreyUpgrades,
+    });
   };
 
   const handleAddUpgrade = useCallback((shipId: string, upgrade: Upgrade) => {
@@ -890,6 +902,14 @@ export default function FleetBuilder({
                   ),
                 }));
 
+                // Update grey_upgrades
+                setGreyUpgrades((prev) => ({
+                  ...prev,
+                  [shipId]: (prev[shipId] || []).filter(
+                    (u) => !upgrade.restrictions?.grey_upgrades?.includes(u)
+                  ),
+                }));
+
                 // If it's a title, remove the 'title' from disabled upgrades
                 if (upgrade.type === "title") {
                   setDisabledUpgrades((prev) => ({
@@ -968,6 +988,7 @@ export default function FleetBuilder({
       setPoints,
       setTotalShipPoints,
       setHasCommander,
+      greyUpgrades
     ]
   );
 
@@ -3435,7 +3456,7 @@ export default function FleetBuilder({
                       onMoveDown={() => handleMoveShip(ship.id, 'down')}
                       isFirst={ship.id === selectedShips[0].id}
                       isLast={ship.id === selectedShips[selectedShips.length - 1].id}
-
+                      greyUpgrades={greyUpgrades[ship.id] || []}
                     />
                   ))}
                 </div>
