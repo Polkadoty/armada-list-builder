@@ -52,10 +52,19 @@ export default function UpgradeIconsToolbar({ upgrades, onUpgradeClick, assigned
     >
       {Object.entries(upgradeCounts).flatMap(([upgrade, count]) => 
         Array(count).fill(0).map((_, index) => {
-          // Count how many slots of this type have already been processed
-          const previousSlotsOfType = index;
-          const isGreyedOut = greyUpgrades.includes(upgrade) && 
-            previousSlotsOfType < (greyedSlotCounts[upgrade] || 0);
+          // Get all filled slots for this upgrade type
+          const filledSlotsForType = filledSlots[upgrade] || [];
+          
+          // Check if this specific slot index is filled
+          const isSlotFilled = filledSlotsForType.includes(index);
+          
+          // Count unfilled slots before this one
+          const unfilledSlotsBefore = index - filledSlotsForType.filter(slot => slot < index).length;
+          
+          // Grey out the first unfilled slot if this upgrade type is in greyUpgrades
+          const isGreyedOut = !isSlotFilled && 
+            greyUpgrades.includes(upgrade) && 
+            unfilledSlotsBefore < (greyedSlotCounts[upgrade] || 0);
 
           const isDisabled = 
             disabledUpgrades.includes(upgrade) || 

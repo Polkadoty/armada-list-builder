@@ -300,6 +300,20 @@ export default function UpgradeSelector({
   }, [allUpgrades, activeSorts, searchQuery]);
 
   const isUpgradeAvailable = (upgrade: Upgrade) => {
+    // Add check for grey_upgrades availability
+    if (upgrade.restrictions?.grey_upgrades) {
+      for (const greyType of upgrade.restrictions.grey_upgrades) {
+        // Count how many slots of this type are available on the ship
+        const totalSlots = ship.availableUpgrades.filter(u => u === greyType).length;
+        // Count how many slots are already filled
+        const filledSlots = currentShipUpgrades.filter(u => u.type === greyType).length;
+        
+        // If all slots are filled, this upgrade can't be equipped
+        if (totalSlots <= filledSlots) {
+          return false;
+        }
+      }
+    }
 
     // Huge ships can't have enable_upgrades
     if (shipSize === 'huge' && upgrade.restrictions?.enable_upgrades && upgrade.restrictions.enable_upgrades.length > 0 && upgrade.restrictions.enable_upgrades.some(upgrade => upgrade.trim() !== '')) {
