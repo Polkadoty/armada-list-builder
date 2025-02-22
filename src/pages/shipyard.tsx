@@ -63,12 +63,12 @@ interface ShipyardItem {
 // };
 
 export default function Shipyard() {
-  /*eslint no-unused-vars: "off" */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { user } = useUser();
   const [searchQuery, setSearchQuery] = useState('');
-  /*eslint no-unused-vars: "off" */
+  /*eslint-disable-next-line @typescript-eslint/no-unused-vars */
   const [sortBy, setSortBy] = useState<'new'|'popular'|'rating'>('new');
-  /*eslint no-unused-vars: "off" */
+  /*eslint-disable-next-line @typescript-eslint/no-unused-vars */
   const [contentType, setContentType] = useState<'squadron'|'ship'|'upgrade'>('squadron');
   const [items, setItems] = useState<ShipyardItem[]>([]);
   const [selectedFaction, setSelectedFaction] = useState<string>('all');
