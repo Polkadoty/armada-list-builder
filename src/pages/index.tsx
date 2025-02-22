@@ -9,7 +9,7 @@ import { LoadingScreen } from '../components/LoadingScreen';
 import { checkAndFetchData } from '../utils/dataFetcher';
 import { ContentToggleButton } from '../components/ContentToggleButton';
 import { TextImportWindow } from '../components/TextImportWindow';
-import { Import, Hammer, Ship } from 'lucide-react';
+import { Import, Ship } from 'lucide-react';
 import { useRouter } from 'next/router';
 import { UserAvatar } from '../components/UserAvatar';
 import Head from 'next/head';

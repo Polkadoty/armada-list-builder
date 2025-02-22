@@ -15,7 +15,6 @@ import { useUser } from '@auth0/nextjs-auth0/client';
 // import { exportCardAsWebP } from '@/utils/cardExport';
 import { ArtworkUploader, type ArtworkTransform } from './ArtworkUploader';
 import html2canvas from 'html2canvas';
-import { replaceIconShortcodes } from '@/constants/icons';
 
 interface SquadronBuilderProps {
   onBack: () => void;
@@ -60,7 +59,6 @@ const ensureNonNegative = (value: string | number) => {
 export function SquadronBuilder({ onBack }: SquadronBuilderProps) {
   const { user } = useUser();
   const previewRef = useRef<HTMLDivElement>(null);
-  const [isSaving, setIsSaving] = useState(false);
 
   const [formData, setFormData] = useState({
     // Core squadron data
@@ -154,7 +152,6 @@ export function SquadronBuilder({ onBack }: SquadronBuilderProps) {
     e.preventDefault();
     if (!user) return;
     
-    setIsSaving(true);
     try {
       // Generate card image
       const cardImageData = await generateCardImage();
@@ -194,8 +191,6 @@ export function SquadronBuilder({ onBack }: SquadronBuilderProps) {
     } catch (error) {
       console.error('Error saving squadron:', error);
       // Add error handling UI here
-    } finally {
-      setIsSaving(false);
     }
   };
 

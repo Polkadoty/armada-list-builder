@@ -268,10 +268,10 @@ const StarryBackground: React.FC<{ show: boolean, lightDisabled?: boolean }> = (
     return stars;
   }, [getElementCounts]);
 
-  const stars = useMemo(() => generateStars(dimensions.width, dimensions.height), [dimensions.width, dimensions.height]);
-  const nebulaClouds = useMemo(() => generateNebulaClouds(dimensions.width, dimensions.height), [dimensions.width, dimensions.height]);
-  const centralStars = useMemo(() => generateCentralStars(dimensions.width, dimensions.height), [dimensions.width, dimensions.height]);
-  const fractalStreaks = useMemo(() => generateFractalStreaks(dimensions.width, dimensions.height), [dimensions.width, dimensions.height]);
+  const stars = useMemo(() => generateStars(dimensions.width, dimensions.height), [dimensions.width, dimensions.height, generateStars]);
+  const nebulaClouds = useMemo(() => generateNebulaClouds(dimensions.width, dimensions.height), [dimensions.width, dimensions.height, generateNebulaClouds]);
+  const centralStars = useMemo(() => generateCentralStars(dimensions.width, dimensions.height), [dimensions.width, dimensions.height, generateCentralStars]);
+  const fractalStreaks = useMemo(() => generateFractalStreaks(dimensions.width, dimensions.height), [dimensions.width, dimensions.height, generateFractalStreaks]);
 
   const animate = useCallback(() => {
     if (!show || !canvasRef.current) return;

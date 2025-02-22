@@ -36,36 +36,39 @@ interface ShipyardItem {
   unique: boolean;
 }
 
-const Nav = ({ className, ...props }: React.HTMLAttributes<HTMLElement>) => {
-  return (
-    <nav
-      className={cn("flex flex-col space-y-4", className)}
-      {...props}
-    >
-      <Button variant="ghost" className="w-full justify-start text-gray-900 dark:text-white">
-        <Home className="mr-2 h-4 w-4" />
-        <span>Home</span>
-      </Button>
-      <Button variant="ghost" className="w-full justify-start text-gray-900 dark:text-white">
-        <ThumbsUp className="mr-2 h-4 w-4" />
-        <span>My Likes</span>
-      </Button>
-      <Button variant="ghost" className="w-full justify-start text-gray-900 dark:text-white">
-        <Heart className="mr-2 h-4 w-4" />
-        <span>My Faves</span>
-      </Button>
-      <Button variant="ghost" className="w-full justify-start text-gray-900 dark:text-white">
-        <FolderOpen className="mr-2 h-4 w-4" />
-        <span>Collections</span>
-      </Button>
-    </nav>
-  );
-};
+// const Nav = ({ className, ...props }: React.HTMLAttributes<HTMLElement>) => {
+//   return (
+//     <nav
+//       className={cn("flex flex-col space-y-4", className)}
+//       {...props}
+//     >
+//       <Button variant="ghost" className="w-full justify-start text-gray-900 dark:text-white">
+//         <Home className="mr-2 h-4 w-4" />
+//         <span>Home</span>
+//       </Button>
+//       <Button variant="ghost" className="w-full justify-start text-gray-900 dark:text-white">
+//         <ThumbsUp className="mr-2 h-4 w-4" />
+//         <span>My Likes</span>
+//       </Button>
+//       <Button variant="ghost" className="w-full justify-start text-gray-900 dark:text-white">
+//         <Heart className="mr-2 h-4 w-4" />
+//         <span>My Faves</span>
+//       </Button>
+//       <Button variant="ghost" className="w-full justify-start text-gray-900 dark:text-white">
+//         <FolderOpen className="mr-2 h-4 w-4" />
+//         <span>Collections</span>
+//       </Button>
+//     </nav>
+//   );
+// };
 
 export default function Shipyard() {
+  /*eslint no-unused-vars: "off" */
   const { user } = useUser();
   const [searchQuery, setSearchQuery] = useState('');
+  /*eslint no-unused-vars: "off" */
   const [sortBy, setSortBy] = useState<'new'|'popular'|'rating'>('new');
+  /*eslint no-unused-vars: "off" */
   const [contentType, setContentType] = useState<'squadron'|'ship'|'upgrade'>('squadron');
   const [items, setItems] = useState<ShipyardItem[]>([]);
   const [selectedFaction, setSelectedFaction] = useState<string>('all');
@@ -126,7 +129,7 @@ export default function Shipyard() {
 
   useEffect(() => {
     fetchItems();
-  }, [sortBy, selectedFaction, filters, contentType]);
+  }, [fetchItems]);
 
   return (
     <>

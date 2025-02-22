@@ -75,7 +75,6 @@ export const ICON_MAP = {
   battery: '\u005A',
   unique: '\u0078',
 
-
   // Other
   recur: '\u0022',
   nonrecur: '\u0023',
@@ -93,7 +92,6 @@ export const ICON_MAP = {
   six_token: '\u00A6',
   die: '\u0077',
   dash: '\u0076',
-  
 
   // Faction
   rebel: '\u005B',
@@ -102,11 +100,6 @@ export const ICON_MAP = {
   scum: '\u007B',
   republic: '\u007C',
   separatist: '\u007D',
-
-
-
-
-
 
   // Add more icon mappings as needed
 } as const;

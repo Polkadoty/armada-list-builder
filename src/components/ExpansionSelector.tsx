@@ -1,7 +1,7 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Box, Trash2, X } from "lucide-react";
 import { LoadingScreen } from "./LoadingScreen";
 import Cookies from 'js-cookie';
@@ -53,7 +53,7 @@ export function ExpansionSelector({
   });
 
   // Load and filter expansions
-  const loadExpansions = () => {
+  const loadExpansions = useCallback(() => {
     const cachedExpansions = localStorage.getItem("expansions");
     if (cachedExpansions) {
       const data = JSON.parse(cachedExpansions);
@@ -82,10 +82,10 @@ export function ExpansionSelector({
         setDisplayedExpansions(filtered);
       }
     }
-  };
+  }, [contentSources]);
 
   // Load and filter releases
-  const loadReleases = () => {
+  const loadReleases = useCallback(() => {
     const cachedReleases = localStorage.getItem("releases");
     if (cachedReleases) {
       const data = JSON.parse(cachedReleases);
@@ -114,7 +114,7 @@ export function ExpansionSelector({
         setDisplayedReleases(filtered);
       }
     }
-  };
+  }, [contentSources]);
 
   // Check cookies and update content sources
   useEffect(() => {
