@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +14,8 @@ import { supabase } from '@/lib/supabase';
 import { useUser } from '@auth0/nextjs-auth0/client';
 // import { exportCardAsWebP } from '@/utils/cardExport';
 import { ArtworkUploader, type ArtworkTransform } from './ArtworkUploader';
+import html2canvas from 'html2canvas';
+import { replaceIconShortcodes } from '@/constants/icons';
 
 interface SquadronBuilderProps {
   onBack: () => void;
@@ -22,25 +24,25 @@ interface SquadronBuilderProps {
 type DefenseTokenType = 'scatter' | 'evade' | 'brace';
 
 const ABILITY_TEXT_TEMPLATES = {
-  adept: (value: number) => `\`adept\` **Adept ${value}.** *(While attacking, you may reroll up to ${value} die.)*`,
-  'ai-battery': (value: number) => `\`ai\` **AI: Battery ${value}.** *(While attacking a ship, if you were activated by a \`squad\` command, you may add ${value} die to your attack pool of a color that is already in your attack pool.)*`,
-  'ai-antisquadron': (value: number) => `\`ai\` **AI: Anti-Squadron ${value}.** *(While attacking a squadron, if you were activated by a \`squad\` command, you may add ${value} die to your attack pool of a color that is already in your attack pool.)*`,
-  assault: () => `\`assault\` **Assault.** *(While attacking a ship, you may spend 1 die with a \`hit\` icon. If you do, the defender gains 1 raid token of your choice.)*`,
-  bomber: () => `\`bomber\` **Bomber.** *(While attacking a ship, each of your \`crit\` icons adds 1 damage to the damage total and you can resolve a critical effect.)*`,
-  cloak: () => `\`cloak\` **Cloak.** *(At the end of the Squadron Phase, you may move up to distance 1, even if you are engaged.)*`,
-  counter: (value: number) => `\`counter\` **Counter ${value}.** *(After a squadron performs a non-**counter** attack against you, you may attack that squadron with an anti-squadron armament of ${value} blue dice, even if you are destroyed.)*`,
-  dodge: (value: number) => `\`dodge\` **Dodge ${value}.** *(While you are defending against a squadron, during the Spend Defense Tokens step, you may choose ${value} die to be rerolled.)*`,
-  escort: () => `\`escort\` **Escort.** *(Squadrons you are engaged with cannot attack squadrons that lack **escort** unless performing a **counter** attack.)*`,
-  grit: () => `\`grit\` **Grit.** *(You are not prevented from moving while you are engaged by only 1 squadron.)*`,
-  heavy: () => `\`heavy\` **Heavy.** *(You do not prevent engaged squadrons from attacking ships or moving.)*`,
-  intel: () => `\`intel\` **Intel.** *(While a friendly squadron is at distance 1 of you, it has **grit**.)*`,
-  relay: (value: number) => `\`relay\` **Relay ${value}.** *(When a friendly ship resolves a \`squad\` command, if you are in range to be activated, up to ${value} of the squadrons it activates can be at distance 1-3 of you.)*`,
-  rogue: () => `\`rogue\` **Rogue.** *(You can move and attack during the Squadron Phase.)*`,
-  scout: () => `\`scout\` **Scout.** *(While deploying fleets you may be placed outside of the deployment zone and don't have to be placed within distance 1-2 of a friendly ship. You must be placed beyond distance 1-5 of all enemy ships and enemy squadrons.)*`,
-  screen: () => `\`screen\` **Screen.** *(While you are defending, for each other friendly squadron the attacker is engaged with that lacks **screen**, up to 3, you gain **dodge 1**.)*`,
-  snipe: (value: number) => `\`snipe\` **Snipe ${value}.** *(You can attack squadrons at distance 2 with anti-squadron armament of ${value} blue dice. This attack ignores the **counter** keyword.)*`,
-  strategic: () => `\`strategic\` **Strategic.** *(When you end your movement at distance 1 of 1 or more objective tokens, you may move 1 of those tokens so that it is at distance 1 of you.)*`,
-  swarm: () => `\`swarm\` **Swarm.** *(While attacking a squadron engaged with another squadron, you may reroll 1 die.)*`,
+  adept: (value: number) => `:adept: **Adept ${value}.** *(While attacking, you may reroll up to ${value} die.)*`,
+  'ai-battery': (value: number) => `:ai: **AI: Battery ${value}.** *(While attacking a ship, if you were activated by a \`squad\` command, you may add ${value} die to your attack pool of a color that is already in your attack pool.)*`,
+  'ai-antisquadron': (value: number) => `:ai: **AI: Anti-Squadron ${value}.** *(While attacking a squadron, if you were activated by a \`squad\` command, you may add ${value} die to your attack pool of a color that is already in your attack pool.)*`,
+  assault: () => `:assault: **Assault.** *(While attacking a ship, you may spend 1 die with a \`hit\` icon. If you do, the defender gains 1 raid token of your choice.)*`,
+  bomber: () => `:bomber: **Bomber.** *(While attacking a ship, each of your :crit: icons adds 1 damage to the damage total and you can resolve a critical effect.)*`,
+  cloak: () => `:cloak: **Cloak.** *(At the end of the Squadron Phase, you may move up to distance 1, even if you are engaged.)*`,
+  counter: (value: number) => `:counter: **Counter ${value}.** *(After a squadron performs a non-**counter** attack against you, you may attack that squadron with an anti-squadron armament of ${value} blue dice, even if you are destroyed.)*`,
+  dodge: (value: number) => `:dodge: **Dodge ${value}.** *(While you are defending against a squadron, during the Spend Defense Tokens step, you may choose ${value} die to be rerolled.)*`,
+  escort: () => `:escort: **Escort.** *(Squadrons you are engaged with cannot attack squadrons that lack **escort** unless performing a **counter** attack.)*`,
+  grit: () => `:grit: **Grit.** *(You are not prevented from moving while you are engaged by only 1 squadron.)*`,
+  heavy: () => `:heavy: **Heavy.** *(You do not prevent engaged squadrons from attacking ships or moving.)*`,
+  intel: () => `:intel: **Intel.** *(While a friendly squadron is at distance 1 of you, it has **grit**.)*`,
+  relay: (value: number) => `:relay: **Relay ${value}.** *(When a friendly ship resolves a \`squad\` command, if you are in range to be activated, up to ${value} of the squadrons it activates can be at distance 1-3 of you.)*`,
+  rogue: () => `:rogue: **Rogue.** *(You can move and attack during the Squadron Phase.)*`,
+  scout: () => `:scout: **Scout.** *(While deploying fleets you may be placed outside of the deployment zone and don't have to be placed within distance 1-2 of a friendly ship. You must be placed beyond distance 1-5 of all enemy ships and enemy squadrons.)*`,
+  screen: () => `:screen: **Screen.** *(While you are defending, for each other friendly squadron the attacker is engaged with that lacks **screen**, up to 3, you gain **dodge 1**.)*`,
+  snipe: (value: number) => `:snipe: **Snipe ${value}.** *(You can attack squadrons at distance 2 with anti-squadron armament of ${value} blue dice. This attack ignores the **counter** keyword.)*`,
+  strategic: () => `:strategic: **Strategic.** *(When you end your movement at distance 1 of 1 or more objective tokens, you may move 1 of those tokens so that it is at distance 1 of you.)*`,
+  swarm: () => `:swarm: **Swarm.** *(While attacking a squadron engaged with another squadron, you may reroll 1 die.)*`,
 };
 
 const DICE_COLOR_STYLES = {
@@ -55,8 +57,11 @@ const ensureNonNegative = (value: string | number) => {
   return Math.max(0, num);
 };
 
-export function SquadronBuilder({ onBack }: Omit<SquadronBuilderProps, 'userId'>) {
+export function SquadronBuilder({ onBack }: SquadronBuilderProps) {
   const { user } = useUser();
+  const previewRef = useRef<HTMLDivElement>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
   const [formData, setFormData] = useState({
     // Core squadron data
     name: '',
@@ -127,34 +132,85 @@ export function SquadronBuilder({ onBack }: Omit<SquadronBuilderProps, 'userId'>
       scale: 1,
       rotation: 0,
       flipped: false
-    } as ArtworkTransform
+    } as ArtworkTransform,
+    import_alias: '',
+    published: false,
+    version: 1,
+    tags: [] as string[],
   });
+
+  const generateCardImage = async (): Promise<string | null> => {
+    if (!previewRef.current) return null;
+    
+    const canvas = await html2canvas(previewRef.current, {
+      scale: 2,
+      backgroundColor: null,
+    });
+    
+    return canvas.toDataURL('image/webp');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) return;
     
-    if (!user) {
-      console.error('Not authenticated');
-      return;
-    }
-
+    setIsSaving(true);
     try {
-      const { error } = await supabase
+      // Generate card image
+      const cardImageData = await generateCardImage();
+      if (!cardImageData) throw new Error('Failed to generate card image');
+
+      // Upload card image to Supabase storage
+      const cardImagePath = `squadrons/${user.sub}/${Date.now()}-card.webp`;
+      const { error: uploadError } = await supabase.storage
+        .from('custom-content')
+        .upload(cardImagePath, base64ToBlob(cardImageData), {
+          contentType: 'image/webp'
+        });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL for card image
+      const { data: { publicUrl: cardImageUrl } } = supabase.storage
+        .from('custom-content')
+        .getPublicUrl(cardImagePath);
+
+      // Save squadron data
+      const { error: dbError } = await supabase
         .from('custom_squadrons')
         .insert({
           ...formData,
           user_id: user.sub,
-          is_public: true
-        })
-        .select()
-        .single();
+          cardimage: cardImageUrl,
+          artwork: formData.artwork || null,
+          import_alias: `squadron-${Date.now()}`,
+          is_public: true,
+        });
 
-      if (error) throw error;
-      
+      if (dbError) throw dbError;
+
+      // Success! Go back to workshop
       onBack();
     } catch (error) {
       console.error('Error saving squadron:', error);
+      // Add error handling UI here
+    } finally {
+      setIsSaving(false);
     }
+  };
+
+  // Helper function to convert base64 to blob
+  const base64ToBlob = (base64: string): Blob => {
+    const byteString = atob(base64.split(',')[1]);
+    const mimeString = base64.split(',')[0].split(':')[1].split(';')[0];
+    const ab = new ArrayBuffer(byteString.length);
+    const ia = new Uint8Array(ab);
+    
+    for (let i = 0; i < byteString.length; i++) {
+      ia[i] = byteString.charCodeAt(i);
+    }
+    
+    return new Blob([ab], { type: mimeString });
   };
 
   const updateAbilityText = (ability: string, value: boolean | number) => {
@@ -486,7 +542,9 @@ export function SquadronBuilder({ onBack }: Omit<SquadronBuilderProps, 'userId'>
 
       <div className="lg:fixed lg:top-24 lg:right-6 lg:w-[400px] w-full mt-6 lg:mt-0">
         <div className="sticky top-24">
-          <SquadronCardPreview formData={formData} />
+          <div ref={previewRef}>
+            <SquadronCardPreview formData={formData} />
+          </div>
         </div>
       </div>
     </div>

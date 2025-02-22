@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { ArtworkTransform } from './ArtworkUploader';
+import { replaceIconShortcodes } from '@/constants/icons';
 
 interface SquadronCardPreviewProps {
   formData: {
@@ -168,9 +169,16 @@ export function SquadronCardPreview({ formData }: SquadronCardPreviewProps) {
                    padding: '2px',
                    whiteSpace: 'pre-wrap',  // Preserve line breaks
                  }}>
-              {formData.ability.split(/(\*\*.*?\*\*|\`.*?\`|\*.*?\*|\n)/).map((segment, index) => {
+              {formData.ability.split(/(\:.*?\:|`.*?`|\*\*.*?\*\*|\*.*?\*|\n)/).map((segment, index) => {
                 if (segment === '\n') {
                   return <br key={index} />;
+                } else if (segment.match(/^:.*?:$/)) {
+                  // Handle icon shortcodes
+                  return (
+                    <span key={index} className="icon">
+                      {replaceIconShortcodes(segment)}
+                    </span>
+                  );
                 } else if (segment.startsWith('**') && segment.endsWith('**')) {
                   return (
                     <span key={index} style={{ fontFamily: 'FighterKeyword' }}>
@@ -178,6 +186,7 @@ export function SquadronCardPreview({ formData }: SquadronCardPreviewProps) {
                     </span>
                   );
                 } else if (segment.startsWith('`') && segment.endsWith('`')) {
+                  // Keep legacy icon support for now
                   const iconChar = segment.slice(1, -1);
                   const iconVar = `--icon-${iconChar}`;
                   return (

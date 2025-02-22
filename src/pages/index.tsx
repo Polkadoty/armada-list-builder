@@ -9,7 +9,7 @@ import { LoadingScreen } from '../components/LoadingScreen';
 import { checkAndFetchData } from '../utils/dataFetcher';
 import { ContentToggleButton } from '../components/ContentToggleButton';
 import { TextImportWindow } from '../components/TextImportWindow';
-import { Import } from 'lucide-react';
+import { Import, Hammer, Ship } from 'lucide-react';
 import { useRouter } from 'next/router';
 import { UserAvatar } from '../components/UserAvatar';
 import Head from 'next/head';
@@ -120,7 +120,16 @@ export default function Home() {
                 DONATE
               </Button>
             </div>
-            <WorkshopButton />
+            <div className="flex items-center gap-2">
+              <WorkshopButton />
+              <Link href="/shipyard">
+                <Button variant="outline" className="flex items-center gap-2 logo-font">
+                  <Ship className="h-4 w-4" />
+                  Shipyard
+                </Button>
+              </Link>
+            </div>
+
           </div>
         </div>
         {isWideScreen && mounted && (
