@@ -901,6 +901,7 @@ export function SquadronBuilder({ onBack }: SquadronBuilderProps) {
               <PopoverContent className="w-80 bg-gray-800 border border-gray-700">
                 <ScrollArea className="h-[300px]">
                   <div className="p-4 space-y-2">
+                    {/* eslint-disable-next-line @typescript-eslint/no-unused-vars */}
                     {Object.entries(formData.abilities).map(([ability, value]) => {
                       const formattedAbility = ability
                         .split('-')
