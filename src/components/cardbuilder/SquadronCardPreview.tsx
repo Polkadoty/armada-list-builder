@@ -75,6 +75,19 @@ export function SquadronCardPreview({ formData, exportMode }: SquadronCardPrevie
   return (
     <div className="relative w-full max-w-[400px] aspect-[2.5/3.5] bg-black/50 rounded-lg overflow-hidden">
       <div className="relative w-full h-full">
+        {/* Title text */}
+        <div className="absolute z-50 w-full text-center" 
+             style={{ 
+               top: `${2 + textShift}%`,
+               fontFamily: 'Title',
+               fontSize: '20pt',
+               color: '#ffffff',
+               textShadow: '0 0 4px rgba(0, 0, 0, 0.8)',
+               letterSpacing: '1px'
+             }}>
+          Star Forge Cardbuilder
+        </div>
+
         {/* Add silhouette layer */}
         {formData.silhouette && (
           <div className="absolute bottom-[5%] left-[5%] z-30 w-[15%]">

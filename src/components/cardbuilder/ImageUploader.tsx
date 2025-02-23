@@ -1,8 +1,9 @@
 import { useState, useRef } from 'react';
 import { Button } from "@/components/ui/button";
-import { Upload, RotateCw, FlipHorizontal, ZoomIn, ZoomOut, Move, Trash2, X } from 'lucide-react';
+import { Upload, RotateCw, FlipHorizontal, ZoomIn } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import Image from "next/image";
+import { Move, X } from 'lucide-react';
 
 interface ImageUploaderProps extends React.HTMLAttributes<HTMLDivElement> {
   onImageChange: (image: string, transform?: ImageTransform) => void;
@@ -50,7 +51,6 @@ export function ImageUploader({
   const [image, setImage] = useState<string>(initialImage);
   const [transform, setTransform] = useState<ImageTransform>(initialTransform);
   const [isDragging, setIsDragging] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileUpload = (file: File) => {

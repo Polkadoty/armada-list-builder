@@ -4,19 +4,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-// import { Card } from "@/components/ui/card";
-import { ArrowLeft, Plus, Download, X } from 'lucide-react';
+import { ArrowLeft, Plus, Download } from 'lucide-react';
 import { SquadronCardPreview } from './SquadronCardPreview';
-// import { SquadronBasePreview } from './SquadronBasePreview';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { supabase } from '@/lib/supabase';
 import { useUser } from '@auth0/nextjs-auth0/client';
-// import { exportCardAsWebP } from '@/utils/cardExport';
-import { ArtworkUploader, type ArtworkTransform } from './ArtworkUploader';
 import html2canvas from 'html2canvas';
-import Image from 'next/image';
 import { ImageUploader } from './ImageUploader';
+import { type ArtworkTransform } from './ArtworkUploader';
 
 interface SquadronBuilderProps {
   onBack: () => void;
@@ -364,11 +360,13 @@ export function SquadronBuilder({ onBack }: SquadronBuilderProps) {
     setFormData({ ...formData, ability: lines.join('\n').trim() });
   };
 
-  const renderDiceLabel = (color: keyof typeof DICE_COLOR_STYLES) => (
-    <Label className={`text-xs ${DICE_COLOR_STYLES[color]}`}>
-      {color.charAt(0).toUpperCase() + color.slice(1)}
-    </Label>
-  );
+  const renderDiceLabel = (type: string) => {
+    return (
+      <div className="flex items-center gap-2">
+        <span>{type}</span>
+      </div>
+    );
+  };
 
   const handleDownload = async () => {
     if (!hiddenRef.current) return;
