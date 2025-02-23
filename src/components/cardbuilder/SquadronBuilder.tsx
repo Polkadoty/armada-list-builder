@@ -75,12 +75,6 @@ const ABILITY_TEXT_TEMPLATES = {
   swarm: () => `:swarm: **Swarm.** *(While attacking a squadron engaged with another squadron, you may reroll 1 die.)*`,
 };
 
-const DICE_COLOR_STYLES = {
-  red: "text-red-500",
-  blue: "text-blue-500",
-  black: "text-gray-300"
-} as const;
-
 // Helper function to ensure non-negative numbers
 const ensureNonNegative = (value: string | number) => {
   const num = typeof value === 'string' ? parseInt(value) : value;
@@ -358,14 +352,6 @@ export function SquadronBuilder({ onBack }: SquadronBuilderProps) {
     }
 
     setFormData({ ...formData, ability: lines.join('\n').trim() });
-  };
-
-  const renderDiceLabel = (type: string) => {
-    return (
-      <div className="flex items-center gap-2">
-        <span>{type}</span>
-      </div>
-    );
   };
 
   const handleDownload = async () => {
