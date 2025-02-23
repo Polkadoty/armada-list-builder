@@ -56,7 +56,7 @@ export function convertDisplayToArmament(display: DiceDisplay): [number, number,
 const ABILITY_TEXT_TEMPLATES = {
   adept: (value: number) => `:adept: **Adept ${value}.** *(While attacking, you may reroll up to ${value} die.)*`,
   'ai-battery': (value: number) => `:ai: **AI: Battery ${value}.** *(While attacking a ship, if you were activated by a :squad: command, you may add ${value} die to your attack pool of a color that is already in your attack pool.)*`,
-  'ai-antisquadron': (value: number) => `:ai: **AI: Anti-Squadron ${value}.** *(While attacking a squadron, if you were activated by a :squad: command, you may add ${value} die to your attack pool of a color that is already in your attack pool.)*`,
+  'ai-anti-squadron': (value: number) => `:ai: **AI: Anti-Squadron ${value}.** *(While attacking a squadron, if you were activated by a :squad: command, you may add ${value} die to your attack pool of a color that is already in your attack pool.)*`,
   assault: () => `:assault: **Assault.** *(While attacking a ship, you may spend 1 die with a :hit: icon. If you do, the defender gains 1 raid token of your choice.)*`,
   bomber: () => `:bomber: **Bomber.** *(While attacking a ship, each of your :crit: icons adds 1 damage to the damage total and you can resolve a critical effect.)*`,
   cloak: () => `:cloak: **Cloak.** *(At the end of the Squadron Phase, you may move up to distance 1, even if you are engaged.)*`,
@@ -108,7 +108,7 @@ interface FormData {
   abilities: {
     adept: number;
     'ai-battery': number;
-    'ai-antisquadron': number;
+    'ai-anti-squadron': number;
     assault: boolean;
     bomber: boolean;
     cloak: boolean;
@@ -185,7 +185,7 @@ export function SquadronBuilder({ onBack }: SquadronBuilderProps) {
     abilities: {
       adept: 0,
       'ai-battery': 0,
-      'ai-antisquadron': 0,
+      'ai-anti-squadron': 0,
       assault: false,
       bomber: false,
       cloak: false,
@@ -242,8 +242,45 @@ export function SquadronBuilder({ onBack }: SquadronBuilderProps) {
   const [aceNameItalics, setAceNameItalics] = useState(false);
 
   // Add these state variables near the top of the component with other useState declarations
-  const [nameFontSize, setNameFontSize] = useState<number>(20); // Default font size for chassis name
-  const [aceNameFontSize, setAceNameFontSize] = useState<number>(20); // Default font size for ace name
+  const [nameFontSize, setNameFontSize] = useState<number>(22); // Default chassis name font size
+  const [aceNameFontSize, setAceNameFontSize] = useState<number>(20); // Default ace name font size
+
+  // Add this new state near the top of the component
+  const [useShortAbilities, setUseShortAbilities] = useState(false);
+
+  // Create a helper to identify which abilities use numbers
+  const NUMERIC_ABILITIES = {
+    adept: true,
+    'ai-battery': true,
+    'ai-anti-squadron': true,
+    counter: true,
+    dodge: true,
+    relay: true,
+    snipe: true
+  };
+
+  // Update the ability text templates for short format
+  const SHORT_ABILITY_TEXT_TEMPLATES = {
+    adept: (value: number) => `:adept: **Adept ${value}**`,
+    'ai-battery': (value: number) => `:ai: **AI: Battery ${value}**`,
+    'ai-anti-squadron': (value: number) => `:ai: **AI: Anti-Squadron ${value}**`,
+    counter: (value: number) => `:counter: **Counter ${value}**`,
+    dodge: (value: number) => `:dodge: **Dodge ${value}**`,
+    relay: (value: number) => `:relay: **Relay ${value}**`,
+    snipe: (value: number) => `:snipe: **Snipe ${value}**`,
+    assault: () => `:assault: **Assault**`,
+    bomber: () => `:bomber: **Bomber**`,
+    cloak: () => `:cloak: **Cloak**`,
+    escort: () => `:escort: **Escort**`,
+    grit: () => `:grit: **Grit**`,
+    heavy: () => `:heavy: **Heavy**`,
+    intel: () => `:intel: **Intel**`,
+    rogue: () => `:rogue: **Rogue**`,
+    scout: () => `:scout: **Scout**`,
+    screen: () => `:screen: **Screen**`,
+    strategic: () => `:strategic: **Strategic**`,
+    swarm: () => `:swarm: **Swarm**`,
+  };
 
   // When either drop-down changes, update the tokens object (which is used for JSON output).
   useEffect(() => {
@@ -339,23 +376,66 @@ export function SquadronBuilder({ onBack }: SquadronBuilderProps) {
     return new Blob([ab], { type: mimeString });
   };
 
+  // Helper function to format ability name for text matching
+  const formatAbilityForMatch = (ability: string): string => {
+    return ability.split('-').map(word => {
+      if (word.toLowerCase() === 'ai') return 'AI';
+      if (word === 'anti') return 'Anti';
+      if (word === 'squadron') return 'Squadron';
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    }).join(' ');
+  };
+
+  // Update the updateAbilityText function
   const updateAbilityText = (ability: string, value: boolean | number) => {
-    const template = ABILITY_TEXT_TEMPLATES[ability as keyof typeof ABILITY_TEXT_TEMPLATES];
+    const template = useShortAbilities 
+      ? SHORT_ABILITY_TEXT_TEMPLATES[ability as keyof typeof SHORT_ABILITY_TEXT_TEMPLATES]
+      : ABILITY_TEXT_TEMPLATES[ability as keyof typeof ABILITY_TEXT_TEMPLATES];
+    
     if (!template) return;
 
-    // Split existing text into lines and filter out the line containing this ability
-    const lines = formData.ability.split('\n').filter(line => !line.includes(`\`${ability}\``));
+    // Split existing text into lines
+    const lines = formData.ability.split('\n').filter(line => line.trim() !== '');
     
-    // Only add new text if the value is truthy
+    // Format the ability name for matching
+    const formattedAbility = formatAbilityForMatch(ability);
+    
+    // Find if this ability already exists
+    const abilityIndex = lines.findIndex(line => {
+      // Special handling for AI abilities
+      if (ability.startsWith('ai-')) {
+        // Handle both "Anti-Squadron" and "Anti Squadron" formats
+        const searchTerm = ability === 'ai-anti-squadron' 
+          ? 'AI: Anti-Squadron'
+          : `AI: ${formattedAbility.split('AI ')[1]}`;
+        return line.includes('**' + searchTerm);
+      }
+      return line.includes(`**${formattedAbility}`);
+    });
+
+    // Remove existing ability if found
+    if (abilityIndex !== -1) {
+      lines.splice(abilityIndex, 1);
+    }
+
+    // Add new text if the value is truthy
     if (value) {
-      if (typeof value === 'number') {
+      if (typeof value === 'number' && value > 0) {
         lines.push(template(value));
       } else if (value === true) {
         lines.push(template(0));
       }
     }
 
-    setFormData({ ...formData, ability: lines.join('\n').trim() });
+    // Update form data with both the new ability value and text
+    setFormData(prev => ({
+      ...prev,
+      abilities: {
+        ...prev.abilities,
+        [ability]: value
+      },
+      ability: lines.join('\n').trim()
+    }));
   };
 
   const handleDownload = async () => {
@@ -833,33 +913,49 @@ export function SquadronBuilder({ onBack }: SquadronBuilderProps) {
                       return (
                         <div key={ability} className="flex items-center justify-between">
                           <Label className="text-sm text-gray-200">{formattedAbility}</Label>
-                          {typeof value === 'boolean' ? (
+                          <div className="flex items-center gap-2">
+                            {NUMERIC_ABILITIES[ability as keyof typeof NUMERIC_ABILITIES] && (
+                              <div className="flex items-center">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-6 w-6 p-0"
+                                  onClick={() => {
+                                    const currentValue = formData.abilities[ability as keyof typeof formData.abilities] as number;
+                                    const newValue = Math.max(0, currentValue - 1);
+                                    updateAbilityText(ability, newValue);
+                                  }}
+                                >
+                                  -
+                                </Button>
+                                <span className="w-8 text-center">
+                                  {formData.abilities[ability as keyof typeof formData.abilities]}
+                                </span>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-6 w-6 p-0"
+                                  onClick={() => {
+                                    const currentValue = formData.abilities[ability as keyof typeof formData.abilities] as number;
+                                    const newValue = currentValue + 1;
+                                    updateAbilityText(ability, newValue);
+                                  }}
+                                >
+                                  +
+                                </Button>
+                              </div>
+                            )}
                             <Switch
-                              checked={formData.abilities[ability as keyof typeof formData.abilities] as boolean}
+                              checked={Boolean(formData.abilities[ability as keyof typeof formData.abilities])}
                               onCheckedChange={(checked) => {
-                                setFormData({
-                                  ...formData,
-                                  abilities: { ...formData.abilities, [ability]: checked }
-                                });
-                                updateAbilityText(ability, checked);
-                              }}
-                            />
-                          ) : (
-                            <Input
-                              type="number"
-                              min="0"
-                              value={String(formData.abilities[ability as keyof typeof formData.abilities])}
-                              onChange={(e) => {
-                                const newValue = ensureNonNegative(e.target.value);
-                                setFormData({
-                                  ...formData,
-                                  abilities: { ...formData.abilities, [ability]: newValue }
-                                });
+                                const newValue = checked 
+                                  ? (NUMERIC_ABILITIES[ability as keyof typeof NUMERIC_ABILITIES] ? 1 : true)
+                                  : (NUMERIC_ABILITIES[ability as keyof typeof NUMERIC_ABILITIES] ? 0 : false);
                                 updateAbilityText(ability, newValue);
                               }}
-                              className="w-20 h-8 text-sm bg-gray-700"
+                              className="custom-switch"
                             />
-                          )}
+                          </div>
                         </div>
                       );
                     })}
@@ -871,6 +967,27 @@ export function SquadronBuilder({ onBack }: SquadronBuilderProps) {
         </div>
 
         <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6">
+          <div className="flex items-center justify-between mb-4">
+            <Label htmlFor="short-abilities" className="text-sm font-medium">
+              Use Short Ability Format
+            </Label>
+            <Switch
+              id="short-abilities"
+              checked={useShortAbilities}
+              onCheckedChange={(checked) => {
+                setUseShortAbilities(checked);
+                // Reformat all current abilities
+                const currentAbilities = formData.abilities;
+                Object.entries(currentAbilities).forEach(([ability, value]) => {
+                  if (value) {
+                    updateAbilityText(ability, value);
+                  }
+                });
+              }}
+              className="custom-switch"
+            />
+          </div>
+          
           <Label htmlFor="ability" className="text-gray-200 mb-2 block">Card Ability Text</Label>
           <textarea
             id="ability"
@@ -989,6 +1106,8 @@ export function SquadronBuilder({ onBack }: SquadronBuilderProps) {
                   unique: formData.is_unique,
                   nameItalics,
                   aceNameItalics,
+                  nameFontSize,
+                  aceNameFontSize,
                 }}
                 exportMode
               />

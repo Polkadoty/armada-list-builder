@@ -85,7 +85,9 @@ export function SquadronCardPreview({ formData, exportMode }: SquadronCardPrevie
                fontSize: '20pt',
                color: '#ffffff',
                textShadow: '0 0 4px rgba(0, 0, 0, 0.8)',
-               letterSpacing: '1px'
+               letterSpacing: '1px',
+               WebkitTextStroke: 'black', // Change to apply stroke color
+               WebkitTextFillColor: 'white', // Make the text fill transparent
              }}>
           Star Forge Cardbuilder
         </div>

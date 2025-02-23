@@ -62,10 +62,10 @@ export function DiceDisplay({ count, colors }: DiceDisplayProps) {
     if (count === 3) {
       return (
         <div style={containerStyle}>
-          <div style={{ width: '100%', display: 'flex', justifyContent: 'center', height: '12px', gap: '4px' }}>
+          <div style={{ width: '100%', display: 'flex', justifyContent: 'center', height: '14px', gap: '4px' }}>
             {dice.slice(0, 2)}
           </div>
-          <div style={{ width: '100%', display: 'flex', justifyContent: 'center', height: '13px', marginTop: '-13px' }}>
+          <div style={{ width: '100%', display: 'flex', justifyContent: 'center', height: '14px', marginTop: '-13px' }}>
             {dice[2]}
           </div>
         </div>
@@ -75,10 +75,10 @@ export function DiceDisplay({ count, colors }: DiceDisplayProps) {
     if (count === 4) {
       return (
         <div style={containerStyle}>
-          <div style={{ width: '100%', display: 'flex', justifyContent: 'center', height: '12px', gap: '3px' }}>
+          <div style={{ width: '100%', display: 'flex', justifyContent: 'center', height: '14px', gap: '3px' }}>
             {dice.slice(0, 2)}
           </div>
-          <div style={{ width: '100%', display: 'flex', justifyContent: 'center', height: '13px', gap: '3px', marginTop: '-13px', paddingLeft: `${parseInt(diceSize) * 1.1}px` }}>
+          <div style={{ width: '100%', display: 'flex', justifyContent: 'center', height: '14px', gap: '3px', marginTop: '-13px', paddingLeft: `${parseInt(diceSize) * 1.1}px` }}>
             {dice.slice(2, 4)}
           </div>
         </div>
