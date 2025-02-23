@@ -96,7 +96,7 @@ export function ArtworkUploader({ onArtworkChange }: ArtworkUploaderProps) {
               onClick={() => handleTransformChange({ rotation: transform.rotation + 90 })}
             >
               <RotateCw className="h-4 w-4 mr-2" />
-              Rotate
+              Rotate 90°
             </Button>
             <Button
               variant="outline"
@@ -109,15 +109,44 @@ export function ArtworkUploader({ onArtworkChange }: ArtworkUploaderProps) {
           </div>
           
           <div className="space-y-1">
+            <label className="text-sm">Rotation (degrees)</label>
+            <input
+              type="range"
+              min="0"
+              max="360"
+              value={transform.rotation}
+              onChange={(e) => handleTransformChange({ rotation: parseInt(e.target.value) })}
+              className="w-full"
+            />
+            <input
+              type="number"
+              min="0"
+              max="360"
+              value={transform.rotation}
+              onChange={(e) => handleTransformChange({ rotation: parseInt(e.target.value) })}
+              className="w-20 text-sm p-1 border rounded"
+            />
+          </div>
+
+          <div className="space-y-1">
             <label className="text-sm">Scale</label>
             <input
               type="range"
               min="0.1"
               max="2"
-              step="0.1"
+              step="0.05"
               value={transform.scale}
               onChange={(e) => handleTransformChange({ scale: parseFloat(e.target.value) })}
               className="w-full"
+            />
+            <input
+              type="number"
+              min="0.1"
+              max="2"
+              step="0.05"
+              value={transform.scale}
+              onChange={(e) => handleTransformChange({ scale: parseFloat(e.target.value) })}
+              className="w-20 text-sm p-1 border rounded"
             />
           </div>
 
@@ -127,9 +156,18 @@ export function ArtworkUploader({ onArtworkChange }: ArtworkUploaderProps) {
               type="range"
               min="-500"
               max="500"
+              step="1"
               value={transform.x}
               onChange={(e) => handleTransformChange({ x: parseInt(e.target.value) })}
               className="w-full"
+            />
+            <input
+              type="number"
+              min="-500"
+              max="500"
+              value={transform.x}
+              onChange={(e) => handleTransformChange({ x: parseInt(e.target.value) })}
+              className="w-20 text-sm p-1 border rounded"
             />
           </div>
 
@@ -139,9 +177,84 @@ export function ArtworkUploader({ onArtworkChange }: ArtworkUploaderProps) {
               type="range"
               min="-500"
               max="500"
+              step="1"
               value={transform.y}
               onChange={(e) => handleTransformChange({ y: parseInt(e.target.value) })}
               className="w-full"
+            />
+            <input
+              type="number"
+              min="-500"
+              max="500"
+              value={transform.y}
+              onChange={(e) => handleTransformChange({ y: parseInt(e.target.value) })}
+              className="w-20 text-sm p-1 border rounded"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-sm">Brightness</label>
+            <input
+              type="range"
+              min="0"
+              max="2"
+              step="0.05"
+              value={transform.brightness}
+              onChange={(e) => handleTransformChange({ brightness: parseFloat(e.target.value) })}
+              className="w-full"
+            />
+            <input
+              type="number"
+              min="0"
+              max="2"
+              step="0.05"
+              value={transform.brightness}
+              onChange={(e) => handleTransformChange({ brightness: parseFloat(e.target.value) })}
+              className="w-20 text-sm p-1 border rounded"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-sm">Contrast</label>
+            <input
+              type="range"
+              min="0"
+              max="2"
+              step="0.05"
+              value={transform.contrast}
+              onChange={(e) => handleTransformChange({ contrast: parseFloat(e.target.value) })}
+              className="w-full"
+            />
+            <input
+              type="number"
+              min="0"
+              max="2"
+              step="0.05"
+              value={transform.contrast}
+              onChange={(e) => handleTransformChange({ contrast: parseFloat(e.target.value) })}
+              className="w-20 text-sm p-1 border rounded"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-sm">Opacity</label>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.05"
+              value={transform.opacity}
+              onChange={(e) => handleTransformChange({ opacity: parseFloat(e.target.value) })}
+              className="w-full"
+            />
+            <input
+              type="number"
+              min="0"
+              max="1"
+              step="0.05"
+              value={transform.opacity}
+              onChange={(e) => handleTransformChange({ opacity: parseFloat(e.target.value) })}
+              className="w-20 text-sm p-1 border rounded"
             />
           </div>
         </div>

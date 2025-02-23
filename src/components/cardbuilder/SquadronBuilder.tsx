@@ -241,6 +241,10 @@ export function SquadronBuilder({ onBack }: SquadronBuilderProps) {
   const [nameItalics, setNameItalics] = useState(false);
   const [aceNameItalics, setAceNameItalics] = useState(false);
 
+  // Add these state variables near the top of the component with other useState declarations
+  const [nameFontSize, setNameFontSize] = useState<number>(20); // Default font size for chassis name
+  const [aceNameFontSize, setAceNameFontSize] = useState<number>(20); // Default font size for ace name
+
   // When either drop-down changes, update the tokens object (which is used for JSON output).
   useEffect(() => {
     const tokens = {
@@ -476,57 +480,71 @@ export function SquadronBuilder({ onBack }: SquadronBuilderProps) {
             </div>
           </div>
 
-          {(
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="name" className="text-red-500">Squadron Chassis Name *</Label>
-                <div className="flex items-center gap-2">
-                  <Select
-                    value={nameItalics ? "italic" : "normal"}
-                    onValueChange={(value) => setNameItalics(value === "italic")}
-                  >
-                    <SelectTrigger className="w-[100px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="normal">Normal</SelectItem>
-                      <SelectItem value="italic">Italic</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="name" className="text-red-500">Squadron Chassis Name *</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  min="12"
+                  max="32"
+                  value={nameFontSize}
+                  onChange={(e) => setNameFontSize(Number(e.target.value))}
+                  className="w-[70px]"
+                />
+                <Select
+                  value={nameItalics ? "italic" : "normal"}
+                  onValueChange={(value) => setNameItalics(value === "italic")}
+                >
+                  <SelectTrigger className="w-[100px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="normal">Normal</SelectItem>
+                    <SelectItem value="italic">Italic</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-              <Input
-                id="name"
-                required
-                value={formData.name}
-                onChange={(e) => setFormData({...formData, name: e.target.value})}
-                className="border-red-500"
-              />
-              {formData.is_unique && (
-                <div className="flex items-center space-x-2 mt-2">
-                  <input
-                    type="checkbox"
-                    id="include_chassis"
-                    checked={formData.unique_class.includes(formData.name)}
-                    onChange={(e) => {
-                      const newUniqueClass = e.target.checked 
-                        ? [...formData.unique_class, formData.name]
-                        : formData.unique_class.filter(uc => uc !== formData.name);
-                      setFormData({...formData, unique_class: newUniqueClass});
-                    }}
-                    className="h-4 w-4 rounded border-gray-300 text-amber-500 focus:ring-amber-500"
-                  />
-                  <Label htmlFor="include_chassis">Include in unique class exclusions</Label>
-                </div>
-              )}
             </div>
-          )}
+            <Input
+              id="name"
+              required
+              value={formData.name}
+              onChange={(e) => setFormData({...formData, name: e.target.value})}
+              className="border-red-500"
+            />
+            {formData.is_unique && (
+              <div className="flex items-center space-x-2 mt-2">
+                <input
+                  type="checkbox"
+                  id="include_chassis"
+                  checked={formData.unique_class.includes(formData.name)}
+                  onChange={(e) => {
+                    const newUniqueClass = e.target.checked 
+                      ? [...formData.unique_class, formData.name]
+                      : formData.unique_class.filter(uc => uc !== formData.name);
+                    setFormData({...formData, unique_class: newUniqueClass});
+                  }}
+                  className="h-4 w-4 rounded border-gray-300 text-amber-500 focus:ring-amber-500"
+                />
+                <Label htmlFor="include_chassis">Include in unique class exclusions</Label>
+              </div>
+            )}
+          </div>
 
           {formData.is_unique && (
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="ace_name">Squadron Ace Name</Label>
                 <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    min="12"
+                    max="32"
+                    value={aceNameFontSize}
+                    onChange={(e) => setAceNameFontSize(Number(e.target.value))}
+                    className="w-[70px]"
+                  />
                   <Select
                     value={aceNameItalics ? "italic" : "normal"}
                     onValueChange={(value) => setAceNameItalics(value === "italic")}
@@ -942,6 +960,8 @@ export function SquadronBuilder({ onBack }: SquadronBuilderProps) {
                 unique: formData.is_unique,
                 nameItalics,
                 aceNameItalics,
+                nameFontSize,
+                aceNameFontSize,
               }} />
             </div>
           </div>

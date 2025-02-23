@@ -30,6 +30,8 @@ interface SquadronCardPreviewProps {
     ace: boolean;
     nameItalics?: boolean;
     aceNameItalics?: boolean;
+    nameFontSize?: number;
+    aceNameFontSize?: number;
     silhouette?: string;
     silhouetteTransform?: ArtworkTransform;
   };
@@ -188,7 +190,7 @@ export function SquadronCardPreview({ formData, exportMode }: SquadronCardPrevie
                    width: '388.85px',
                    height: '48px',
                    fontFamily: 'Title',
-                   fontSize: '22pt',
+                   fontSize: `${formData.nameFontSize || 22}pt`,
                    fontStyle: formData.nameItalics ? 'italic' : 'normal',
                    color: '#000000',
                    textAlign: 'center',
@@ -337,11 +339,11 @@ export function SquadronCardPreview({ formData, exportMode }: SquadronCardPrevie
               <div className="absolute z-30" 
                    style={{ 
                     left: '50%',
-                    top: formData.unique && tokenCount === 0 ? `${-12 + 8*textShift}%` : tokenCount === 0 ? `${-11 + 8*textShift}%` : tokenCount === 1 ? `${-1 + .75*textShift}%` : `${-1 + .75*textShift}%`, // Adjusted top based on tokenCount
+                    top: formData.unique && tokenCount === 0 ? `${-12 + 8*textShift}%` : tokenCount === 0 ? `${-11 + 8*textShift}%` : tokenCount === 1 ? `${-1 + .75*textShift}%` : `${-1 + .75*textShift}%`,
                     width: '388.85px',
                     height: '48px',
                     fontFamily: 'Title',
-                    fontSize: '20pt',
+                    fontSize: `${formData.aceNameFontSize || 20}pt`,
                     fontStyle: formData.aceNameItalics ? 'italic' : 'normal',
                     color: '#000000',
                     textAlign: 'center',
@@ -383,7 +385,7 @@ export function SquadronCardPreview({ formData, exportMode }: SquadronCardPrevie
         <div className="absolute z-10" 
              style={{ 
                left: `${convertArmamentToDisplay(formData.armament['anti-ship']).total === 4 ? 88 : 88.75}%`,
-               top: `${53.2 + 0.33*textShift}%`,
+               top: `${53.2 + 0.3*textShift}%`,
                width: '8.196%',
                height: '6.177%',
                transform: 'translate(-50%, -50%)'
