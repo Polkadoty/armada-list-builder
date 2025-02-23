@@ -107,7 +107,11 @@ export const ICON_MAP = {
 // Helper function to convert :shortcode: to icon character
 export function replaceIconShortcodes(text: string): string {
   return text.replace(/:([a-z-]+):/g, (match, code) => {
+    console.log(`Replacing shortcode: ${match} with code: ${code}`); // Debug log
     const icon = ICON_MAP[code as keyof typeof ICON_MAP];
-    return icon || match; // Return original text if no mapping found
+    if (!icon) {
+      console.warn(`No icon found for shortcode: ${match}`); // Warning if no icon found
+    }
+    return icon || match;
   });
 } 

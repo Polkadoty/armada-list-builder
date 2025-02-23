@@ -5,10 +5,7 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
-  --icon-scatter: '';  /* Add actual icon character */
-  --icon-evade: '';   /* Add actual icon character */
-  --icon-brace: '';   /* Add actual icon character */
-  /* Add more icon mappings as needed */
+  /* Add more icon mappings when needed */
 }
 
 @media (prefers-color-scheme: dark) {

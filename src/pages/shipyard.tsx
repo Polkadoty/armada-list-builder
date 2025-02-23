@@ -15,11 +15,12 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent } from "@/components/ui/card";
-import { Heart, Download, Search, X, Home, ThumbsUp, FolderOpen, Menu } from 'lucide-react';
+import { Heart, Download, Search, X, Home, ThumbsUp, FolderOpen, Menu, ChevronLeft } from 'lucide-react';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import { SortToggleGroup, SortOption } from '@/components/SortToggleGroup';
 import { cn } from "@/lib/utils";
 import { UserAvatar } from "@/components/UserAvatar";
+import Link from 'next/link';
 
 const standardFactions = ['empire', 'rebel', 'republic', 'separatist', 'scum', 'new-republic'];
 
@@ -137,8 +138,16 @@ export default function Shipyard() {
       <div className="min-h-screen bg-background">
         {/* Header */}
         <div className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="container flex h-14 items-center">
-            <div className="lg:w-48 flex items-center">
+          <div className="container flex h-14 max-w-full items-center px-4">
+            <div className="flex items-center gap-2">
+              <Link href="/">
+                <Button
+                  variant="ghost"
+                  className="text-gray-900 dark:text-white"
+                >
+                  <ChevronLeft className="h-6 w-6" />
+                </Button>
+              </Link>
               <Button
                 variant="ghost"
                 className="lg:hidden text-gray-900 dark:text-white"
@@ -150,7 +159,7 @@ export default function Shipyard() {
             <div className="flex-1 flex justify-center">
               <h1 className="text-2xl font-bold logo-font text-gray-900 dark:text-white">Shipyard</h1>
             </div>
-            <div className="flex justify-end space-x-2">
+            <div className="flex items-center gap-2 ml-auto">
               <UserAvatar />
               <ThemeToggle />
             </div>
@@ -224,7 +233,7 @@ export default function Shipyard() {
                 </Button>
               </div>
 
-              <div className="flex flex-wrap gap-4">
+              <div className="flex flex-wrap gap-4 items-center">
                 <Select value={selectedFaction} onValueChange={setSelectedFaction}>
                   <SelectTrigger className="w-full sm:w-[180px] text-gray-900 dark:text-white">
                     <SelectValue placeholder="Select Faction" />
@@ -250,7 +259,7 @@ export default function Shipyard() {
                       />
                       <label 
                         htmlFor={key}
-                        className="text-sm font-medium text-gray-900 dark:text-white capitalize cursor-pointer"
+                        className="text-sm font-medium text-gray-900 dark:text-white capitalize cursor-pointer whitespace-nowrap"
                       >
                         {key.replace(/([A-Z])/g, ' $1').trim()}
                       </label>
@@ -259,12 +268,14 @@ export default function Shipyard() {
                 </div>
               </div>
 
-              <div className="flex justify-center sm:justify-start">
-                <SortToggleGroup 
-                  activeSorts={activeSorts} 
-                  onToggle={handleSortToggle}
-                  selectorType="squadrons"
-                />
+              <div className="flex justify-center sm:justify-start overflow-x-auto py-2 w-full">
+                <div className="min-w-fit">
+                  <SortToggleGroup 
+                    activeSorts={activeSorts} 
+                    onToggle={handleSortToggle}
+                    selectorType="squadrons"
+                  />
+                </div>
               </div>
             </div>
 

@@ -12,6 +12,9 @@ export interface ArtworkTransform {
   scale: number;
   rotation: number;
   flipped: boolean;
+  brightness?: number;
+  contrast?: number;
+  opacity?: number;
 }
 
 export function ArtworkUploader({ onArtworkChange }: ArtworkUploaderProps) {
@@ -21,7 +24,10 @@ export function ArtworkUploader({ onArtworkChange }: ArtworkUploaderProps) {
     y: 0,
     scale: 1,
     rotation: 0,
-    flipped: false
+    flipped: false,
+    brightness: 1,
+    contrast: 1,
+    opacity: 1
   });
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
