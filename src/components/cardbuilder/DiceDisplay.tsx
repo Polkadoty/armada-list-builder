@@ -78,7 +78,7 @@ export function DiceDisplay({ count, colors }: DiceDisplayProps) {
           <div style={{ width: '100%', display: 'flex', justifyContent: 'center', height: '12px', gap: '3px' }}>
             {dice.slice(0, 2)}
           </div>
-          <div style={{ width: '100%', display: 'flex', justifyContent: 'center', height: '13px', gap: '3px', marginTop: '-13px', paddingLeft: diceSize }}>
+          <div style={{ width: '100%', display: 'flex', justifyContent: 'center', height: '13px', gap: '3px', marginTop: '-13px', paddingLeft: `${parseInt(diceSize) * 1.1}px` }}>
             {dice.slice(2, 4)}
           </div>
         </div>

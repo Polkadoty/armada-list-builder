@@ -367,7 +367,7 @@ export function SquadronCardPreview({ formData, exportMode }: SquadronCardPrevie
         {/* Anti-squadron dice */}
         <div className="absolute z-10" 
              style={{ 
-               left: `${convertArmamentToDisplay(formData.armament['anti-squadron']).total === 4 ? 64.75 : 65.75}%`,
+               left: `${convertArmamentToDisplay(formData.armament['anti-squadron']).total === 4 ? 65 : 65.75}%`,
                top: `${53.2 + 0.33*textShift}%`,
                width: '8.196%',
                height: '6.177%',
@@ -382,7 +382,7 @@ export function SquadronCardPreview({ formData, exportMode }: SquadronCardPrevie
         {/* Anti-ship dice */}
         <div className="absolute z-10" 
              style={{ 
-               left: `${convertArmamentToDisplay(formData.armament['anti-ship']).total === 4 ? 86 : 88.75}%`,
+               left: `${convertArmamentToDisplay(formData.armament['anti-ship']).total === 4 ? 88 : 88.75}%`,
                top: `${53.2 + 0.33*textShift}%`,
                width: '8.196%',
                height: '6.177%',
