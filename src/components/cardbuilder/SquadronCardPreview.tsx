@@ -234,7 +234,7 @@ export function SquadronCardPreview({ formData, exportMode }: SquadronCardPrevie
                   // Handle bold text, but process any icons within it
                   const innerText = segment.slice(2, -2);
                   return (
-                    <span key={index} style={{ fontFamily: 'FighterKeyword' }}>
+                    <span key={index} style={{ fontFamily: 'FighterKeyword', fontSize: '14pt' }}>
                       {innerText.split(/(:[\w-]+:)/g).map((part, i) => {
                         if (part.match(/^:[\w-]+:$/)) {
                           const iconCode = part.slice(1, -1);
@@ -387,7 +387,7 @@ export function SquadronCardPreview({ formData, exportMode }: SquadronCardPrevie
         <div className="absolute z-10" 
              style={{ 
                left: `${convertArmamentToDisplay(formData.armament['anti-ship']).total === 4 ? 88 : 88.75}%`,
-               top: `${53.2 + 0.3*textShift}%`,
+               top: `${53.2 + 0.33*textShift}%`,
                width: '8.196%',
                height: '6.177%',
                transform: 'translate(-50%, -50%)'

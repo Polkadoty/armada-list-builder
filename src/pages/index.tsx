@@ -147,6 +147,8 @@ export default function Home() {
                   layout="fill"
                   objectFit="contain"
                   className='p-24'
+                  priority
+                  loading="eager"
                 />
               </div>
             ))}

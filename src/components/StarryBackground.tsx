@@ -32,6 +32,11 @@ const getHDRColors = (color: string, intensity = 1) => {
   return color;
 };
 
+const isFirefox = () => {
+  if (typeof window === 'undefined') return false;
+  return navigator.userAgent.toLowerCase().indexOf('firefox') > -1;
+};
+
 const StarryBackground: React.FC<{ show: boolean, lightDisabled?: boolean }> = ({ show, lightDisabled }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const offscreenCanvasRef = useRef<OffscreenCanvas | null>(null);
@@ -48,6 +53,18 @@ const StarryBackground: React.FC<{ show: boolean, lightDisabled?: boolean }> = (
     
     canvasRef.current.width = width;
     canvasRef.current.height = height;
+    
+    // Add Chrome-specific optimizations
+    const ctx = canvasRef.current.getContext('2d', {
+      alpha: false,
+      desynchronized: true,
+      willReadFrequently: false,
+    });
+    
+    if (ctx) {
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+    }
     
     if (offscreenCanvasRef.current) {
       offscreenCanvasRef.current.width = width;
@@ -276,35 +293,69 @@ const StarryBackground: React.FC<{ show: boolean, lightDisabled?: boolean }> = (
   const animate = useCallback(() => {
     if (!show || !canvasRef.current) return;
     
-    // Use offscreen canvas for better performance
-    if (!offscreenCanvasRef.current) {
-      offscreenCanvasRef.current = new OffscreenCanvas(dimensions.width, dimensions.height);
-    }
-
-    const offscreenCtx = offscreenCanvasRef.current.getContext('2d');
-    const ctx = canvasRef.current.getContext('2d');
+    // Use offscreen canvas for better performance, with fallback
+    let offscreenCtx;
+    let mainCtx = canvasRef.current.getContext('2d', {
+      alpha: isFirefox(),  // Use alpha for Firefox
+      desynchronized: !isFirefox(),  // Only use desynchronized for Chrome
+      willReadFrequently: false
+    });
     
-    if (!offscreenCtx || !ctx) return;
+    if (!mainCtx) return;
+
+    try {
+      if (!offscreenCanvasRef.current) {
+        offscreenCanvasRef.current = new OffscreenCanvas(dimensions.width, dimensions.height);
+      }
+      offscreenCtx = offscreenCanvasRef.current.getContext('2d', {
+        alpha: isFirefox(),
+        desynchronized: !isFirefox(),
+        willReadFrequently: false
+      });
+    } catch (e) {
+      // Fallback to main canvas if OffscreenCanvas fails
+      offscreenCtx = mainCtx;
+    }
+    
+    if (!offscreenCtx) return;
 
     // Clear with black background
+    offscreenCtx.clearRect(0, 0, dimensions.width, dimensions.height);
     offscreenCtx.fillStyle = 'rgb(0, 0, 0)';
     offscreenCtx.fillRect(0, 0, dimensions.width, dimensions.height);
 
     // Draw all elements to offscreen canvas
     offscreenCtx.save();
     
-    // Batch all stars
-    offscreenCtx.beginPath();
-    stars.forEach(star => {
-      offscreenCtx.moveTo(star.x, star.y);
-      offscreenCtx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
-    });
-    centralStars.forEach(star => {
-      offscreenCtx.moveTo(star.x, star.y);
-      offscreenCtx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
-    });
-    offscreenCtx.fillStyle = getHDRColors('rgba(255, 255, 255, 0.9)', 1.4);
-    offscreenCtx.fill();
+    if (isFirefox()) {
+      // Firefox optimized batched rendering
+      offscreenCtx.beginPath();
+      stars.forEach(star => {
+        offscreenCtx.moveTo(star.x, star.y);
+        offscreenCtx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+      });
+      centralStars.forEach(star => {
+        offscreenCtx.moveTo(star.x, star.y);
+        offscreenCtx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+      });
+      offscreenCtx.fillStyle = getHDRColors('rgba(255, 255, 255, 0.9)', 1.4);
+      offscreenCtx.fill();
+    } else {
+      // Chrome individual star rendering
+      stars.forEach(star => {
+        offscreenCtx.beginPath();
+        offscreenCtx.fillStyle = getHDRColors(star.color, 1.4);
+        offscreenCtx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+        offscreenCtx.fill();
+      });
+
+      centralStars.forEach(star => {
+        offscreenCtx.beginPath();
+        offscreenCtx.fillStyle = getHDRColors(star.color, 1.4);
+        offscreenCtx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+        offscreenCtx.fill();
+      });
+    }
     offscreenCtx.restore();
 
     // Draw fractal streaks
@@ -338,9 +389,9 @@ const StarryBackground: React.FC<{ show: boolean, lightDisabled?: boolean }> = (
 
     // Batch draw operations
     requestAnimationFrame(() => {
-      if (ctx) {
-        ctx.clearRect(0, 0, dimensions.width, dimensions.height);
-        ctx.drawImage(offscreenCanvasRef.current!, 0, 0);
+      if (mainCtx) {
+        mainCtx.clearRect(0, 0, dimensions.width, dimensions.height);
+        mainCtx.drawImage(offscreenCanvasRef.current!, 0, 0);
       }
       animationFrameRef.current = requestAnimationFrame(animate);
     });
