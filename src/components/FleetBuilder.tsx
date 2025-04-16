@@ -295,6 +295,8 @@ export default function FleetBuilder({
   const [greyUpgrades, setGreyUpgrades] = useState<Record<string, string[]>>({});
 
   const checkTournamentViolations = useMemo(() => {
+    if (!tournamentMode) return []; // Early return if not in tournament mode
+    
     const violations: string[] = [];
 
     if (points > 400) {
@@ -320,9 +322,9 @@ export default function FleetBuilder({
     }
 
     if (
-      !selectedAssaultObjectives ||
-      !selectedDefenseObjectives ||
-      !selectedNavigationObjectives
+      !selectedAssaultObjectives?.length ||
+      !selectedDefenseObjectives?.length ||
+      !selectedNavigationObjectives?.length
     ) {
       violations.push("Missing objective card(s)");
     }
@@ -336,6 +338,7 @@ export default function FleetBuilder({
 
     return violations;
   }, [
+    tournamentMode,
     points,
     totalSquadronPoints,
     selectedShips,
@@ -409,7 +412,7 @@ export default function FleetBuilder({
     setShowShipSelector(false);
   };
 
-  const handleRemoveShip = (id: string) => {
+  const handleRemoveShip = useCallback((id: string) => {
     const shipToRemove = selectedShips.find((ship) => ship.id === id);
     if (shipToRemove) {
       const shipPoints =
@@ -437,12 +440,17 @@ export default function FleetBuilder({
         }
       });
 
-      setSelectedShips(selectedShips.filter((ship) => ship.id !== id));
+      // Batch state updates for better performance
+      const newShips = selectedShips.filter((ship) => ship.id !== id);
+      const newPoints = points - shipPoints;
+      const newTotalShipPoints = totalShipPoints - shipPoints;
+      
+      // Update all states at once at the end of the function
+      setSelectedShips(newShips);
       setPreviousPoints(points);
       setPreviousShipPoints(totalShipPoints);
-      const newPoints = points - shipPoints;
       setPoints(newPoints);
-      setTotalShipPoints(totalShipPoints - shipPoints);
+      setTotalShipPoints(newTotalShipPoints);
 
       // Clear disabled and enabled upgrades for the removed ship
       setDisabledUpgrades((prev) => {
@@ -450,18 +458,40 @@ export default function FleetBuilder({
         delete newDisabled[id];
         return newDisabled;
       });
+
       setEnabledUpgrades((prev) => {
         const newEnabled = { ...prev };
         delete newEnabled[id];
         return newEnabled;
       });
 
-      // Set hasCommander to false if the removed ship had a commander
+      setFilledSlots((prev) => {
+        const newFilledSlots = { ...prev };
+        delete newFilledSlots[id];
+        return newFilledSlots;
+      });
+
+      setGreyUpgrades((prev) => {
+        const newGreyUpgrades = { ...prev };
+        delete newGreyUpgrades[id];
+        return newGreyUpgrades;
+      });
+
+      // Update commander status
       if (hadCommander) {
         setHasCommander(false);
       }
     }
-  };
+  }, [
+    points, 
+    selectedShips, 
+    totalShipPoints, 
+    removeUniqueClassName,
+    setPreviousPoints,
+    setPreviousShipPoints,
+    setPoints,
+    setTotalShipPoints
+  ]);
 
   const handleUpgradeClick = (
     shipId: string,

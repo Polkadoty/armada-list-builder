@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, memo } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { useSpring, animated } from 'react-spring';
 import { Squadron } from './FleetBuilder';
@@ -12,16 +12,17 @@ import { OptimizedImage } from './OptimizedImage';
 interface SelectedSquadronProps {
   squadron: Squadron;
   onRemove: (id: string) => void;
-  onIncrement: (id: string) => void;
+  onIncrement?: (id: string) => void;
   onDecrement: (id: string) => void;
   onSwapSquadron: (id: string) => void;
-  onMoveUp: (id: string) => void;
-  onMoveDown: (id: string) => void;
+  onMoveUp?: (id: string) => void;
+  onMoveDown?: (id: string) => void;
   isFirst: boolean;
   isLast: boolean;
+  showSource?: boolean;
 }
 
-export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement, onSwapSquadron, onMoveUp, onMoveDown, isFirst, isLast }: SelectedSquadronProps) {
+function SelectedSquadronComponent({ squadron, onRemove, onIncrement, onDecrement, onSwapSquadron, onMoveUp, onMoveDown, isFirst, isLast, showSource }: SelectedSquadronProps) {
   const [{ x }, api] = useSpring(() => ({ x: 0 }));
   const isDragging = useRef(false);
   const startX = useRef(0);
@@ -71,7 +72,7 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
       } else if (currentX > SWIPE_THRESHOLD) {
         if (squadron.unique) {
           onSwapSquadron(squadron.id);
-        } else {
+        } else if (onIncrement) {
           onIncrement(squadron.id);
         }
       }
@@ -146,7 +147,7 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
                           <Minus size={16} />
                         </Button>
                         <span>{count}</span>
-                        <Button variant="ghost" size="sm" onClick={() => onIncrement(squadron.id)} className="text-blue-500 p-1">
+                        <Button variant="ghost" size="sm" onClick={() => onIncrement && onIncrement(squadron.id)} className="text-blue-500 p-1">
                           <Plus size={16} />
                         </Button>
                       </>
@@ -157,7 +158,7 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
                       <Button 
                         variant="ghost" 
                         size="sm" 
-                        onClick={() => onMoveUp(squadron.id)} 
+                        onClick={() => onMoveUp && onMoveUp(squadron.id)} 
                         className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-1"
                         disabled={isFirst}
                       >
@@ -166,7 +167,7 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
                       <Button 
                         variant="ghost" 
                         size="sm" 
-                        onClick={() => onMoveDown(squadron.id)} 
+                        onClick={() => onMoveDown && onMoveDown(squadron.id)} 
                         className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-1"
                         disabled={isLast}
                       >
@@ -211,3 +212,24 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
     </div>
   );
 }
+
+// Create a custom comparison function that only triggers re-renders when necessary
+function arePropsEqual(prevProps: SelectedSquadronProps, nextProps: SelectedSquadronProps) {
+  // Always re-render if the squadron ID changes
+  if (prevProps.squadron.id !== nextProps.squadron.id) return false;
+  
+  // Re-render if the squadron's count changed
+  if (prevProps.squadron.count !== nextProps.squadron.count) return false;
+  
+  // Re-render if the squadron's points changed
+  if (prevProps.squadron.points !== nextProps.squadron.points) return false;
+  
+  // Check position-related props
+  if (prevProps.isFirst !== nextProps.isFirst || prevProps.isLast !== nextProps.isLast) return false;
+  
+  // Props are equal, skip re-render
+  return true;
+}
+
+// Export the memoized version of the component
+export const SelectedSquadron = memo(SelectedSquadronComponent, arePropsEqual);

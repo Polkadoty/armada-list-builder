@@ -32,6 +32,10 @@
   }
 }
 
+html {
+  overscroll-behavior: none;
+}
+
 body {
   color: var(--foreground);
   background: var(--background);
@@ -39,6 +43,63 @@ body {
   display: flex;
   flex-direction: column;
   font-family: 'Optima', system-ui, -apple-system, Arial, Helvetica, sans-serif;
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Optimize for mobile */
+@media (max-width: 768px) {
+  body {
+    height: 100vh;
+    height: -webkit-fill-available;
+    overflow-x: hidden;
+    will-change: transform;
+  }
+  
+  img {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+
+  /* Fleet Builder Mobile Optimizations */
+  .shipping-list, .squadron-list {
+    contain: content;
+    will-change: transform;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+  
+  /* Optimize card animations */
+  .card {
+    will-change: transform;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    contain: layout;
+  }
+  
+  /* Use hardware acceleration for all animations */
+  .animated-card {
+    transform: translateZ(0);
+    will-change: transform, opacity;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+    contain: layout;
+  }
+
+  /* Optimize scrolling */
+  .overflow-auto, .overflow-y-auto {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+    overscroll-behavior: none;
+    will-change: scroll-position;
+  }
+
+  /* Reduce repaints */
+  .fixed {
+    will-change: transform;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
 }
 
 @layer utilities {

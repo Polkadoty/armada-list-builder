@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, memo } from 'react';
 import Image from 'next/image';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,7 +26,7 @@ interface SelectedShipProps {
   greyUpgrades: string[];
 }
 
-export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRemoveUpgrade, disabledUpgrades, enabledUpgrades, filledSlots, hasCommander, onMoveUp, onMoveDown, isFirst, isLast, greyUpgrades }: SelectedShipProps) {
+function SelectedShipComponent({ ship, onRemove, onUpgradeClick, onCopy, handleRemoveUpgrade, disabledUpgrades, enabledUpgrades, filledSlots, hasCommander, onMoveUp, onMoveDown, isFirst, isLast, greyUpgrades }: SelectedShipProps) {
   const [isToolbarVisible, setIsToolbarVisible] = useState(true);
   const [{ x }, api] = useSpring(() => ({ x: 0 }));
   
@@ -103,8 +103,6 @@ export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRem
       setShowImageModal(true);
     }
   };
-
-
 
   return (
     <div className="relative overflow-hidden mb-2">
@@ -290,6 +288,43 @@ export function SelectedShip({ ship, onRemove, onUpgradeClick, onCopy, handleRem
   );
 }
 
+// Create a custom comparison function that only triggers re-renders when necessary
+function arePropsEqual(prevProps: SelectedShipProps, nextProps: SelectedShipProps) {
+  // Always re-render if the ship ID changes
+  if (prevProps.ship.id !== nextProps.ship.id) return false;
+  
+  // Re-render if the ship's data has changed (points, upgrades, etc.)
+  if (prevProps.ship.points !== nextProps.ship.points) return false;
+  
+  // Check if assigned upgrades changed
+  const prevUpgrades = prevProps.ship.assignedUpgrades;
+  const nextUpgrades = nextProps.ship.assignedUpgrades;
+  if (prevUpgrades.length !== nextUpgrades.length) return false;
+  
+  // Compare disabled upgrades arrays
+  if (prevProps.disabledUpgrades?.length !== nextProps.disabledUpgrades?.length) return false;
+  
+  // Compare enabled upgrades arrays
+  if (prevProps.enabledUpgrades?.length !== nextProps.enabledUpgrades?.length) return false;
+  
+  // Compare grey upgrades arrays
+  if (prevProps.greyUpgrades?.length !== nextProps.greyUpgrades?.length) return false;
+  
+  // Check position-related props
+  if (prevProps.isFirst !== nextProps.isFirst || prevProps.isLast !== nextProps.isLast) return false;
+  
+  // Deep comparison of filled slots
+  const prevSlotKeys = Object.keys(prevProps.filledSlots || {});
+  const nextSlotKeys = Object.keys(nextProps.filledSlots || {});
+  if (prevSlotKeys.length !== nextSlotKeys.length) return false;
+  
+  // Return true if nothing changed (skip re-render)
+  return true;
+}
+
+// Export the memoized version of the component
+export const SelectedShip = memo(SelectedShipComponent, arePropsEqual);
+
 interface SwipeableUpgradeProps {
   upgrade: Upgrade;
   onSwipe: (direction: 'left' | 'right') => void;
@@ -350,8 +385,6 @@ function SwipeableUpgrade({ upgrade, onSwipe, onSwap, onRemove }: SwipeableUpgra
     api.start({ x: 0, immediate: false });
     isHorizontalSwipe.current = false;
   };
-
-
 
   return (
     <div className="relative overflow-hidden mb-2">

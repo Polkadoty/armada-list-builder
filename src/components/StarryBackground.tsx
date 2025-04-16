@@ -440,9 +440,11 @@ const StarryBackground: React.FC<{ show: boolean, lightDisabled?: boolean }> = (
         <Image 
           src='/images/nebula-lightmode.webp' 
           alt="Nebula Light Background" 
-          className='object-cover w-full h-full scale-110 contrast-150'
+          className='object-cover w-full h-full will-change-transform scale-110 contrast-150'
           width={1920} 
           height={1080} 
+          sizes="100vw"
+          loading="eager"
           priority
         />
       </div>
@@ -452,9 +454,11 @@ const StarryBackground: React.FC<{ show: boolean, lightDisabled?: boolean }> = (
         <Image 
           src='/images/nebula-darkmode.webp' 
           alt="Nebula Dark Background" 
-          className='object-cover w-full h-full scale-110'
+          className='object-cover w-full h-full will-change-transform scale-110'
           width={1920} 
-          height={1080} 
+          height={1080}
+          sizes="100vw" 
+          loading="eager"
           priority
         />
       </div>

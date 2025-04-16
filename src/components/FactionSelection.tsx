@@ -24,8 +24,6 @@ const customFactions = [
   { name: 'Cylon Alliance', logo: '/icons/cylon.webp', slug: 'cylon', shipImage: '/images/cylon-basestar.webp' },
 ];
 
-
-
 // const shouldInvertImage = (logoPath: string) => {
 //   if (logoPath === '/icons/sandbox.webp' || logoPath === '/icons/profile.svg' || logoPath === '/icons/new-republic.webp') {
 //     return true;
@@ -38,16 +36,11 @@ export default function FactionSelection({ onHover }: { onHover: (faction: strin
   const [enableCustomFactions, setEnableCustomFactions] = useState(false);
 
   useEffect(() => {
-    const checkContentState = () => {
-      const legendsEnabled = Cookies.get('enableLegends') === 'true';
-      const customFactionsEnabled = Cookies.get('enableCustomFactions') === 'true';
-      setEnableLegends(legendsEnabled);
-      setEnableCustomFactions(customFactionsEnabled);
-    };
-
-    checkContentState();
-    const intervalId = setInterval(checkContentState, 1000);
-    return () => clearInterval(intervalId);
+    // Only check once on component mount
+    const legendsEnabled = Cookies.get('enableLegends') === 'true';
+    const customFactionsEnabled = Cookies.get('enableCustomFactions') === 'true';
+    setEnableLegends(legendsEnabled);
+    setEnableCustomFactions(customFactionsEnabled);
   }, []);
 
   const handleHover = (faction: string | null) => {
