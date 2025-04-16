@@ -806,7 +806,7 @@ export default function FleetBuilder({
 
     setPoints((prevPoints) => prevPoints + upgrade.points);
     setTotalShipPoints((prevTotal) => prevTotal + upgrade.points);
-  }, [enabledUpgrades, setEnabledUpgrades, setFilledSlots, setHasCommander]);
+  }, [enabledUpgrades, setEnabledUpgrades, setFilledSlots, setHasCommander, addUniqueClassName, disabledUpgrades]);
 
   const handleRemoveUpgrade = useCallback(
     (shipId: string, upgradeType: string, upgradeIndex: number) => {
@@ -3174,7 +3174,8 @@ export default function FleetBuilder({
     selectedNavigationObjectives,
     isExpansionMode,
     hasLoadedPage,
-    handleImportFleet
+    handleImportFleet,
+    applyUpdates
   ]);
 
   useEffect(() => {

@@ -1,7 +1,7 @@
 // import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import Image from 'next/image';
 // import { throttle } from '@/utils/throttle';
-import React, { useRef, useState } from 'react';
+import React from 'react';
 import { useTheme } from 'next-themes';
 
 // interface FractalStreak {
@@ -41,11 +41,11 @@ import { useTheme } from 'next-themes';
 
 
 const StarryBackground: React.FC<{ show: boolean, lightDisabled?: boolean }> = ({ show, lightDisabled }) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const offscreenCanvasRef = useRef<OffscreenCanvas | null>(null);
-  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
-  const globalHueOffset = useRef(0);
-  const animationFrameRef = useRef<number>();
+  // const canvasRef = useRef<HTMLCanvasElement>(null);
+  // const offscreenCanvasRef = useRef<OffscreenCanvas | null>(null);
+  // const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  // const globalHueOffset = useRef(0);
+  // const animationFrameRef = useRef<number>();
 
   // const updateDimensions = useCallback(() => {
   //   if (!canvasRef.current) return;

@@ -96,41 +96,41 @@ export default function Shipyard() {
     );
   };
 
-  const fetchItems = async () => {
-    let query = supabase
-      .from(`custom_${contentType}s`)
-      .select('*')
-      .eq('published', true);
-
-    if (selectedFaction !== 'all') {
-      query = query.eq('faction', selectedFaction);
-    }
-
-    if (filters.customFaction) {
-      query = query.not('faction', 'in', `(${standardFactions.join(',')})`);
-    }
-
-    if (filters.unique) {
-      query = query.eq('unique', true);
-    }
-
-    query = query.order(
-      sortBy === 'new' ? 'created_at' : 
-      sortBy === 'popular' ? 'downloads_count' : 
-      'average_rating', 
-      { ascending: false }
-    );
-
-    const { data, error } = await query;
-    
-    if (!error && data) {
-      setItems(data);
-    }
-  };
-
   useEffect(() => {
+    const fetchItems = async () => {
+      let query = supabase
+        .from(`custom_${contentType}s`)
+        .select('*')
+        .eq('published', true);
+  
+      if (selectedFaction !== 'all') {
+        query = query.eq('faction', selectedFaction);
+      }
+  
+      if (filters.customFaction) {
+        query = query.not('faction', 'in', `(${standardFactions.join(',')})`);
+      }
+  
+      if (filters.unique) {
+        query = query.eq('unique', true);
+      }
+  
+      query = query.order(
+        sortBy === 'new' ? 'created_at' : 
+        sortBy === 'popular' ? 'downloads_count' : 
+        'average_rating', 
+        { ascending: false }
+      );
+  
+      const { data, error } = await query;
+      
+      if (!error && data) {
+        setItems(data);
+      }
+    };
+
     fetchItems();
-  }, [fetchItems]);
+  }, [contentType, selectedFaction, filters, sortBy, standardFactions]);
 
   return (
     <>

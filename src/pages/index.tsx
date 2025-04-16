@@ -41,7 +41,6 @@ export default function Home() {
   const [showImportWindow, setShowImportWindow] = useState(false);
   const router = useRouter();
   const { resolvedTheme } = useTheme();
-  const isDarkMode = resolvedTheme === 'dark';
 
   useEffect(() => {
     setMounted(true);
@@ -79,7 +78,7 @@ export default function Home() {
         <title>Star Forge</title>
       </Head>
       <div className="min-h-screen flex flex-col lg:flex-row relative">
-        <StarryBackground show={true} lightDisabled={false}/>
+        <StarryBackground show={true} lightDisabled={resolvedTheme === 'dark'}/>
         {isLoading && <LoadingScreen progress={loadingProgress} message={loadingMessage} />}
         <div className={`bg-transparent backdrop-blur-md lg:backdrop-blur-sm p-8 flex-grow lg:w-1/3 lg:min-w-[300px] relative z-10`}>
           <div className="flex justify-end space-x-2 mb-4 items-center">
