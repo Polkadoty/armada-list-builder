@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ContentSource, Squadron } from './FleetBuilder';
@@ -114,27 +114,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
     };
   }, []);  // No dependencies to avoid re-creating the override
 
-  useEffect(() => {
-    console.log('Content sources updated, refreshing squadrons');
-    // Clear the current squadrons state to ensure complete refresh
-    setAllSquadrons([]);
-    // Use setTimeout to ensure state update completes before fetching
-    const timer = setTimeout(() => {
-      const cachedSquadrons = localStorage.getItem('squadrons');
-      const cachedLegacySquadrons = localStorage.getItem('legacySquadrons');
-      const cachedLegendsSquadrons = localStorage.getItem('legendsSquadrons');
-      const cachedOldLegacySquadrons = localStorage.getItem('oldLegacySquadrons');
-      const cachedArcSquadrons = localStorage.getItem('arcSquadrons');
-      const cachedAMGSquadrons = localStorage.getItem('amgSquadrons');
-      
-      console.log('Current content source settings:', JSON.stringify(contentSources));
-      fetchSquadrons();
-    }, 50);
-    
-    return () => clearTimeout(timer);
-  }, [contentSources, faction, filter.minPoints, filter.maxPoints]);
-
-  const fetchSquadrons = () => {
+  const fetchSquadrons = useCallback(() => {
     const cachedSquadrons = localStorage.getItem('squadrons');
     const cachedLegacySquadrons = localStorage.getItem('legacySquadrons');
     const cachedLegendsSquadrons = localStorage.getItem('legendsSquadrons');
@@ -155,7 +135,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
           const uniqueKey = `${prefix}-${squadronId}-${squadron.name}-${aceName}`;
           if (!squadronMap.has(uniqueKey)) {
             const abilityText = Object.entries(squadron.abilities || {})
-              .filter(([_, value]) => value !== 0 && value !== false)
+              .filter(([key, value]) => value !== 0 && value !== false)
               .map(([key, value]) => typeof value === 'boolean' ? key : `${key} ${value}`)
               .join(' ');
       
@@ -185,7 +165,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
                 abilities: abilityText,
                 armament: armamentText,
                 tokens: Object.entries(squadron.tokens || {})
-                .filter(([_, value]) => value > 0)
+                .filter(([key, value]) => value > 0)
                 .reduce((acc, [key, value]) => ({ ...acc, [key.replace('def_', '')]: value }), {})
               }).toLowerCase()
             });
@@ -301,7 +281,20 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
 
     console.log(`Setting ${sortedSquadrons.length} squadrons after filtering`);
     setAllSquadrons(sortedSquadrons);
-  };
+  }, [contentSources, faction, filter.minPoints, filter.maxPoints]);
+
+  useEffect(() => {
+    console.log('Content sources updated, refreshing squadrons');
+    // Clear the current squadrons state to ensure complete refresh
+    setAllSquadrons([]);
+    // Use setTimeout to ensure state update completes before fetching
+    const timer = setTimeout(() => {
+      console.log('Current content source settings:', JSON.stringify(contentSources));
+      fetchSquadrons();
+    }, 50);
+    
+    return () => clearTimeout(timer);
+  }, [contentSources, faction, filter.minPoints, filter.maxPoints, fetchSquadrons]);
 
   const processedSquadrons = useMemo(() => {
     console.log(`Processing ${allSquadrons.length} squadrons with filters`);

@@ -810,8 +810,6 @@ export function FleetList() {
   const dialogContent = useMemo(() => {
     if (!isDialogOpen) return null;
     
-    const isFleetDataReady = !isLoading || fleets.length > 0;
-    
     console.log(`Rendering dialog content - isLoading: ${isLoading}, fleets: ${fleets.length}`);
     
     return (
