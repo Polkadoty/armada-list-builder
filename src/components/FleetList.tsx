@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useUser } from '@auth0/nextjs-auth0/client';
 import { supabase } from '../lib/supabase';
 import {
@@ -103,6 +103,14 @@ export function FleetList() {
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [showNotification, setShowNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState("");
+  const [factionDropdownOpen, setFactionDropdownOpen] = useState(false);
+  const [commanderDropdownOpen, setCommanderDropdownOpen] = useState(false);
+  const [commanderSearchQuery, setCommanderSearchQuery] = useState("");
+  
+  // Pagination for dropdown menus
+  const [factionPage, setFactionPage] = useState(0);
+  const [commanderPage, setCommanderPage] = useState(0);
+  const ITEMS_PER_DROPDOWN_PAGE = 25;
 
   const fetchFleets = useCallback(async () => {
     setIsLoading(true);
@@ -189,28 +197,68 @@ export function FleetList() {
     return string.charAt(0).toUpperCase() + string.slice(1);
   };
 
-  const filteredFleets = fleets
-    .filter(fleet => {
-      const matchesSearch = fleet.fleet_name.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesFaction = factionFilter.length === 0 || factionFilter.includes(fleet.faction);
-      const matchesCommander = commanderFilter.length === 0 || commanderFilter.includes(fleet.commander);
-      return matchesSearch && matchesFaction && matchesCommander;
-    })
-    .sort((a, b) => {
-      const aValue = a[sortColumn] !== undefined ? a[sortColumn] : '';
-      const bValue = b[sortColumn] !== undefined ? b[sortColumn] : '';
-      const direction = sortDirection === 'asc' ? 1 : -1;
-      return aValue > bValue ? direction : -direction;
-    });
+  // Memoize expensive calculations
+  const filteredFleets = useMemo(() => {
+    return fleets
+      .filter(fleet => {
+        const matchesSearch = fleet.fleet_name.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesFaction = factionFilter.length === 0 || factionFilter.includes(fleet.faction);
+        const matchesCommander = commanderFilter.length === 0 || commanderFilter.includes(fleet.commander);
+        return matchesSearch && matchesFaction && matchesCommander;
+      })
+      .sort((a, b) => {
+        const aValue = a[sortColumn] !== undefined ? a[sortColumn] : '';
+        const bValue = b[sortColumn] !== undefined ? b[sortColumn] : '';
+        const direction = sortDirection === 'asc' ? 1 : -1;
+        return aValue > bValue ? direction : -direction;
+      });
+  }, [fleets, searchQuery, factionFilter, commanderFilter, sortColumn, sortDirection]);
 
-  const totalPages = Math.ceil(filteredFleets.length / rowsPerPage);
-  const paginatedFleets = filteredFleets.slice(
-    (currentPage - 1) * rowsPerPage,
-    currentPage * rowsPerPage
+  const totalPages = useMemo(() => Math.ceil(filteredFleets.length / rowsPerPage), [filteredFleets.length, rowsPerPage]);
+  
+  const paginatedFleets = useMemo(() => {
+    return filteredFleets.slice(
+      (currentPage - 1) * rowsPerPage,
+      currentPage * rowsPerPage
+    );
+  }, [filteredFleets, currentPage, rowsPerPage]);
+
+  // Memoize dropdown data to avoid recalculating on each render
+  const uniqueFactions = useMemo(() => Array.from(new Set(fleets.map(fleet => fleet.faction))), [fleets]);
+  
+  const uniqueCommanders = useMemo(() => Array.from(new Set(fleets.map(fleet => fleet.commander))), [fleets]);
+  
+  // Filter and paginate commanders for dropdown
+  const filteredCommanders = useMemo(() => {
+    return uniqueCommanders
+      .filter(commander => 
+        commander.toLowerCase().includes(commanderSearchQuery.toLowerCase()))
+      .sort();
+  }, [uniqueCommanders, commanderSearchQuery]);
+
+  const paginatedCommanders = useMemo(() => {
+    return filteredCommanders.slice(
+      commanderPage * ITEMS_PER_DROPDOWN_PAGE,
+      (commanderPage + 1) * ITEMS_PER_DROPDOWN_PAGE
+    );
+  }, [filteredCommanders, commanderPage]);
+
+  const paginatedFactions = useMemo(() => {
+    return uniqueFactions.slice(
+      factionPage * ITEMS_PER_DROPDOWN_PAGE,
+      (factionPage + 1) * ITEMS_PER_DROPDOWN_PAGE
+    );
+  }, [uniqueFactions, factionPage]);
+
+  const totalCommanderPages = useMemo(() => 
+    Math.ceil(filteredCommanders.length / ITEMS_PER_DROPDOWN_PAGE),
+    [filteredCommanders.length]
   );
 
-  const uniqueFactions = Array.from(new Set(fleets.map(fleet => fleet.faction)));
-  const uniqueCommanders = Array.from(new Set(fleets.map(fleet => fleet.commander)));
+  const totalFactionPages = useMemo(() => 
+    Math.ceil(uniqueFactions.length / ITEMS_PER_DROPDOWN_PAGE),
+    [uniqueFactions.length]
+  );
 
   const handleFleetDelete = async (fleet: Fleet) => {
     setFleetToDelete(fleet);
@@ -420,14 +468,14 @@ export function FleetList() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="max-w-sm"
               />
-              <DropdownMenu>
+              <DropdownMenu open={factionDropdownOpen} onOpenChange={setFactionDropdownOpen}>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm">
                     Faction <ChevronDown className="ml-2 h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  {uniqueFactions.map(faction => (
+                <DropdownMenuContent className="max-h-[300px] overflow-auto">
+                  {paginatedFactions.map(faction => (
                     <DropdownMenuItem
                       key={faction}
                       onClick={() => setFactionFilter(prev => 
@@ -439,16 +487,57 @@ export function FleetList() {
                       {capitalizeFirstLetter(faction)}
                     </DropdownMenuItem>
                   ))}
+                  {totalFactionPages > 1 && (
+                    <div className="flex justify-between p-2 border-t mt-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setFactionPage(prev => Math.max(0, prev - 1));
+                        }}
+                        disabled={factionPage === 0}
+                      >
+                        Previous
+                      </Button>
+                      <span className="text-xs self-center">
+                        Page {factionPage + 1} of {totalFactionPages}
+                      </span>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setFactionPage(prev => Math.min(totalFactionPages - 1, prev + 1));
+                        }}
+                        disabled={factionPage >= totalFactionPages - 1}
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
-              <DropdownMenu>
+              <DropdownMenu open={commanderDropdownOpen} onOpenChange={setCommanderDropdownOpen}>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm">
                     Commander <ChevronDown className="ml-2 h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  {uniqueCommanders.map(commander => (
+                <DropdownMenuContent className="max-h-[300px] overflow-auto">
+                  <div className="p-2 border-b">
+                    <Input
+                      placeholder="Search commanders..."
+                      value={commanderSearchQuery}
+                      onChange={(e) => {
+                        setCommanderSearchQuery(e.target.value);
+                        setCommanderPage(0); // Reset to first page when searching
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                      className="h-8 text-xs"
+                    />
+                  </div>
+                  {paginatedCommanders.map(commander => (
                     <DropdownMenuItem
                       key={commander}
                       onClick={() => setCommanderFilter(prev => 
@@ -460,6 +549,35 @@ export function FleetList() {
                       {commander}
                     </DropdownMenuItem>
                   ))}
+                  {totalCommanderPages > 1 && (
+                    <div className="flex justify-between p-2 border-t mt-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setCommanderPage(prev => Math.max(0, prev - 1));
+                        }}
+                        disabled={commanderPage === 0}
+                      >
+                        Previous
+                      </Button>
+                      <span className="text-xs self-center">
+                        Page {commanderPage + 1} of {totalCommanderPages}
+                      </span>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setCommanderPage(prev => Math.min(totalCommanderPages - 1, prev + 1));
+                        }}
+                        disabled={commanderPage >= totalCommanderPages - 1}
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>

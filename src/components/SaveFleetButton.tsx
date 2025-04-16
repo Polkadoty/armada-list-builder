@@ -90,6 +90,7 @@ export const SaveFleetButton = forwardRef<HTMLButtonElement, SaveFleetButtonProp
           onClick={handleSaveFleet} 
           disabled={isSaving || !user}
           variant="outline"
+          className="bg-white/50 dark:bg-gray-900/50 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md"
         >
           <Save className="h-4 w-4" />
         </Button>

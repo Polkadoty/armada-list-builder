@@ -72,7 +72,7 @@ export function FactionIcon({ faction, onHover }: FactionIconProps) {
       <TooltipTrigger>
         <Link href={`/${faction.slug}`}>
           <div 
-            className="p-4 transition-all duration-200 rounded-lg hover:scale-110"
+            className="p-4 transition-all duration-200 rounded-lg hover:scale-110 backdrop-blur-sm"
             onMouseEnter={() => onHover?.(faction.slug)}
             onMouseLeave={() => onHover?.(null)}
             style={{

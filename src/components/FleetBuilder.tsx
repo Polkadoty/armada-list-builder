@@ -289,6 +289,7 @@ export default function FleetBuilder({
   const [isExpansionMode, setIsExpansionMode] = useState(false);
   const [showCardBacks, setShowCardBacks] = useState(false);
   const [showDamageDeck, setShowDamageDeck] = useState(false);
+  const [expandCardBacks, setExpandCardBacks] = useState(false);
   const [showDeleteShipsConfirmation, setShowDeleteShipsConfirmation] = useState(false);
   const [showDeleteSquadronsConfirmation, setShowDeleteSquadronsConfirmation] = useState(false);
   const [greyUpgrades, setGreyUpgrades] = useState<Record<string, string[]>>({});
@@ -2530,7 +2531,8 @@ export default function FleetBuilder({
                     <div class="card-container">
                       <img class="card-image" 
                           src="https://api.swarmada.wiki/images/damage-rear.webp" 
-                          alt="Damage card back" />
+                          alt="Damage card back"
+                          style="${expandCardBacks ? 'transform: scale(1.075);' : ''}" />
                     </div>
                   </div>
                 `;
@@ -2894,6 +2896,15 @@ export default function FleetBuilder({
               z-index: 2;
             }
 
+            .card-back {
+              transform: scaleX(-1);
+            }
+
+            .card-back.expanded {
+              transform: scaleX(-1) scale(1.075);
+              transform-origin: center;
+            }
+
           </style>
       </head>
       <body>
@@ -2951,7 +2962,7 @@ export default function FleetBuilder({
                           justify-self: center;
                         ">
                           <div class="card-container">
-                            <img class="card-image" 
+                            <img class="card-image ${expandCardBacks ? 'card-back expanded' : 'card-back'}" 
                                 src="https://api.swarmada.wiki/images/${shipGroup[0].faction}-ship-huge-rear.webp" 
                                 alt="${shipGroup[0].name} back" />
                           </div>
@@ -2975,7 +2986,7 @@ export default function FleetBuilder({
                         return `
                           <div class="tarot-card" style="transform: scaleX(-1)">
                             <div class="card-container">
-                              <img class="card-image" 
+                              <img class="card-image ${expandCardBacks ? 'card-back expanded' : 'card-back'}" 
                                   src="https://api.swarmada.wiki/images/${reversedShip.faction}-ship-rear.webp" 
                                   alt="${reversedShip.name} back" />
                             </div>
@@ -3046,7 +3057,7 @@ export default function FleetBuilder({
                     return `
                       <div class="poker-card" style="transform: scaleX(-1)">
                         <div class="card-container">
-                          <img class="card-image" 
+                          <img class="card-image ${expandCardBacks ? 'card-back expanded' : 'card-back'}" 
                                src="https://api.swarmada.wiki/images/${rearImage}.webp" 
                                alt="Card back" />
                         </div>
@@ -3091,6 +3102,7 @@ export default function FleetBuilder({
     showPrintObjectives,
     showCardBacks,
     showDamageDeck,
+    expandCardBacks,
     paperSize
   ]);
 
@@ -3342,7 +3354,7 @@ export default function FleetBuilder({
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="outline" onClick={handlePrint}>
+                  <Button variant="outline" className="bg-white/50 dark:bg-gray-900/50 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md" onClick={handlePrint}>
                     <Printer className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
@@ -3353,7 +3365,7 @@ export default function FleetBuilder({
 
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="outline" onClick={() => setShowExportPopup(true)}>
+                  <Button variant="outline" className="bg-white/50 dark:bg-gray-900/50 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md" onClick={() => setShowExportPopup(true)}>
                     <FileText className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
@@ -3364,7 +3376,7 @@ export default function FleetBuilder({
 
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="outline" onClick={() => setShowImportWindow(true)}>
+                  <Button variant="outline" className="bg-white/50 dark:bg-gray-900/50 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md" onClick={() => setShowImportWindow(true)}>
                     <Import className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
@@ -3466,7 +3478,7 @@ export default function FleetBuilder({
           ) : (
             <Card className="mb-4 relative">
               <Button
-                className="w-full justify-between bg-white/30 dark:bg-gray-900/30 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md text-lg py-6"
+                className="w-full justify-between bg-white/50 dark:bg-gray-900/50 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md text-lg py-6"
                 variant="outline"
                 onClick={handleAddShip}
               >
@@ -3514,7 +3526,7 @@ export default function FleetBuilder({
           ) : (
             <Card className="mb-4 relative">
               <Button
-                className="w-full justify-between bg-white/30 dark:bg-gray-900/30 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-md text-lg py-6"
+                className="w-full justify-between bg-white/50 dark:bg-gray-900/50 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-md text-lg py-6"
                 variant="outline"
                 onClick={handleAddSquadron}
               >
@@ -3684,10 +3696,12 @@ export default function FleetBuilder({
         setShowRestrictions={setShowPrintRestrictions}
         showObjectives={showPrintObjectives}
         setShowObjectives={setShowPrintObjectives}
-        showDamageDeck={showDamageDeck}
-        setShowDamageDeck={setShowDamageDeck}
         showCardBacks={showCardBacks}
         setShowCardBacks={setShowCardBacks}
+        showDamageDeck={showDamageDeck}
+        setShowDamageDeck={setShowDamageDeck}
+        expandCardBacks={expandCardBacks}
+        setExpandCardBacks={setExpandCardBacks}
       />
     )}
 

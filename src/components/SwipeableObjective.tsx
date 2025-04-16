@@ -74,8 +74,9 @@ export function SwipeableObjective({ type, selectedObjective, selectedObjectives
           <animated.div key={objective.id} style={{ x }} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} className="relative mb-2">
             <Button 
               variant="outline" 
-              className="w-full justify-start transition-colors py-6 text-lg bg-white dark:bg-gray-950" 
+              className="w-full justify-start transition-colors py-6 text-lg bg-white/50 dark:bg-gray-900/50 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md border-2" 
               onClick={onOpen}
+              style={{ borderColor: color }}
             >
               <div className="flex justify-between items-center w-full">
                 <div className="flex items-center">
@@ -95,7 +96,7 @@ export function SwipeableObjective({ type, selectedObjective, selectedObjectives
       ) : (
         <Button
           onClick={onOpen}
-          className="w-full py-6"
+          className="w-full py-6 bg-white/50 dark:bg-gray-900/50 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md border-2"
           variant="outline"
           style={{ borderColor: color }}
         >

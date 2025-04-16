@@ -85,11 +85,11 @@ export default function FactionSelection({ onHover }: { onHover: (faction: strin
   return (
     <>
       <div className="mb-6 w-full">
-        <div className="bg-blue-100/30 backdrop-blur-md border border-blue-400 rounded-lg p-4">
-          <p className="text-blue-800 dark:text-blue-200 text-center font-medium">
+        {/* <div className="bg-black/20 dark:bg-white/10 backdrop-blur-sm border border-gray-300 dark:border-gray-700 rounded-lg p-4">
+          <p className="text-gray-800 dark:text-gray-200 text-center font-medium">
             If you are having issues logging into Facebook, send me a message on discord @polkadoty03 or to the github page in the faq so I can help you out!
           </p>
-        </div>
+        </div> */}
       </div>
       <div className="flex flex-col gap-8">
         <div className="grid grid-cols-2 gap-4 justify-items-center">
@@ -100,7 +100,7 @@ export default function FactionSelection({ onHover }: { onHover: (faction: strin
 
         {enableLegends && availableFactions.legends.length > 0 && (
           <>
-            <Separator className="bg-gray-200 dark:bg-gray-700 h-[2px]" />
+            <Separator className="bg-gray-600/30 dark:bg-gray-400/30 h-[2px]" />
             <div className="grid grid-cols-2 gap-4 justify-items-center">
               {availableFactions.legends.map((faction) => (
                 <FactionIcon key={faction.slug} faction={faction} onHover={handleHover} />
@@ -117,7 +117,7 @@ export default function FactionSelection({ onHover }: { onHover: (faction: strin
 
         {enableCustomFactions && availableFactions.custom.length > 0 && (
           <>
-            <Separator className="bg-gray-200 dark:bg-gray-700 h-[2px]" />
+            <Separator className="bg-gray-600/30 dark:bg-gray-400/30 h-[2px]" />
             <div className="grid grid-cols-2 gap-4 justify-items-center">
               {availableFactions.custom.map((faction) => (
                 <FactionIcon key={faction.slug} faction={faction} onHover={handleHover} />

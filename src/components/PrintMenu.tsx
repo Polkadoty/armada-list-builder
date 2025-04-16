@@ -17,6 +17,8 @@ interface PrintMenuProps {
   setShowCardBacks: (show: boolean) => void;
   showDamageDeck: boolean;
   setShowDamageDeck: (show: boolean) => void;
+  expandCardBacks: boolean;
+  setExpandCardBacks: (expand: boolean) => void;
 }
 
 export function PrintMenu({ 
@@ -32,7 +34,9 @@ export function PrintMenu({
   showCardBacks,
   setShowCardBacks,
   showDamageDeck,
-  setShowDamageDeck
+  setShowDamageDeck,
+  expandCardBacks,
+  setExpandCardBacks
 }: PrintMenuProps) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
@@ -97,6 +101,31 @@ export function PrintMenu({
                 Hide Backs
               </Button>
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <h3 className="text-sm font-medium">Expand Card Backs</h3>
+            <div className="flex gap-2">
+              <Button 
+                variant={expandCardBacks ? 'default' : 'outline'}
+                className="flex-1"
+                onClick={() => setExpandCardBacks(true)}
+                title="Expand card backs by 7.5% to avoid white lines when printing double-sided"
+              >
+                Expand
+              </Button>
+              <Button 
+                variant={!expandCardBacks ? 'default' : 'outline'}
+                className="flex-1"
+                onClick={() => setExpandCardBacks(false)}
+                title="Use normal size for card backs"
+              >
+                Normal
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Expands card backs by 7.5% to avoid white lines when printing double-sided. Cards will remain centered on the page.
+            </p>
           </div>
 
           <div className="space-y-2">

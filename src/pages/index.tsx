@@ -14,6 +14,7 @@ import { useRouter } from 'next/router';
 import { UserAvatar } from '../components/UserAvatar';
 import Head from 'next/head';
 import { WorkshopButton } from "@/components/WorkshopButton";
+import { useTheme } from 'next-themes';
 
 const factionShips = {
   rebel: '/images/cr90.webp',
@@ -39,6 +40,8 @@ export default function Home() {
   const [tournamentMode, setTournamentMode] = useState(true);
   const [showImportWindow, setShowImportWindow] = useState(false);
   const router = useRouter();
+  const { resolvedTheme } = useTheme();
+  const isDarkMode = resolvedTheme === 'dark';
 
   useEffect(() => {
     setMounted(true);
@@ -76,9 +79,9 @@ export default function Home() {
         <title>Star Forge</title>
       </Head>
       <div className="min-h-screen flex flex-col lg:flex-row relative">
-        <StarryBackground show={true} lightDisabled={true}/>
+        <StarryBackground show={true} lightDisabled={false}/>
         {isLoading && <LoadingScreen progress={loadingProgress} message={loadingMessage} />}
-        <div className={`bg-white dark:bg-transparent p-8 flex-grow lg:w-1/3 lg:min-w-[300px] relative z-10`}>
+        <div className={`bg-transparent backdrop-blur-md lg:backdrop-blur-sm p-8 flex-grow lg:w-1/3 lg:min-w-[300px] relative z-10`}>
           <div className="flex justify-end space-x-2 mb-4 items-center">
             <UserAvatar />
             <ContentToggleButton setIsLoading={setIsLoading} setLoadingProgress={setLoadingProgress} setLoadingMessage={setLoadingMessage} tournamentMode={tournamentMode} setTournamentMode={setTournamentMode} />
@@ -100,21 +103,21 @@ export default function Home() {
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20 logo-font"
+                className="bg-white/50 dark:bg-gray-900/50 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md logo-font"
                 onClick={() => setShowImportWindow(true)}
               >
                 <Import className="mr-2 h-4 w-4" />
                 IMPORT
               </Button>
               <Link href="/faq">
-                <Button variant="outline" size="sm" className="text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20 logo-font">
+                <Button variant="outline" size="sm" className="bg-white/50 dark:bg-gray-900/50 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md logo-font">
                   FAQ
                 </Button>
               </Link>
               <Button
                 variant="outline"
                 size="sm"
-                className="text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20 logo-font"
+                className="bg-white/50 dark:bg-gray-900/50 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md logo-font"
                 onClick={() => window.open('https://ko-fi.com/polkadoty', '_blank')}
               >
                 DONATE
@@ -123,7 +126,7 @@ export default function Home() {
             <div className="flex items-center gap-2">
               <WorkshopButton />
               <Link href="/shipyard">
-                <Button variant="outline" className="flex items-center gap-2 logo-font">
+                <Button variant="outline" className="bg-white/50 dark:bg-gray-900/50 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md flex items-center gap-2 logo-font">
                   <Ship className="h-4 w-4" />
                   Shipyard
                 </Button>
