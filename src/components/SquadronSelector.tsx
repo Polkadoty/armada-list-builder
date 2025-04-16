@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ContentSource, Squadron } from './FleetBuilder';
@@ -48,7 +48,16 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
     oldLegacy: Cookies.get('enableOldLegacy') === 'true',
     amg: Cookies.get('enableAMG') === 'true'
   });
+  
+  // Use ref to track latest contentSources without creating dependencies
+  const contentSourcesRef = useRef(contentSources);
+  
+  // Update ref when contentSources changes
+  useEffect(() => {
+    contentSourcesRef.current = contentSources;
+  }, [contentSources]);
 
+  // Improved cookie tracking that dispatches a custom event when cookies change
   useEffect(() => {
     const originalSet = Cookies.set;
     
@@ -94,7 +103,8 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
         amg: Cookies.get('enableAMG') === 'true'
       };
 
-      if (JSON.stringify(newContentSources) !== JSON.stringify(contentSources)) {
+      // Compare with the ref value instead of state to avoid circular dependencies
+      if (JSON.stringify(newContentSources) !== JSON.stringify(contentSourcesRef.current)) {
         console.log('Content source settings changed via interval check:', newContentSources);
         setContentSources(newContentSources);
       }
@@ -112,7 +122,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
       clearInterval(interval);
       document.removeEventListener('content-source-changed', handleContentSourceChange);
     };
-  }, []);  // No dependencies to avoid re-creating the override
+  }, []);  // No dependencies, using ref instead
 
   const fetchSquadrons = useCallback(() => {
     const cachedSquadrons = localStorage.getItem('squadrons');
@@ -125,7 +135,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
     const squadronMap = new Map<string, Squadron>();
 
     const processSquadrons = (data: SquadronData, prefix: string = '') => {
-      if (prefix && !contentSources[prefix as keyof typeof contentSources]) {
+      if (prefix && !contentSourcesRef.current[prefix as keyof typeof contentSourcesRef.current]) {
         return;
       }
       
@@ -135,7 +145,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
           const uniqueKey = `${prefix}-${squadronId}-${squadron.name}-${aceName}`;
           if (!squadronMap.has(uniqueKey)) {
             const abilityText = Object.entries(squadron.abilities || {})
-              .filter(([key, value]) => value !== 0 && value !== false)
+              .filter(([_key, value]) => value !== 0 && value !== false)
               .map(([key, value]) => typeof value === 'boolean' ? key : `${key} ${value}`)
               .join(' ');
       
@@ -165,7 +175,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
                 abilities: abilityText,
                 armament: armamentText,
                 tokens: Object.entries(squadron.tokens || {})
-                .filter(([key, value]) => value > 0)
+                .filter(([_key, value]) => value > 0)
                 .reduce((acc, [key, value]) => ({ ...acc, [key.replace('def_', '')]: value }), {})
               }).toLowerCase()
             });
@@ -179,27 +189,27 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
       processSquadrons(squadronData);
     }
 
-    if (contentSources.legacy && cachedLegacySquadrons) {
+    if (contentSourcesRef.current.legacy && cachedLegacySquadrons) {
       const legacySquadronData = JSON.parse(cachedLegacySquadrons);
       processSquadrons(legacySquadronData, 'legacy');
     }
 
-    if (contentSources.legends && cachedLegendsSquadrons) {
+    if (contentSourcesRef.current.legends && cachedLegendsSquadrons) {
       const legendsSquadronData = JSON.parse(cachedLegendsSquadrons);
       processSquadrons(legendsSquadronData, 'legends');
     }
 
-    if (contentSources.oldLegacy && cachedOldLegacySquadrons) {
+    if (contentSourcesRef.current.oldLegacy && cachedOldLegacySquadrons) {
       const oldLegacySquadronData = JSON.parse(cachedOldLegacySquadrons);
       processSquadrons(oldLegacySquadronData, 'oldLegacy');
     }
 
-    if (contentSources.amg && cachedAMGSquadrons) {
+    if (contentSourcesRef.current.amg && cachedAMGSquadrons) {
       const amgSquadronData = JSON.parse(cachedAMGSquadrons);
       processSquadrons(amgSquadronData, 'amg');
     }
 
-    if (contentSources.arc && cachedArcSquadrons) {
+    if (contentSourcesRef.current.arc && cachedArcSquadrons) {
       const arcSquadronData = JSON.parse(cachedArcSquadrons);
       processSquadrons(arcSquadronData, 'arc');
     }
@@ -225,7 +235,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
       const enabledSourceGroup = group.filter(squadron => {
         if (squadron.source === 'regular') return true;
         
-        return contentSources[squadron.source as keyof typeof contentSources] === true;
+        return contentSourcesRef.current[squadron.source as keyof typeof contentSourcesRef.current] === true;
       });
       
       if (enabledSourceGroup.length === 0) return undefined;
@@ -235,7 +245,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
         if (!matchingSquadron) return false;
         
         if (errataKey.endsWith('-errata')) {
-          return contentSources.amg;
+          return contentSourcesRef.current.amg;
         }
         
         return true;
@@ -257,7 +267,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
         const baseFactions = ['rebel', 'empire', 'republic', 'separatist'];
         const allowedFactions = [...baseFactions];
         
-        if (contentSources.legends) {
+        if (contentSourcesRef.current.legends) {
           allowedFactions.push('scum');
           allowedFactions.push('new-republic');
         }
@@ -281,7 +291,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
 
     console.log(`Setting ${sortedSquadrons.length} squadrons after filtering`);
     setAllSquadrons(sortedSquadrons);
-  }, [contentSources, faction, filter.minPoints, filter.maxPoints]);
+  }, [faction, filter.minPoints, filter.maxPoints]);
 
   useEffect(() => {
     console.log('Content sources updated, refreshing squadrons');
@@ -289,7 +299,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
     setAllSquadrons([]);
     // Use setTimeout to ensure state update completes before fetching
     const timer = setTimeout(() => {
-      console.log('Current content source settings:', JSON.stringify(contentSources));
+      console.log('Current content source settings:', JSON.stringify(contentSourcesRef.current));
       fetchSquadrons();
     }, 50);
     
@@ -298,6 +308,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
 
   const processedSquadrons = useMemo(() => {
     console.log(`Processing ${allSquadrons.length} squadrons with filters`);
+    // Apply search filter if needed
     let filtered = allSquadrons;
     
     if (searchQuery) {
@@ -307,11 +318,13 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
       );
     }
 
+    // Apply points filter
     filtered = filtered.filter(squadron => 
       squadron.points >= filter.minPoints && 
       squadron.points <= filter.maxPoints
     );
 
+    // Define sort functions
     const sortFunctions: Record<SortOption, (a: Squadron, b: Squadron) => number> = {
       custom: (a, b) => {
         if (a.source === b.source) return 0;
@@ -336,7 +349,9 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
 
     const sortPriority: SortOption[] = ['custom', 'unique', 'points', 'alphabetical'];
 
+    // Apply sorting
     filtered.sort((a, b) => {
+      // If no active sorts, use default sorting (by squadron_type, then alphabetical)
       if (Object.values(activeSorts).every(sort => sort === null)) {
         if (a.squadron_type !== b.squadron_type) {
           return a.squadron_type.localeCompare(b.squadron_type);
@@ -344,6 +359,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
         return a.name.localeCompare(b.name);
       }
 
+      // Apply active sorts in priority order
       for (const option of sortPriority) {
         if (activeSorts[option] !== null) {
           const result = sortFunctions[option](a, b);
