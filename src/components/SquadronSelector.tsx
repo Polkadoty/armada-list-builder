@@ -50,6 +50,41 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
   });
 
   useEffect(() => {
+    const originalSet = Cookies.set;
+    
+    // Override Cookies.set to dispatch an event when a content toggle cookie changes
+    Cookies.set = function(...args) {
+      const [name] = args;
+      const result = originalSet.apply(this, args);
+      
+      // If the cookie being set is related to content sources, dispatch event
+      if (name && name.startsWith('enable')) {
+        const event = new CustomEvent('content-source-changed', { 
+          detail: { cookie: name } 
+        });
+        document.dispatchEvent(event);
+      }
+      
+      return result;
+    };
+    
+    // Handle the custom event
+    const handleContentSourceChange = () => {
+      const newContentSources = {
+        arc: Cookies.get('enableArc') === 'true',
+        legacy: Cookies.get('enableLegacy') === 'true',
+        legends: Cookies.get('enableLegends') === 'true',
+        oldLegacy: Cookies.get('enableOldLegacy') === 'true',
+        amg: Cookies.get('enableAMG') === 'true'
+      };
+      
+      console.log('Content source event triggered, new settings:', newContentSources);
+      setContentSources(newContentSources);
+    };
+    
+    document.addEventListener('content-source-changed', handleContentSourceChange);
+    
+    // Regular interval check as fallback
     const checkCookies = () => {
       const newContentSources = {
         arc: Cookies.get('enableArc') === 'true',
@@ -60,207 +95,230 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
       };
 
       if (JSON.stringify(newContentSources) !== JSON.stringify(contentSources)) {
+        console.log('Content source settings changed via interval check:', newContentSources);
         setContentSources(newContentSources);
       }
     };
-
+    
+    // Check immediately on mount
     checkCookies();
+    
+    // Set up an interval as a backup
     const interval = setInterval(checkCookies, 1000);
-    return () => clearInterval(interval);
-  }, [contentSources]);
+    
+    return () => {
+      // Restore original Cookies.set
+      Cookies.set = originalSet;
+      clearInterval(interval);
+      document.removeEventListener('content-source-changed', handleContentSourceChange);
+    };
+  }, []);  // No dependencies to avoid re-creating the override
 
   useEffect(() => {
-    const fetchSquadrons = () => {
+    console.log('Content sources updated, refreshing squadrons');
+    // Clear the current squadrons state to ensure complete refresh
+    setAllSquadrons([]);
+    // Use setTimeout to ensure state update completes before fetching
+    const timer = setTimeout(() => {
       const cachedSquadrons = localStorage.getItem('squadrons');
       const cachedLegacySquadrons = localStorage.getItem('legacySquadrons');
       const cachedLegendsSquadrons = localStorage.getItem('legendsSquadrons');
       const cachedOldLegacySquadrons = localStorage.getItem('oldLegacySquadrons');
       const cachedArcSquadrons = localStorage.getItem('arcSquadrons');
       const cachedAMGSquadrons = localStorage.getItem('amgSquadrons');
-
-      const squadronMap = new Map<string, Squadron>();
-
-      const processSquadrons = (data: SquadronData, prefix: string = '') => {
-        if (data && data.squadrons) {
-          Object.entries(data.squadrons).forEach(([squadronId, squadron]) => {
-            const aceName = squadron['ace-name'] && squadron['ace-name'] !== '' ? squadron['ace-name'] : '';
-            const uniqueKey = `${prefix}-${squadronId}-${squadron.name}-${aceName}`;
-            if (!squadronMap.has(uniqueKey)) {
-              const abilityText = Object.entries(squadron.abilities || {})
-              // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                .filter(([_, value]) => value !== 0 && value !== false)
-                .map(([key, value]) => typeof value === 'boolean' ? key : `${key} ${value}`)
-                .join(' ');
       
-              const armamentText = Object.entries(squadron.armament || {}).map(([key, value]) => {
-                const diceColors = ['red', 'blue', 'black'];
-                return value.map((dice, index) => dice > 0 ? `${key} ${diceColors[index]}` : '').filter(Boolean);
-              }).flat().join(' ');
+      console.log('Current content source settings:', JSON.stringify(contentSources));
+      fetchSquadrons();
+    }, 50);
+    
+    return () => clearTimeout(timer);
+  }, [contentSources, faction, filter.minPoints, filter.maxPoints]);
+
+  const fetchSquadrons = () => {
+    const cachedSquadrons = localStorage.getItem('squadrons');
+    const cachedLegacySquadrons = localStorage.getItem('legacySquadrons');
+    const cachedLegendsSquadrons = localStorage.getItem('legendsSquadrons');
+    const cachedOldLegacySquadrons = localStorage.getItem('oldLegacySquadrons');
+    const cachedArcSquadrons = localStorage.getItem('arcSquadrons');
+    const cachedAMGSquadrons = localStorage.getItem('amgSquadrons');
+
+    const squadronMap = new Map<string, Squadron>();
+
+    const processSquadrons = (data: SquadronData, prefix: string = '') => {
+      if (prefix && !contentSources[prefix as keyof typeof contentSources]) {
+        return;
+      }
       
-              squadronMap.set(uniqueKey, {
+      if (data && data.squadrons) {
+        Object.entries(data.squadrons).forEach(([squadronId, squadron]) => {
+          const aceName = squadron['ace-name'] && squadron['ace-name'] !== '' ? squadron['ace-name'] : '';
+          const uniqueKey = `${prefix}-${squadronId}-${squadron.name}-${aceName}`;
+          if (!squadronMap.has(uniqueKey)) {
+            const abilityText = Object.entries(squadron.abilities || {})
+              .filter(([_, value]) => value !== 0 && value !== false)
+              .map(([key, value]) => typeof value === 'boolean' ? key : `${key} ${value}`)
+              .join(' ');
+      
+            const armamentText = Object.entries(squadron.armament || {}).map(([key, value]) => {
+              const diceColors = ['red', 'blue', 'black'];
+              return value.map((dice, index) => dice > 0 ? `${key} ${diceColors[index]}` : '').filter(Boolean);
+            }).flat().join(' ');
+      
+            squadronMap.set(uniqueKey, {
+              ...squadron,
+              id: squadronId,
+              name: squadron.name,
+              'ace-name': aceName,
+              squadron_type: squadron.squadron_type,
+              points: squadron.points,
+              cardimage: sanitizeImageUrl(squadron.cardimage),
+              faction: squadron.faction,
+              hull: squadron.hull,
+              speed: squadron.speed,
+              unique: squadron.unique,
+              count: 1,
+              ace: squadron.ace || false,
+              'unique-class': squadron['unique-class'] || [],
+              source: (prefix || 'regular') as ContentSource,
+              searchableText: JSON.stringify({
                 ...squadron,
-                id: squadronId,
-                name: squadron.name,
-                'ace-name': aceName,
-                squadron_type: squadron.squadron_type,
-                points: squadron.points,
-                cardimage: sanitizeImageUrl(squadron.cardimage),
-                faction: squadron.faction,
-                hull: squadron.hull,
-                speed: squadron.speed,
-                unique: squadron.unique,
-                count: 1,
-                ace: squadron.ace || false,
-                'unique-class': squadron['unique-class'] || [],
-                source: (prefix || 'regular') as ContentSource,
-                searchableText: JSON.stringify({
-                  ...squadron,
-                  abilities: abilityText,
-                  armament: armamentText,
-                  tokens: Object.entries(squadron.tokens || {})
-                  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                    .filter(([_, value]) => value > 0)
-                    .reduce((acc, [key, value]) => ({ ...acc, [key.replace('def_', '')]: value }), {})
-                }).toLowerCase()
-              });
-            }
-          });
-        }
-      };
-
-      if (cachedSquadrons) {
-        const squadronData = JSON.parse(cachedSquadrons);
-        processSquadrons(squadronData);
-      }
-
-      if (cachedLegacySquadrons) {
-        const legacySquadronData = JSON.parse(cachedLegacySquadrons);
-        processSquadrons(legacySquadronData, 'legacy');
-      }
-
-      if (cachedLegendsSquadrons) {
-        const legendsSquadronData = JSON.parse(cachedLegendsSquadrons);
-        processSquadrons(legendsSquadronData, 'legends');
-      }
-
-      if (cachedOldLegacySquadrons) {
-        const oldLegacySquadronData = JSON.parse(cachedOldLegacySquadrons);
-        processSquadrons(oldLegacySquadronData, 'oldLegacy');
-      }
-
-      if (cachedAMGSquadrons) {
-        const amgSquadronData = JSON.parse(cachedAMGSquadrons);
-        processSquadrons(amgSquadronData, 'amg');
-      }
-
-      if (cachedArcSquadrons) {
-        const arcSquadronData = JSON.parse(cachedArcSquadrons);
-        processSquadrons(arcSquadronData, 'arc');
-      }
-
-      // Get errata keys from localStorage
-      const errataKeys = JSON.parse(localStorage.getItem('errataKeys') || '{}');
-      const squadronErrataKeys = errataKeys.squadrons || [];
-      // console.log('Errata Keys for Squadrons:', squadronErrataKeys);
-
-      let squadronsArray = Array.from(squadronMap.values());
-
-      // Create a Map to group squadrons by their base name
-      const squadronGroups = new Map<string, Squadron[]>();
-
-      squadronsArray.forEach(squadron => {
-        // Extract base name without any prefixes or errata suffixes
-        const baseName = squadron.id.replace(/-errata(-[^-]+)?$/, '');
-        
-        if (!squadronGroups.has(baseName)) {
-          squadronGroups.set(baseName, []);
-        }
-        squadronGroups.get(baseName)?.push(squadron);
-      });
-
-      // Filter out non-errata versions when errata exists
-      squadronsArray = Array.from(squadronGroups.values()).map(group => {
-        // Check if any squadron in the group has an errata version
-        const hasErrata = squadronErrataKeys.some((errataKey: string) => {
-          const matchingSquadron = group.find(squadron => squadron.id === errataKey);
-          if (!matchingSquadron) return false;
-          
-          // For AMG errata, check if it's enabled
-          if (errataKey.endsWith('-errata')) {
-            return Cookies.get('enableAMG') === 'true';
+                abilities: abilityText,
+                armament: armamentText,
+                tokens: Object.entries(squadron.tokens || {})
+                .filter(([_, value]) => value > 0)
+                .reduce((acc, [key, value]) => ({ ...acc, [key.replace('def_', '')]: value }), {})
+              }).toLowerCase()
+            });
           }
-          // Otherwise check content source settings
-          const source = matchingSquadron.source;
-          return source ? contentSources[source as keyof typeof contentSources] : true;
         });
-
-        if (hasErrata) {
-          // Return only the errata version
-          return group.find(squadron => 
-            squadronErrataKeys.includes(squadron.id) && 
-            (squadron.id.endsWith('-errata') ? 
-              Cookies.get('enableAMG') === 'true' : 
-              contentSources[squadron.source as keyof typeof contentSources])
-          );
-        }
-        
-        // If no errata exists, return the first squadron in the group
-        return group[0];
-      }).filter((squadron): squadron is Squadron => squadron !== undefined);
-
-      const filteredSquadrons = squadronsArray.filter(squadron => {
-        // For sandbox mode, include squadrons from all base factions
-        if (faction === 'sandbox') {
-          const baseFactions = ['rebel', 'empire', 'republic', 'separatist'];
-          const allowedFactions = [...baseFactions];
-          
-          // Include scum faction if custom content is enabled
-          if (contentSources.legends) {
-            allowedFactions.push('scum');
-            allowedFactions.push('new-republic');
-          }
-          
-          return allowedFactions.includes(squadron.faction) &&
-            squadron.points >= filter.minPoints &&
-            squadron.points <= filter.maxPoints;
-        }
-        
-        // Normal faction filtering
-        return squadron.faction === faction &&
-          squadron.points >= filter.minPoints &&
-          squadron.points <= filter.maxPoints;
-      });
-
-      const sortedSquadrons = filteredSquadrons.sort((a, b) => {
-        if (a.squadron_type !== b.squadron_type) {
-          return a.squadron_type.localeCompare(b.squadron_type);
-        }
-        return a.name.localeCompare(b.name);
-      });
-
-      setAllSquadrons(sortedSquadrons);
+      }
     };
 
-    fetchSquadrons();
-  }, [faction, filter.minPoints, filter.maxPoints, contentSources]);
+    if (cachedSquadrons) {
+      const squadronData = JSON.parse(cachedSquadrons);
+      processSquadrons(squadronData);
+    }
+
+    if (contentSources.legacy && cachedLegacySquadrons) {
+      const legacySquadronData = JSON.parse(cachedLegacySquadrons);
+      processSquadrons(legacySquadronData, 'legacy');
+    }
+
+    if (contentSources.legends && cachedLegendsSquadrons) {
+      const legendsSquadronData = JSON.parse(cachedLegendsSquadrons);
+      processSquadrons(legendsSquadronData, 'legends');
+    }
+
+    if (contentSources.oldLegacy && cachedOldLegacySquadrons) {
+      const oldLegacySquadronData = JSON.parse(cachedOldLegacySquadrons);
+      processSquadrons(oldLegacySquadronData, 'oldLegacy');
+    }
+
+    if (contentSources.amg && cachedAMGSquadrons) {
+      const amgSquadronData = JSON.parse(cachedAMGSquadrons);
+      processSquadrons(amgSquadronData, 'amg');
+    }
+
+    if (contentSources.arc && cachedArcSquadrons) {
+      const arcSquadronData = JSON.parse(cachedArcSquadrons);
+      processSquadrons(arcSquadronData, 'arc');
+    }
+
+    const errataKeys = JSON.parse(localStorage.getItem('errataKeys') || '{}');
+    const squadronErrataKeys = errataKeys.squadrons || [];
+
+    let squadronsArray = Array.from(squadronMap.values());
+    console.log(`Loaded ${squadronsArray.length} squadrons from sources`);
+
+    const squadronGroups = new Map<string, Squadron[]>();
+
+    squadronsArray.forEach(squadron => {
+      const baseName = squadron.id.replace(/-errata(-[^-]+)?$/, '');
+      
+      if (!squadronGroups.has(baseName)) {
+        squadronGroups.set(baseName, []);
+      }
+      squadronGroups.get(baseName)?.push(squadron);
+    });
+
+    squadronsArray = Array.from(squadronGroups.values()).map(group => {
+      const enabledSourceGroup = group.filter(squadron => {
+        if (squadron.source === 'regular') return true;
+        
+        return contentSources[squadron.source as keyof typeof contentSources] === true;
+      });
+      
+      if (enabledSourceGroup.length === 0) return undefined;
+      
+      const hasErrata = squadronErrataKeys.some((errataKey: string) => {
+        const matchingSquadron = enabledSourceGroup.find(squadron => squadron.id === errataKey);
+        if (!matchingSquadron) return false;
+        
+        if (errataKey.endsWith('-errata')) {
+          return contentSources.amg;
+        }
+        
+        return true;
+      });
+
+      if (hasErrata) {
+        const errataSquadron = enabledSourceGroup.find(squadron => 
+          squadronErrataKeys.includes(squadron.id)
+        );
+        
+        return errataSquadron || enabledSourceGroup[0];
+      }
+      
+      return enabledSourceGroup[0];
+    }).filter((squadron): squadron is Squadron => squadron !== undefined);
+
+    const filteredSquadrons = squadronsArray.filter(squadron => {
+      if (faction === 'sandbox') {
+        const baseFactions = ['rebel', 'empire', 'republic', 'separatist'];
+        const allowedFactions = [...baseFactions];
+        
+        if (contentSources.legends) {
+          allowedFactions.push('scum');
+          allowedFactions.push('new-republic');
+        }
+        
+        return allowedFactions.includes(squadron.faction) &&
+          squadron.points >= filter.minPoints &&
+          squadron.points <= filter.maxPoints;
+      }
+      
+      return squadron.faction === faction &&
+        squadron.points >= filter.minPoints &&
+        squadron.points <= filter.maxPoints;
+    });
+
+    const sortedSquadrons = filteredSquadrons.sort((a, b) => {
+      if (a.squadron_type !== b.squadron_type) {
+        return a.squadron_type.localeCompare(b.squadron_type);
+      }
+      return a.name.localeCompare(b.name);
+    });
+
+    console.log(`Setting ${sortedSquadrons.length} squadrons after filtering`);
+    setAllSquadrons(sortedSquadrons);
+  };
 
   const processedSquadrons = useMemo(() => {
+    console.log(`Processing ${allSquadrons.length} squadrons with filters`);
     let filtered = allSquadrons;
     
-    // Apply search filter if needed
     if (searchQuery) {
       filtered = filtered.filter(squadron =>
-        squadron.name.toLowerCase().includes(searchQuery.toLowerCase())
+        squadron.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (squadron['ace-name'] && squadron['ace-name'].toLowerCase().includes(searchQuery.toLowerCase()))
       );
     }
 
-    // Apply points filter
     filtered = filtered.filter(squadron => 
       squadron.points >= filter.minPoints && 
       squadron.points <= filter.maxPoints
     );
 
-    // Define sort functions
     const sortFunctions: Record<SortOption, (a: Squadron, b: Squadron) => number> = {
       custom: (a, b) => {
         if (a.source === b.source) return 0;
@@ -285,9 +343,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
 
     const sortPriority: SortOption[] = ['custom', 'unique', 'points', 'alphabetical'];
 
-    // Apply sorting
     filtered.sort((a, b) => {
-      // If no active sorts, use default sorting (by squadron_type, then alphabetical)
       if (Object.values(activeSorts).every(sort => sort === null)) {
         if (a.squadron_type !== b.squadron_type) {
           return a.squadron_type.localeCompare(b.squadron_type);
@@ -295,7 +351,6 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
         return a.name.localeCompare(b.name);
       }
 
-      // Apply active sorts in priority order
       for (const option of sortPriority) {
         if (activeSorts[option] !== null) {
           const result = sortFunctions[option](a, b);
@@ -322,23 +377,19 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
   };
 
   const isSquadronSelected = (squadron: Squadron) => {
-    // Check if this exact squadron is already selected
     const isExactMatch = selectedSquadrons.some(s => 
       s.id === squadron.id || 
       (s.name === squadron.name && s['ace-name'] === squadron['ace-name'])
     );
 
-    // Check if a conflicting unique squadron is already selected
     const hasConflictingUnique = squadron.unique && selectedSquadrons.some(s => 
       s.unique && s['ace-name'] === squadron['ace-name'] && s['ace-name'] !== ''
     );
 
-    // Check if any of the unique classes are already in use
     const hasConflictingUniqueClass = squadron['unique-class']?.some(uc => 
       uniqueClassNames.includes(uc)
     );
 
-    // For non-unique squadrons, don't consider them conflicting
     if (!squadron.unique) {
       return isExactMatch;
     }
@@ -411,8 +462,8 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
                     <OptimizedImage
                       src={squadron.cardimage}
                       alt={squadron.name}
-                      width={250}  // Standard poker card width (2.5 inches * 100)
-                      height={350} // Standard poker card height (3.5 inches * 100)
+                      width={250}
+                      height={350}
                       className="object-cover object-center w-full h-full"
                       onError={() => {}}
                     />

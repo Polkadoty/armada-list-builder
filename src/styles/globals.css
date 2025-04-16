@@ -100,6 +100,50 @@ body {
     transform: translateZ(0);
     backface-visibility: hidden;
   }
+  
+  /* FleetList optimizations */
+  .fleet-list-dialog {
+    contain: content;
+    will-change: transform;
+    transform: translateZ(0);
+  }
+  
+  .fleet-list-table {
+    contain: content;
+    will-change: transform;
+  }
+  
+  .fleet-list-row {
+    contain: layout;
+    will-change: opacity;
+  }
+  
+  .fleet-dropdown-menu {
+    contain: content;
+    will-change: transform, opacity;
+  }
+  
+  .fleet-dropdown-content {
+    contain: content;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+  
+  /* Reduce animation complexity on mobile */
+  @media (max-width: 640px) {
+    .DialogContent {
+      animation-duration: 150ms !important;
+    }
+    
+    .DropdownMenuContent, 
+    .SelectContent {
+      animation-duration: 150ms !important;
+    }
+    
+    .fleet-list-row:hover {
+      background-color: transparent !important;
+    }
+  }
 }
 
 @layer utilities {

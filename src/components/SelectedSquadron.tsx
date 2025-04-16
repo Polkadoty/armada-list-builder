@@ -19,10 +19,9 @@ interface SelectedSquadronProps {
   onMoveDown?: (id: string) => void;
   isFirst: boolean;
   isLast: boolean;
-  showSource?: boolean;
 }
 
-function SelectedSquadronComponent({ squadron, onRemove, onIncrement, onDecrement, onSwapSquadron, onMoveUp, onMoveDown, isFirst, isLast, showSource }: SelectedSquadronProps) {
+function SelectedSquadronComponent({ squadron, onRemove, onIncrement, onDecrement, onSwapSquadron, onMoveUp, onMoveDown, isFirst, isLast }: SelectedSquadronProps) {
   const [{ x }, api] = useSpring(() => ({ x: 0 }));
   const isDragging = useRef(false);
   const startX = useRef(0);
