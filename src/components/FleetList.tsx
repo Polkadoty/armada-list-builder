@@ -17,10 +17,19 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+  SheetFooter,
+} from "@/components/ui/sheet";
+import { Card, CardContent } from "@/components/ui/card";
 import { useRouter } from 'next/router';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MoreVertical, ChevronDown } from 'lucide-react';
+import { MoreVertical, ChevronDown, Trash, Edit, Copy, Share, ExternalLink, FileText } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,6 +47,7 @@ import { NotificationWindow } from "@/components/NotificationWindow";
 import { useTheme } from 'next-themes';
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useMediaQuery } from '../hooks/use-media-query';
 
 interface Fleet {
   id: string;
@@ -314,6 +324,125 @@ function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue;
 }
 
+// Add a simplified fleet card component for mobile
+const FleetCard = memo(({
+  fleet,
+  handleFleetSelect,
+  handleFleetDelete,
+  handleFleetCopy,
+  handleToggleShare,
+  handleCopyLink,
+  handleCopyText,
+  theme,
+  setFleetToRename,
+  setNewFleetName,
+  setShowRenameDialog
+}: {
+  fleet: Fleet,
+  handleFleetSelect: (fleet: Fleet) => void,
+  handleFleetDelete: (fleet: Fleet) => void,
+  handleFleetCopy: (fleet: Fleet) => void,
+  handleToggleShare: (fleet: Fleet) => void,
+  handleCopyLink: (fleet: Fleet) => void,
+  handleCopyText: (fleet: Fleet) => void,
+  theme: string | undefined,
+  setFleetToRename: (fleet: Fleet | null) => void,
+  setNewFleetName: (name: string) => void,
+  setShowRenameDialog: (show: boolean) => void
+}) => (
+  <Card className="mb-3">
+    <CardContent className="p-4">
+      <div className="flex justify-between items-start mb-2">
+        <button
+          onClick={() => handleFleetSelect(fleet)}
+          className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline text-lg font-medium"
+        >
+          {fleet.fleet_name}
+        </button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+              <MoreVertical className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => handleFleetSelect(fleet)}>
+              Load Fleet
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleToggleShare(fleet)}>
+              <div className="flex items-center">
+                <Checkbox
+                  checked={fleet.shared}
+                  className="mr-2 cursor-not-allowed"
+                  disabled={true}
+                />
+                Share Fleet
+              </div>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => {
+              setFleetToRename(fleet);
+              setNewFleetName(fleet.fleet_name);
+              setShowRenameDialog(true);
+            }}>
+              Rename Fleet
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleFleetCopy(fleet)}>
+              Copy Fleet
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleCopyLink(fleet)}>
+              Copy Share Link
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleCopyText(fleet)}>
+              Copy Fleet Text
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              onClick={() => handleFleetDelete(fleet)}
+              className="text-destructive focus:text-destructive focus:bg-destructive/10"
+            >
+              Delete Fleet
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+      
+      <div className="grid grid-cols-2 gap-1 text-sm">
+        <div className={theme === 'light' ? 'text-gray-600' : 'text-gray-400'}>Faction:</div>
+        <div className="font-medium">{fleet.faction.charAt(0).toUpperCase() + fleet.faction.slice(1)}</div>
+        
+        <div className={theme === 'light' ? 'text-gray-600' : 'text-gray-400'}>Commander:</div>
+        <div className="font-medium">{fleet.commander}</div>
+        
+        <div className={theme === 'light' ? 'text-gray-600' : 'text-gray-400'}>Points:</div>
+        <div className="font-medium">{fleet.points}</div>
+      </div>
+      
+      <div className="flex gap-2 mt-3">
+        <Button variant="outline" size="sm" className="h-8 p-1 px-2" onClick={() => handleFleetSelect(fleet)}>
+          Load
+        </Button>
+        <Button variant="outline" size="sm" className="h-8 p-1 px-2" onClick={() => handleFleetCopy(fleet)}>
+          <Copy className="h-4 w-4" />
+        </Button>
+        <Button variant="outline" size="sm" className="h-8 p-1 px-2" onClick={() => handleToggleShare(fleet)}>
+          <Share className="h-4 w-4" />
+        </Button>
+        <Button variant="outline" size="sm" className="h-8 p-1 px-2" onClick={() => {
+          setFleetToRename(fleet);
+          setNewFleetName(fleet.fleet_name);
+          setShowRenameDialog(true);
+        }}>
+          <Edit className="h-4 w-4" />
+        </Button>
+        <Button variant="outline" size="sm" className="h-8 p-1 px-2 text-destructive" onClick={() => handleFleetDelete(fleet)}>
+          <Trash className="h-4 w-4" />
+        </Button>
+      </div>
+    </CardContent>
+  </Card>
+));
+
+FleetCard.displayName = 'FleetCard';
+
 export function FleetList() {
   const { theme } = useTheme();
   const { user } = useUser();
@@ -354,6 +483,9 @@ export function FleetList() {
 
   // Add state for dialog open status
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  
+  // Detect mobile screens
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
   // Define fetchFleets before it's used
   const fetchFleets = useCallback(async () => {
@@ -806,6 +938,168 @@ export function FleetList() {
     setCurrentPage(1);
   }, [debouncedSearchQuery, factionFilter, commanderFilter]);
 
+  // Mobile-specific UI content for Sheet component
+  const mobileContent = useMemo(() => {
+    if (!isDialogOpen) return null;
+    
+    return (
+      <SheetContent 
+        className="w-screen h-[100dvh] max-w-none p-0 border-0 rounded-none mt-0 pt-6" 
+        side="bottom"
+      >
+        <SheetHeader className="px-4 pb-2">
+          <SheetTitle className="text-center text-xl">Your Fleets</SheetTitle>
+          <div className="flex flex-col gap-3 mt-3">
+            <Input
+              placeholder="Filter fleets..."
+              value={searchQuery}
+              onChange={handleSearchQueryChange}
+              className="w-full"
+            />
+            <div className="flex gap-2">
+              <Select
+                value={factionFilter.length ? factionFilter[0] : "all"}
+                onValueChange={(value) => {
+                  setFactionFilter(value === "all" ? [] : [value]);
+                }}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Filter by faction" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Factions</SelectItem>
+                  {uniqueFactions.map(faction => (
+                    <SelectItem key={faction} value={faction}>
+                      {faction.charAt(0).toUpperCase() + faction.slice(1)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              
+              <Select
+                value={commanderFilter.length ? commanderFilter[0] : "all-commanders"}
+                onValueChange={(value) => {
+                  setCommanderFilter(value === "all-commanders" ? [] : [value]);
+                }}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Filter by commander" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all-commanders">All Commanders</SelectItem>
+                  {uniqueCommanders.map(commander => (
+                    <SelectItem key={commander} value={commander}>
+                      {commander}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </SheetHeader>
+        
+        <div className="flex-1 overflow-auto px-4 pb-24">
+          {isLoading && fleets.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-32">
+              <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
+              <p>Loading your fleets...</p>
+            </div>
+          ) : (
+            <>
+              {fleets.length === 0 ? (
+                <div className="text-center py-8">
+                  <p>No fleets found. Create and save a fleet to see it here.</p>
+                </div>
+              ) : (
+                <div className="flex flex-col">
+                  {paginatedFleets.map((fleet) => (
+                    <FleetCard
+                      key={fleet.id}
+                      fleet={fleet}
+                      handleFleetSelect={handleFleetSelect}
+                      handleFleetDelete={handleFleetDelete}
+                      handleFleetCopy={handleFleetCopy}
+                      handleToggleShare={handleToggleShare}
+                      handleCopyLink={handleCopyLink}
+                      handleCopyText={handleCopyText}
+                      theme={theme}
+                      setFleetToRename={setFleetToRename}
+                      setNewFleetName={setNewFleetName}
+                      setShowRenameDialog={setShowRenameDialog}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+        
+        {fleets.length > 0 && (
+          <SheetFooter className="fixed bottom-0 left-0 right-0 p-4 flex flex-row justify-between items-center border-t bg-background/95 backdrop-blur-sm pb-8">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </Button>
+            <span className="text-sm">
+              Page {currentPage} of {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </Button>
+          </SheetFooter>
+        )}
+        
+        {showDeleteConfirmation && fleetToDelete && (
+          <NotificationWindow
+            title="Delete Fleet"
+            message={`Are you sure you want to delete "${fleetToDelete.fleet_name}"?`}
+            onClose={() => {
+              setShowDeleteConfirmation(false);
+              setFleetToDelete(null);
+            }}
+            showConfirmButton={true}
+            onConfirm={confirmDelete}
+          />
+        )}
+      </SheetContent>
+    );
+  }, [
+    isDialogOpen,
+    isLoading,
+    fleets.length,
+    searchQuery,
+    handleSearchQueryChange,
+    factionFilter,
+    commanderFilter,
+    uniqueFactions,
+    uniqueCommanders,
+    paginatedFleets,
+    theme,
+    handleFleetSelect,
+    handleFleetDelete,
+    handleFleetCopy,
+    handleToggleShare,
+    handleCopyLink,
+    handleCopyText,
+    setFleetToRename,
+    setNewFleetName,
+    setShowRenameDialog,
+    currentPage,
+    totalPages,
+    showDeleteConfirmation,
+    fleetToDelete,
+    confirmDelete
+  ]);
+
   // Memoize dialog render content to avoid re-rendering when closed
   const dialogContent = useMemo(() => {
     if (!isDialogOpen) return null;
@@ -938,54 +1232,77 @@ export function FleetList() {
               <p>Loading your fleets...</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              {fleets.length === 0 ? (
-                <div className="text-center py-8">
-                  <p>No fleets found. Create and save a fleet to see it here.</p>
+            <div className="flex-1 overflow-auto px-4 pb-24">
+              {isLoading && fleets.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-32">
+                  <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
+                  <p>Loading your fleets...</p>
                 </div>
               ) : (
-                <Table>
-                  <TableHeaderMemo 
-                    columns={columns} 
-                    sortColumn={sortColumn}
-                    sortDirection={sortDirection}
-                    handleSort={handleSort}
-                    theme={theme}
-                  />
-                  <TableBody>
-                    {paginatedFleets.map((fleet) => (
-                      <FleetRowMemo
-                        key={fleet.id}
-                        fleet={fleet}
-                        handleFleetSelect={handleFleetSelect}
-                        handleFleetDelete={handleFleetDelete}
-                        handleFleetCopy={handleFleetCopy}
-                        handleToggleShare={handleToggleShare}
-                        handleCopyLink={handleCopyLink}
-                        handleCopyText={handleCopyText}
+                <div className="overflow-x-auto">
+                  {fleets.length === 0 ? (
+                    <div className="text-center py-8">
+                      <p>No fleets found. Create and save a fleet to see it here.</p>
+                    </div>
+                  ) : (
+                    <Table>
+                      <TableHeaderMemo 
+                        columns={columns} 
+                        sortColumn={sortColumn}
+                        sortDirection={sortDirection}
+                        handleSort={handleSort}
                         theme={theme}
-                        columns={columns}
-                        capitalizeFirstLetter={capitalizeFirstLetter}
-                        setFleetToRename={setFleetToRename}
-                        setNewFleetName={setNewFleetName}
-                        setShowRenameDialog={setShowRenameDialog}
                       />
-                    ))}
-                  </TableBody>
-                </Table>
+                      <TableBody>
+                        {paginatedFleets.map((fleet) => (
+                          <FleetRowMemo
+                            key={fleet.id}
+                            fleet={fleet}
+                            handleFleetSelect={handleFleetSelect}
+                            handleFleetDelete={handleFleetDelete}
+                            handleFleetCopy={handleFleetCopy}
+                            handleToggleShare={handleToggleShare}
+                            handleCopyLink={handleCopyLink}
+                            handleCopyText={handleCopyText}
+                            theme={theme}
+                            columns={columns}
+                            capitalizeFirstLetter={capitalizeFirstLetter}
+                            setFleetToRename={setFleetToRename}
+                            setNewFleetName={setNewFleetName}
+                            setShowRenameDialog={setShowRenameDialog}
+                          />
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                </div>
               )}
             </div>
           )}
         </div>
 
         {fleets.length > 0 && (
-          <PaginationControls
-            currentPage={currentPage}
-            totalPages={totalPages}
-            setCurrentPage={setCurrentPage}
-            rowsPerPage={rowsPerPage}
-            setRowsPerPage={handleRowsPerPageChange}
-          />
+          <SheetFooter className="fixed bottom-0 left-0 right-0 p-4 flex flex-row justify-between items-center border-t bg-background/95 backdrop-blur-sm pb-8">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </Button>
+            <span className="text-sm">
+              Page {currentPage} of {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </Button>
+          </SheetFooter>
         )}
         
         {showDeleteConfirmation && fleetToDelete && (
@@ -1098,24 +1415,85 @@ export function FleetList() {
     notificationMessage
   ]);
 
+  // Return either the Dialog or Sheet based on screen size
   return (
     <>
       {/* Only show the global loading screen when absolutely necessary */}
       {isLoading && !isDialogOpen && (
         <LoadingScreen progress={loadingProgress} message={loadingMessage} />
       )}
-      <Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
-        <DialogTrigger asChild>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full justify-start text-sm font-normal h-9 bg-background text-foreground hover:bg-accent hover:text-accent-foreground"
-          >
-            Fleet List
-          </Button>
-        </DialogTrigger>
-        {dialogContent}
-      </Dialog>
+      
+      {isMobile ? (
+        <Sheet open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
+          <SheetTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-start text-sm font-normal h-9 bg-background text-foreground hover:bg-accent hover:text-accent-foreground"
+            >
+              Fleet List
+            </Button>
+          </SheetTrigger>
+          {mobileContent}
+        </Sheet>
+      ) : (
+        <Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
+          <DialogTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-start text-sm font-normal h-9 bg-background text-foreground hover:bg-accent hover:text-accent-foreground"
+            >
+              Fleet List
+            </Button>
+          </DialogTrigger>
+          {dialogContent}
+        </Dialog>
+      )}
+      
+      {showRenameDialog && fleetToRename && (
+        <Dialog open={showRenameDialog} onOpenChange={setShowRenameDialog}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Rename Fleet</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Input
+                  id="name"
+                  value={newFleetName}
+                  onChange={(e) => setNewFleetName(e.target.value)}
+                  className="col-span-4"
+                  placeholder="Enter new fleet name"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => {
+                  setShowRenameDialog(false);
+                  setFleetToRename(null);
+                  setNewFleetName('');
+                }}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" onClick={handleFleetRename}>
+                Save Changes
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+      
+      {showNotification && (
+        <NotificationWindow
+          message={notificationMessage}
+          onClose={() => setShowNotification(false)}
+        />
+      )}
     </>
   );
 }

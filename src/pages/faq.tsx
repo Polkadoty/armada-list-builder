@@ -13,7 +13,7 @@ interface FAQProps {
 
 export default function FAQ({ content }: FAQProps) {
   return (
-    <div className="min-h-screen flex flex-col relative">
+    <div className="relative min-h-screen w-full flex flex-col overflow-hidden">
       <StarryBackground show={true} />
       <div className="flex-grow flex flex-col relative z-10 overflow-auto">
         <div className="bg-white dark:bg-transparent p-8">

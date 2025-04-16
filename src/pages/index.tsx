@@ -77,7 +77,7 @@ export default function Home() {
         <meta name="supported-color-schemes" content="srgb p3" />
         <title>Star Forge</title>
       </Head>
-      <div className="min-h-screen flex flex-col lg:flex-row relative overscroll-none">
+      <div className="relative min-h-screen w-full flex flex-col lg:flex-row overflow-hidden">
         <StarryBackground show={true} lightDisabled={resolvedTheme === 'dark'}/>
         {isLoading && <LoadingScreen progress={loadingProgress} message={loadingMessage} />}
         <div className={`bg-transparent lg:backdrop-blur-sm md:backdrop-blur-[2px] backdrop-blur-[1px] p-8 flex-grow lg:w-1/3 lg:min-w-[300px] relative z-10`}>
