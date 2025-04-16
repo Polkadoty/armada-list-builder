@@ -29,7 +29,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useRouter } from 'next/router';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MoreVertical, ChevronDown, Trash, Edit, Copy, Share, ExternalLink, FileText } from 'lucide-react';
+import { MoreVertical, ChevronDown, Trash, Edit, Copy, Share } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
