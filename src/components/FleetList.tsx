@@ -143,9 +143,6 @@ const FleetRowMemo = memo(({
   columns,
   capitalizeFirstLetter,
   handleOpenRenameDialog,
-  setFleetToRename,
-  setNewFleetName,
-  setShowRenameDialog
 }: { 
   fleet: Fleet, 
   handleFleetSelect: (fleet: Fleet) => void,
@@ -158,9 +155,6 @@ const FleetRowMemo = memo(({
   columns: SortableColumn[],
   capitalizeFirstLetter: (s: string) => string,
   handleOpenRenameDialog: (fleet: Fleet) => void,
-  setFleetToRename: (fleet: Fleet | null) => void,
-  setNewFleetName: (name: string) => void,
-  setShowRenameDialog: (show: boolean) => void
 }) => (
   <TableRow key={fleet.id} className={`hover:bg-muted/50 border-b ${
     theme === 'light' ? 'text-slate-900' : 'text-foreground'
@@ -333,9 +327,6 @@ const FleetCard = memo(({
   handleCopyText,
   theme,
   handleOpenRenameDialog,
-  setFleetToRename,
-  setNewFleetName,
-  setShowRenameDialog
 }: {
   fleet: Fleet,
   handleFleetSelect: (fleet: Fleet) => void,
@@ -346,9 +337,6 @@ const FleetCard = memo(({
   handleCopyText: (fleet: Fleet) => void,
   theme: string | undefined,
   handleOpenRenameDialog: (fleet: Fleet) => void,
-  setFleetToRename: (fleet: Fleet | null) => void,
-  setNewFleetName: (name: string) => void,
-  setShowRenameDialog: (show: boolean) => void
 }) => (
   <Card className="mb-3">
     <CardContent className="p-4">
@@ -1035,9 +1023,6 @@ export function FleetList() {
                       handleCopyText={handleCopyText}
                       theme={theme}
                       handleOpenRenameDialog={handleOpenRenameDialog}
-                      setFleetToRename={setFleetToRename}
-                      setNewFleetName={setNewFleetName}
-                      setShowRenameDialog={setShowRenameDialog}
                     />
                   ))}
                 </div>
@@ -1276,9 +1261,6 @@ export function FleetList() {
                             columns={columns}
                             capitalizeFirstLetter={capitalizeFirstLetter}
                             handleOpenRenameDialog={handleOpenRenameDialog}
-                            setFleetToRename={setFleetToRename}
-                            setNewFleetName={setNewFleetName}
-                            setShowRenameDialog={setShowRenameDialog}
                           />
                         ))}
                       </TableBody>
@@ -1394,7 +1376,6 @@ export function FleetList() {
     totalCommanderPages,
     handleCommanderPageChange,
     commanderPage,
-    columns,
     sortColumn,
     sortDirection,
     handleSort,
@@ -1410,7 +1391,6 @@ export function FleetList() {
     totalPages,
     setCurrentPage,
     rowsPerPage,
-    handleRowsPerPageChange,
     showDeleteConfirmation,
     fleetToDelete,
     confirmDelete,
