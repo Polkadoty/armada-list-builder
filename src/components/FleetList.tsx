@@ -1268,27 +1268,13 @@ export function FleetList() {
         </div>
 
         {fleets.length > 0 && (
-          <SheetFooter className="fixed bottom-0 left-0 right-0 p-4 flex flex-row justify-between items-center border-t bg-background/95 backdrop-blur-sm pb-8">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-              disabled={currentPage === 1}
-            >
-              Previous
-            </Button>
-            <span className="text-sm">
-              Page {currentPage} of {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-              disabled={currentPage === totalPages}
-            >
-              Next
-            </Button>
-          </SheetFooter>
+          <PaginationControls 
+            currentPage={currentPage}
+            totalPages={totalPages}
+            setCurrentPage={setCurrentPage}
+            rowsPerPage={rowsPerPage}
+            setRowsPerPage={setRowsPerPage} 
+          />
         )}
         
         {showDeleteConfirmation && fleetToDelete && (
@@ -1385,6 +1371,8 @@ export function FleetList() {
     currentPage,
     totalPages,
     setCurrentPage,
+    rowsPerPage,
+    setRowsPerPage,
     showDeleteConfirmation,
     fleetToDelete,
     confirmDelete,
