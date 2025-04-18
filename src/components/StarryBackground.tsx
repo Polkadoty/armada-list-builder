@@ -12,7 +12,7 @@ const StarryBackground: React.FC<{ show: boolean, lightDisabled?: boolean }> = (
         className={`bg-absolute-cover transition-opacity duration-300 ${!isDarkMode ? 'opacity-100' : 'opacity-0'}`}
         style={{
           backgroundImage: 'url(/images/nebula-lightmode.webp)',
-          filter: 'contrast(1.5)',
+          filter: 'contrast(1.1) brightness(1.2)',
           transform: 'scale(1.1)',
           transformOrigin: 'center center'
         }}
@@ -23,6 +23,7 @@ const StarryBackground: React.FC<{ show: boolean, lightDisabled?: boolean }> = (
         className={`bg-absolute-cover transition-opacity duration-300 ${isDarkMode && show ? 'opacity-100' : 'opacity-0'}`}
         style={{
           backgroundImage: 'url(/images/nebula-darkmode.webp)',
+          filter: 'contrast(1.1)',
           transform: 'scale(1.1)',
           transformOrigin: 'center center'
         }}
