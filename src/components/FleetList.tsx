@@ -909,11 +909,6 @@ export function FleetList() {
     setSearchQuery(e.target.value);
   }, []);
 
-  const handleRowsPerPageChange = useCallback((value: number) => {
-    setRowsPerPage(value);
-    setCurrentPage(1); // Reset to first page when changing rows per page
-  }, []);
-
   // Reset isMounted ref when unmounting
   useEffect(() => {
     return () => {
@@ -1390,7 +1385,6 @@ export function FleetList() {
     currentPage,
     totalPages,
     setCurrentPage,
-    rowsPerPage,
     showDeleteConfirmation,
     fleetToDelete,
     confirmDelete,
