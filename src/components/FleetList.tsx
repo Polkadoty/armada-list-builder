@@ -487,6 +487,11 @@ export function FleetList() {
   // Detect mobile screens
   const isMobile = useMediaQuery("(max-width: 768px)");
 
+  // --- FIX: Memoized handler wrappers for stable props to memoized components ---
+  const handleSetFleetToRename = useCallback((fleet: Fleet | null) => setFleetToRename(fleet), []);
+  const handleSetNewFleetName = useCallback((name: string) => setNewFleetName(name), []);
+  const handleSetShowRenameDialog = useCallback((show: boolean) => setShowRenameDialog(show), []);
+
   // Define fetchFleets before it's used
   const fetchFleets = useCallback(async () => {
     if (!user?.sub || !isMounted.current) return;
@@ -1035,9 +1040,9 @@ export function FleetList() {
                       handleCopyLink={handleCopyLink}
                       handleCopyText={handleCopyText}
                       theme={theme}
-                      setFleetToRename={setFleetToRename}
-                      setNewFleetName={setNewFleetName}
-                      setShowRenameDialog={setShowRenameDialog}
+                      setFleetToRename={handleSetFleetToRename}
+                      setNewFleetName={handleSetNewFleetName}
+                      setShowRenameDialog={handleSetShowRenameDialog}
                     />
                   ))}
                 </div>
@@ -1102,9 +1107,9 @@ export function FleetList() {
     handleToggleShare,
     handleCopyLink,
     handleCopyText,
-    setFleetToRename,
-    setNewFleetName,
-    setShowRenameDialog,
+    handleSetFleetToRename,
+    handleSetNewFleetName,
+    handleSetShowRenameDialog,
     currentPage,
     totalPages,
     showDeleteConfirmation,
@@ -1116,13 +1121,6 @@ export function FleetList() {
   const dialogContent = useMemo(() => {
     if (!isDialogOpen) return null;
     
-    console.log(`Rendering dialog content - isLoading: ${isLoading}, fleets: ${fleets.length}`);
-    
-    // Memoized handler wrappers for stable props to memoized components
-    const handleSetFleetToRename = useCallback((fleet: Fleet | null) => setFleetToRename(fleet), []);
-    const handleSetNewFleetName = useCallback((name: string) => setNewFleetName(name), []);
-    const handleSetShowRenameDialog = useCallback((show: boolean) => setShowRenameDialog(show), []);
-
     return (
       <DialogContent className={`max-w-[95vw] sm:max-w-3xl max-h-[90vh] flex flex-col border backdrop-blur-md ${
         theme === 'light' 
@@ -1413,9 +1411,9 @@ export function FleetList() {
     handleToggleShare,
     handleCopyLink,
     handleCopyText,
-    setFleetToRename,
-    setNewFleetName,
-    setShowRenameDialog,
+    handleSetFleetToRename,
+    handleSetNewFleetName,
+    handleSetShowRenameDialog,
     currentPage,
     totalPages,
     setCurrentPage,
