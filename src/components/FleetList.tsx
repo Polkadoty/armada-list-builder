@@ -654,9 +654,21 @@ export function FleetList() {
   }, [filteredFleets, currentPage, rowsPerPage]);
 
   // Memoize dropdown data to avoid recalculating on each render
-  const uniqueFactions = useMemo(() => Array.from(new Set(fleets.map(fleet => fleet.faction))), [fleets]);
+  const uniqueFactions = useMemo(
+    () => {
+      const factions = Array.from(new Set(fleets.map(fleet => fleet.faction)));
+      return factions.map(faction => faction && faction.trim() !== '' ? faction : 'unknown');
+    },
+    [fleets]
+  );
   
-  const uniqueCommanders = useMemo(() => Array.from(new Set(fleets.map(fleet => fleet.commander))), [fleets]);
+  const uniqueCommanders = useMemo(
+    () => {
+      const commanders = Array.from(new Set(fleets.map(fleet => fleet.commander)));
+      return commanders.map(commander => commander && commander.trim() !== '' ? commander : 'unknown');
+    },
+    [fleets]
+  );
   
   // Filter and paginate commanders for dropdown
   const filteredCommanders = useMemo(() => {
@@ -970,7 +982,7 @@ export function FleetList() {
                   <SelectItem value="all">All Factions</SelectItem>
                   {uniqueFactions.map(faction => (
                     <SelectItem key={faction} value={faction}>
-                      {faction.charAt(0).toUpperCase() + faction.slice(1)}
+                      {faction === 'unknown' ? 'Unknown' : faction.charAt(0).toUpperCase() + faction.slice(1)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -989,7 +1001,7 @@ export function FleetList() {
                   <SelectItem value="all-commanders">All Commanders</SelectItem>
                   {uniqueCommanders.map(commander => (
                     <SelectItem key={commander} value={commander}>
-                      {commander}
+                      {commander === 'unknown' ? 'Unknown' : commander}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -1133,7 +1145,7 @@ export function FleetList() {
                     key={faction}
                     onClick={() => handleFactionFilterChange(faction)}
                   >
-                    {capitalizeFirstLetter(faction)}
+                    {faction === 'unknown' ? 'Unknown' : faction.charAt(0).toUpperCase() + faction.slice(1)}
                   </DropdownMenuItem>
                 ))}
                 {totalFactionPages > 1 && (
@@ -1188,7 +1200,7 @@ export function FleetList() {
                     key={commander}
                     onClick={() => handleCommanderFilterChange(commander)}
                   >
-                    {commander}
+                    {commander === 'unknown' ? 'Unknown' : commander}
                   </DropdownMenuItem>
                 ))}
                 {totalCommanderPages > 1 && (
