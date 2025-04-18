@@ -1118,6 +1118,11 @@ export function FleetList() {
     
     console.log(`Rendering dialog content - isLoading: ${isLoading}, fleets: ${fleets.length}`);
     
+    // Memoized handler wrappers for stable props to memoized components
+    const handleSetFleetToRename = useCallback((fleet: Fleet | null) => setFleetToRename(fleet), []);
+    const handleSetNewFleetName = useCallback((name: string) => setNewFleetName(name), []);
+    const handleSetShowRenameDialog = useCallback((show: boolean) => setShowRenameDialog(show), []);
+
     return (
       <DialogContent className={`max-w-[95vw] sm:max-w-3xl max-h-[90vh] flex flex-col border backdrop-blur-md ${
         theme === 'light' 
@@ -1279,9 +1284,9 @@ export function FleetList() {
                             theme={theme}
                             columns={columns}
                             capitalizeFirstLetter={capitalizeFirstLetter}
-                            setFleetToRename={setFleetToRename}
-                            setNewFleetName={setNewFleetName}
-                            setShowRenameDialog={setShowRenameDialog}
+                            setFleetToRename={handleSetFleetToRename}
+                            setNewFleetName={handleSetNewFleetName}
+                            setShowRenameDialog={handleSetShowRenameDialog}
                           />
                         ))}
                       </TableBody>
