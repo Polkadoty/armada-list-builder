@@ -142,6 +142,7 @@ const FleetRowMemo = memo(({
   theme,
   columns,
   capitalizeFirstLetter,
+  handleOpenRenameDialog,
   setFleetToRename,
   setNewFleetName,
   setShowRenameDialog
@@ -156,6 +157,7 @@ const FleetRowMemo = memo(({
   theme: string | undefined,
   columns: SortableColumn[],
   capitalizeFirstLetter: (s: string) => string,
+  handleOpenRenameDialog: (fleet: Fleet) => void,
   setFleetToRename: (fleet: Fleet | null) => void,
   setNewFleetName: (name: string) => void,
   setShowRenameDialog: (show: boolean) => void
@@ -200,11 +202,7 @@ const FleetRowMemo = memo(({
               Share Fleet
             </div>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => {
-            setFleetToRename(fleet);
-            setNewFleetName(fleet.fleet_name);
-            setShowRenameDialog(true);
-          }}>
+          <DropdownMenuItem onClick={() => handleOpenRenameDialog(fleet)}>
             Rename Fleet
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => handleFleetCopy(fleet)}>
@@ -334,6 +332,7 @@ const FleetCard = memo(({
   handleCopyLink,
   handleCopyText,
   theme,
+  handleOpenRenameDialog,
   setFleetToRename,
   setNewFleetName,
   setShowRenameDialog
@@ -346,6 +345,7 @@ const FleetCard = memo(({
   handleCopyLink: (fleet: Fleet) => void,
   handleCopyText: (fleet: Fleet) => void,
   theme: string | undefined,
+  handleOpenRenameDialog: (fleet: Fleet) => void,
   setFleetToRename: (fleet: Fleet | null) => void,
   setNewFleetName: (name: string) => void,
   setShowRenameDialog: (show: boolean) => void
@@ -379,11 +379,7 @@ const FleetCard = memo(({
                 Share Fleet
               </div>
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => {
-              setFleetToRename(fleet);
-              setNewFleetName(fleet.fleet_name);
-              setShowRenameDialog(true);
-            }}>
+            <DropdownMenuItem onClick={() => handleOpenRenameDialog(fleet)}>
               Rename Fleet
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => handleFleetCopy(fleet)}>
@@ -426,11 +422,7 @@ const FleetCard = memo(({
         <Button variant="outline" size="sm" className="h-8 p-1 px-2" onClick={() => handleToggleShare(fleet)}>
           <Share className="h-4 w-4" />
         </Button>
-        <Button variant="outline" size="sm" className="h-8 p-1 px-2" onClick={() => {
-          setFleetToRename(fleet);
-          setNewFleetName(fleet.fleet_name);
-          setShowRenameDialog(true);
-        }}>
+        <Button variant="outline" size="sm" className="h-8 p-1 px-2" onClick={() => handleOpenRenameDialog(fleet)}>
           <Edit className="h-4 w-4" />
         </Button>
         <Button variant="outline" size="sm" className="h-8 p-1 px-2 text-destructive" onClick={() => handleFleetDelete(fleet)}>
@@ -487,10 +479,12 @@ export function FleetList() {
   // Detect mobile screens
   const isMobile = useMediaQuery("(max-width: 768px)");
 
-  // --- FIX: Memoized handler wrappers for stable props to memoized components ---
-  const handleSetFleetToRename = useCallback((fleet: Fleet | null) => setFleetToRename(fleet), []);
-  const handleSetNewFleetName = useCallback((name: string) => setNewFleetName(name), []);
-  const handleSetShowRenameDialog = useCallback((show: boolean) => setShowRenameDialog(show), []);
+  // Top Level
+  const handleOpenRenameDialog = useCallback((fleet: Fleet) => {
+    setFleetToRename(fleet);
+    setNewFleetName(fleet.fleet_name);
+    setShowRenameDialog(true);
+  }, []); // Dependencies: setFleetToRename, setNewFleetName, setShowRenameDialog (which are stable)
 
   // Define fetchFleets before it's used
   const fetchFleets = useCallback(async () => {
@@ -961,7 +955,7 @@ export function FleetList() {
     
     return (
       <SheetContent 
-        className="w-screen h-[100dvh] max-w-none p-0 border-0 rounded-none mt-0 pt-6" 
+        className="w-screen h-[100dvh] max-w-none p-0 border-0 rounded-none mt-0 pt-6 flex flex-col"
         side="bottom"
       >
         <SheetHeader className="px-4 pb-2">
@@ -1040,9 +1034,10 @@ export function FleetList() {
                       handleCopyLink={handleCopyLink}
                       handleCopyText={handleCopyText}
                       theme={theme}
-                      setFleetToRename={handleSetFleetToRename}
-                      setNewFleetName={handleSetNewFleetName}
-                      setShowRenameDialog={handleSetShowRenameDialog}
+                      handleOpenRenameDialog={handleOpenRenameDialog}
+                      setFleetToRename={setFleetToRename}
+                      setNewFleetName={setNewFleetName}
+                      setShowRenameDialog={setShowRenameDialog}
                     />
                   ))}
                 </div>
@@ -1107,9 +1102,7 @@ export function FleetList() {
     handleToggleShare,
     handleCopyLink,
     handleCopyText,
-    handleSetFleetToRename,
-    handleSetNewFleetName,
-    handleSetShowRenameDialog,
+    handleOpenRenameDialog,
     currentPage,
     totalPages,
     showDeleteConfirmation,
@@ -1282,9 +1275,10 @@ export function FleetList() {
                             theme={theme}
                             columns={columns}
                             capitalizeFirstLetter={capitalizeFirstLetter}
-                            setFleetToRename={handleSetFleetToRename}
-                            setNewFleetName={handleSetNewFleetName}
-                            setShowRenameDialog={handleSetShowRenameDialog}
+                            handleOpenRenameDialog={handleOpenRenameDialog}
+                            setFleetToRename={setFleetToRename}
+                            setNewFleetName={setNewFleetName}
+                            setShowRenameDialog={setShowRenameDialog}
                           />
                         ))}
                       </TableBody>
@@ -1411,9 +1405,7 @@ export function FleetList() {
     handleToggleShare,
     handleCopyLink,
     handleCopyText,
-    handleSetFleetToRename,
-    handleSetNewFleetName,
-    handleSetShowRenameDialog,
+    handleOpenRenameDialog,
     currentPage,
     totalPages,
     setCurrentPage,
