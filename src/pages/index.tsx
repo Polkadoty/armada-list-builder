@@ -77,10 +77,10 @@ export default function Home() {
         <meta name="supported-color-schemes" content="srgb p3" />
         <title>Star Forge</title>
       </Head>
-      <div className="min-h-screen flex flex-col lg:flex-row relative">
+      <div className="relative min-h-screen w-full flex flex-col lg:flex-row overflow-hidden">
         <StarryBackground show={true} lightDisabled={resolvedTheme === 'dark'}/>
         {isLoading && <LoadingScreen progress={loadingProgress} message={loadingMessage} />}
-        <div className={`bg-transparent backdrop-blur-md lg:backdrop-blur-sm p-8 flex-grow lg:w-1/3 lg:min-w-[300px] relative z-10`}>
+        <div className={`bg-transparent lg:backdrop-blur-sm md:backdrop-blur-[2px] backdrop-blur-[1px] p-8 flex-grow lg:w-1/3 lg:min-w-[300px] relative z-10`}>
           <div className="flex justify-end space-x-2 mb-4 items-center">
             <UserAvatar />
             <ContentToggleButton setIsLoading={setIsLoading} setLoadingProgress={setLoadingProgress} setLoadingMessage={setLoadingMessage} tournamentMode={tournamentMode} setTournamentMode={setTournamentMode} />
@@ -141,7 +141,8 @@ export default function Home() {
                 key={faction}
                 className={`absolute inset-0 transition-opacity duration-300 ${
                   hoveredFaction === faction ? 'opacity-100' : 'opacity-0'
-                }`}
+                } will-change-opacity`}
+                style={{ contain: 'strict' }}
               >
                 <Image 
                   src={shipImage}
@@ -149,8 +150,8 @@ export default function Home() {
                   layout="fill"
                   objectFit="contain"
                   className='p-24'
-                  priority
-                  loading="eager"
+                  priority={faction === 'rebel'} // Only prioritize the first ship
+                  loading={faction === 'rebel' ? 'eager' : 'lazy'}
                 />
               </div>
             ))}

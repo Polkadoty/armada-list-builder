@@ -339,3 +339,53 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+/* --- Viewport Height Fix for Mobile Backgrounds --- */
+body {
+  background-image: url('/images/nebula-lightmode.webp');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-attachment: scroll;
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background-image: url('/images/nebula-darkmode.webp');
+  }
+}
+html, body {
+  /* Use dynamic viewport units where supported */
+  min-height: 100dvh;
+  height: 100dvh;
+  /* Fallback for browsers that don't support dvh */
+  min-height: calc(var(--vh, 1vh) * 100);
+  height: calc(var(--vh, 1vh) * 100);
+}
+
+.bg-fixed-cover {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  min-height: 100dvh;
+  height: 100dvh;
+  min-height: calc(var(--vh, 1vh) * 100);
+  height: calc(var(--vh, 1vh) * 100);
+  z-index: -2;
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  pointer-events: none;
+}
+
+.bg-absolute-cover {
+  position: absolute;
+  inset: 0;
+  width: 100vw;
+  height: 100%;
+  z-index: -2;
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  pointer-events: none;
+}
