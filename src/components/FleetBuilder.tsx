@@ -1236,62 +1236,76 @@ export default function FleetBuilder({
     }
   };
 
+  const handleDecrementSquadron = useCallback((id: string) => {
+    const squadron = selectedSquadrons.find(s => s.id === id);
+    if (!squadron) return;
+
+    const newCount = (squadron.count || 1) - 1;
+    
+    // Set previous points for history
+    setPreviousPoints(points);
+    setPreviousSquadronPoints(totalSquadronPoints);
+    
+    // Calculate point change once
+    const pointsToRemove = squadron.points;
+    
+    if (newCount === 0) {
+      // Remove the squadron entirely
+      setSelectedSquadrons(prevSquadrons => 
+        prevSquadrons.filter(s => s.id !== id)
+      );
+      
+      // Remove unique class names if it's the last squadron
+      if (squadron.unique) {
+        removeUniqueClassName(squadron.name);
+        if (squadron["ace-name"]) {
+          removeUniqueClassName(squadron["ace-name"]);
+        }
+      }
+      
+      if (squadron["unique-class"]) {
+        squadron["unique-class"].forEach(uc => 
+          removeUniqueClassName(uc)
+        );
+      }
+    } else {
+      // Just decrease the count
+      setSelectedSquadrons(prevSquadrons => 
+        prevSquadrons.map(s => 
+          s.id === id ? { ...s, count: newCount } : s
+        )
+      );
+    }
+    
+    // Update points only once
+    setPoints(prevPoints => prevPoints - pointsToRemove);
+    setTotalSquadronPoints(prevTotal => prevTotal - pointsToRemove);
+  }, [points, selectedSquadrons, totalSquadronPoints, removeUniqueClassName]);
+
   const handleIncrementSquadron = useCallback((id: string) => {
-    setSelectedSquadrons((squadrons) =>
-      squadrons.map((squadron) =>
-        squadron.id === id
-          ? { ...squadron, count: (squadron.count || 1) + 1 }
-          : squadron
+    const squadron = selectedSquadrons.find(s => s.id === id);
+    if (!squadron) return;
+    
+    // Set previous points for history
+    setPreviousPoints(points);
+    setPreviousSquadronPoints(totalSquadronPoints);
+    
+    // Calculate point change once
+    const pointsToAdd = squadron.points;
+    
+    // Update squadron count
+    setSelectedSquadrons(prevSquadrons =>
+      prevSquadrons.map(s =>
+        s.id === id
+          ? { ...s, count: (s.count || 1) + 1 }
+          : s
       )
     );
-    const squadron = selectedSquadrons.find((s) => s.id === id);
-    if (squadron) {
-      setPreviousPoints(points);
-      setPreviousSquadronPoints(totalSquadronPoints);
-      const newPoints = points + squadron.points;
-      setPoints(newPoints);
-      setTotalSquadronPoints(totalSquadronPoints + squadron.points);
-    }
-  }, [points, selectedSquadrons, setPoints, setSelectedSquadrons, setTotalSquadronPoints, totalSquadronPoints]);
-
-  const handleDecrementSquadron = (id: string) => {
-    setSelectedSquadrons((prevSquadrons) => {
-      return prevSquadrons.reduce((acc, squadron) => {
-        if (squadron.id === id) {
-          const newCount = (squadron.count || 1) - 1;
-          if (newCount === 0) {
-            // Squadron will be removed
-            setPreviousPoints(points);
-            setPreviousSquadronPoints(totalSquadronPoints);
-            const newPoints = points - squadron.points;
-            setPoints(newPoints);
-            setTotalSquadronPoints(totalSquadronPoints - squadron.points);
-
-            // Remove unique class names if it's the last squadron
-            if (squadron.unique) {
-              removeUniqueClassName(squadron.name);
-            }
-            if (squadron["unique-class"]) {
-              squadron["unique-class"].forEach((uc) =>
-                removeUniqueClassName(uc)
-              );
-            }
-            // Don't add this squadron to the accumulator
-            return acc;
-          } else {
-            // Squadron count is decremented
-            setPreviousPoints(points);
-            setPreviousSquadronPoints(totalSquadronPoints);
-            const newPoints = points - squadron.points;
-            setPoints(newPoints);
-            setTotalSquadronPoints(totalSquadronPoints - squadron.points);
-            return [...acc, { ...squadron, count: newCount }];
-          }
-        }
-        return [...acc, squadron];
-      }, [] as Squadron[]);
-    });
-  };
+    
+    // Update points only once
+    setPoints(prevPoints => prevPoints + pointsToAdd);
+    setTotalSquadronPoints(prevTotal => prevTotal + pointsToAdd);
+  }, [points, selectedSquadrons, totalSquadronPoints]);
 
   const handleSwapSquadron = (id: string) => {
     setShowSquadronSelector(true);
