@@ -12,11 +12,11 @@ import { OptimizedImage } from './OptimizedImage';
 interface SelectedSquadronProps {
   squadron: Squadron;
   onRemove: (id: string) => void;
-  onIncrement?: (id: string) => void;
+  onIncrement: (id: string) => void;
   onDecrement: (id: string) => void;
   onSwapSquadron: (id: string) => void;
-  onMoveUp?: (id: string) => void;
-  onMoveDown?: (id: string) => void;
+  onMoveUp: (id: string) => void;
+  onMoveDown: (id: string) => void;
   isFirst: boolean;
   isLast: boolean;
 }
@@ -71,7 +71,7 @@ function SelectedSquadronComponent({ squadron, onRemove, onIncrement, onDecremen
       } else if (currentX > SWIPE_THRESHOLD) {
         if (squadron.unique) {
           onSwapSquadron(squadron.id);
-        } else if (onIncrement) {
+        } else {
           onIncrement(squadron.id);
         }
       }
@@ -146,7 +146,7 @@ function SelectedSquadronComponent({ squadron, onRemove, onIncrement, onDecremen
                           <Minus size={16} />
                         </Button>
                         <span>{count}</span>
-                        <Button variant="ghost" size="sm" onClick={() => onIncrement && onIncrement(squadron.id)} className="text-blue-500 p-1">
+                        <Button variant="ghost" size="sm" onClick={() => onIncrement(squadron.id)} className="text-blue-500 p-1">
                           <Plus size={16} />
                         </Button>
                       </>
@@ -157,7 +157,7 @@ function SelectedSquadronComponent({ squadron, onRemove, onIncrement, onDecremen
                       <Button 
                         variant="ghost" 
                         size="sm" 
-                        onClick={() => onMoveUp && onMoveUp(squadron.id)} 
+                        onClick={() => onMoveUp(squadron.id)} 
                         className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-1"
                         disabled={isFirst}
                       >
@@ -166,7 +166,7 @@ function SelectedSquadronComponent({ squadron, onRemove, onIncrement, onDecremen
                       <Button 
                         variant="ghost" 
                         size="sm" 
-                        onClick={() => onMoveDown && onMoveDown(squadron.id)} 
+                        onClick={() => onMoveDown(squadron.id)} 
                         className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-1"
                         disabled={isLast}
                       >
