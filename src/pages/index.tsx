@@ -125,7 +125,7 @@ export default function Home() {
             <div className="flex items-center gap-2">
               <WorkshopButton />
               <Link href="/shipyard">
-                <Button variant="outline" className="bg-white/50 dark:bg-gray-900/50 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md flex items-center gap-2 logo-font">
+                <Button variant="outline" size="sm" className="bg-white/50 dark:bg-gray-900/50 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md flex items-center gap-2 logo-font">
                   <Ship className="h-4 w-4" />
                   Shipyard
                 </Button>
