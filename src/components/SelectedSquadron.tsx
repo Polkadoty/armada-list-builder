@@ -1,4 +1,4 @@
-import React, { useRef, useState, memo } from 'react';
+import React, { useRef, useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { useSpring, animated } from 'react-spring';
 import { Squadron } from './FleetBuilder';
@@ -21,7 +21,7 @@ interface SelectedSquadronProps {
   isLast: boolean;
 }
 
-function SelectedSquadronComponent({ squadron, onRemove, onIncrement, onDecrement, onSwapSquadron, onMoveUp, onMoveDown, isFirst, isLast }: SelectedSquadronProps) {
+export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement, onSwapSquadron, onMoveUp, onMoveDown, isFirst, isLast }: SelectedSquadronProps) {
   const [{ x }, api] = useSpring(() => ({ x: 0 }));
   const isDragging = useRef(false);
   const startX = useRef(0);
@@ -211,24 +211,3 @@ function SelectedSquadronComponent({ squadron, onRemove, onIncrement, onDecremen
     </div>
   );
 }
-
-// Create a custom comparison function that only triggers re-renders when necessary
-function arePropsEqual(prevProps: SelectedSquadronProps, nextProps: SelectedSquadronProps) {
-  // Always re-render if the squadron ID changes
-  if (prevProps.squadron.id !== nextProps.squadron.id) return false;
-  
-  // Re-render if the squadron's count changed
-  if (prevProps.squadron.count !== nextProps.squadron.count) return false;
-  
-  // Re-render if the squadron's points changed
-  if (prevProps.squadron.points !== nextProps.squadron.points) return false;
-  
-  // Check position-related props
-  if (prevProps.isFirst !== nextProps.isFirst || prevProps.isLast !== nextProps.isLast) return false;
-  
-  // Props are equal, skip re-render
-  return true;
-}
-
-// Export the memoized version of the component
-export const SelectedSquadron = memo(SelectedSquadronComponent, arePropsEqual);

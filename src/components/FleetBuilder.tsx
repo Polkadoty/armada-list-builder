@@ -42,7 +42,7 @@ import { SaveFleetButton } from './SaveFleetButton';
 import { useRouter } from 'next/router';
 import { PrintMenu } from "./PrintMenu";
 import { ExpansionSelector } from "./ExpansionSelector";
-import Cookies from 'js-cookie';
+import Cookies, { set } from 'js-cookie';
 
 // Add to your imports
 const DAMAGE_DECK = [
@@ -295,8 +295,6 @@ export default function FleetBuilder({
   const [greyUpgrades, setGreyUpgrades] = useState<Record<string, string[]>>({});
 
   const checkTournamentViolations = useMemo(() => {
-    if (!tournamentMode) return []; // Early return if not in tournament mode
-    
     const violations: string[] = [];
 
     if (points > 400) {
@@ -322,9 +320,9 @@ export default function FleetBuilder({
     }
 
     if (
-      !selectedAssaultObjectives?.length ||
-      !selectedDefenseObjectives?.length ||
-      !selectedNavigationObjectives?.length
+      !selectedAssaultObjectives ||
+      !selectedDefenseObjectives ||
+      !selectedNavigationObjectives
     ) {
       violations.push("Missing objective card(s)");
     }
@@ -338,7 +336,6 @@ export default function FleetBuilder({
 
     return violations;
   }, [
-    tournamentMode,
     points,
     totalSquadronPoints,
     selectedShips,
@@ -412,7 +409,7 @@ export default function FleetBuilder({
     setShowShipSelector(false);
   };
 
-  const handleRemoveShip = useCallback((id: string) => {
+  const handleRemoveShip = (id: string) => {
     const shipToRemove = selectedShips.find((ship) => ship.id === id);
     if (shipToRemove) {
       const shipPoints =
@@ -440,17 +437,12 @@ export default function FleetBuilder({
         }
       });
 
-      // Batch state updates for better performance
-      const newShips = selectedShips.filter((ship) => ship.id !== id);
-      const newPoints = points - shipPoints;
-      const newTotalShipPoints = totalShipPoints - shipPoints;
-      
-      // Update all states at once at the end of the function
-      setSelectedShips(newShips);
+      setSelectedShips(selectedShips.filter((ship) => ship.id !== id));
       setPreviousPoints(points);
       setPreviousShipPoints(totalShipPoints);
+      const newPoints = points - shipPoints;
       setPoints(newPoints);
-      setTotalShipPoints(newTotalShipPoints);
+      setTotalShipPoints(totalShipPoints - shipPoints);
 
       // Clear disabled and enabled upgrades for the removed ship
       setDisabledUpgrades((prev) => {
@@ -458,40 +450,18 @@ export default function FleetBuilder({
         delete newDisabled[id];
         return newDisabled;
       });
-
       setEnabledUpgrades((prev) => {
         const newEnabled = { ...prev };
         delete newEnabled[id];
         return newEnabled;
       });
 
-      setFilledSlots((prev) => {
-        const newFilledSlots = { ...prev };
-        delete newFilledSlots[id];
-        return newFilledSlots;
-      });
-
-      setGreyUpgrades((prev) => {
-        const newGreyUpgrades = { ...prev };
-        delete newGreyUpgrades[id];
-        return newGreyUpgrades;
-      });
-
-      // Update commander status
+      // Set hasCommander to false if the removed ship had a commander
       if (hadCommander) {
         setHasCommander(false);
       }
     }
-  }, [
-    points, 
-    selectedShips, 
-    totalShipPoints, 
-    removeUniqueClassName,
-    setPreviousPoints,
-    setPreviousShipPoints,
-    setPoints,
-    setTotalShipPoints
-  ]);
+  };
 
   const handleUpgradeClick = (
     shipId: string,
@@ -836,7 +806,7 @@ export default function FleetBuilder({
 
     setPoints((prevPoints) => prevPoints + upgrade.points);
     setTotalShipPoints((prevTotal) => prevTotal + upgrade.points);
-  }, [enabledUpgrades, setEnabledUpgrades, setFilledSlots, setHasCommander, addUniqueClassName, disabledUpgrades]);
+  }, [enabledUpgrades, setEnabledUpgrades, setFilledSlots, setHasCommander]);
 
   const handleRemoveUpgrade = useCallback(
     (shipId: string, upgradeType: string, upgradeIndex: number) => {
@@ -1236,76 +1206,62 @@ export default function FleetBuilder({
     }
   };
 
-  const handleDecrementSquadron = useCallback((id: string) => {
-    const squadron = selectedSquadrons.find(s => s.id === id);
-    if (!squadron) return;
-
-    const newCount = (squadron.count || 1) - 1;
-    
-    // Set previous points for history
-    setPreviousPoints(points);
-    setPreviousSquadronPoints(totalSquadronPoints);
-    
-    // Calculate point change once
-    const pointsToRemove = squadron.points;
-    
-    if (newCount === 0) {
-      // Remove the squadron entirely
-      setSelectedSquadrons(prevSquadrons => 
-        prevSquadrons.filter(s => s.id !== id)
-      );
-      
-      // Remove unique class names if it's the last squadron
-      if (squadron.unique) {
-        removeUniqueClassName(squadron.name);
-        if (squadron["ace-name"]) {
-          removeUniqueClassName(squadron["ace-name"]);
-        }
-      }
-      
-      if (squadron["unique-class"]) {
-        squadron["unique-class"].forEach(uc => 
-          removeUniqueClassName(uc)
-        );
-      }
-    } else {
-      // Just decrease the count
-      setSelectedSquadrons(prevSquadrons => 
-        prevSquadrons.map(s => 
-          s.id === id ? { ...s, count: newCount } : s
-        )
-      );
-    }
-    
-    // Update points only once
-    setPoints(prevPoints => prevPoints - pointsToRemove);
-    setTotalSquadronPoints(prevTotal => prevTotal - pointsToRemove);
-  }, [points, selectedSquadrons, totalSquadronPoints, removeUniqueClassName]);
-
   const handleIncrementSquadron = useCallback((id: string) => {
-    const squadron = selectedSquadrons.find(s => s.id === id);
-    if (!squadron) return;
-    
-    // Set previous points for history
-    setPreviousPoints(points);
-    setPreviousSquadronPoints(totalSquadronPoints);
-    
-    // Calculate point change once
-    const pointsToAdd = squadron.points;
-    
-    // Update squadron count
-    setSelectedSquadrons(prevSquadrons =>
-      prevSquadrons.map(s =>
-        s.id === id
-          ? { ...s, count: (s.count || 1) + 1 }
-          : s
+    setSelectedSquadrons((squadrons) =>
+      squadrons.map((squadron) =>
+        squadron.id === id
+          ? { ...squadron, count: (squadron.count || 1) + 1 }
+          : squadron
       )
     );
-    
-    // Update points only once
-    setPoints(prevPoints => prevPoints + pointsToAdd);
-    setTotalSquadronPoints(prevTotal => prevTotal + pointsToAdd);
-  }, [points, selectedSquadrons, totalSquadronPoints]);
+    const squadron = selectedSquadrons.find((s) => s.id === id);
+    if (squadron) {
+      setPreviousPoints(points);
+      setPreviousSquadronPoints(totalSquadronPoints);
+      const newPoints = points + squadron.points;
+      setPoints(newPoints);
+      setTotalSquadronPoints(totalSquadronPoints + squadron.points);
+    }
+  }, [points, selectedSquadrons, setPoints, setSelectedSquadrons, setTotalSquadronPoints, totalSquadronPoints]);
+
+  const handleDecrementSquadron = (id: string) => {
+    setSelectedSquadrons((prevSquadrons) => {
+      return prevSquadrons.reduce((acc, squadron) => {
+        if (squadron.id === id) {
+          const newCount = (squadron.count || 1) - 1;
+          if (newCount === 0) {
+            // Squadron will be removed
+            setPreviousPoints(points);
+            setPreviousSquadronPoints(totalSquadronPoints);
+            const newPoints = points - squadron.points;
+            setPoints(newPoints);
+            setTotalSquadronPoints(totalSquadronPoints - squadron.points);
+
+            // Remove unique class names if it's the last squadron
+            if (squadron.unique) {
+              removeUniqueClassName(squadron.name);
+            }
+            if (squadron["unique-class"]) {
+              squadron["unique-class"].forEach((uc) =>
+                removeUniqueClassName(uc)
+              );
+            }
+            // Don't add this squadron to the accumulator
+            return acc;
+          } else {
+            // Squadron count is decremented
+            setPreviousPoints(points);
+            setPreviousSquadronPoints(totalSquadronPoints);
+            const newPoints = points - squadron.points;
+            setPoints(newPoints);
+            setTotalSquadronPoints(totalSquadronPoints - squadron.points);
+            return [...acc, { ...squadron, count: newCount }];
+          }
+        }
+        return [...acc, squadron];
+      }, [] as Squadron[]);
+    });
+  };
 
   const handleSwapSquadron = (id: string) => {
     setShowSquadronSelector(true);
@@ -2575,7 +2531,7 @@ export default function FleetBuilder({
                     <div class="card-container">
                       <img class="card-image" 
                           src="https://api.swarmada.wiki/images/damage-rear.webp" 
-                          alt="Damage card back"
+                          alt="Damage card back" />
                           style="${expandCardBacks ? 'transform: scale(1.075);' : ''}" />
                     </div>
                   </div>
@@ -2944,7 +2900,7 @@ export default function FleetBuilder({
               transform: scaleX(-1);
             }
 
-            .card-back.expanded {
+            .card-back-expanded {
               transform: scaleX(-1) scale(1.075);
               transform-origin: center;
             }
@@ -3006,7 +2962,7 @@ export default function FleetBuilder({
                           justify-self: center;
                         ">
                           <div class="card-container">
-                            <img class="card-image ${expandCardBacks ? 'card-back expanded' : 'card-back'}" 
+                            <img class="card-image" 
                                 src="https://api.swarmada.wiki/images/${shipGroup[0].faction}-ship-huge-rear.webp" 
                                 alt="${shipGroup[0].name} back" />
                           </div>
@@ -3030,7 +2986,7 @@ export default function FleetBuilder({
                         return `
                           <div class="tarot-card" style="transform: scaleX(-1)">
                             <div class="card-container">
-                              <img class="card-image ${expandCardBacks ? 'card-back expanded' : 'card-back'}" 
+                              <img class="card-image" 
                                   src="https://api.swarmada.wiki/images/${reversedShip.faction}-ship-rear.webp" 
                                   alt="${reversedShip.name} back" />
                             </div>
@@ -3101,7 +3057,7 @@ export default function FleetBuilder({
                     return `
                       <div class="poker-card" style="transform: scaleX(-1)">
                         <div class="card-container">
-                          <img class="card-image ${expandCardBacks ? 'card-back expanded' : 'card-back'}" 
+                          <img class="card-image" 
                                src="https://api.swarmada.wiki/images/${rearImage}.webp" 
                                alt="Card back" />
                         </div>
@@ -3146,8 +3102,8 @@ export default function FleetBuilder({
     showPrintObjectives,
     showCardBacks,
     showDamageDeck,
-    expandCardBacks,
-    paperSize
+    paperSize,
+    expandCardBacks
   ]);
 
 // ${baseTokensHTML}
@@ -3218,8 +3174,7 @@ export default function FleetBuilder({
     selectedNavigationObjectives,
     isExpansionMode,
     hasLoadedPage,
-    handleImportFleet,
-    applyUpdates
+    handleImportFleet
   ]);
 
   useEffect(() => {
@@ -3399,7 +3354,7 @@ export default function FleetBuilder({
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="outline" className="bg-white/50 dark:bg-gray-900/50 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md" onClick={handlePrint}>
+                <Button variant="outline" className="bg-white/50 dark:bg-gray-900/50 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md" onClick={handlePrint}>
                     <Printer className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
@@ -3410,7 +3365,7 @@ export default function FleetBuilder({
 
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="outline" className="bg-white/50 dark:bg-gray-900/50 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md" onClick={() => setShowExportPopup(true)}>
+                <Button variant="outline" className="bg-white/50 dark:bg-gray-900/50 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md" onClick={() => setShowExportPopup(true)}>
                     <FileText className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
@@ -3421,7 +3376,7 @@ export default function FleetBuilder({
 
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="outline" className="bg-white/50 dark:bg-gray-900/50 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md" onClick={() => setShowImportWindow(true)}>
+                <Button variant="outline" className="bg-white/50 dark:bg-gray-900/50 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md" onClick={() => setShowImportWindow(true)}>
                     <Import className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
@@ -3571,7 +3526,7 @@ export default function FleetBuilder({
           ) : (
             <Card className="mb-4 relative">
               <Button
-                className="w-full justify-between bg-white/50 dark:bg-gray-900/50 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-md text-lg py-6"
+                className="w-full justify-between bg-white/30 dark:bg-gray-900/30 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-md text-lg py-6"
                 variant="outline"
                 onClick={handleAddSquadron}
               >
@@ -3741,10 +3696,10 @@ export default function FleetBuilder({
         setShowRestrictions={setShowPrintRestrictions}
         showObjectives={showPrintObjectives}
         setShowObjectives={setShowPrintObjectives}
-        showCardBacks={showCardBacks}
-        setShowCardBacks={setShowCardBacks}
         showDamageDeck={showDamageDeck}
         setShowDamageDeck={setShowDamageDeck}
+        showCardBacks={showCardBacks}
+        setShowCardBacks={setShowCardBacks}
         expandCardBacks={expandCardBacks}
         setExpandCardBacks={setExpandCardBacks}
       />
