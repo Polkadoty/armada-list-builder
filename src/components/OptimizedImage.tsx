@@ -244,7 +244,7 @@ export const OptimizedImage = memo(({
       {hasError && (
         <div className="absolute inset-0 flex flex-col items-center justify-center border-2 border-red-500/20 rounded-lg">
           <AlertCircle className="w-12 h-12 text-red-500 mb-2" />
-          <span className="text-sm text-gray-500">Failed to load image</span>
+          <span className="text-sm text-zinc-500">Failed to load image</span>
         </div>
       )}
     </div>

@@ -158,7 +158,7 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
                         variant="ghost" 
                         size="sm" 
                         onClick={() => onMoveUp(squadron.id)} 
-                        className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-1"
+                        className="text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 p-1"
                         disabled={isFirst}
                       >
                         <ChevronLeft className="h-4 w-4 rotate-90 sm:rotate-0" />
@@ -167,7 +167,7 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
                         variant="ghost" 
                         size="sm" 
                         onClick={() => onMoveDown(squadron.id)} 
-                        className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-1"
+                        className="text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 p-1"
                         disabled={isLast}
                       >
                         <ChevronRight className="h-4 w-4 rotate-90 sm:rotate-0" />
@@ -182,10 +182,10 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
             </div>
           </CardContent>
         </Card>
-        <div className="absolute left-0 top-0 bottom-0 flex items-center justify-center w-12 bg-gray-800 bg-opacity-75" style={{ transform: 'translateX(-100%)' }}>
+        <div className="absolute left-0 top-0 bottom-0 flex items-center justify-center w-12 bg-zinc-800 bg-opacity-75" style={{ transform: 'translateX(-100%)' }}>
           {squadron.unique ? <ArrowLeftRight size={20} className="text-blue-500" /> : <Plus size={20} className="text-blue-500" />}
         </div>
-        <div className="absolute right-0 top-0 bottom-0 flex items-center justify-center w-12 bg-gray-800 bg-opacity-75" style={{ transform: 'translateX(100%)' }}>
+        <div className="absolute right-0 top-0 bottom-0 flex items-center justify-center w-12 bg-zinc-800 bg-opacity-75" style={{ transform: 'translateX(100%)' }}>
           {squadron.count === 1 ? <Trash2 size={20} className="text-red-500" /> : <Minus size={20} className="text-red-500" />}
         </div>
       </animated.div>

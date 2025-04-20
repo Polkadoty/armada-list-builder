@@ -102,21 +102,21 @@ export default function Home() {
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="bg-white/50 dark:bg-gray-900/50 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md logo-font"
+                className="bg-white/50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md logo-font"
                 onClick={() => setShowImportWindow(true)}
               >
                 <Import className="mr-2 h-4 w-4" />
                 IMPORT
               </Button>
               <Link href="/faq">
-                <Button variant="outline" size="sm" className="bg-white/50 dark:bg-gray-900/50 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md logo-font">
+                <Button variant="outline" size="sm" className="bg-white/50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md logo-font">
                   FAQ
                 </Button>
               </Link>
               <Button
                 variant="outline"
                 size="sm"
-                className="bg-white/50 dark:bg-gray-900/50 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md logo-font"
+                className="bg-white/50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md logo-font"
                 onClick={() => window.open('https://ko-fi.com/polkadoty', '_blank')}
               >
                 DONATE
@@ -125,7 +125,7 @@ export default function Home() {
             <div className="flex items-center gap-2">
               <WorkshopButton />
               <Link href="/shipyard">
-                <Button variant="outline" size="sm" className="bg-white/50 dark:bg-gray-900/50 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md flex items-center gap-2 logo-font">
+                <Button variant="outline" size="sm" className="bg-white/50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md flex items-center gap-2 logo-font">
                   <Ship className="h-4 w-4" />
                   Shipyard
                 </Button>

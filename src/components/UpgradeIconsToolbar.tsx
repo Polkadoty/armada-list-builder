@@ -47,7 +47,7 @@ export default function UpgradeIconsToolbar({ upgrades, onUpgradeClick, assigned
 
   return (
     <div 
-      className="bg-white dark:bg-gray-900 p-2 flex flex-wrap justify-left backdrop-blur-md bg-opacity-30 dark:bg-opacity-30"
+      className="bg-white dark:bg-zinc-900 p-2 flex flex-wrap justify-left backdrop-blur-md bg-opacity-30 dark:bg-opacity-30"
       onClick={(e) => e.stopPropagation()}
     >
       {Object.entries(upgradeCounts).flatMap(([upgrade, count]) => 

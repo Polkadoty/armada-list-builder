@@ -53,11 +53,11 @@ export default function CardBuilder() {
               <h1 className="text-3xl font-bold mb-8 text-center">Card Builder</h1>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Card 
-                  className="p-6 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
+                  className="p-6 cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800"
                   onClick={() => setSelectedType('squadron')}
                 >
                   <h2 className="text-xl font-semibold mb-2">Squadron</h2>
-                  <p className="text-gray-600">Create custom squadron cards</p>
+                  <p className="text-zinc-600">Create custom squadron cards</p>
                 </Card>
                 {/* Add other card types here */}
               </div>
