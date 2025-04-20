@@ -342,7 +342,7 @@ const FleetCard = memo(({
   theme: string | undefined,
   handleOpenRenameDialog: (fleet: Fleet) => void,
 }) => (
-  <Card className="mb-3 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+  <Card className={`mb-3 ${theme === 'light' ? 'bg-white' : 'bg-gray-800'} border-gray-200 dark:border-gray-700`}>
     <CardContent className="p-4">
       <div className="flex justify-between items-start mb-2">
         <button
@@ -904,11 +904,6 @@ export function FleetList() {
     );
   }, []);
 
-  const handleCommanderSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setCommanderSearchQuery(e.target.value);
-    setCommanderPage(0); // Reset to first page when searching
-  }, []);
-
   const handleSearchQueryChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
   }, []);
@@ -1317,18 +1312,14 @@ export function FleetList() {
     commanderDropdownOpen,
     setCommanderDropdownOpen,
     commanderSearchQuery,
-    setCommanderSearchQuery,
     paginatedCommanders,
     handleCommanderFilterChange,
     totalCommanderPages,
     handleCommanderPageChange,
     commanderPage,
-    factionFilter,
-    commanderFilter,
     setFactionFilter,
     setCommanderFilter,
     setSearchQuery,
-    columns,
     isMobile,
     sortColumn,
     sortDirection,
