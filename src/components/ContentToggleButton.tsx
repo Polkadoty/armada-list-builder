@@ -143,7 +143,7 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
       <Popover>
         <PopoverTrigger asChild>
           <TooltipTrigger asChild>
-            <Button variant="outline" size="icon" className="bg-white/50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md">
+            <Button variant="outline" size="icon" className="bg-zinc-100/80 dark:bg-zinc-800/80 text-zinc-900 dark:text-white hover:bg-zinc-200/90 dark:hover:bg-zinc-700/90 border-zinc-200 dark:border-zinc-700 backdrop-blur-md">
               <ListPlus className={`h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all ${isDarkTheme ? 'text-white' : 'text-zinc-900'}`} />
             </Button>
           </TooltipTrigger>
