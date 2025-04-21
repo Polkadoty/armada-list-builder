@@ -37,7 +37,13 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [loadingMessage, setLoadingMessage] = useState('');
-  const [gamemode, setGamemode] = useState<string>('Standard');
+  const [gamemode, setGamemode] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('selectedGamemode');
+      return stored ? stored : 'Standard';
+    }
+    return 'Standard';
+  });
   const [showImportWindow, setShowImportWindow] = useState(false);
   const router = useRouter();
   const { resolvedTheme } = useTheme();
@@ -48,8 +54,11 @@ export default function Home() {
     handleResize();
     window.addEventListener('resize', handleResize);
     checkAndFetchData(setIsLoading, setLoadingProgress, setLoadingMessage);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('selectedGamemode', gamemode || 'Standard');
+    }
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [gamemode]);
 
   const handleImportFleet = (importText: string) => {
     // Save the import text temporarily

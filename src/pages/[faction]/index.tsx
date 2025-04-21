@@ -56,13 +56,25 @@ export default function FactionPage() {
   const [loadingMessage, setLoadingMessage] = useState('');
   const [fleetName, setFleetName] = useState('Untitled Fleet');
   const [isEditingName, setIsEditingName] = useState(false);
-  const [gamemode, setGamemode] = useState("Standard");
+  const [gamemode, setGamemode] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('selectedGamemode');
+      return stored ? stored : 'Standard';
+    }
+    return 'Standard';
+  });
   const maxFleetNameLength = 64;
 
   useEffect(() => {
     setMounted(true);
     checkAndFetchData(setIsLoading, setLoadingProgress, setLoadingMessage);
   }, []);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('selectedGamemode', gamemode || 'Standard');
+    }
+  }, [gamemode]);
 
   if (!mounted || !faction) return null;
 
