@@ -215,14 +215,12 @@ export default function FleetBuilder({
   fleetName,
   setFleetName,
   gamemode,
-  setGamemode,
 }: {
   faction: string;
   factionColor: string;
   fleetName: string;
   setFleetName: React.Dispatch<React.SetStateAction<string>>;
   gamemode: string;
-  setGamemode: React.Dispatch<React.SetStateAction<string>>;
 }) {
   const [points, setPoints] = useState(0);
   const [previousPoints, setPreviousPoints] = useState(0);
@@ -274,9 +272,6 @@ export default function FleetBuilder({
   >({});
   const [hasCommander, setHasCommander] = useState(false);
   const [squadronToSwap, setSquadronToSwap] = useState<string | null>(null);
-  const [tournamentViolations, setTournamentViolations] = useState<string[]>(
-    []
-  );
   const [showImportWindow, setShowImportWindow] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState("");
