@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { TriangleAlert } from 'lucide-react';
 
 interface PointsDisplayProps {
     points: number;
     previousPoints: number;
-  }
+    pointsLimit?: number;
+    showWarning?: boolean;
+}
   
-  export function PointsDisplay({ points, previousPoints }: PointsDisplayProps) {
+export function PointsDisplay({ points, previousPoints, pointsLimit, showWarning }: PointsDisplayProps) {
     const [displayPoints, setDisplayPoints] = useState(previousPoints);
     const counterRefs = useRef<(HTMLDivElement | null)[]>([]);
     const [isIncreasing, setIsIncreasing] = useState(false);
@@ -50,10 +53,11 @@ interface PointsDisplayProps {
 
     // Calculate the number of digits to display
     const digitsToShow = displayPoints.toString().length;
+    const overLimit = pointsLimit !== undefined && points > pointsLimit;
 
     return (
       <div className="relative">
-        <div className="text-xl font-bold flex items-center">
+        <div className={`text-xl font-bold flex items-center ${overLimit || showWarning ? 'text-yellow-500' : ''}`}>
           {[0, 1, 2, 3].map((index) => (
             <div 
               key={index} 
@@ -77,7 +81,13 @@ interface PointsDisplayProps {
             </div>
           ))}
           <span className="ml-1">points</span>
+          {(overLimit || showWarning) && (
+            <TriangleAlert className="ml-1 h-5 w-5 text-yellow-500 animate-pulse" />
+          )}
         </div>
+        {overLimit && pointsLimit !== undefined && (
+          <div className="text-xs text-yellow-600 font-semibold mt-1">Limit: {pointsLimit}</div>
+        )}
       </div>
     );
   }

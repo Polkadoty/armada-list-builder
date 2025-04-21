@@ -16,13 +16,15 @@ interface SquadronSelectorProps {
   onSelectSquadron: (squadron: Squadron) => void;
   onClose: () => void;
   selectedSquadrons: Squadron[];
+  aceLimit?: number;
+  aceCount?: number;
 }
 
 interface SquadronData {
   squadrons: Record<string, Squadron>;
 }
 
-export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, selectedSquadrons }: SquadronSelectorProps) {
+export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, selectedSquadrons, aceLimit = 0, aceCount = 0 }: SquadronSelectorProps) {
   const [allSquadrons, setAllSquadrons] = useState<Squadron[]>([]);
   const [showPopup, setShowPopup] = useState(false);
   const [popupMessage, setPopupMessage] = useState('');
@@ -397,15 +399,20 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
           </div>
         </div>
         <CardContent className="p-2 sm:p-4 flex-grow overflow-auto">
+          {aceLimit > 0 && aceCount >= aceLimit && (
+            <div className="mb-2 p-2 bg-yellow-100 text-yellow-800 rounded text-center font-semibold">
+              You have {aceCount} aces equipped (limit: {aceLimit}). You must remove an ace to add another.
+            </div>
+          )}
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-2">
             {processedSquadrons.map((squadron) => (
               <div key={squadron.id} className="w-full aspect-[2.5/3.5]">
                 <Button
                   onClick={() => handleSquadronClick(squadron)}
                   className={`p-0 overflow-hidden relative w-full h-full rounded-lg bg-transparent ${
-                    isSquadronSelected(squadron) ? 'opacity-50 cursor-not-allowed' : ''
+                    (isSquadronSelected(squadron) || (aceLimit > 0 && aceCount >= aceLimit && squadron.ace)) ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
-                  disabled={isSquadronSelected(squadron)}
+                  disabled={isSquadronSelected(squadron) || (aceLimit > 0 && aceCount >= aceLimit && squadron.ace)}
                 >
                   <div className="absolute inset-0 flex items-center justify-center">
                     <OptimizedImage

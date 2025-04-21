@@ -7,6 +7,7 @@ import { useTheme } from 'next-themes';
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import Cookies from 'js-cookie';
 import { flushCacheAndReload } from '../utils/dataFetcher';
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue, SelectLabel, SelectGroup } from "@/components/ui/select";
 
 // Configuration flags
 const CONFIG = {
@@ -20,12 +21,12 @@ const CONFIG = {
   showAMGToggle: false
 };
 
-export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadingMessage, tournamentMode, setTournamentMode }: {
+export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadingMessage, gamemode, setGamemode }: {
   setIsLoading: (isLoading: boolean) => void;
   setLoadingProgress: (progress: number) => void;
   setLoadingMessage: (message: string) => void;
-  tournamentMode: boolean;
-  setTournamentMode: (mode: boolean) => void;
+  gamemode: string;
+  setGamemode: (mode: string) => void;
 }) {
   const [enableLegacy, setEnableLegacy] = useState(false);
   const [enableLegends, setEnableLegends] = useState(false);
@@ -37,6 +38,7 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
   // const [enableAMG, setEnableAMG] = useState(false);
   const { theme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [selectedGamemode, setSelectedGamemode] = useState<string>(gamemode || "Standard");
 
   useEffect(() => {
     setMounted(true);
@@ -57,6 +59,14 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
     setEnableProxy(CONFIG.showProxyToggle && proxyCookie === 'true');
     // setEnableAMG(CONFIG.showAMGToggle && amgCookie !== 'false');
   }, []);
+
+  useEffect(() => {
+    setSelectedGamemode(gamemode);
+  }, [gamemode]);
+
+  useEffect(() => {
+    setGamemode(selectedGamemode);
+  }, [selectedGamemode]);
 
   if (!mounted) {
     return null;
@@ -157,6 +167,26 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
               </p>
             </div>
             <div className="grid gap-2">
+              {/* Gamemode Dropdown */}
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium leading-none">Gamemode</label>
+                <Select value={selectedGamemode} onValueChange={setSelectedGamemode}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select a gamemode" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>Gamemode</SelectLabel>
+                      <SelectItem value="Task Force">Task Force</SelectItem>
+                      <SelectItem value="Standard">Standard</SelectItem>
+                      <SelectItem value="Sector Fleet">Sector Fleet</SelectItem>
+                      <SelectItem value="Monster Trucks">Monster Trucks</SelectItem>
+                      <SelectItem value="Campaign">Campaign</SelectItem>
+                      <SelectItem value="Fighter Group">Fighter Group</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
               {/* {CONFIG.showAMGToggle && (
                 <div className="flex items-center justify-between">
                   <label htmlFor="amg-toggle" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
@@ -263,17 +293,6 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
                   />
                 </div>
               )}
-              <div className="flex items-center justify-between">
-                <label htmlFor="tournament-mode" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                  Tournament Mode
-                </label>
-                <Switch
-                  id="tournament-mode"
-                  checked={tournamentMode}
-                  onCheckedChange={setTournamentMode}
-                  className="custom-switch"
-                />
-              </div>
               <Button onClick={handleFlushCache} variant="outline" size="sm" className="mt-2">
                 Flush Cache and Reload
               </Button>

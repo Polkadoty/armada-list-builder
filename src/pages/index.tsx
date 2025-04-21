@@ -37,7 +37,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [loadingMessage, setLoadingMessage] = useState('');
-  const [tournamentMode, setTournamentMode] = useState(true);
+  const [gamemode, setGamemode] = useState<string>('Standard');
   const [showImportWindow, setShowImportWindow] = useState(false);
   const router = useRouter();
   const { resolvedTheme } = useTheme();
@@ -83,7 +83,13 @@ export default function Home() {
         <div className={`bg-transparent lg:backdrop-blur-sm md:backdrop-blur-[2px] backdrop-blur-[1px] p-8 flex-grow lg:w-1/3 lg:min-w-[300px] relative z-10`}>
           <div className="flex justify-end space-x-2 mb-4 items-center">
             <UserAvatar />
-            <ContentToggleButton setIsLoading={setIsLoading} setLoadingProgress={setLoadingProgress} setLoadingMessage={setLoadingMessage} tournamentMode={tournamentMode} setTournamentMode={setTournamentMode} />
+            <ContentToggleButton 
+              setIsLoading={setIsLoading} 
+              setLoadingProgress={setLoadingProgress} 
+              setLoadingMessage={setLoadingMessage} 
+              gamemode={gamemode}
+              setGamemode={setGamemode}
+            />
             <ThemeToggle />
           </div>
           <div className="flex flex-col items-center mb-8">

@@ -56,7 +56,7 @@ export default function FactionPage() {
   const [loadingMessage, setLoadingMessage] = useState('');
   const [fleetName, setFleetName] = useState('Untitled Fleet');
   const [isEditingName, setIsEditingName] = useState(false);
-  const [tournamentMode, setTournamentMode] = useState(true);
+  const [gamemode, setGamemode] = useState("Standard");
   const maxFleetNameLength = 64;
 
   useEffect(() => {
@@ -147,8 +147,8 @@ export default function FactionPage() {
               setIsLoading={setIsLoading}
               setLoadingProgress={setLoadingProgress}
               setLoadingMessage={setLoadingMessage}
-              tournamentMode={tournamentMode}
-              setTournamentMode={setTournamentMode}
+              gamemode={gamemode}
+              setGamemode={setGamemode}
             />
             <ThemeToggle />
           </div>
@@ -160,8 +160,8 @@ export default function FactionPage() {
           factionColor={factionColors[faction as keyof typeof factionColors]}
           fleetName={fleetName}
           setFleetName={setFleetName}
-          tournamentMode={tournamentMode}
-          setTournamentMode={setTournamentMode}
+          gamemode={gamemode}
+          setGamemode={setGamemode}
             />
           )}
       </div>
