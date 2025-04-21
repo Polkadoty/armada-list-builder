@@ -161,8 +161,7 @@ export default function FactionPage() {
           fleetName={fleetName}
           setFleetName={setFleetName}
           gamemode={gamemode}
-          setGamemode={setGamemode}
-            />
+        />
           )}
       </div>
     </div>
