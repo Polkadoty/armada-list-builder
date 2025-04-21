@@ -1,4 +1,4 @@
-export type Gamemode = "Task Force" | "Standard" | "Sector Fleet" | "Monster Trucks" | "Campaign" | "Fighter Group";
+export type Gamemode = "Task Force" | "Standard" | "Sector Fleet" | "Minivan" | "Campaign" | "Fighter Group";
 
 export interface GamemodeRestrictions {
   pointsLimit?: number;
@@ -47,14 +47,13 @@ export const GAMEMODE_RESTRICTIONS: Record<Gamemode, GamemodeRestrictions> = {
     requireCommander: true,
     forceToggles: { tournamentMode: true },
   },
-  "Monster Trucks": {
-    pointsLimit: 500,
-    squadronPointsLimit: 167,
+  "Minivan": {
+    pointsLimit: 200,
+    squadronPointsLimit: 80,
     flotillaLimit: 2,
-    aceLimit: 5,
-    requireObjectives: false,
-    requireCommander: false,
-    forceToggles: { tournamentMode: false },
+    aceLimit: 1,
+    requireObjectives: true,
+    requireCommander: true
   },
   "Campaign": {
     pointsLimit: 600,
