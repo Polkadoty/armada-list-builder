@@ -88,11 +88,11 @@ export default function Home() {
           </div>
           <div className="flex flex-col items-center mb-8">
             <Image
-              src="star-forge.svg"
-              alt="Star Forge"
+              src="/Star Forge Logo.png"
+              alt="Star Forge Logo"
               width={300}
               height={100}
-              className="invert-0 dark:invert h-auto"
+              className="invert dark:invert-0 h-auto"
               priority
             />
           </div>
