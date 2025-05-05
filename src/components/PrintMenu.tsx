@@ -2,7 +2,6 @@
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
 import { List, Grid } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 interface PrintMenuProps {
   onPrintList: () => void;
