@@ -42,7 +42,7 @@ import { SaveFleetButton } from './SaveFleetButton';
 import { useRouter } from 'next/router';
 import { PrintMenu } from "./PrintMenu";
 import { ExpansionSelector } from "./ExpansionSelector";
-import Cookies, { set } from 'js-cookie';
+import Cookies from 'js-cookie';
 import { checkFleetViolations, Gamemode, getRestrictionsForGamemode } from "../utils/gamemodeRestrictions";
 
 const DAMAGE_DECK = [
