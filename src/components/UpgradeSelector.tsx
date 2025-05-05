@@ -489,7 +489,7 @@ export default function UpgradeSelector({
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-md bg-opacity-30 dark:bg-opacity-30">
       <Card className="w-full h-full sm:w-[95%] sm:h-[90%] lg:w-[85%] lg:h-[85%] flex flex-col">
-        <div className="p-2 sm:p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+        <div className="p-2 sm:p-4 border-b border-zinc-200 dark:border-zinc-700 flex justify-between items-center">
           {showSearch ? (
             <div className="flex-grow mr-2 relative">
               <Input
@@ -500,7 +500,7 @@ export default function UpgradeSelector({
                 className="w-full pr-10"
                 autoFocus
               />
-              <Search size={20} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <Search size={20} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-zinc-400" />
             </div>
           ) : (
             <Button variant="ghost" onClick={() => setShowSearch(true)} className="flex items-center">

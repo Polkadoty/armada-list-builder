@@ -43,8 +43,8 @@ import { useRouter } from 'next/router';
 import { PrintMenu } from "./PrintMenu";
 import { ExpansionSelector } from "./ExpansionSelector";
 import Cookies, { set } from 'js-cookie';
+import { checkFleetViolations, Gamemode, getRestrictionsForGamemode } from "../utils/gamemodeRestrictions";
 
-// Add to your imports
 const DAMAGE_DECK = [
   { name: 'Blinded Gunners', count: 2 },
   { name: 'Capacitor Failure', count: 2 },
@@ -177,6 +177,7 @@ const SectionHeader = ({
   previousPoints,
   onClearAll,
   onAdd,
+  pointsLimit,
 }: {
   title: string;
   points: number;
@@ -184,6 +185,7 @@ const SectionHeader = ({
   show: boolean;
   onClearAll: () => void;
   onAdd: () => void;
+  pointsLimit: number;
 }) => (
   <Card className="mb-4 relative">
     <Button
@@ -202,7 +204,7 @@ const SectionHeader = ({
         >
           <Trash2 size={16} />
         </button>
-        <PointsDisplay points={points} previousPoints={previousPoints} />
+        <PointsDisplay points={points} previousPoints={previousPoints} pointsLimit={pointsLimit} showWarning={points > pointsLimit} />
       </span>
     </Button>
   </Card>
@@ -212,14 +214,13 @@ export default function FleetBuilder({
   faction,
   fleetName,
   setFleetName,
-  tournamentMode,
+  gamemode,
 }: {
   faction: string;
   factionColor: string;
   fleetName: string;
   setFleetName: React.Dispatch<React.SetStateAction<string>>;
-  tournamentMode: boolean;
-  setTournamentMode: React.Dispatch<React.SetStateAction<boolean>>;
+  gamemode: string;
 }) {
   const [points, setPoints] = useState(0);
   const [previousPoints, setPreviousPoints] = useState(0);
@@ -271,9 +272,6 @@ export default function FleetBuilder({
   >({});
   const [hasCommander, setHasCommander] = useState(false);
   const [squadronToSwap, setSquadronToSwap] = useState<string | null>(null);
-  const [tournamentViolations, setTournamentViolations] = useState<string[]>(
-    []
-  );
   const [showImportWindow, setShowImportWindow] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState("");
@@ -294,62 +292,25 @@ export default function FleetBuilder({
   const [showDeleteSquadronsConfirmation, setShowDeleteSquadronsConfirmation] = useState(false);
   const [greyUpgrades, setGreyUpgrades] = useState<Record<string, string[]>>({});
 
-  const checkTournamentViolations = useMemo(() => {
-    const violations: string[] = [];
+  const commanderCount = selectedShips
+    .flatMap((ship) => ship.assignedUpgrades)
+    .filter((upgrade) => upgrade.type === "commander").length;
 
-    if (points > 400) {
-      violations.push("Fleet exceeds 400 point limit");
+  const fleetViolations = checkFleetViolations(
+    gamemode as Gamemode,
+    {
+      points,
+      totalSquadronPoints,
+      selectedShips,
+      selectedSquadrons,
+      selectedAssaultObjectives,
+      selectedDefenseObjectives,
+      selectedNavigationObjectives,
+      commanderCount,
     }
-
-    if (totalSquadronPoints > 134) {
-      violations.push("Squadrons exceed 134 point limit");
-    }
-
-    const flotillaCount = selectedShips.filter((ship) =>
-      ship.traits?.includes("flotilla")
-    ).length;
-    if (flotillaCount > 2) {
-      violations.push("More than two flotillas in fleet");
-    }
-
-    const aceSquadronCount = selectedSquadrons.filter(
-      (squadron) => squadron.ace === true
-    ).length;
-    if (aceSquadronCount > 4) {
-      violations.push("More than four aces in fleet");
-    }
-
-    if (
-      !selectedAssaultObjectives ||
-      !selectedDefenseObjectives ||
-      !selectedNavigationObjectives
-    ) {
-      violations.push("Missing objective card(s)");
-    }
-
-    const commanderCount = selectedShips
-      .flatMap((ship) => ship.assignedUpgrades)
-      .filter((upgrade) => upgrade.type === "commander").length;
-    if (commanderCount !== 1) {
-      violations.push("One commander upgrade is required");
-    }
-
-    return violations;
-  }, [
-    points,
-    totalSquadronPoints,
-    selectedShips,
-    selectedSquadrons,
-    selectedAssaultObjectives,
-    selectedDefenseObjectives,
-    selectedNavigationObjectives,
-  ]);
+  );
 
   useEffect(() => {
-    if (tournamentMode) {
-      setTournamentViolations(checkTournamentViolations);
-    }
-    
     // Cleanup function to reset state when component unmounts
     return () => {
       // Clear unique class names
@@ -376,7 +337,7 @@ export default function FleetBuilder({
         }
       });
     };
-  }, [tournamentMode, checkTournamentViolations, selectedShips, selectedSquadrons, removeUniqueClassName]);
+  }, [selectedShips, selectedSquadrons, removeUniqueClassName]);
 
 
   const generateUniqueShipId = (): string => {
@@ -2451,15 +2412,15 @@ export default function FleetBuilder({
         </div>
       ` : ''}
 
-      ${tournamentMode && showPrintRestrictions ? `
+      ${showPrintRestrictions ? `
         <div class="tournament-info">
-          <h3>Tournament Restrictions:</h3>
-          ${tournamentViolations.length === 0
-            ? "<p>This list complies with tournament restrictions.</p>"
+          <h3>Restrictions:</h3>
+          ${fleetViolations.length === 0
+            ? "<p>This list complies with restrictions.</p>"
             : `
-              <p>This list does not comply with tournament restrictions:</p>
+              <p>This list does not comply with restrictions:</p>
               <ul>
-                ${tournamentViolations.map((violation) => `<li>${violation}</li>`).join("")}
+                ${fleetViolations.map((violation) => `<li>${violation}</li>`).join("")}
               </ul>
             `}
         </div>
@@ -3346,6 +3307,9 @@ export default function FleetBuilder({
     return () => clearInterval(interval);
   }, []);
 
+  const restrictions = getRestrictionsForGamemode(gamemode as Gamemode);
+  const aceCount = selectedSquadrons.filter((s) => s.ace).length;
+
   return (
     <div ref={contentRef} className="max-w-[2000px] mx-auto">
       <div className="flex flex-col sm:flex-row items-start sm:items-center mb-4">
@@ -3355,6 +3319,7 @@ export default function FleetBuilder({
               <Tooltip>
                 <TooltipTrigger asChild>
                 <Button variant="outline" className="bg-white/50 dark:bg-gray-900/50 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md" onClick={handlePrint}>
+                  <Button variant="outline" className="bg-zinc-100/80 dark:bg-zinc-800/80 text-zinc-900 dark:text-white hover:bg-zinc-200/90 dark:hover:bg-zinc-700/90 border-zinc-200 dark:border-zinc-700 backdrop-blur-md" onClick={handlePrint}>
                     <Printer className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
@@ -3377,6 +3342,7 @@ export default function FleetBuilder({
               <Tooltip>
                 <TooltipTrigger asChild>
                 <Button variant="outline" className="bg-white/50 dark:bg-gray-900/50 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md" onClick={() => setShowImportWindow(true)}>
+                  <Button variant="outline" className="bg-zinc-100/80 dark:bg-zinc-800/80 text-zinc-900 dark:text-white hover:bg-zinc-200/90 dark:hover:bg-zinc-700/90 border-zinc-200 dark:border-zinc-700 backdrop-blur-md" onClick={() => setShowImportWindow(true)}>
                     <Import className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
@@ -3401,7 +3367,7 @@ export default function FleetBuilder({
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-            {tournamentMode && tournamentViolations.length > 0 && (
+            {fleetViolations.length > 0 && (
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="ghost" size="icon" className="text-yellow-500">
@@ -3410,9 +3376,9 @@ export default function FleetBuilder({
                 </PopoverTrigger>
                 <PopoverContent className="w-80">
                   <div className="space-y-2">
-                    <h4 className="font-medium">Tournament Violations:</h4>
+                    <h4 className="font-medium">Restrictions Violations:</h4>
                     <ul className="list-disc pl-4 space-y-1">
-                      {tournamentViolations.map((violation, index) => (
+                      {fleetViolations.map((violation, index) => (
                         <li key={index}>{violation}</li>
                       ))}
                     </ul>
@@ -3448,6 +3414,7 @@ export default function FleetBuilder({
                 show={true}
                 onClearAll={handleClearAllShips}
                 onAdd={handleAddShip}
+                pointsLimit={restrictions.pointsLimit ?? 0}
               />
               <div className="relative">
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 4xl:grid-cols-5 gap-4">
@@ -3502,6 +3469,7 @@ export default function FleetBuilder({
                 show={true}
                 onClearAll={handleClearAllSquadrons}
                 onAdd={handleAddSquadron}
+                pointsLimit={restrictions.squadronPointsLimit ?? 0}
               />
               <div className="relative">
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
@@ -3596,6 +3564,8 @@ export default function FleetBuilder({
           onSelectSquadron={handleSelectSquadron}
           onClose={() => setShowSquadronSelector(false)}
           selectedSquadrons={selectedSquadrons}
+          aceLimit={restrictions.aceLimit ?? 0}
+          aceCount={aceCount}
         />
       )}
 

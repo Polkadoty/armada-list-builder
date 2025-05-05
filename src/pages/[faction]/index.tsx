@@ -56,13 +56,25 @@ export default function FactionPage() {
   const [loadingMessage, setLoadingMessage] = useState('');
   const [fleetName, setFleetName] = useState('Untitled Fleet');
   const [isEditingName, setIsEditingName] = useState(false);
-  const [tournamentMode, setTournamentMode] = useState(true);
+  const [gamemode, setGamemode] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('selectedGamemode');
+      return stored ? stored : 'Standard';
+    }
+    return 'Standard';
+  });
   const maxFleetNameLength = 64;
 
   useEffect(() => {
     setMounted(true);
     checkAndFetchData(setIsLoading, setLoadingProgress, setLoadingMessage);
   }, []);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('selectedGamemode', gamemode || 'Standard');
+    }
+  }, [gamemode]);
 
   if (!mounted || !faction) return null;
 
@@ -147,8 +159,8 @@ export default function FactionPage() {
               setIsLoading={setIsLoading}
               setLoadingProgress={setLoadingProgress}
               setLoadingMessage={setLoadingMessage}
-              tournamentMode={tournamentMode}
-              setTournamentMode={setTournamentMode}
+              gamemode={gamemode}
+              setGamemode={setGamemode}
             />
             <ThemeToggle />
           </div>
@@ -160,9 +172,8 @@ export default function FactionPage() {
           factionColor={factionColors[faction as keyof typeof factionColors]}
           fleetName={fleetName}
           setFleetName={setFleetName}
-          tournamentMode={tournamentMode}
-          setTournamentMode={setTournamentMode}
-            />
+          gamemode={gamemode}
+        />
           )}
       </div>
     </div>

@@ -37,7 +37,13 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [loadingMessage, setLoadingMessage] = useState('');
-  const [tournamentMode, setTournamentMode] = useState(true);
+  const [gamemode, setGamemode] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('selectedGamemode');
+      return stored ? stored : 'Standard';
+    }
+    return 'Standard';
+  });
   const [showImportWindow, setShowImportWindow] = useState(false);
   const router = useRouter();
   const { resolvedTheme } = useTheme();
@@ -48,8 +54,11 @@ export default function Home() {
     handleResize();
     window.addEventListener('resize', handleResize);
     checkAndFetchData(setIsLoading, setLoadingProgress, setLoadingMessage);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('selectedGamemode', gamemode || 'Standard');
+    }
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [gamemode]);
 
   const handleImportFleet = (importText: string) => {
     // Save the import text temporarily
@@ -83,16 +92,22 @@ export default function Home() {
         <div className={`bg-transparent lg:backdrop-blur-sm md:backdrop-blur-[2px] backdrop-blur-[1px] p-8 flex-grow lg:w-1/3 lg:min-w-[300px] relative z-10`}>
           <div className="flex justify-end space-x-2 mb-4 items-center">
             <UserAvatar />
-            <ContentToggleButton setIsLoading={setIsLoading} setLoadingProgress={setLoadingProgress} setLoadingMessage={setLoadingMessage} tournamentMode={tournamentMode} setTournamentMode={setTournamentMode} />
+            <ContentToggleButton 
+              setIsLoading={setIsLoading} 
+              setLoadingProgress={setLoadingProgress} 
+              setLoadingMessage={setLoadingMessage} 
+              gamemode={gamemode}
+              setGamemode={setGamemode}
+            />
             <ThemeToggle />
           </div>
           <div className="flex flex-col items-center mb-8">
             <Image
-              src="star-forge.svg"
-              alt="Star Forge"
+              src="/Star Forge Logo.png"
+              alt="Star Forge Logo"
               width={300}
               height={100}
-              className="invert-0 dark:invert h-auto"
+              className="invert dark:invert-0 h-auto"
               priority
             />
           </div>
@@ -102,21 +117,21 @@ export default function Home() {
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="bg-white/50 dark:bg-gray-900/50 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md logo-font"
+                className="bg-zinc-100/80 dark:bg-zinc-800/80 text-zinc-900 dark:text-white hover:bg-zinc-200/90 dark:hover:bg-zinc-700/90 border-zinc-200 dark:border-zinc-700 backdrop-blur-md logo-font"
                 onClick={() => setShowImportWindow(true)}
               >
                 <Import className="mr-2 h-4 w-4" />
                 IMPORT
               </Button>
               <Link href="/faq">
-                <Button variant="outline" size="sm" className="bg-white/50 dark:bg-gray-900/50 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md logo-font">
+                <Button variant="outline" size="sm" className="bg-zinc-100/80 dark:bg-zinc-800/80 text-zinc-900 dark:text-white hover:bg-zinc-200/90 dark:hover:bg-zinc-700/90 border-zinc-200 dark:border-zinc-700 backdrop-blur-md logo-font">
                   FAQ
                 </Button>
               </Link>
               <Button
                 variant="outline"
                 size="sm"
-                className="bg-white/50 dark:bg-gray-900/50 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md logo-font"
+                className="bg-zinc-100/80 dark:bg-zinc-800/80 text-zinc-900 dark:text-white hover:bg-zinc-200/90 dark:hover:bg-zinc-700/90 border-zinc-200 dark:border-zinc-700 backdrop-blur-md logo-font"
                 onClick={() => window.open('https://ko-fi.com/polkadoty', '_blank')}
               >
                 DONATE
@@ -125,7 +140,7 @@ export default function Home() {
             <div className="flex items-center gap-2">
               <WorkshopButton />
               <Link href="/shipyard">
-                <Button variant="outline" className="bg-white/50 dark:bg-gray-900/50 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md flex items-center gap-2 logo-font">
+                <Button variant="outline" size="sm" className="bg-zinc-100/80 dark:bg-zinc-800/80 text-zinc-900 dark:text-white hover:bg-zinc-200/90 dark:hover:bg-zinc-700/90 border-zinc-200 dark:border-zinc-700 backdrop-blur-md flex items-center gap-2 logo-font">
                   <Ship className="h-4 w-4" />
                   Shipyard
                 </Button>

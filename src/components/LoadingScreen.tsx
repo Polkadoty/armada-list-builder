@@ -20,13 +20,13 @@ export function LoadingScreen({ progress, message }: LoadingScreenProps) {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-md bg-opacity-30 dark:bg-opacity-30">
-      <Card className="w-full max-w-md bg-white/80 dark:bg-gray-800/80 backdrop-blur-md shadow-lg">
-        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+      <Card className="w-full max-w-md bg-white/80 dark:bg-zinc-800/80 backdrop-blur-md shadow-lg">
+        <div className="p-4 border-b border-zinc-200 dark:border-zinc-700">
           <h2 className="text-lg font-semibold">Loading Data</h2>
         </div>
         <div className="p-4">
           <Progress value={progress} className="w-full mb-4" />
-          <p className="text-sm text-gray-600 dark:text-gray-300">{message}</p>
+          <p className="text-sm text-zinc-600 dark:text-zinc-300">{message}</p>
         </div>
       </Card>
     </div>

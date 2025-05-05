@@ -109,7 +109,7 @@ const TableHeaderMemo = memo(({
         <TableHead 
           key={column.id}
           className={`cursor-pointer hover:text-accent-foreground ${
-            theme === 'light' ? 'text-black' : 'text-white'
+            theme === 'light' ? 'text-zinc-900' : 'text-foreground'
           }`}
           onClick={() => handleSort(column.id)}
         >
@@ -157,7 +157,7 @@ const FleetRowMemo = memo(({
   handleOpenRenameDialog: (fleet: Fleet) => void,
 }) => (
   <TableRow key={fleet.id} className={`hover:bg-muted/50 border-b ${
-    theme === 'light' ? 'text-slate-900' : 'text-foreground'
+    theme === 'light' ? 'text-zinc-900' : 'text-foreground'
   }`}>
     <TableCell>
       <button
@@ -168,10 +168,10 @@ const FleetRowMemo = memo(({
       </button>
     </TableCell>
     <TableCell className={
-      theme === 'light' ? 'text-black' : 'text-white'
+      theme === 'light' ? 'text-zinc-900' : 'text-white'
     }>{capitalizeFirstLetter(fleet.faction)}</TableCell>
-    <TableCell className={theme === 'light' ? 'text-black' : 'text-white'}>{fleet.commander}</TableCell>
-    <TableCell className={theme === 'light' ? 'text-black' : 'text-white'}>{fleet.points}</TableCell>
+    <TableCell className={theme === 'light' ? 'text-zinc-900' : 'text-white'}>{fleet.commander}</TableCell>
+    <TableCell className={theme === 'light' ? 'text-zinc-900' : 'text-white'}>{fleet.points}</TableCell>
     {columns.find(col => col.id === 'date_added')?.visible && (
       <TableCell>{new Date(fleet.date_added).toLocaleDateString()}</TableCell>
     )}
@@ -236,7 +236,7 @@ const PaginationControls = memo(({
   rowsPerPage: number,
   setRowsPerPage: (value: number) => void
 }) => (
-  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-4 border-t pt-4">
+  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-4 border-t pt-4 border-zinc-200 dark:border-zinc-700">
     <div className="flex items-center space-x-2">
       <Select
         value={rowsPerPage.toString()}
@@ -245,10 +245,10 @@ const PaginationControls = memo(({
           setRowsPerPage(parseInt(value, 10));
         }}
       >
-        <SelectTrigger className="w-[100px]">
+        <SelectTrigger className="w-[100px] bg-white/50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white backdrop-blur-md border-zinc-200 dark:border-zinc-700">
           <SelectValue />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white border-zinc-200 dark:border-zinc-700">
           {[10, 20, 30, 40, 50].map((value) => (
             <SelectItem key={value} value={value.toString()}>
               {value} rows
@@ -256,7 +256,7 @@ const PaginationControls = memo(({
           ))}
         </SelectContent>
       </Select>
-      <span className="text-sm text-muted-foreground">
+      <span className="text-sm text-zinc-900 dark:text-white">
         Page {currentPage} of {totalPages}
       </span>
     </div>
@@ -266,6 +266,7 @@ const PaginationControls = memo(({
         size="sm"
         onClick={() => setCurrentPage(1)}
         disabled={currentPage === 1}
+        className="bg-white/50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md border-zinc-200 dark:border-zinc-700 disabled:opacity-50"
       >
         First
       </Button>
@@ -274,6 +275,7 @@ const PaginationControls = memo(({
         size="sm"
         onClick={() => setCurrentPage(prev => prev - 1)}
         disabled={currentPage === 1}
+        className="bg-white/50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md border-zinc-200 dark:border-zinc-700 disabled:opacity-50"
       >
         Previous
       </Button>
@@ -282,6 +284,7 @@ const PaginationControls = memo(({
         size="sm"
         onClick={() => setCurrentPage(prev => prev + 1)}
         disabled={currentPage === totalPages}
+        className="bg-white/50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md border-zinc-200 dark:border-zinc-700 disabled:opacity-50"
       >
         Next
       </Button>
@@ -290,6 +293,7 @@ const PaginationControls = memo(({
         size="sm"
         onClick={() => setCurrentPage(totalPages)}
         disabled={currentPage === totalPages}
+        className="bg-white/50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md border-zinc-200 dark:border-zinc-700 disabled:opacity-50"
       >
         Last
       </Button>
@@ -338,7 +342,7 @@ const FleetCard = memo(({
   theme: string | undefined,
   handleOpenRenameDialog: (fleet: Fleet) => void,
 }) => (
-  <Card className="mb-3">
+  <Card className={`mb-3 ${theme === 'light' ? 'bg-white' : 'bg-zinc-800'} border-zinc-200 dark:border-zinc-700`}>
     <CardContent className="p-4">
       <div className="flex justify-between items-start mb-2">
         <button
@@ -349,15 +353,15 @@ const FleetCard = memo(({
         </button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-zinc-700 dark:text-zinc-300">
               <MoreVertical className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => handleFleetSelect(fleet)}>
+          <DropdownMenuContent align="end" className="bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700">
+            <DropdownMenuItem onClick={() => handleFleetSelect(fleet)} className="text-zinc-900 dark:text-white">
               Load Fleet
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleToggleShare(fleet)}>
+            <DropdownMenuItem onClick={() => handleToggleShare(fleet)} className="text-zinc-900 dark:text-white">
               <div className="flex items-center">
                 <Checkbox
                   checked={fleet.shared}
@@ -367,16 +371,16 @@ const FleetCard = memo(({
                 Share Fleet
               </div>
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleOpenRenameDialog(fleet)}>
+            <DropdownMenuItem onClick={() => handleOpenRenameDialog(fleet)} className="text-zinc-900 dark:text-white">
               Rename Fleet
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleFleetCopy(fleet)}>
+            <DropdownMenuItem onClick={() => handleFleetCopy(fleet)} className="text-zinc-900 dark:text-white">
               Copy Fleet
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleCopyLink(fleet)}>
+            <DropdownMenuItem onClick={() => handleCopyLink(fleet)} className="text-zinc-900 dark:text-white">
               Copy Share Link
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleCopyText(fleet)}>
+            <DropdownMenuItem onClick={() => handleCopyText(fleet)} className="text-zinc-900 dark:text-white">
               Copy Fleet Text
             </DropdownMenuItem>
             <DropdownMenuItem 
@@ -390,30 +394,30 @@ const FleetCard = memo(({
       </div>
       
       <div className="grid grid-cols-2 gap-1 text-sm">
-        <div className={theme === 'light' ? 'text-gray-600' : 'text-gray-400'}>Faction:</div>
-        <div className="font-medium">{fleet.faction.charAt(0).toUpperCase() + fleet.faction.slice(1)}</div>
+        <div className="text-zinc-600 dark:text-zinc-400">Faction:</div>
+        <div className="font-medium text-zinc-900 dark:text-white">{fleet.faction.charAt(0).toUpperCase() + fleet.faction.slice(1)}</div>
         
-        <div className={theme === 'light' ? 'text-gray-600' : 'text-gray-400'}>Commander:</div>
-        <div className="font-medium">{fleet.commander}</div>
+        <div className="text-zinc-600 dark:text-zinc-400">Commander:</div>
+        <div className="font-medium text-zinc-900 dark:text-white">{fleet.commander}</div>
         
-        <div className={theme === 'light' ? 'text-gray-600' : 'text-gray-400'}>Points:</div>
-        <div className="font-medium">{fleet.points}</div>
+        <div className="text-zinc-600 dark:text-zinc-400">Points:</div>
+        <div className="font-medium text-zinc-900 dark:text-white">{fleet.points}</div>
       </div>
       
       <div className="flex gap-2 mt-3">
-        <Button variant="outline" size="sm" className="h-8 p-1 px-2" onClick={() => handleFleetSelect(fleet)}>
+        <Button variant="outline" size="sm" className="h-8 p-1 px-2 bg-white/50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md border-zinc-200 dark:border-zinc-700" onClick={() => handleFleetSelect(fleet)}>
           Load
         </Button>
-        <Button variant="outline" size="sm" className="h-8 p-1 px-2" onClick={() => handleFleetCopy(fleet)}>
+        <Button variant="outline" size="sm" className="h-8 p-1 px-2 bg-white/50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md border-zinc-200 dark:border-zinc-700" onClick={() => handleFleetCopy(fleet)}>
           <Copy className="h-4 w-4" />
         </Button>
-        <Button variant="outline" size="sm" className="h-8 p-1 px-2" onClick={() => handleToggleShare(fleet)}>
+        <Button variant="outline" size="sm" className="h-8 p-1 px-2 bg-white/50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md border-zinc-200 dark:border-zinc-700" onClick={() => handleToggleShare(fleet)}>
           <Share className="h-4 w-4" />
         </Button>
-        <Button variant="outline" size="sm" className="h-8 p-1 px-2" onClick={() => handleOpenRenameDialog(fleet)}>
+        <Button variant="outline" size="sm" className="h-8 p-1 px-2 bg-white/50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md border-zinc-200 dark:border-zinc-700" onClick={() => handleOpenRenameDialog(fleet)}>
           <Edit className="h-4 w-4" />
         </Button>
-        <Button variant="outline" size="sm" className="h-8 p-1 px-2 text-destructive" onClick={() => handleFleetDelete(fleet)}>
+        <Button variant="outline" size="sm" className="h-8 p-1 px-2 bg-white/50 dark:bg-zinc-900/50 text-red-600 dark:text-red-400 hover:bg-opacity-20 backdrop-blur-md border-zinc-200 dark:border-zinc-700" onClick={() => handleFleetDelete(fleet)}>
           <Trash className="h-4 w-4" />
         </Button>
       </div>
@@ -900,11 +904,6 @@ export function FleetList() {
     );
   }, []);
 
-  const handleCommanderSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setCommanderSearchQuery(e.target.value);
-    setCommanderPage(0); // Reset to first page when searching
-  }, []);
-
   const handleSearchQueryChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
   }, []);
@@ -938,17 +937,17 @@ export function FleetList() {
     
     return (
       <SheetContent 
-        className="w-screen h-[100dvh] max-w-none p-0 border-0 rounded-none mt-0 pt-6 flex flex-col"
+        className="w-screen h-[100dvh] max-w-none p-0 border-0 rounded-none mt-0 pt-6 flex flex-col bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white"
         side="bottom"
       >
         <SheetHeader className="px-4 pb-2">
-          <SheetTitle className="text-center text-xl">Your Fleets</SheetTitle>
+          <SheetTitle className="text-center text-xl text-zinc-900 dark:text-white">Your Fleets</SheetTitle>
           <div className="flex flex-col gap-3 mt-3">
             <Input
               placeholder="Filter fleets..."
               value={searchQuery}
               onChange={handleSearchQueryChange}
-              className="w-full"
+              className="w-full bg-white/50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white backdrop-blur-md border-zinc-200 dark:border-zinc-700"
             />
             <div className="flex gap-2">
               <Select
@@ -957,10 +956,10 @@ export function FleetList() {
                   setFactionFilter(value === "all" ? [] : [value]);
                 }}
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full bg-white/50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md border-zinc-200 dark:border-zinc-700">
                   <SelectValue placeholder="Filter by faction" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white border-zinc-200 dark:border-zinc-700">
                   <SelectItem value="all">All Factions</SelectItem>
                   {uniqueFactions.map(faction => (
                     <SelectItem key={faction} value={faction}>
@@ -976,10 +975,10 @@ export function FleetList() {
                   setCommanderFilter(value === "all-commanders" ? [] : [value]);
                 }}
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full bg-white/50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md border-zinc-200 dark:border-zinc-700">
                   <SelectValue placeholder="Filter by commander" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white border-zinc-200 dark:border-zinc-700">
                   <SelectItem value="all-commanders">All Commanders</SelectItem>
                   {uniqueCommanders.map(commander => (
                     <SelectItem key={commander} value={commander}>
@@ -996,12 +995,12 @@ export function FleetList() {
           {isLoading && fleets.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-32">
               <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
-              <p>Loading your fleets...</p>
+              <p className="text-zinc-900 dark:text-white">Loading your fleets...</p>
             </div>
           ) : (
             <>
               {fleets.length === 0 ? (
-                <div className="text-center py-8">
+                <div className="text-center py-8 text-zinc-900 dark:text-white">
                   <p>No fleets found. Create and save a fleet to see it here.</p>
                 </div>
               ) : (
@@ -1027,16 +1026,17 @@ export function FleetList() {
         </div>
         
         {fleets.length > 0 && (
-          <SheetFooter className="fixed bottom-0 left-0 right-0 p-4 flex flex-row justify-between items-center border-t bg-background/95 backdrop-blur-sm pb-8">
+          <SheetFooter className="fixed bottom-0 left-0 right-0 p-4 flex flex-row justify-between items-center border-t bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-700 backdrop-blur-sm pb-8">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
               disabled={currentPage === 1}
+              className="bg-white/50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md border-zinc-200 dark:border-zinc-700 disabled:opacity-50"
             >
               Previous
             </Button>
-            <span className="text-sm">
+            <span className="text-sm text-zinc-900 dark:text-white">
               Page {currentPage} of {totalPages}
             </span>
             <Button
@@ -1044,6 +1044,7 @@ export function FleetList() {
               size="sm"
               onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
               disabled={currentPage === totalPages}
+              className="bg-white/50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md border-zinc-200 dark:border-zinc-700 disabled:opacity-50"
             >
               Next
             </Button>
@@ -1097,35 +1098,36 @@ export function FleetList() {
     return (
       <DialogContent className={`max-w-[95vw] sm:max-w-3xl max-h-[90vh] flex flex-col border backdrop-blur-md ${
         theme === 'light' 
-          ? 'bg-white/95 text-black' 
-          : 'bg-background/80 text-white'
+          ? 'bg-white/95 text-zinc-900 border-zinc-200' 
+          : 'bg-zinc-900/90 text-white border-zinc-700'
       }`}>
         <DialogHeader>
-          <DialogTitle>Your Fleets</DialogTitle>
+          <DialogTitle className="text-zinc-900 dark:text-white">Your Fleets</DialogTitle>
           <div className="flex flex-wrap items-center gap-2 mt-4">
             <Input
               placeholder="Filter fleets..."
               value={searchQuery}
               onChange={handleSearchQueryChange}
-              className="max-w-sm"
+              className="max-w-sm bg-white/50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white backdrop-blur-md border-zinc-200 dark:border-zinc-700"
             />
             <DropdownMenu open={factionDropdownOpen} onOpenChange={setFactionDropdownOpen}>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" className="bg-white/50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md border-zinc-200 dark:border-zinc-700">
                   Faction <ChevronDown className="ml-2 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="max-h-[300px] overflow-auto">
+              <DropdownMenuContent className="max-h-[300px] overflow-auto bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white border-zinc-200 dark:border-zinc-700">
                 {paginatedFactions.map(faction => (
                   <DropdownMenuItem
                     key={faction}
                     onClick={() => handleFactionFilterChange(faction)}
+                    className="text-zinc-900 dark:text-white"
                   >
                     {faction === 'unknown' ? 'Unknown' : faction.charAt(0).toUpperCase() + faction.slice(1)}
                   </DropdownMenuItem>
                 ))}
                 {totalFactionPages > 1 && (
-                  <div className="flex justify-between p-2 border-t mt-2">
+                  <div className="flex justify-between p-2 border-t mt-2 border-zinc-200 dark:border-zinc-700">
                     <Button 
                       variant="outline" 
                       size="sm" 
@@ -1134,20 +1136,19 @@ export function FleetList() {
                         handleFactionPageChange('prev');
                       }}
                       disabled={factionPage === 0}
+                      className="bg-white/50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md border-zinc-200 dark:border-zinc-700 disabled:opacity-50"
                     >
                       Previous
                     </Button>
-                    <span className="text-xs self-center">
-                      Page {factionPage + 1} of {totalFactionPages}
-                    </span>
                     <Button 
                       variant="outline" 
-                      size="sm" 
+                      size="sm"
                       onClick={(e) => {
                         e.preventDefault();
                         handleFactionPageChange('next');
                       }}
                       disabled={factionPage >= totalFactionPages - 1}
+                      className="bg-white/50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md border-zinc-200 dark:border-zinc-700 disabled:opacity-50"
                     >
                       Next
                     </Button>
@@ -1155,32 +1156,33 @@ export function FleetList() {
                 )}
               </DropdownMenuContent>
             </DropdownMenu>
+            
             <DropdownMenu open={commanderDropdownOpen} onOpenChange={setCommanderDropdownOpen}>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" className="bg-white/50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md border-zinc-200 dark:border-zinc-700">
                   Commander <ChevronDown className="ml-2 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="max-h-[300px] overflow-auto">
-                <div className="p-2 border-b">
+              <DropdownMenuContent className="max-h-[300px] overflow-auto bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white border-zinc-200 dark:border-zinc-700">
+                <div className="p-2 border-b border-zinc-200 dark:border-zinc-700">
                   <Input
-                    placeholder="Search commanders..."
+                    placeholder="Filter commanders..."
                     value={commanderSearchQuery}
-                    onChange={handleCommanderSearchChange}
-                    onClick={(e) => e.stopPropagation()}
-                    className="h-8 text-xs"
+                    onChange={(e) => setCommanderSearchQuery(e.target.value)}
+                    className="w-full bg-white/50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white backdrop-blur-md border-zinc-200 dark:border-zinc-700"
                   />
                 </div>
                 {paginatedCommanders.map(commander => (
                   <DropdownMenuItem
                     key={commander}
                     onClick={() => handleCommanderFilterChange(commander)}
+                    className="text-zinc-900 dark:text-white"
                   >
                     {commander === 'unknown' ? 'Unknown' : commander}
                   </DropdownMenuItem>
                 ))}
                 {totalCommanderPages > 1 && (
-                  <div className="flex justify-between p-2 border-t mt-2">
+                  <div className="flex justify-between p-2 border-t mt-2 border-zinc-200 dark:border-zinc-700">
                     <Button 
                       variant="outline" 
                       size="sm" 
@@ -1189,20 +1191,19 @@ export function FleetList() {
                         handleCommanderPageChange('prev');
                       }}
                       disabled={commanderPage === 0}
+                      className="bg-white/50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md border-zinc-200 dark:border-zinc-700 disabled:opacity-50"
                     >
                       Previous
                     </Button>
-                    <span className="text-xs self-center">
-                      Page {commanderPage + 1} of {totalCommanderPages}
-                    </span>
                     <Button 
                       variant="outline" 
-                      size="sm" 
+                      size="sm"
                       onClick={(e) => {
                         e.preventDefault();
                         handleCommanderPageChange('next');
                       }}
                       disabled={commanderPage >= totalCommanderPages - 1}
+                      className="bg-white/50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md border-zinc-200 dark:border-zinc-700 disabled:opacity-50"
                     >
                       Next
                     </Button>
@@ -1210,72 +1211,74 @@ export function FleetList() {
                 )}
               </DropdownMenuContent>
             </DropdownMenu>
+            
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => {
+                setFactionFilter([]);
+                setCommanderFilter([]);
+                setSearchQuery('');
+              }}
+              className="bg-white/50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md border-zinc-200 dark:border-zinc-700"
+            >
+              Reset Filters
+            </Button>
           </div>
         </DialogHeader>
-
-        <div className="flex-1 min-h-0 overflow-auto">
-          {isLoading && fleets.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-64">
+        <div className="overflow-auto flex-grow border-t border-b border-zinc-200 dark:border-zinc-700">
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center h-32">
               <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
-              <p>Loading your fleets...</p>
+              <p className="text-zinc-900 dark:text-white">Loading your fleets...</p>
             </div>
           ) : (
-            <div className="flex-1 overflow-auto px-4 pb-24">
-              {isLoading && fleets.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-32">
-                  <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
-                  <p>Loading your fleets...</p>
+            <>
+              {fleets.length === 0 ? (
+                <div className="text-center py-8 text-zinc-900 dark:text-white">
+                  <p>No fleets found. Create and save a fleet to see it here.</p>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  {fleets.length === 0 ? (
-                    <div className="text-center py-8">
-                      <p>No fleets found. Create and save a fleet to see it here.</p>
-                    </div>
-                  ) : (
-                    <Table>
-                      <TableHeaderMemo 
-                        columns={columns} 
-                        sortColumn={sortColumn}
-                        sortDirection={sortDirection}
-                        handleSort={handleSort}
+                <Table className="w-full text-zinc-900 dark:text-white">
+                  <TableHeaderMemo 
+                    columns={columns.filter(col => !isMobile || col.visible)} 
+                    sortColumn={sortColumn} 
+                    sortDirection={sortDirection} 
+                    handleSort={handleSort}
+                    theme={theme}
+                  />
+                  <TableBody>
+                    {paginatedFleets.map((fleet) => (
+                      <FleetRowMemo
+                        key={fleet.id}
+                        fleet={fleet}
+                        handleFleetSelect={handleFleetSelect}
+                        handleFleetDelete={handleFleetDelete}
+                        handleFleetCopy={handleFleetCopy}
+                        handleToggleShare={handleToggleShare}
+                        handleCopyLink={handleCopyLink}
+                        handleCopyText={handleCopyText}
                         theme={theme}
+                        columns={columns}
+                        capitalizeFirstLetter={capitalizeFirstLetter}
+                        handleOpenRenameDialog={handleOpenRenameDialog}
                       />
-                      <TableBody>
-                        {paginatedFleets.map((fleet) => (
-                          <FleetRowMemo
-                            key={fleet.id}
-                            fleet={fleet}
-                            handleFleetSelect={handleFleetSelect}
-                            handleFleetDelete={handleFleetDelete}
-                            handleFleetCopy={handleFleetCopy}
-                            handleToggleShare={handleToggleShare}
-                            handleCopyLink={handleCopyLink}
-                            handleCopyText={handleCopyText}
-                            theme={theme}
-                            columns={columns}
-                            capitalizeFirstLetter={capitalizeFirstLetter}
-                            handleOpenRenameDialog={handleOpenRenameDialog}
-                          />
-                        ))}
-                      </TableBody>
-                    </Table>
-                  )}
-                </div>
+                    ))}
+                  </TableBody>
+                </Table>
               )}
-            </div>
+            </>
           )}
         </div>
-
-        {fleets.length > 0 && (
-          <PaginationControls 
+        <div className="p-4 border-t border-zinc-200 dark:border-zinc-700">
+          <PaginationControls
             currentPage={currentPage}
             totalPages={totalPages}
             setCurrentPage={setCurrentPage}
             rowsPerPage={rowsPerPage}
-            setRowsPerPage={setRowsPerPage} 
+            setRowsPerPage={setRowsPerPage}
           />
-        )}
+        </div>
         
         {showDeleteConfirmation && fleetToDelete && (
           <NotificationWindow
@@ -1287,48 +1290,6 @@ export function FleetList() {
             }}
             showConfirmButton={true}
             onConfirm={confirmDelete}
-          />
-        )}
-        {showRenameDialog && fleetToRename && (
-          <Dialog open={showRenameDialog} onOpenChange={setShowRenameDialog}>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Rename Fleet</DialogTitle>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Input
-                    id="name"
-                    value={newFleetName}
-                    onChange={(e) => setNewFleetName(e.target.value)}
-                    className="col-span-4"
-                    placeholder="Enter new fleet name"
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => {
-                    setShowRenameDialog(false);
-                    setFleetToRename(null);
-                    setNewFleetName('');
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" onClick={handleFleetRename}>
-                  Save Changes
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        )}
-        {showNotification && (
-          <NotificationWindow
-            message={notificationMessage}
-            onClose={() => setShowNotification(false)}
           />
         )}
       </DialogContent>
@@ -1351,12 +1312,15 @@ export function FleetList() {
     commanderDropdownOpen,
     setCommanderDropdownOpen,
     commanderSearchQuery,
-    handleCommanderSearchChange,
     paginatedCommanders,
     handleCommanderFilterChange,
     totalCommanderPages,
     handleCommanderPageChange,
     commanderPage,
+    setFactionFilter,
+    setCommanderFilter,
+    setSearchQuery,
+    isMobile,
     sortColumn,
     sortDirection,
     handleSort,
@@ -1375,13 +1339,7 @@ export function FleetList() {
     setRowsPerPage,
     showDeleteConfirmation,
     fleetToDelete,
-    confirmDelete,
-    showRenameDialog,
-    fleetToRename,
-    newFleetName,
-    handleFleetRename,
-    showNotification,
-    notificationMessage
+    confirmDelete
   ]);
 
   // Return either the Dialog or Sheet based on screen size
@@ -1396,9 +1354,9 @@ export function FleetList() {
         <Sheet open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
           <SheetTrigger asChild>
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
-              className="w-full justify-start text-sm font-normal h-9 bg-background text-foreground hover:bg-accent hover:text-accent-foreground"
+              className="w-full justify-start text-sm font-normal bg-white/50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md border-zinc-200 dark:border-zinc-700"
             >
               Fleet List
             </Button>
@@ -1409,9 +1367,9 @@ export function FleetList() {
         <Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
           <DialogTrigger asChild>
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
-              className="w-full justify-start text-sm font-normal h-9 bg-background text-foreground hover:bg-accent hover:text-accent-foreground"
+              className="w-full justify-start text-sm font-normal bg-white/50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md border-zinc-200 dark:border-zinc-700"
             >
               Fleet List
             </Button>
@@ -1422,9 +1380,9 @@ export function FleetList() {
       
       {showRenameDialog && fleetToRename && (
         <Dialog open={showRenameDialog} onOpenChange={setShowRenameDialog}>
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className="sm:max-w-[425px] bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border border-zinc-200 dark:border-zinc-700">
             <DialogHeader>
-              <DialogTitle>Rename Fleet</DialogTitle>
+              <DialogTitle className="text-zinc-900 dark:text-white">Rename Fleet</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
@@ -1432,7 +1390,7 @@ export function FleetList() {
                   id="name"
                   value={newFleetName}
                   onChange={(e) => setNewFleetName(e.target.value)}
-                  className="col-span-4"
+                  className="col-span-4 bg-white/50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white backdrop-blur-md border-zinc-200 dark:border-zinc-700"
                   placeholder="Enter new fleet name"
                 />
               </div>
@@ -1440,16 +1398,24 @@ export function FleetList() {
             <DialogFooter>
               <Button
                 type="button"
-                variant="secondary"
+                variant="outline"
+                size="sm"
                 onClick={() => {
                   setShowRenameDialog(false);
                   setFleetToRename(null);
                   setNewFleetName('');
                 }}
+                className="bg-white/50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md border-zinc-200 dark:border-zinc-700"
               >
                 Cancel
               </Button>
-              <Button type="submit" onClick={handleFleetRename}>
+              <Button 
+                type="submit" 
+                onClick={handleFleetRename}
+                variant="outline"
+                size="sm"
+                className="bg-white/50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md border-zinc-200 dark:border-zinc-700"
+              >
                 Save Changes
               </Button>
             </DialogFooter>

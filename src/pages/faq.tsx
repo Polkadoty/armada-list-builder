@@ -19,7 +19,7 @@ export default function FAQ({ content }: FAQProps) {
         <div className="bg-white dark:bg-transparent p-8">
           <div className="flex justify-between items-center mb-4">
             <Link href="/">
-              <span className="text-gray-900 dark:text-white hover:underline cursor-pointer">
+              <span className="text-zinc-900 dark:text-white hover:underline cursor-pointer">
                 ← Back to Home
               </span>
             </Link>
@@ -27,7 +27,7 @@ export default function FAQ({ content }: FAQProps) {
               <ThemeToggle />
             </div>
           </div>
-          <h1 className="text-3xl font-bold mb-8 text-center text-gray-900 dark:text-white">
+          <h1 className="text-3xl font-bold mb-8 text-center text-zinc-900 dark:text-white">
             Frequently Asked Questions
           </h1>
         </div>

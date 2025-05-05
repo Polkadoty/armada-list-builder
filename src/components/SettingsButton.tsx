@@ -34,7 +34,7 @@ export function SettingsButton({ setIsLoading, setLoadingProgress, setLoadingMes
     <Tooltip>
       <TooltipTrigger asChild>
         <Button variant="ghost" size="icon" onClick={handleFlushCache}>
-          <FolderSync className={`h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all ${isDarkTheme ? 'text-white' : 'text-gray-900'}`} />
+          <FolderSync className={`h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all ${isDarkTheme ? 'text-white' : 'text-zinc-900'}`} />
         </Button>
       </TooltipTrigger>
       <TooltipContent>

@@ -50,7 +50,8 @@ export const SaveFleetButton = forwardRef<HTMLButtonElement, SaveFleetButtonProp
               points,
               legends: contentTypes.legends,
               legacy: contentTypes.legacy,
-              old_legacy: contentTypes.old_legacy
+              old_legacy: contentTypes.old_legacy,
+              arc: contentTypes.arc
             })
             .eq('id', data.id);
           if (error) throw error;
@@ -67,7 +68,8 @@ export const SaveFleetButton = forwardRef<HTMLButtonElement, SaveFleetButtonProp
               points,
               legends: contentTypes.legends,
               legacy: contentTypes.legacy,
-              old_legacy: contentTypes.old_legacy
+              old_legacy: contentTypes.old_legacy,
+              arc: contentTypes.arc
             });
           if (error) throw error;
         }
@@ -90,7 +92,7 @@ export const SaveFleetButton = forwardRef<HTMLButtonElement, SaveFleetButtonProp
           onClick={handleSaveFleet} 
           disabled={isSaving || !user}
           variant="outline"
-          className="bg-white/50 dark:bg-gray-900/50 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md"
+          className="bg-white/50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md"
         >
           <Save className="h-4 w-4" />
         </Button>

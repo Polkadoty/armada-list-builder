@@ -143,21 +143,21 @@ export default function Shipyard() {
               <Link href="/">
                 <Button
                   variant="ghost"
-                  className="text-gray-900 dark:text-white"
+                  className="text-zinc-900 dark:text-white"
                 >
                   <ChevronLeft className="h-6 w-6" />
                 </Button>
               </Link>
               <Button
                 variant="ghost"
-                className="lg:hidden text-gray-900 dark:text-white"
+                className="lg:hidden text-zinc-900 dark:text-white"
                 onClick={() => setSidebarOpen(!sidebarOpen)}
               >
                 <Menu className="h-6 w-6" />
               </Button>
             </div>
             <div className="flex-1 flex justify-center">
-              <h1 className="text-2xl font-bold logo-font text-gray-900 dark:text-white">Shipyard</h1>
+              <h1 className="text-2xl font-bold logo-font text-zinc-900 dark:text-white">Shipyard</h1>
             </div>
             <div className="flex items-center gap-2 ml-auto">
               <UserAvatar />
@@ -190,19 +190,19 @@ export default function Shipyard() {
             </div>
             <ScrollArea className="h-[calc(100vh-3.5rem)] p-4">
               <nav className="flex flex-col space-y-4">
-                <Button variant="ghost" className="w-full justify-start text-gray-900 dark:text-white">
+                <Button variant="ghost" className="w-full justify-start text-zinc-900 dark:text-white">
                   <Home className="mr-2 h-4 w-4" />
                   <span>Home</span>
                 </Button>
-                <Button variant="ghost" className="w-full justify-start text-gray-900 dark:text-white">
+                <Button variant="ghost" className="w-full justify-start text-zinc-900 dark:text-white">
                   <ThumbsUp className="mr-2 h-4 w-4" />
                   <span>My Likes</span>
                 </Button>
-                <Button variant="ghost" className="w-full justify-start text-gray-900 dark:text-white">
+                <Button variant="ghost" className="w-full justify-start text-zinc-900 dark:text-white">
                   <Heart className="mr-2 h-4 w-4" />
                   <span>My Faves</span>
                 </Button>
-                <Button variant="ghost" className="w-full justify-start text-gray-900 dark:text-white">
+                <Button variant="ghost" className="w-full justify-start text-zinc-900 dark:text-white">
                   <FolderOpen className="mr-2 h-4 w-4" />
                   <span>Collections</span>
                 </Button>
@@ -220,14 +220,14 @@ export default function Shipyard() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search..."
-                    className="w-full pr-10 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                    className="w-full pr-10 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white"
                   />
-                  <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-900 dark:text-white h-4 w-4" />
+                  <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-zinc-900 dark:text-white h-4 w-4" />
                 </div>
                 <Button 
                   variant="outline" 
                   onClick={() => setSearchQuery('')} 
-                  className="w-full sm:w-auto text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-800"
+                  className="w-full sm:w-auto text-zinc-900 dark:text-white hover:bg-zinc-200 dark:hover:bg-zinc-800"
                 >
                   Clear
                 </Button>
@@ -235,13 +235,13 @@ export default function Shipyard() {
 
               <div className="flex flex-wrap gap-4 items-center">
                 <Select value={selectedFaction} onValueChange={setSelectedFaction}>
-                  <SelectTrigger className="w-full sm:w-[180px] text-gray-900 dark:text-white">
+                  <SelectTrigger className="w-full sm:w-[180px] text-zinc-900 dark:text-white">
                     <SelectValue placeholder="Select Faction" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all" className="text-gray-900 dark:text-white">All Factions</SelectItem>
+                    <SelectItem value="all" className="text-zinc-900 dark:text-white">All Factions</SelectItem>
                     {standardFactions.map(faction => (
-                      <SelectItem key={faction} value={faction} className="text-gray-900 dark:text-white">
+                      <SelectItem key={faction} value={faction} className="text-zinc-900 dark:text-white">
                         {faction.charAt(0).toUpperCase() + faction.slice(1)}
                       </SelectItem>
                     ))}
@@ -259,7 +259,7 @@ export default function Shipyard() {
                       />
                       <label 
                         htmlFor={key}
-                        className="text-sm font-medium text-gray-900 dark:text-white capitalize cursor-pointer whitespace-nowrap"
+                        className="text-sm font-medium text-zinc-900 dark:text-white capitalize cursor-pointer whitespace-nowrap"
                       >
                         {key.replace(/([A-Z])/g, ' $1').trim()}
                       </label>
@@ -282,7 +282,7 @@ export default function Shipyard() {
             {/* Content Cards */}
             <div className="grid grid-cols-1 gap-4">
               {items.map((item) => (
-                <Card key={item.id} className="overflow-hidden bg-white dark:bg-gray-800">
+                <Card key={item.id} className="overflow-hidden bg-white dark:bg-zinc-800">
                   <CardContent className="p-0">
                     <div className="flex flex-col sm:flex-row">
                       <div className="relative w-full sm:w-96 h-64">
@@ -297,11 +297,11 @@ export default function Shipyard() {
                       <div className="p-4 flex-1">
                         <div className="flex justify-between items-start">
                           <div>
-                            <h3 className="text-lg font-bold text-gray-900 dark:text-white">{item.name}</h3>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                            <h3 className="text-lg font-bold text-zinc-900 dark:text-white">{item.name}</h3>
+                            <p className="text-sm text-zinc-600 dark:text-zinc-400">
                               by {item.author}
                             </p>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                            <p className="text-sm text-zinc-600 dark:text-zinc-400">
                               Faction: {item.faction}
                             </p>
                           </div>

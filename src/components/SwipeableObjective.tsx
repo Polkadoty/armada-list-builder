@@ -74,7 +74,7 @@ export function SwipeableObjective({ type, selectedObjective, selectedObjectives
           <animated.div key={objective.id} style={{ x }} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} className="relative mb-2">
             <Button 
               variant="outline" 
-              className="w-full justify-start transition-colors py-6 text-lg bg-white/50 dark:bg-gray-900/50 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md border-2" 
+              className="w-full justify-start transition-colors py-6 text-lg bg-zinc-100/80 dark:bg-zinc-800/80 text-zinc-900 dark:text-white hover:bg-zinc-200/90 dark:hover:bg-zinc-700/90 border-2 border-zinc-200 dark:border-zinc-700 backdrop-blur-md" 
               onClick={onOpen}
               style={{ borderColor: color }}
             >
@@ -96,17 +96,17 @@ export function SwipeableObjective({ type, selectedObjective, selectedObjectives
       ) : (
         <Button
           onClick={onOpen}
-          className="w-full py-6 bg-white/50 dark:bg-gray-900/50 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md border-2"
+          className="w-full py-6 bg-zinc-100/80 dark:bg-zinc-800/80 text-zinc-900 dark:text-white hover:bg-zinc-200/90 dark:hover:bg-zinc-700/90 border-2 border-zinc-200 dark:border-zinc-700 backdrop-blur-md"
           variant="outline"
           style={{ borderColor: color }}
         >
           {`Select ${type.charAt(0).toUpperCase() + type.slice(1)} Objective`}
         </Button>
       )}
-      <div className="absolute left-0 top-0 bottom-0 flex items-center justify-center w-16 text-blue-500 bg-gray-900 bg-opacity-75" style={{ transform: 'translateX(-100%)' }}>
+      <div className="absolute left-0 top-0 bottom-0 flex items-center justify-center w-16 text-blue-500 bg-zinc-900 bg-opacity-75" style={{ transform: 'translateX(-100%)' }}>
         <ArrowLeftRight size={20} />
       </div>
-      <div className="absolute right-0 top-0 bottom-0 flex items-center justify-center w-16 text-red-500 bg-gray-900 bg-opacity-75" style={{ transform: 'translateX(100%)' }}>
+      <div className="absolute right-0 top-0 bottom-0 flex items-center justify-center w-16 text-red-500 bg-zinc-900 bg-opacity-75" style={{ transform: 'translateX(100%)' }}>
         <X size={20} />
       </div>
     </div>
