@@ -2,6 +2,7 @@
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
 import { List, Grid } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface PrintMenuProps {
   onPrintList: () => void;
@@ -48,14 +49,24 @@ export function PrintMenu({
             <div className="flex gap-2">
               <Button 
                 variant={paperSize === 'letter' ? 'default' : 'outline'}
-                className="flex-1 bg-zinc-100/80 dark:bg-zinc-800/80 text-zinc-900 dark:text-white hover:bg-zinc-200/90 dark:hover:bg-zinc-700/90 border-zinc-200 dark:border-zinc-700 backdrop-blur-md"
+                className={cn(
+                  "flex-1 bg-zinc-100/80 dark:bg-zinc-800/80 text-zinc-900 dark:text-white hover:bg-zinc-200/90 dark:hover:bg-zinc-700/90 backdrop-blur-md",
+                  paperSize === 'letter'
+                    ? 'border-2 border-primary'
+                    : 'border border-zinc-200 dark:border-zinc-700'
+                )}
                 onClick={() => setPaperSize('letter')}
               >
                 Letter
               </Button>
               <Button 
                 variant={paperSize === 'a4' ? 'default' : 'outline'}
-                className="flex-1 bg-zinc-100/80 dark:bg-zinc-800/80 text-zinc-900 dark:text-white hover:bg-zinc-200/90 dark:hover:bg-zinc-700/90 border-zinc-200 dark:border-zinc-700 backdrop-blur-md"
+                className={cn(
+                  "flex-1 bg-zinc-100/80 dark:bg-zinc-800/80 text-zinc-900 dark:text-white hover:bg-zinc-200/90 dark:hover:bg-zinc-700/90 backdrop-blur-md",
+                  paperSize === 'a4'
+                    ? 'border-2 border-primary'
+                    : 'border border-zinc-200 dark:border-zinc-700'
+                )}
                 onClick={() => setPaperSize('a4')}
               >
                 A4
@@ -68,14 +79,24 @@ export function PrintMenu({
             <div className="flex gap-2">
               <Button 
                 variant={showRestrictions ? 'default' : 'outline'}
-                className="flex-1 bg-zinc-100/80 dark:bg-zinc-800/80 text-zinc-900 dark:text-white hover:bg-zinc-200/90 dark:hover:bg-zinc-700/90 border-zinc-200 dark:border-zinc-700 backdrop-blur-md"
+                className={cn(
+                  "flex-1 bg-zinc-100/80 dark:bg-zinc-800/80 text-zinc-900 dark:text-white hover:bg-zinc-200/90 dark:hover:bg-zinc-700/90 backdrop-blur-md",
+                  showRestrictions
+                    ? 'border-2 border-primary'
+                    : 'border border-zinc-200 dark:border-zinc-700'
+                )}
                 onClick={() => setShowRestrictions(!showRestrictions)}
               >
                 Restrictions
               </Button>
               <Button 
                 variant={showObjectives ? 'default' : 'outline'}
-                className="flex-1 bg-zinc-100/80 dark:bg-zinc-800/80 text-zinc-900 dark:text-white hover:bg-zinc-200/90 dark:hover:bg-zinc-700/90 border-zinc-200 dark:border-zinc-700 backdrop-blur-md"
+                className={cn(
+                  "flex-1 bg-zinc-100/80 dark:bg-zinc-800/80 text-zinc-900 dark:text-white hover:bg-zinc-200/90 dark:hover:bg-zinc-700/90 backdrop-blur-md",
+                  showObjectives
+                    ? 'border-2 border-primary'
+                    : 'border border-zinc-200 dark:border-zinc-700'
+                )}
                 onClick={() => setShowObjectives(!showObjectives)}
               >
                 Objectives
@@ -88,14 +109,24 @@ export function PrintMenu({
             <div className="flex gap-2">
               <Button 
                 variant={showCardBacks ? 'default' : 'outline'}
-                className="flex-1 bg-zinc-100/80 dark:bg-zinc-800/80 text-zinc-900 dark:text-white hover:bg-zinc-200/90 dark:hover:bg-zinc-700/90 border-zinc-200 dark:border-zinc-700 backdrop-blur-md"
+                className={cn(
+                  "flex-1 bg-zinc-100/80 dark:bg-zinc-800/80 text-zinc-900 dark:text-white hover:bg-zinc-200/90 dark:hover:bg-zinc-700/90 backdrop-blur-md",
+                  showCardBacks
+                    ? 'border-2 border-primary'
+                    : 'border border-zinc-200 dark:border-zinc-700'
+                )}
                 onClick={() => setShowCardBacks(true)}
               >
                 Show Backs
               </Button>
               <Button 
                 variant={!showCardBacks ? 'default' : 'outline'}
-                className="flex-1 bg-zinc-100/80 dark:bg-zinc-800/80 text-zinc-900 dark:text-white hover:bg-zinc-200/90 dark:hover:bg-zinc-700/90 border-zinc-200 dark:border-zinc-700 backdrop-blur-md"
+                className={cn(
+                  "flex-1 bg-zinc-100/80 dark:bg-zinc-800/80 text-zinc-900 dark:text-white hover:bg-zinc-200/90 dark:hover:bg-zinc-700/90 backdrop-blur-md",
+                  !showCardBacks
+                    ? 'border-2 border-primary'
+                    : 'border border-zinc-200 dark:border-zinc-700'
+                )}
                 onClick={() => setShowCardBacks(false)}
               >
                 Hide Backs
@@ -108,7 +139,12 @@ export function PrintMenu({
             <div className="flex gap-2">
               <Button 
                 variant={expandCardBacks ? 'default' : 'outline'}
-                className="flex-1 bg-zinc-100/80 dark:bg-zinc-800/80 text-zinc-900 dark:text-white hover:bg-zinc-200/90 dark:hover:bg-zinc-700/90 border-zinc-200 dark:border-zinc-700 backdrop-blur-md"
+                className={cn(
+                  "flex-1 bg-zinc-100/80 dark:bg-zinc-800/80 text-zinc-900 dark:text-white hover:bg-zinc-200/90 dark:hover:bg-zinc-700/90 backdrop-blur-md",
+                  expandCardBacks
+                    ? 'border-2 border-primary'
+                    : 'border border-zinc-200 dark:border-zinc-700'
+                )}
                 onClick={() => setExpandCardBacks(true)}
                 title="Expand card backs by 7.5% to avoid white lines when printing double-sided"
               >
@@ -116,7 +152,12 @@ export function PrintMenu({
               </Button>
               <Button 
                 variant={!expandCardBacks ? 'default' : 'outline'}
-                className="flex-1 bg-zinc-100/80 dark:bg-zinc-800/80 text-zinc-900 dark:text-white hover:bg-zinc-200/90 dark:hover:bg-zinc-700/90 border-zinc-200 dark:border-zinc-700 backdrop-blur-md"
+                className={cn(
+                  "flex-1 bg-zinc-100/80 dark:bg-zinc-800/80 text-zinc-900 dark:text-white hover:bg-zinc-200/90 dark:hover:bg-zinc-700/90 backdrop-blur-md",
+                  !expandCardBacks
+                    ? 'border-2 border-primary'
+                    : 'border border-zinc-200 dark:border-zinc-700'
+                )}
                 onClick={() => setExpandCardBacks(false)}
                 title="Use normal size for card backs"
               >
@@ -133,14 +174,24 @@ export function PrintMenu({
             <div className="flex gap-2">
               <Button 
                 variant={showDamageDeck ? 'default' : 'outline'}
-                className="flex-1 bg-zinc-100/80 dark:bg-zinc-800/80 text-zinc-900 dark:text-white hover:bg-zinc-200/90 dark:hover:bg-zinc-700/90 border-zinc-200 dark:border-zinc-700 backdrop-blur-md"
+                className={cn(
+                  "flex-1 bg-zinc-100/80 dark:bg-zinc-800/80 text-zinc-900 dark:text-white hover:bg-zinc-200/90 dark:hover:bg-zinc-700/90 backdrop-blur-md",
+                  showDamageDeck
+                    ? 'border-2 border-primary'
+                    : 'border border-zinc-200 dark:border-zinc-700'
+                )}
                 onClick={() => setShowDamageDeck(true)}
               >
                 Include
               </Button>
               <Button 
                 variant={!showDamageDeck ? 'default' : 'outline'}
-                className="flex-1 bg-zinc-100/80 dark:bg-zinc-800/80 text-zinc-900 dark:text-white hover:bg-zinc-200/90 dark:hover:bg-zinc-700/90 border-zinc-200 dark:border-zinc-700 backdrop-blur-md"
+                className={cn(
+                  "flex-1 bg-zinc-100/80 dark:bg-zinc-800/80 text-zinc-900 dark:text-white hover:bg-zinc-200/90 dark:hover:bg-zinc-700/90 backdrop-blur-md",
+                  !showDamageDeck
+                    ? 'border-2 border-primary'
+                    : 'border border-zinc-200 dark:border-zinc-700'
+                )}
                 onClick={() => setShowDamageDeck(false)}
               >
                 Exclude
