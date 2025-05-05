@@ -2,6 +2,7 @@
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
 import { List, Grid } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface PrintMenuProps {
   onPrintList: () => void;
@@ -48,14 +49,14 @@ export function PrintMenu({
             <div className="flex gap-2">
               <Button 
                 variant={paperSize === 'letter' ? 'default' : 'outline'}
-                className="flex-1"
+                className={cn("flex-1", paperSize === 'letter' && 'border-2 border-primary')}
                 onClick={() => setPaperSize('letter')}
               >
                 Letter
               </Button>
               <Button 
                 variant={paperSize === 'a4' ? 'default' : 'outline'}
-                className="flex-1"
+                className={cn("flex-1", paperSize === 'a4' && 'border-2 border-primary')}
                 onClick={() => setPaperSize('a4')}
               >
                 A4
@@ -68,14 +69,14 @@ export function PrintMenu({
             <div className="flex gap-2">
               <Button 
                 variant={showRestrictions ? 'default' : 'outline'}
-                className="flex-1"
+                className={cn("flex-1", showRestrictions && 'border-2 border-primary')}
                 onClick={() => setShowRestrictions(!showRestrictions)}
               >
                 Restrictions
               </Button>
               <Button 
                 variant={showObjectives ? 'default' : 'outline'}
-                className="flex-1"
+                className={cn("flex-1", showObjectives && 'border-2 border-primary')}
                 onClick={() => setShowObjectives(!showObjectives)}
               >
                 Objectives
@@ -88,14 +89,14 @@ export function PrintMenu({
             <div className="flex gap-2">
               <Button 
                 variant={showCardBacks ? 'default' : 'outline'}
-                className="flex-1"
+                className={cn("flex-1", showCardBacks && 'border-2 border-primary')}
                 onClick={() => setShowCardBacks(true)}
               >
                 Show Backs
               </Button>
               <Button 
                 variant={!showCardBacks ? 'default' : 'outline'}
-                className="flex-1"
+                className={cn("flex-1", !showCardBacks && 'border-2 border-primary')}
                 onClick={() => setShowCardBacks(false)}
               >
                 Hide Backs
@@ -108,7 +109,7 @@ export function PrintMenu({
             <div className="flex gap-2">
               <Button 
                 variant={expandCardBacks ? 'default' : 'outline'}
-                className="flex-1"
+                className={cn("flex-1", expandCardBacks && 'border-2 border-primary')}
                 onClick={() => setExpandCardBacks(true)}
                 title="Expand card backs by 7.5% to avoid white lines when printing double-sided"
               >
@@ -116,7 +117,7 @@ export function PrintMenu({
               </Button>
               <Button 
                 variant={!expandCardBacks ? 'default' : 'outline'}
-                className="flex-1"
+                className={cn("flex-1", !expandCardBacks && 'border-2 border-primary')}
                 onClick={() => setExpandCardBacks(false)}
                 title="Use normal size for card backs"
               >
@@ -133,14 +134,14 @@ export function PrintMenu({
             <div className="flex gap-2">
               <Button 
                 variant={showDamageDeck ? 'default' : 'outline'}
-                className="flex-1"
+                className={cn("flex-1", showDamageDeck && 'border-2 border-primary')}
                 onClick={() => setShowDamageDeck(true)}
               >
                 Include
               </Button>
               <Button 
                 variant={!showDamageDeck ? 'default' : 'outline'}
-                className="flex-1"
+                className={cn("flex-1", !showDamageDeck && 'border-2 border-primary')}
                 onClick={() => setShowDamageDeck(false)}
               >
                 Exclude

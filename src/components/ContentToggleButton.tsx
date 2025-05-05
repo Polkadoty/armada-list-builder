@@ -12,6 +12,7 @@ import { flushCacheAndReload } from '../utils/dataFetcher';
 const CONFIG = {
   showLegacyToggle: true,
   showLegendsToggle: true,
+  showNexusToggle: true,
   showOldLegacyToggle: true,
   showArcToggle: false,
   showLocalContentToggle: false,
@@ -34,6 +35,7 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
   const [enableCustomFactions, setEnableCustomFactions] = useState(false);
   const [enableLocalContent, setEnableLocalContent] = useState(false);
   const [enableProxy, setEnableProxy] = useState(false);
+  const [enableNexus, setEnableNexus] = useState(false);
   // const [enableAMG, setEnableAMG] = useState(false);
   const { theme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -47,6 +49,7 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
     const customFactionsCookie = Cookies.get('enableCustomFactions');
     const localContentCookie = Cookies.get('enableLocalContent');
     const proxyCookie = Cookies.get('enableProxy');
+    const nexusCookie = Cookies.get('enableNexus');
     // const amgCookie = Cookies.get('enableAMG');
     setEnableLegacy(CONFIG.showLegacyToggle && legacyCookie === 'true');
     setEnableLegends(CONFIG.showLegendsToggle && legendsCookie === 'true');
@@ -55,6 +58,7 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
     setEnableCustomFactions(CONFIG.showCustomFactionsToggle && customFactionsCookie === 'true');
     setEnableLocalContent(CONFIG.showLocalContentToggle && localContentCookie === 'true');
     setEnableProxy(CONFIG.showProxyToggle && proxyCookie === 'true');
+    setEnableNexus(nexusCookie === 'true');
     // setEnableAMG(CONFIG.showAMGToggle && amgCookie !== 'false');
   }, []);
 
@@ -132,7 +136,11 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
     }
   };
 
-
+  const handleNexusToggle = (checked: boolean) => {
+    setEnableNexus(checked);
+    Cookies.set('enableNexus', checked.toString(), { expires: 365 });
+    flushCacheAndReload(() => {}, () => {}, () => {});
+  };
 
   const handleFlushCache = async () => {
     await flushCacheAndReload(setIsLoading, setLoadingProgress, setLoadingMessage);
@@ -259,6 +267,19 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
                     id="old-legacy-toggle"
                     checked={enableOldLegacy}
                     onCheckedChange={handleOldLegacyToggle}
+                    className="custom-switch"
+                  />
+                </div>
+              )}
+              {CONFIG.showNexusToggle && (
+                <div className="flex items-center justify-between">
+                  <label htmlFor="nexus-toggle" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    Enable Nexus Content
+                  </label>
+                  <Switch
+                    id="nexus-toggle"
+                    checked={enableNexus}
+                    onCheckedChange={handleNexusToggle}
                     className="custom-switch"
                   />
                 </div>

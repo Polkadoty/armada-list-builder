@@ -49,6 +49,7 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose }: Objectiv
     arc: Cookies.get('enableArc') === 'true',
     legacy: Cookies.get('enableLegacy') === 'true',
     legends: Cookies.get('enableLegends') === 'true',
+    nexus: Cookies.get('enableNexus') === 'true',
     oldLegacy: Cookies.get('enableOldLegacy') === 'true'
   });
 
@@ -59,6 +60,7 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose }: Objectiv
         arc: Cookies.get('enableArc') === 'true',
         legacy: Cookies.get('enableLegacy') === 'true',
         legends: Cookies.get('enableLegends') === 'true',
+        nexus: Cookies.get('enableNexus') === 'true',
         oldLegacy: Cookies.get('enableOldLegacy') === 'true'
       };
 

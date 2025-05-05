@@ -65,6 +65,7 @@ const fetchAndSaveData = async (
   const apiUrl = await getApiUrl();
   const enableLegacy = Cookies.get('enableLegacy') === 'true';
   const enableLegends = Cookies.get('enableLegends') === 'true';
+  const enableNexus = Cookies.get('enableNexus') === 'true';
   const enableOldLegacy = Cookies.get('enableOldLegacy') === 'true';
   const enableArc = Cookies.get('enableArc') === 'true';
   // const enableAMG = Cookies.get('enableAMG') === 'true';
@@ -95,6 +96,14 @@ const fetchAndSaveData = async (
       { name: 'legendsShips', url: '/legends/ships/' },
       { name: 'legendsSquadrons', url: '/legends/squadrons/' },
       { name: 'legendsUpgrades', url: '/legends/upgrades/' }
+    );
+  }
+
+  if (enableNexus) {
+    endpoints.push(
+      { name: 'nexusShips', url: '/nexus/ships/' },
+      { name: 'nexusSquadrons', url: '/nexus/squadrons/' },
+      { name: 'nexusUpgrades', url: '/nexus/upgrades/' }
     );
   }
 
@@ -174,6 +183,9 @@ export const flushCacheAndReload = async (setIsLoading: (isLoading: boolean) => 
   localStorage.removeItem('legendsShips');
   localStorage.removeItem('legendsSquadrons');
   localStorage.removeItem('legendsUpgrades');
+  localStorage.removeItem('nexusShips');
+  localStorage.removeItem('nexusSquadrons');
+  localStorage.removeItem('nexusUpgrades');
   localStorage.removeItem('oldLegacyShips');
   localStorage.removeItem('oldLegacySquadrons');
   localStorage.removeItem('oldLegacyUpgrades');
