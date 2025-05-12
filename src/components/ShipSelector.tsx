@@ -234,8 +234,8 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
             // Then check for source-prefixed version
             const sourceVersion = group.find(candidate => 
               candidate.id !== ship.id && 
-              candidate.id.match(/^(legacy|legends|oldLegacy|arc|nexus)-/) &&
-              ship.id === candidate.id.replace(/^(legacy|legends|oldLegacy|arc|nexus)-/, '')
+              candidate.id.match(/^(legacy|legends|oldLegacy|arc|amg|nexus)-/) &&
+              ship.id === candidate.id.replace(/^(legacy|legends|oldLegacy|arc|amg|nexus)-/, '')
             );
 
             if (sourceVersion) {

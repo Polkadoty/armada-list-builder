@@ -50,7 +50,8 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose }: Objectiv
     legacy: Cookies.get('enableLegacy') === 'true',
     legends: Cookies.get('enableLegends') === 'true',
     nexus: Cookies.get('enableNexus') === 'true',
-    oldLegacy: Cookies.get('enableOldLegacy') === 'true'
+    oldLegacy: Cookies.get('enableOldLegacy') === 'true',
+    amg: Cookies.get('enableAMG') === 'true'
   });
 
   // Check for cookie changes
@@ -61,7 +62,8 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose }: Objectiv
         legacy: Cookies.get('enableLegacy') === 'true',
         legends: Cookies.get('enableLegends') === 'true',
         nexus: Cookies.get('enableNexus') === 'true',
-        oldLegacy: Cookies.get('enableOldLegacy') === 'true'
+        oldLegacy: Cookies.get('enableOldLegacy') === 'true',
+        amg: Cookies.get('enableAMG') === 'true'
       };
 
       // Check if any values have changed

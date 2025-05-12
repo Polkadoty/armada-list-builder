@@ -169,7 +169,7 @@ export interface Ship extends ShipModel {
   searchableText: string;
 }
 
-export type ContentSource = "regular" | "legacy" | "legends" | "oldLegacy" | "arc" | "community" | "amg";
+export type ContentSource = "regular" | "legacy" | "legends" | "oldLegacy" | "arc" | "community" | "amg" | "nexus";
 
 const SectionHeader = ({
   title,
@@ -654,6 +654,8 @@ export default function FleetBuilder({
               source = "legends";
             } else if (upgrade.alias.includes("ARC")) {
               source = "arc";
+            } else if (upgrade.alias.includes("Nexus")) {
+              source = "nexus";
             }
           }
 
@@ -970,7 +972,7 @@ export default function FleetBuilder({
           shipToCopy.source === 'legacy' ? 'Legacy' : 
           shipToCopy.source === 'legends' ? 'Legends' : 
           shipToCopy.source === 'arc' ? 'ARC' : 
-          ''
+          shipToCopy.source === 'nexus' ? 'Nexus' : ''
         }]`
       : shipToCopy.name;
     
@@ -1360,6 +1362,8 @@ export default function FleetBuilder({
         return '[OldLegacy]';
       case 'arc':
         return '[ARC]';
+      case 'nexus':
+        return '[Nexus]';
       default:
         return '';
     }
@@ -1547,7 +1551,8 @@ export default function FleetBuilder({
             source: storageKey.includes('arc') ? 'arc' :
                    storageKey.includes('oldLegacy') ? 'oldLegacy' :
                    storageKey.includes('legacy') ? 'legacy' :
-                   storageKey.includes('legends') ? 'legends' : 'regular'
+                   storageKey.includes('legends') ? 'legends' :
+                   storageKey.includes('nexus') ? 'nexus' : 'regular'
           } as ObjectiveModel;
         }
       } catch (error) {
@@ -1592,7 +1597,8 @@ export default function FleetBuilder({
                   source: storageKey.includes('arc') ? 'arc' :
                           storageKey.includes('oldLegacy') ? 'oldLegacy' :
                           storageKey.includes('legacy') ? 'legacy' :
-                          storageKey.includes('legends') ? 'legends' : 'regular'
+                          storageKey.includes('legends') ? 'legends' :
+                          storageKey.includes('nexus') ? 'nexus' : 'regular'
                 };
               }
             }
@@ -1604,7 +1610,8 @@ export default function FleetBuilder({
                 source: storageKey.includes('arc') ? 'arc' :
                         storageKey.includes('oldLegacy') ? 'oldLegacy' :
                         storageKey.includes('legacy') ? 'legacy' :
-                        storageKey.includes('legends') ? 'legends' : 'regular'
+                        storageKey.includes('legends') ? 'legends' :
+                        storageKey.includes('nexus') ? 'nexus' : 'regular'
               };
             }
           }
@@ -1911,6 +1918,8 @@ export default function FleetBuilder({
             source = "legends";
           } else if (shipName.includes("[ARC]")) {
             source = "arc";
+          } else if (shipName.includes("[Nexus]")) {
+            source = "nexus";
           }
 
           const newShip: Ship = {
@@ -1937,6 +1946,8 @@ export default function FleetBuilder({
               source = "legends";
             } else if (shipName.includes("[ARC]")) {
               source = "arc";
+            } else if (shipName.includes("[Nexus]")) {
+              source = "nexus";
             }
             const selectedSquadron = {
               ...squadron,
@@ -2102,6 +2113,9 @@ export default function FleetBuilder({
                   case 'arc':
                     source = 'arc';
                     break;
+                  case 'nexus':
+                    source = 'nexus';
+                    break;
                 }
               }
               console.log(`Source for ${upgradeName}:`, source);
@@ -2162,6 +2176,8 @@ export default function FleetBuilder({
                 source = "legends";
               } else if (squadronName.includes("[ARC]")) {
                 source = "arc";
+              } else if (squadronName.includes("[Nexus]")) {
+                source = "nexus";
               }
               const selectedSquadron = {
                 ...squadron,
@@ -3279,7 +3295,8 @@ export default function FleetBuilder({
       legacy: Cookies.get('enableLegacy') === 'true',
       legends: Cookies.get('enableLegends') === 'true',
       oldLegacy: Cookies.get('enableOldLegacy') === 'true',
-      amg: Cookies.get('enableAMG') === 'true'
+      amg: Cookies.get('enableAMG') === 'true',
+      nexus: Cookies.get('enableNexus') === 'true'
     };
   }, []); // Empty dependency array as this should only run once on mount
 
@@ -3294,7 +3311,8 @@ export default function FleetBuilder({
         legacy: Cookies.get('enableLegacy') === 'true',
         legends: Cookies.get('enableLegends') === 'true',
         oldLegacy: Cookies.get('enableOldLegacy') === 'true',
-        amg: Cookies.get('enableAMG') === 'true'
+        amg: Cookies.get('enableAMG') === 'true',
+        nexus: Cookies.get('enableNexus') === 'true'
       };
 
       if (JSON.stringify(newSources) !== JSON.stringify(previousContentSources.current)) {
