@@ -164,11 +164,8 @@ const ContentAdditionWindow: React.FC<ContentAdditionWindowProps> = ({ contentTy
                 <div key={faction} className="mb-12 pb-4">
                   <h3 className="text-xl font-semibold mb-2">{formatFaction(faction)}</h3>
                   <div
-                    className="grid gap-6 w-full"
-                    style={{
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-                      maxWidth: '100%'
-                    }}
+                    className="content-grid"
+                    style={{ maxWidth: '100%' }}
                   >
                     {factionCards.map((card, i) => {
                       const key = (card.id ? card.id : `${card.name}-${card.faction}-${i}`) + '-' + Math.random().toString(36).substr(2, 6);
@@ -264,11 +261,8 @@ const ContentAdditionWindow: React.FC<ContentAdditionWindowProps> = ({ contentTy
                 <div key={faction} className="mb-12 pb-4">
                   <h3 className="text-xl font-semibold mb-2">{formatFaction(faction)}</h3>
                   <div
-                    className="grid gap-6 w-full"
-                    style={{
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-                      maxWidth: '100%'
-                    }}
+                    className="content-grid"
+                    style={{ maxWidth: '100%' }}
                   >
                     {factionCards.map((card, i) => {
                       const key = (card.id ? card.id : `${card.name}-${card.faction}-${i}`) + '-' + Math.random().toString(36).substr(2, 6);

@@ -389,3 +389,16 @@ html, body {
   background-repeat: no-repeat;
   pointer-events: none;
 }
+
+.content-grid {
+  display: grid;
+  gap: 1.5rem;
+  width: 100%;
+  grid-template-columns: repeat(2, 1fr);
+}
+
+@media (min-width: 500px) {
+  .content-grid {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+}
