@@ -31,50 +31,24 @@ const customFactions = [
 //   return !logoPath.endsWith('.webp');
 // };
 
-export default function FactionSelection({ onHover }: { onHover: (faction: string | null) => void }) {
-  const [enableLegends, setEnableLegends] = useState(false);
-  const [enableCustomFactions, setEnableCustomFactions] = useState(false);
-
-  useEffect(() => {
-    // Only check once on component mount
-    const legendsEnabled = Cookies.get('enableLegends') === 'true';
-    const customFactionsEnabled = Cookies.get('enableCustomFactions') === 'true';
-    setEnableLegends(legendsEnabled);
-    setEnableCustomFactions(customFactionsEnabled);
-  }, []);
-
+export default function FactionSelection({ onHover, enableLegends }: { onHover: (faction: string | null) => void, enableLegends: boolean }) {
   const handleHover = (faction: string | null) => {
     onHover(faction);
   };
 
-  const availableFactions = enableLegends && enableCustomFactions
+  const availableFactions = enableLegends
     ? {
         base: baseFactions,
         legends: legendsFactions,
         sandbox: [sandboxFaction],
         custom: customFactions
       }
-    : enableLegends
-      ? {
-          base: baseFactions,
-          legends: legendsFactions,
-          sandbox: [sandboxFaction],
-          custom: []
-        }
-      : enableCustomFactions
-        ? {
-            base: baseFactions,
-            legends: [],
-            sandbox: [sandboxFaction],
-            custom: customFactions
-          }
-        : {
-            base: baseFactions,
-            legends: [],
-            sandbox: [sandboxFaction],
-            custom: []
-          };
-
+    : {
+        base: baseFactions,
+        legends: [],
+        sandbox: [sandboxFaction],
+        custom: []
+      };
   return (
     <>
       <div className="mb-6 w-full">
@@ -108,7 +82,7 @@ export default function FactionSelection({ onHover }: { onHover: (faction: strin
           ))}
         </div>
 
-        {enableCustomFactions && availableFactions.custom.length > 0 && (
+        {availableFactions.custom.length > 0 && (
           <>
             <Separator className="bg-gray-600/30 dark:bg-gray-400/30 h-[2px]" />
             <div className="grid grid-cols-2 gap-4 justify-items-center">

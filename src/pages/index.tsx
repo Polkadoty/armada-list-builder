@@ -15,6 +15,7 @@ import { UserAvatar } from '../components/UserAvatar';
 import Head from 'next/head';
 import { WorkshopButton } from "@/components/WorkshopButton";
 import { useTheme } from 'next-themes';
+import Cookies from 'js-cookie';
 
 const factionShips = {
   rebel: '/images/cr90.webp',
@@ -47,6 +48,7 @@ export default function Home() {
   const [showImportWindow, setShowImportWindow] = useState(false);
   const router = useRouter();
   const { resolvedTheme } = useTheme();
+  const [enableLegends, setEnableLegends] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -56,9 +58,25 @@ export default function Home() {
     checkAndFetchData(setIsLoading, setLoadingProgress, setLoadingMessage);
     if (typeof window !== 'undefined') {
       localStorage.setItem('selectedGamemode', gamemode || 'Standard');
+      // Initialize enableLegends from cookie
+      const legendsCookie = Cookies.get('enableLegends');
+      setEnableLegends(legendsCookie === 'true');
     }
     return () => window.removeEventListener('resize', handleResize);
   }, [gamemode]);
+
+  // Poll for enableLegends cookie changes and update state
+  useEffect(() => {
+    let prevLegends = Cookies.get('enableLegends');
+    const interval = setInterval(() => {
+      const currentLegends = Cookies.get('enableLegends');
+      if (currentLegends !== prevLegends) {
+        setEnableLegends(currentLegends === 'true');
+        prevLegends = currentLegends;
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleImportFleet = (importText: string) => {
     // Save the import text temporarily
@@ -111,7 +129,7 @@ export default function Home() {
               priority
             />
           </div>
-          <FactionSelection onHover={setHoveredFaction} />
+          <FactionSelection onHover={setHoveredFaction} enableLegends={enableLegends} />
           <div className="mt-8 flex flex-col items-center space-y-4">
             <div className="flex justify-center space-x-4">
               <Button 
