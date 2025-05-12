@@ -34,7 +34,6 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
   const [enableOldLegacy, setEnableOldLegacy] = useState(false);
   const [enableArc, setEnableArc] = useState(false);
   const [enableLegends, setEnableLegends] = useState(false);
-  const [enableLocalContent, setEnableLocalContent] = useState(false);
   const [enableProxy, setEnableProxy] = useState(false);
   const [enableNexus, setEnableNexus] = useState(false);
   // const [enableAMG, setEnableAMG] = useState(false);
@@ -50,7 +49,6 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
     const oldLegacyCookie = Cookies.get('enableOldLegacy');
     const arcCookie = Cookies.get('enableArc');
     const legendsCookie = Cookies.get('enableLegends');
-    const localContentCookie = Cookies.get('enableLocalContent');
     const proxyCookie = Cookies.get('enableProxy');
     const nexusCookie = Cookies.get('enableNexus');
     // const amgCookie = Cookies.get('enableAMG');
@@ -58,7 +56,6 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
     setEnableOldLegacy(CONFIG.showOldLegacyToggle && oldLegacyCookie === 'true');
     setEnableArc(CONFIG.showArcToggle && arcCookie === 'true');
     setEnableLegends(CONFIG.showLegendsToggle && legendsCookie === 'true');
-    setEnableLocalContent(CONFIG.showLocalContentToggle && localContentCookie === 'true');
     setEnableProxy(CONFIG.showProxyToggle && proxyCookie === 'true');
     setEnableNexus(nexusCookie === 'true');
     // setEnableAMG(CONFIG.showAMGToggle && amgCookie !== 'false');
@@ -122,14 +119,6 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
     if (CONFIG.showArcToggle) {
       setEnableArc(checked);
       Cookies.set('enableArc', checked.toString(), { expires: 365 });
-      flushCacheAndReload(() => {}, () => {}, () => {});
-    }
-  };
-
-  const handleLocalContentToggle = (checked: boolean) => {
-    if (CONFIG.showLocalContentToggle) {
-      setEnableLocalContent(checked);
-      Cookies.set('enableLocalContent', checked.toString(), { expires: 365 });
       flushCacheAndReload(() => {}, () => {}, () => {});
     }
   };
@@ -200,7 +189,7 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
                         <label htmlFor="legacy-toggle" className="text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                          Enable Legacy Content (Beta)
+                          Enable Legacy Content
                         </label>
                         <button type="button" onClick={() => { setInfoOpen('legacy'); }} className="ml-1 p-1 hover:bg-zinc-700/20 rounded-full" aria-label="Info">
                           <Info className="w-4 h-4" />

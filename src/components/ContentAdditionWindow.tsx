@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ImageModal } from './ImageModal';
 import { Eye } from 'lucide-react';
 import { useRouter } from 'next/router';
+import { OptimizedImage } from './OptimizedImage';
 
 interface Card {
   id: string;
@@ -33,7 +34,7 @@ function formatFaction(faction: string) {
     .join('-');
 }
 
-function getDisplayName(card: any) {
+function getDisplayName(card: Card) {
   // For squadrons, use ace-name if present, else name
   let name = card['ace-name'] && card['ace-name'].trim() !== '' ? card['ace-name'] : card.name;
   // Add bullet if unique
@@ -169,16 +170,18 @@ const ContentAdditionWindow: React.FC<ContentAdditionWindowProps> = ({ contentTy
                         <div
                           key={key}
                           className="flex flex-col items-center relative group"
-                          onClick={e => {
+                          onClick={() => {
                             if (!isTouchMoving) setModalImage({ src: card.cardimage, alt: card.name });
                           }}
                           onTouchStart={() => setIsTouchMoving(false)}
                           onTouchMove={() => setIsTouchMoving(true)}
                           style={{ cursor: 'pointer' }}
                         >
-                          <img
+                          <OptimizedImage
                             src={card.cardimage}
                             alt={card.name}
+                            width={250}
+                            height={350}
                             className="w-full aspect-[5/7] object-contain rounded shadow border border-zinc-700"
                           />
                           <div
@@ -259,16 +262,18 @@ const ContentAdditionWindow: React.FC<ContentAdditionWindowProps> = ({ contentTy
                         <div
                           key={key}
                           className="flex flex-col items-center relative group"
-                          onClick={e => {
+                          onClick={() => {
                             if (!isTouchMoving) setModalImage({ src: card.cardimage, alt: card.name });
                           }}
                           onTouchStart={() => setIsTouchMoving(false)}
                           onTouchMove={() => setIsTouchMoving(true)}
                           style={{ cursor: 'pointer' }}
                         >
-                          <img
+                          <OptimizedImage
                             src={card.cardimage}
                             alt={card.name}
+                            width={250}
+                            height={350}
                             className="w-full aspect-[5/7] object-contain rounded shadow border border-zinc-700"
                           />
                           <div

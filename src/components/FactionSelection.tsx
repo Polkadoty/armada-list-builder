@@ -1,6 +1,4 @@
-import { useState, useEffect } from 'react';
 import { Separator } from "@/components/ui/separator";
-import Cookies from 'js-cookie';
 import { FactionIcon } from "@/components/FactionIcon";
 
 const baseFactions = [
