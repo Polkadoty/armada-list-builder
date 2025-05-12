@@ -60,8 +60,10 @@ const ContentAdditionWindow: React.FC<ContentAdditionWindowProps> = ({ contentTy
       if (raw && raw.trim().length > 0) {
         try {
           const data = JSON.parse(raw);
+          /* eslint-disable @typescript-eslint/no-explicit-any */
           let items: any[] = [];
           if (type === 'Ships' && data.ships) {
+          /* eslint-disable @typescript-eslint/no-explicit-any */
             items = Object.values(data.ships).flatMap((chassis: any) =>
               chassis.models ? Object.values(chassis.models) : []
             );
@@ -85,6 +87,7 @@ const ContentAdditionWindow: React.FC<ContentAdditionWindowProps> = ({ contentTy
               });
             }
           });
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (e) {
           // Ignore parse errors for this key
         }
