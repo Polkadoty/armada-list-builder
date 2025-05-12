@@ -17,7 +17,7 @@ export function ImageModal({ src, alt, onClose }: ImageModalProps) {
 
   return (
     <div 
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" 
+      className="fixed inset-0 z-[9999] bg-black bg-opacity-80 flex items-center justify-center w-screen h-screen" 
       onClick={onClose}
     >
       <div className="relative p-4" onClick={(e) => e.stopPropagation()}>

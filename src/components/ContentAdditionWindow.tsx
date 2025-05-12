@@ -11,6 +11,8 @@ interface Card {
   cardimage: string;
   unique: boolean;
   'ace-name': string;
+  size?: string;
+  type?: string;
   // ...other fields as needed
 }
 
@@ -63,9 +65,8 @@ const ContentAdditionWindow: React.FC<ContentAdditionWindowProps> = ({ contentTy
           /* eslint-disable @typescript-eslint/no-explicit-any */
           let items: any[] = [];
           if (type === 'Ships' && data.ships) {
-          /* eslint-disable @typescript-eslint/no-explicit-any */
             items = Object.values(data.ships).flatMap((chassis: any) =>
-              chassis.models ? Object.values(chassis.models) : []
+              chassis.models ? Object.values(chassis.models).map((model: any) => ({ ...model, size: chassis.size })) : []
             );
           } else if (type === 'Squadrons' && data.squadrons) {
             items = Object.values(data.squadrons);
@@ -84,6 +85,8 @@ const ContentAdditionWindow: React.FC<ContentAdditionWindowProps> = ({ contentTy
                 cardimage: item.cardimage,
                 unique: item.unique,
                 'ace-name': item['ace-name'] || '',
+                size: item.size,
+                type,
               });
             }
           });
@@ -169,10 +172,18 @@ const ContentAdditionWindow: React.FC<ContentAdditionWindowProps> = ({ contentTy
                   >
                     {factionCards.map((card, i) => {
                       const key = (card.id ? card.id : `${card.name}-${card.faction}-${i}`) + '-' + Math.random().toString(36).substr(2, 6);
+                      let width = 250, height = 350, aspect = 'aspect-[8.75/15]', colSpan = '';
+                      const className = 'object-cover object-center w-full h-full rounded shadow border border-zinc-700';
+                      if (card.type === 'Ships' && (card.size === 'huge' || card.size === '280-huge')) {
+                        width = 900; height = 630; aspect = 'aspect-[5/4]';
+                        colSpan = 'col-span-3';
+                      } else if (card.type === 'Squadrons' || card.type === 'Upgrades') {
+                        width = 250; height = 350; aspect = 'aspect-[2.5/3.5]';
+                      }
                       return (
                         <div
                           key={key}
-                          className="flex flex-col items-center relative group"
+                          className={`flex flex-col items-center relative group ${aspect} ${colSpan}`}
                           onClick={() => {
                             if (!isTouchMoving) setModalImage({ src: card.cardimage, alt: card.name });
                           }}
@@ -183,9 +194,9 @@ const ContentAdditionWindow: React.FC<ContentAdditionWindowProps> = ({ contentTy
                           <OptimizedImage
                             src={card.cardimage}
                             alt={card.name}
-                            width={250}
-                            height={350}
-                            className="w-full aspect-[5/7] object-contain rounded shadow border border-zinc-700"
+                            width={width}
+                            height={height}
+                            className={className}
                           />
                           <div
                             className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/30 rounded"
@@ -261,10 +272,18 @@ const ContentAdditionWindow: React.FC<ContentAdditionWindowProps> = ({ contentTy
                   >
                     {factionCards.map((card, i) => {
                       const key = (card.id ? card.id : `${card.name}-${card.faction}-${i}`) + '-' + Math.random().toString(36).substr(2, 6);
+                      let width = 250, height = 350, aspect = 'aspect-[8.75/15]', colSpan = '';
+                      const className = 'object-cover object-center w-full h-full rounded shadow border border-zinc-700';
+                      if (card.type === 'Ships' && (card.size === 'huge' || card.size === '280-huge')) {
+                        width = 900; height = 630; aspect = 'aspect-[5/4]';
+                        colSpan = 'col-span-3';
+                      } else if (card.type === 'Squadrons' || card.type === 'Upgrades') {
+                        width = 250; height = 350; aspect = 'aspect-[2.5/3.5]';
+                      }
                       return (
                         <div
                           key={key}
-                          className="flex flex-col items-center relative group"
+                          className={`flex flex-col items-center relative group ${aspect} ${colSpan}`}
                           onClick={() => {
                             if (!isTouchMoving) setModalImage({ src: card.cardimage, alt: card.name });
                           }}
@@ -275,9 +294,9 @@ const ContentAdditionWindow: React.FC<ContentAdditionWindowProps> = ({ contentTy
                           <OptimizedImage
                             src={card.cardimage}
                             alt={card.name}
-                            width={250}
-                            height={350}
-                            className="w-full aspect-[5/7] object-contain rounded shadow border border-zinc-700"
+                            width={width}
+                            height={height}
+                            className={className}
                           />
                           <div
                             className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/30 rounded"
