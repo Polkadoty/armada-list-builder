@@ -49,6 +49,7 @@ export default function Home() {
   const router = useRouter();
   const { resolvedTheme } = useTheme();
   const [enableLegends, setEnableLegends] = useState(false);
+  const [enableNexus, setEnableNexus] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -61,6 +62,9 @@ export default function Home() {
       // Initialize enableLegends from cookie
       const legendsCookie = Cookies.get('enableLegends');
       setEnableLegends(legendsCookie === 'true');
+      // Initialize enableNexus from cookie
+      const nexusCookie = Cookies.get('enableNexus');
+      setEnableNexus(nexusCookie === 'true');
     }
     return () => window.removeEventListener('resize', handleResize);
   }, [gamemode]);
@@ -73,6 +77,19 @@ export default function Home() {
       if (currentLegends !== prevLegends) {
         setEnableLegends(currentLegends === 'true');
         prevLegends = currentLegends;
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Poll for enableNexus cookie changes and update state
+  useEffect(() => {
+    let prevNexus = Cookies.get('enableNexus');
+    const interval = setInterval(() => {
+      const currentNexus = Cookies.get('enableNexus');
+      if (currentNexus !== prevNexus) {
+        setEnableNexus(currentNexus === 'true');
+        prevNexus = currentNexus;
       }
     }, 1000);
     return () => clearInterval(interval);
@@ -129,7 +146,7 @@ export default function Home() {
               priority
             />
           </div>
-          <FactionSelection onHover={setHoveredFaction} enableLegends={enableLegends} />
+          <FactionSelection onHover={setHoveredFaction} enableLegends={enableLegends} enableNexus={enableNexus} />
           <div className="mt-8 flex flex-col items-center space-y-4">
             <div className="flex justify-center space-x-4">
               <Button 
