@@ -10,10 +10,10 @@ export async function debugWhitelistSystem(currentUserSub?: string): Promise<voi
   console.log('DEBUG: Testing Supabase connection...');
   
   try {
-    // Test basic connection
+    // Test basic connection - fix count syntax
     const { data: testData, error: testError } = await supabase
       .from('legacy_beta_whitelist')
-      .select('count(*)', { count: 'exact' });
+      .select('*', { count: 'exact', head: true });
 
     console.log('DEBUG: Connection test - data:', testData, 'error:', testError);
 
