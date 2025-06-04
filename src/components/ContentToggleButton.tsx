@@ -11,7 +11,6 @@ import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue, SelectLa
 import ContentAdditionWindow from './ContentAdditionWindow';
 import { useUser } from '@auth0/nextjs-auth0/client';
 import { isUserWhitelistedForLegacyBeta } from '../utils/whitelist';
-import { debugWhitelistSystem } from '../utils/whitelistAdmin';
 
 // Configuration flags
 const CONFIG = {
@@ -69,24 +68,15 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
   // Check if user is whitelisted for LegacyBeta
   useEffect(() => {
     const checkWhitelist = async () => {
-      console.log('DEBUG: Checking whitelist for user:', user?.sub);
-      
-      // Run debug system check
-      await debugWhitelistSystem(user?.sub ?? undefined);
-      
       if (user?.sub) {
-        console.log('DEBUG: User sub exists, calling isUserWhitelistedForLegacyBeta');
         const whitelisted = await isUserWhitelistedForLegacyBeta(user.sub);
-        console.log('DEBUG: Whitelist result:', whitelisted);
         setIsLegacyBetaWhitelisted(whitelisted);
       } else {
-        console.log('DEBUG: No user.sub, setting whitelisted to false');
         setIsLegacyBetaWhitelisted(false);
       }
     };
 
     if (mounted) {
-      console.log('DEBUG: Component mounted, checking whitelist');
       checkWhitelist();
     }
   }, [user?.sub, mounted]);
@@ -102,15 +92,6 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
   useEffect(() => {
     if (infoOpen) setPopoverOpen(false);
   }, [infoOpen]);
-
-  // DEBUG: Log toggle visibility conditions
-  useEffect(() => {
-    console.log('DEBUG: Legacy Beta toggle visibility check:', {
-      showLegacyBetaToggle: CONFIG.showLegacyBetaToggle,
-      isLegacyBetaWhitelisted,
-      shouldShow: CONFIG.showLegacyBetaToggle && isLegacyBetaWhitelisted
-    });
-  }, [isLegacyBetaWhitelisted]);
 
   if (!mounted) {
     return null;
