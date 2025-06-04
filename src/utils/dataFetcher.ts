@@ -66,7 +66,7 @@ const fetchAndSaveData = async (
   const enableLegacy = Cookies.get('enableLegacy') === 'true';
   const enableLegends = Cookies.get('enableLegends') === 'true';
   const enableNexus = Cookies.get('enableNexus') === 'true';
-  const enableOldLegacy = Cookies.get('enableOldLegacy') === 'true';
+  const enableLegacyBeta = Cookies.get('enableLegacyBeta') === 'true';
   const enableArc = Cookies.get('enableArc') === 'true';
   // const enableAMG = Cookies.get('enableAMG') === 'true';
 
@@ -107,11 +107,11 @@ const fetchAndSaveData = async (
     );
   }
 
-  if (enableOldLegacy) {
+  if (enableLegacyBeta) {
     endpoints.push(
-      { name: 'oldLegacyShips', url: '/old-legacy/ships/' },
-      { name: 'oldLegacySquadrons', url: '/old-legacy/squadrons/' },
-      { name: 'oldLegacyUpgrades', url: '/old-legacy/upgrades/' }
+      { name: 'legacyBetaShips', url: '/legacy-beta/ships/' },
+      { name: 'legacyBetaSquadrons', url: '/legacy-beta/squadrons/' },
+      { name: 'legacyBetaUpgrades', url: '/legacy-beta/upgrades/' }
     );
   }
 
@@ -180,15 +180,18 @@ export const flushCacheAndReload = async (setIsLoading: (isLoading: boolean) => 
   localStorage.removeItem('legacyShips');
   localStorage.removeItem('legacySquadrons');
   localStorage.removeItem('legacyUpgrades');
+  localStorage.removeItem('oldLegacyShips');
+  localStorage.removeItem('oldLegacySquadrons');
+  localStorage.removeItem('oldLegacyUpgrades');
   localStorage.removeItem('legendsShips');
   localStorage.removeItem('legendsSquadrons');
   localStorage.removeItem('legendsUpgrades');
   localStorage.removeItem('nexusShips');
   localStorage.removeItem('nexusSquadrons');
   localStorage.removeItem('nexusUpgrades');
-  localStorage.removeItem('oldLegacyShips');
-  localStorage.removeItem('oldLegacySquadrons');
-  localStorage.removeItem('oldLegacyUpgrades');
+  localStorage.removeItem('legacyBetaShips');
+  localStorage.removeItem('legacyBetaSquadrons');
+  localStorage.removeItem('legacyBetaUpgrades');
   localStorage.removeItem('arcShips');
   localStorage.removeItem('arcSquadrons');
   localStorage.removeItem('arcUpgrades');

@@ -44,14 +44,26 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose }: Objectiv
     };
   });
 
-  // Add state to track content source enablement
-  const [contentSources, setContentSources] = useState({
-    arc: Cookies.get('enableArc') === 'true',
-    legacy: Cookies.get('enableLegacy') === 'true',
-    legends: Cookies.get('enableLegends') === 'true',
-    nexus: Cookies.get('enableNexus') === 'true',
-    oldLegacy: Cookies.get('enableOldLegacy') === 'true',
-    amg: Cookies.get('enableAMG') === 'true'
+  const contentSourcesEnabled = useMemo(() => {
+    return {
+      arc: Cookies.get('enableArc') === 'true',
+      legacy: Cookies.get('enableLegacy') === 'true',
+      legends: Cookies.get('enableLegends') === 'true',
+      legacyBeta: Cookies.get('enableLegacyBeta') === 'true',
+      amg: Cookies.get('enableAMG') === 'true',
+      nexus: Cookies.get('enableNexus') === 'true'
+    };
+  }, []);
+
+  const [loadingState, setLoadingState] = useState(() => {
+    return {
+      arc: Cookies.get('enableArc') === 'true',
+      legacy: Cookies.get('enableLegacy') === 'true',
+      legends: Cookies.get('enableLegends') === 'true',
+      legacyBeta: Cookies.get('enableLegacyBeta') === 'true',
+      amg: Cookies.get('enableAMG') === 'true',
+      nexus: Cookies.get('enableNexus') === 'true'
+    };
   });
 
   // Check for cookie changes
@@ -61,14 +73,14 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose }: Objectiv
         arc: Cookies.get('enableArc') === 'true',
         legacy: Cookies.get('enableLegacy') === 'true',
         legends: Cookies.get('enableLegends') === 'true',
-        nexus: Cookies.get('enableNexus') === 'true',
-        oldLegacy: Cookies.get('enableOldLegacy') === 'true',
-        amg: Cookies.get('enableAMG') === 'true'
+        legacyBeta: Cookies.get('enableLegacyBeta') === 'true',
+        amg: Cookies.get('enableAMG') === 'true',
+        nexus: Cookies.get('enableNexus') === 'true'
       };
 
       // Check if any values have changed
-      if (JSON.stringify(newContentSources) !== JSON.stringify(contentSources)) {
-        setContentSources(newContentSources);
+      if (JSON.stringify(newContentSources) !== JSON.stringify(loadingState)) {
+        setLoadingState(newContentSources);
       }
     };
 
@@ -77,7 +89,7 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose }: Objectiv
     const interval = setInterval(checkCookies, 1000);
 
     return () => clearInterval(interval);
-  }, [contentSources]);
+  }, [loadingState]);
 
   // Modified useEffect to depend on contentSources
   useEffect(() => {
@@ -106,7 +118,7 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose }: Objectiv
             const source = storageKey.replace(/objectives|Objectives/g, '').toLowerCase() || 'regular';
 
             // Skip if this content source is disabled (except for regular content)
-            if (source !== 'regular' && !contentSources[source as keyof typeof contentSources]) {
+            if (source !== 'regular' && !contentSourcesEnabled[source as keyof typeof contentSourcesEnabled]) {
               return;
             }
 
@@ -135,14 +147,14 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose }: Objectiv
             const source = storageKey.replace(/objectives|Objectives/g, '').toLowerCase() || 'regular';
 
             // Skip if this content source is disabled (except for regular content)
-            if (source !== 'regular' && !contentSources[source as keyof typeof contentSources]) {
+            if (source !== 'regular' && !contentSourcesEnabled[source as keyof typeof contentSourcesEnabled]) {
               return;
             }
 
             /* eslint-disable @typescript-eslint/no-explicit-any */
             Object.entries(objectivesData).forEach(([objectiveId, objective]: [string, any]) => {
               if (objective.type === type && objectiveId.includes('-errata-')) {
-                const baseId = objectiveId.replace(/-errata-(legacy|legends|oldLegacy|arc)$/, '');
+                const baseId = objectiveId.replace(/-errata-(legacy|legends|legacyBeta|arc)$/, '');
                 
                 if (errataKeys.includes(objectiveId)) {
                   objectiveMap.set(baseId, {
@@ -168,7 +180,7 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose }: Objectiv
     };
 
     fetchObjectives();
-  }, [type, contentSources]);
+  }, [type, contentSourcesEnabled]);
 
   // Add useMemo for filtered and sorted objectives
   const processedObjectives = useMemo(() => {

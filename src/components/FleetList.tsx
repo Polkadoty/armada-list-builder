@@ -59,8 +59,9 @@ interface Fleet {
   fleet_data: string;
   legends?: boolean;
   legacy?: boolean;
-  old_legacy?: boolean;
+  legacy_beta?: boolean;
   arc?: boolean;
+  nexus?: boolean;
   numerical_id?: string;
   shared?: boolean;
 }
@@ -76,8 +77,9 @@ export const getContentTypes = (fleetData: string) => {
   return {
     legends: fleetData.includes("[Legends]"),
     legacy: fleetData.includes("[Legacy]"),
-    old_legacy: fleetData.includes("[OldLegacy]"),
-    arc: fleetData.includes("[ARC]")
+    legacy_beta: fleetData.includes("[LegacyBeta]"),
+    arc: fleetData.includes("[ARC]"),
+    nexus: fleetData.includes("[Nexus]")
   };
 };
 
@@ -528,8 +530,9 @@ export function FleetList() {
           ...fleet,
           legends: contentTypes.legends,
           legacy: contentTypes.legacy,
-          old_legacy: contentTypes.old_legacy,
-          arc: contentTypes.arc
+          legacy_beta: contentTypes.legacy_beta,
+          arc: contentTypes.arc,
+          nexus: contentTypes.nexus
         };
       });
       
@@ -542,8 +545,9 @@ export function FleetList() {
       const fleetsNeedingUpdate = processedFleets.filter(fleet => 
         fleet.legends !== getContentTypes(fleet.fleet_data).legends ||
         fleet.legacy !== getContentTypes(fleet.fleet_data).legacy ||
-        fleet.old_legacy !== getContentTypes(fleet.fleet_data).old_legacy ||
-        fleet.arc !== getContentTypes(fleet.fleet_data).arc
+        fleet.legacy_beta !== getContentTypes(fleet.fleet_data).legacy_beta ||
+        fleet.arc !== getContentTypes(fleet.fleet_data).arc ||
+        fleet.nexus !== getContentTypes(fleet.fleet_data).nexus
       );
       
       // Update content flags in database if needed, but continue regardless
@@ -793,7 +797,7 @@ export function FleetList() {
           points: fleet.points,
           legends: contentTypes.legends,
           legacy: contentTypes.legacy,
-          old_legacy: contentTypes.old_legacy
+          legacy_beta: contentTypes.legacy_beta
         });
 
       if (error) {

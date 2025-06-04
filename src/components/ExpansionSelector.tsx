@@ -49,8 +49,8 @@ export function ExpansionSelector({
     arc: Cookies.get('enableArc') === 'true',
     legacy: Cookies.get('enableLegacy') === 'true',
     legends: Cookies.get('enableLegends') === 'true',
-    nexus: Cookies.get('enableNexus') === 'true',
-    oldLegacy: Cookies.get('enableOldLegacy') === 'true'
+    legacyBeta: Cookies.get('enableLegacyBeta') === 'true',
+    nexus: Cookies.get('enableNexus') === 'true'
   });
 
   // Load and filter expansions
@@ -134,8 +134,8 @@ export function ExpansionSelector({
         arc: Cookies.get('enableArc') === 'true',
         legacy: Cookies.get('enableLegacy') === 'true',
         legends: Cookies.get('enableLegends') === 'true',
-        nexus: Cookies.get('enableNexus') === 'true',
-        oldLegacy: Cookies.get('enableOldLegacy') === 'true'
+        legacyBeta: Cookies.get('enableLegacyBeta') === 'true',
+        nexus: Cookies.get('enableNexus') === 'true'
       };
 
       if (JSON.stringify(newContentSources) !== JSON.stringify(contentSources)) {

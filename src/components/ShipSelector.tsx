@@ -62,17 +62,30 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
   });
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [contentSources, setContentSources] = useState(() => ({
-    arc: Cookies.get('enableArc') === 'true',
-    legacy: Cookies.get('enableLegacy') === 'true',
-    legends: Cookies.get('enableLegends') === 'true',
-    nexus: Cookies.get('enableNexus') === 'true',
-    oldLegacy: Cookies.get('enableOldLegacy') === 'true',
-    amg: Cookies.get('enableAMG') === 'true'
-  }));
+  const contentSourcesEnabled = useMemo(() => {
+    return {
+      arc: Cookies.get('enableArc') === 'true',
+      legacy: Cookies.get('enableLegacy') === 'true',
+      legends: Cookies.get('enableLegends') === 'true',
+      legacyBeta: Cookies.get('enableLegacyBeta') === 'true',
+      amg: Cookies.get('enableAMG') === 'true',
+      nexus: Cookies.get('enableNexus') === 'true'
+    };
+  }, []);
+
+  const [loadingState, setLoadingState] = useState(() => {
+    return {
+      arc: Cookies.get('enableArc') === 'true',
+      legacy: Cookies.get('enableLegacy') === 'true',
+      legends: Cookies.get('enableLegends') === 'true',
+      legacyBeta: Cookies.get('enableLegacyBeta') === 'true',
+      amg: Cookies.get('enableAMG') === 'true',
+      nexus: Cookies.get('enableNexus') === 'true'
+    };
+  });
 
   // Use a ref to track the previous state
-  const previousContentSources = useRef(contentSources);
+  const previousContentSources = useRef(contentSourcesEnabled);
 
   useEffect(() => {
     const checkCookies = () => {
@@ -80,15 +93,15 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
         arc: Cookies.get('enableArc') === 'true',
         legacy: Cookies.get('enableLegacy') === 'true',
         legends: Cookies.get('enableLegends') === 'true',
-        nexus: Cookies.get('enableNexus') === 'true',
-        oldLegacy: Cookies.get('enableOldLegacy') === 'true',
-        amg: Cookies.get('enableAMG') === 'true'
+        legacyBeta: Cookies.get('enableLegacyBeta') === 'true',
+        amg: Cookies.get('enableAMG') === 'true',
+        nexus: Cookies.get('enableNexus') === 'true'
       };
 
       // Only update if there are actual changes
       if (JSON.stringify(newContentSources) !== JSON.stringify(previousContentSources.current)) {
         previousContentSources.current = newContentSources;
-        setContentSources(newContentSources);
+        setLoadingState(newContentSources);
       }
     };
 
@@ -97,14 +110,7 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
   }, []); // Empty dependency array since we're using refs
 
   useEffect(() => {
-    const fetchShips = () => {
-      const cachedShips = localStorage.getItem('ships');
-      const cachedLegacyShips = localStorage.getItem('legacyShips');
-      const cachedLegendsShips = localStorage.getItem('legendsShips');
-      const cachedOldLegacyShips = localStorage.getItem('oldLegacyShips');
-      const cachedArcShips = localStorage.getItem('arcShips');
-      const cachedAMGShips = localStorage.getItem('amgShips');
-      const cachedNexusShips = localStorage.getItem('nexusShips');
+    const fetchShips = async () => {
       let allShips: ShipModel[] = [];
 
       const processShips = (data: ShipData, prefix: string = '') => {
@@ -147,39 +153,48 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
         return [];
       };
 
+      // Load cached data
+      const cachedShips = localStorage.getItem('ships');
+      const cachedLegacyShips = localStorage.getItem('legacyShips');
+      const cachedLegendsShips = localStorage.getItem('legendsShips');
+      const cachedNexusShips = localStorage.getItem('nexusShips');
+      const cachedLegacyBetaShips = localStorage.getItem('legacyBetaShips');
+      const cachedArcShips = localStorage.getItem('arcShips');
+
+      // Process regular ships
       if (cachedShips) {
         const shipData = JSON.parse(cachedShips);
-        allShips = [...allShips, ...processShips(shipData)];
+        allShips = processShips(shipData, 'regular');
       }
 
-      if (cachedAMGShips) {
-        const amgShipData = JSON.parse(cachedAMGShips);
-        allShips = [...allShips, ...processShips(amgShipData, 'amg')];
-      }
-
+      // Process legacy ships
       if (cachedLegacyShips) {
         const legacyShipData = JSON.parse(cachedLegacyShips);
         allShips = [...allShips, ...processShips(legacyShipData, 'legacy')];
       }
 
+      // Process legends ships
       if (cachedLegendsShips) {
         const legendsShipData = JSON.parse(cachedLegendsShips);
         allShips = [...allShips, ...processShips(legendsShipData, 'legends')];
       }
 
-      if (cachedOldLegacyShips) {
-        const oldLegacyShipData = JSON.parse(cachedOldLegacyShips);
-        allShips = [...allShips, ...processShips(oldLegacyShipData, 'oldLegacy')];
-      }
-
-      if (cachedArcShips) {
-        const arcShipData = JSON.parse(cachedArcShips);
-        allShips = [...allShips, ...processShips(arcShipData, 'arc')];
-      }
-
+      // Process nexus ships
       if (cachedNexusShips) {
         const nexusShipData = JSON.parse(cachedNexusShips);
         allShips = [...allShips, ...processShips(nexusShipData, 'nexus')];
+      }
+
+      // Process legacy beta ships
+      if (cachedLegacyBetaShips) {
+        const legacyBetaShipData = JSON.parse(cachedLegacyBetaShips);
+        allShips = [...allShips, ...processShips(legacyBetaShipData, 'legacyBeta')];
+      }
+
+      // Process arc ships
+      if (cachedArcShips) {
+        const arcShipData = JSON.parse(cachedArcShips);
+        allShips = [...allShips, ...processShips(arcShipData, 'arc')];
       }
 
       // Get errata keys from localStorage
@@ -193,7 +208,7 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
       allShips.forEach(ship => {
         // Use chassis name for grouping since errata is chassis-based
         const baseName = ship.chassis
-          .replace(/^(legacy|legends|oldLegacy|arc|amg|nexus)-/, '') // Remove source prefix
+          .replace(/^(legacy|legends|legacyBeta|arc|amg|nexus)-/, '') // Remove source prefix
           .replace(/-errata(-[^-]+)?$/, ''); // Remove both types of errata suffixes
         
         // console.log(`Processing ship: ${ship.id}, baseName: ${baseName}`);
@@ -234,14 +249,14 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
             // Then check for source-prefixed version
             const sourceVersion = group.find(candidate => 
               candidate.id !== ship.id && 
-              candidate.id.match(/^(legacy|legends|oldLegacy|arc|amg|nexus)-/) &&
-              ship.id === candidate.id.replace(/^(legacy|legends|oldLegacy|arc|amg|nexus)-/, '')
+              candidate.id.match(/^(legacy|legends|legacyBeta|arc|amg|nexus)-/) &&
+              ship.id === candidate.id.replace(/^(legacy|legends|legacyBeta|arc|amg|nexus)-/, '')
             );
 
             if (sourceVersion) {
               // Check if the source version is enabled
               const source = sourceVersion.source;
-              const isSourceEnabled = source ? contentSources[source as keyof typeof contentSources] : true;
+              const isSourceEnabled = source ? contentSourcesEnabled[source as keyof typeof contentSourcesEnabled] : true;
               
               if (isSourceEnabled) {
                 console.log(`Replacing ${ship.id} with source version ${sourceVersion.id}`);
@@ -255,10 +270,10 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
           // Remove duplicates and check content sources
           const uniqueShips = new Map();
           processedShips.forEach(ship => {
-            const normalizedId = ship.id.replace(/^(legacy|legends|oldLegacy|arc|nexus|amg)-/, '');
-            const isSourceEnabled = ship.source === 'regular' || contentSources[ship.source as keyof typeof contentSources];
+            const normalizedId = ship.id.replace(/^(legacy|legends|legacyBeta|arc|nexus|amg)-/, '');
+            const isSourceEnabled = ship.source === 'regular' || contentSourcesEnabled[ship.source as keyof typeof contentSourcesEnabled];
             
-            if (isSourceEnabled && (!uniqueShips.has(normalizedId) || ship.id.match(/^(legacy|legends|oldLegacy|arc|nexus|amg)-/))) {
+            if (isSourceEnabled && (!uniqueShips.has(normalizedId) || ship.id.match(/^(legacy|legends|legacyBeta|arc|nexus|amg)-/))) {
               uniqueShips.set(normalizedId, ship);
             }
           });
@@ -268,7 +283,7 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
 
         // If no errata exists, filter by enabled content sources
         return group.filter(ship => 
-          ship.source === 'regular' || contentSources[ship.source as keyof typeof contentSources]
+          ship.source === 'regular' || contentSourcesEnabled[ship.source as keyof typeof contentSourcesEnabled]
         );
       }).flat();
 
@@ -282,7 +297,7 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
           const allowedFactions = [...baseFactions];
           
           // Include scum faction if custom content is enabled
-          if (contentSources.legends) {
+          if (contentSourcesEnabled.legends) {
             allowedFactions.push('scum');
           }
           
@@ -308,7 +323,7 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
     };
 
     fetchShips();
-  }, [faction, filter.minPoints, filter.maxPoints, contentSources]);
+  }, [faction, filter.minPoints, filter.maxPoints, contentSourcesEnabled]);
 
   // Update the useMemo for filtered and sorted ships
   const processedShips = useMemo(() => {

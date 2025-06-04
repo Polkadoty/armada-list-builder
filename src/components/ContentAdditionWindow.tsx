@@ -24,17 +24,18 @@ interface ContentAdditionWindowProps {
 
 const DATA_TYPES = ['Ships', 'Squadrons', 'Upgrades', 'Objectives'];
 
-// Helper to capitalize each word and special-case Legacy/Nexus/OldLegacy
-function formatFaction(faction: string) {
-  if (!faction) return '';
-  if (faction.toLowerCase() === 'legacy') return 'Legacy';
-  if (faction.toLowerCase() === 'nexus') return 'Nexus';
-  if (faction === 'oldLegacy') return 'Old Legacy';
+// Helper to capitalize each word and special-case Legacy/Nexus/LegacyBeta
+const formatFactionName = (faction: string): string => {
+  if (faction === 'legacy') return 'Legacy';
+  if (faction === 'nexus') return 'Nexus';
+  if (faction === 'legends') return 'Legends';
+  if (faction === 'legacyBeta') return 'Legacy Beta';
+  
   return faction
-    .split('-')
+    .split(' ')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join('-');
-}
+    .join(' ');
+};
 
 function getDisplayName(card: Card) {
   // For squadrons, use ace-name if present, else name
@@ -141,7 +142,7 @@ const ContentAdditionWindow: React.FC<ContentAdditionWindowProps> = ({ contentTy
           {/* Sticky header for title and close button, always at the very top */}
           <div className="sticky top-0 z-20 bg-white dark:bg-zinc-900 rounded-t-lg flex items-center justify-between px-4 sm:px-10 pt-2 pb-2 sm:pt-6 sm:pb-4" style={{ borderBottom: '1px solid #e5e7eb', minWidth: 0 }}>
             <h2 className="font-bold" style={{ fontSize: 'clamp(1.1rem, 2vw, 2rem)', minWidth: 0, whiteSpace: 'normal', wordBreak: 'break-word', flex: 1, paddingRight: '1rem' }}>
-              Content Window - {formatFaction(contentType)}
+              Content Window - {formatFactionName(contentType)}
             </h2>
             <button
               onClick={onClose}
@@ -162,7 +163,7 @@ const ContentAdditionWindow: React.FC<ContentAdditionWindowProps> = ({ contentTy
             <div>
               {Object.entries(cardsByFaction).map(([faction, factionCards]) => (
                 <div key={faction} className="mb-12 pb-4">
-                  <h3 className="text-xl font-semibold mb-2">{formatFaction(faction)}</h3>
+                  <h3 className="text-xl font-semibold mb-2">{formatFactionName(faction)}</h3>
                   <div
                     className="content-grid"
                     style={{ maxWidth: '100%' }}
@@ -238,7 +239,7 @@ const ContentAdditionWindow: React.FC<ContentAdditionWindowProps> = ({ contentTy
           {/* Sticky header for title and close button, always at the very top */}
           <div className="sticky top-0 z-20 bg-white dark:bg-zinc-900 rounded-t-lg flex items-center justify-between px-4 sm:px-10 pt-2 pb-2 sm:pt-6 sm:pb-4" style={{ borderBottom: '1px solid #e5e7eb', minWidth: 0 }}>
             <h2 className="font-bold" style={{ fontSize: 'clamp(1.1rem, 2vw, 2rem)', minWidth: 0, whiteSpace: 'normal', wordBreak: 'break-word', flex: 1, paddingRight: '1rem' }}>
-              Content Window - {formatFaction(contentType)}
+              Content Window - {formatFactionName(contentType)}
             </h2>
             <button
               onClick={onClose}
@@ -259,7 +260,7 @@ const ContentAdditionWindow: React.FC<ContentAdditionWindowProps> = ({ contentTy
             <div>
               {Object.entries(cardsByFaction).map(([faction, factionCards]) => (
                 <div key={faction} className="mb-12 pb-4">
-                  <h3 className="text-xl font-semibold mb-2">{formatFaction(faction)}</h3>
+                  <h3 className="text-xl font-semibold mb-2">{formatFactionName(faction)}</h3>
                   <div
                     className="content-grid"
                     style={{ maxWidth: '100%' }}

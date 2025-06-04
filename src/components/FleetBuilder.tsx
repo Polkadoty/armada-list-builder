@@ -169,7 +169,7 @@ export interface Ship extends ShipModel {
   searchableText: string;
 }
 
-export type ContentSource = "regular" | "legacy" | "legends" | "oldLegacy" | "arc" | "community" | "amg" | "nexus";
+export type ContentSource = "regular" | "legacy" | "legends" | "legacyBeta" | "arc" | "community" | "amg" | "nexus";
 
 const SectionHeader = ({
   title,
@@ -646,8 +646,8 @@ export default function FleetBuilder({
           // Determine the source based on the alias
           let source: ContentSource = "regular";
           if (upgrade.alias) {
-            if (upgrade.alias.includes("OldLegacy")) {
-              source = "oldLegacy";
+            if (upgrade.alias.includes("LegacyBeta")) {
+              source = "legacyBeta";
             } else if (upgrade.alias.includes("Legacy")) {
               source = "legacy";
             } else if (upgrade.alias.includes("Legends")) {
@@ -968,7 +968,7 @@ export default function FleetBuilder({
     // Format the ship name with source tag if needed
     const shipNameWithSource = shipToCopy.source && shipToCopy.source !== "regular" && shipToCopy.source !== "amg"
       ? `${shipToCopy.name} [${
-          shipToCopy.source === 'oldLegacy' ? 'OldLegacy' : 
+          shipToCopy.source === 'legacyBeta' ? 'LegacyBeta' : 
           shipToCopy.source === 'legacy' ? 'Legacy' : 
           shipToCopy.source === 'legends' ? 'Legends' : 
           shipToCopy.source === 'arc' ? 'ARC' : 
@@ -1358,8 +1358,8 @@ export default function FleetBuilder({
         return '[Legacy]';
       case 'legends':
         return '[Legends]';
-      case 'oldLegacy':
-        return '[OldLegacy]';
+      case 'legacyBeta':
+        return '[LegacyBeta]';
       case 'arc':
         return '[ARC]';
       case 'nexus':
@@ -1549,7 +1549,7 @@ export default function FleetBuilder({
             ...objectivesData[key],
             // Set source based on storage key
             source: storageKey.includes('arc') ? 'arc' :
-                   storageKey.includes('oldLegacy') ? 'oldLegacy' :
+                   storageKey.includes('legacyBeta') ? 'legacyBeta' :
                    storageKey.includes('legacy') ? 'legacy' :
                    storageKey.includes('legends') ? 'legends' :
                    storageKey.includes('nexus') ? 'nexus' : 'regular'
@@ -1595,7 +1595,7 @@ export default function FleetBuilder({
                   blueprint: chassis.blueprint,
                   // Add source information
                   source: storageKey.includes('arc') ? 'arc' :
-                          storageKey.includes('oldLegacy') ? 'oldLegacy' :
+                          storageKey.includes('legacyBeta') ? 'legacyBeta' :
                           storageKey.includes('legacy') ? 'legacy' :
                           storageKey.includes('legends') ? 'legends' :
                           storageKey.includes('nexus') ? 'nexus' : 'regular'
@@ -1608,7 +1608,7 @@ export default function FleetBuilder({
               return {
                 ...item,
                 source: storageKey.includes('arc') ? 'arc' :
-                        storageKey.includes('oldLegacy') ? 'oldLegacy' :
+                        storageKey.includes('legacyBeta') ? 'legacyBeta' :
                         storageKey.includes('legacy') ? 'legacy' :
                         storageKey.includes('legends') ? 'legends' :
                         storageKey.includes('nexus') ? 'nexus' : 'regular'
@@ -1910,8 +1910,8 @@ export default function FleetBuilder({
         if (shipModel) {
           console.log(`Adding ship to fleet:`, shipModel);
           let source: ContentSource = "regular";
-          if (shipName.includes("[OldLegacy]")) {
-            source = "oldLegacy";
+          if (shipName.includes("[LegacyBeta]")) {
+            source = "legacyBeta";
           } else if (shipName.includes("[Legacy]")) {
             source = "legacy";
           } else if (shipName.includes("[Legends]")) {
@@ -1938,8 +1938,8 @@ export default function FleetBuilder({
           if (squadron) {
             console.log(`Found squadron instead of ship:`, squadron);
             let source: ContentSource = "regular";
-            if (shipName.includes("[OldLegacy]")) {
-              source = "oldLegacy";
+            if (shipName.includes("[LegacyBeta]")) {
+              source = "legacyBeta";
             } else if (shipName.includes("[Legacy]")) {
               source = "legacy";
             } else if (shipName.includes("[Legends]")) {
@@ -2101,8 +2101,8 @@ export default function FleetBuilder({
               if (sourceMatch) {
                 const sourceTag = sourceMatch[1].toLowerCase();
                 switch (sourceTag) {
-                  case 'oldlegacy':
-                    source = 'oldLegacy';
+                  case 'legacybeta':
+                    source = 'legacyBeta';
                     break;
                   case 'legacy':
                     source = 'legacy';
@@ -2168,8 +2168,8 @@ export default function FleetBuilder({
             if (squadron) {
               console.log(`Selecting squadron:`, squadron);
               let source: ContentSource = "regular";
-              if (squadronName.includes("[OldLegacy]")) {
-                source = "oldLegacy";
+              if (squadronName.includes("[LegacyBeta]")) {
+                source = "legacyBeta";
               } else if (squadronName.includes("[Legacy]")) {
                 source = "legacy";
               } else if (squadronName.includes("[Legends]")) {
@@ -3294,7 +3294,7 @@ export default function FleetBuilder({
       arc: Cookies.get('enableArc') === 'true',
       legacy: Cookies.get('enableLegacy') === 'true',
       legends: Cookies.get('enableLegends') === 'true',
-      oldLegacy: Cookies.get('enableOldLegacy') === 'true',
+      legacyBeta: Cookies.get('enableLegacyBeta') === 'true',
       amg: Cookies.get('enableAMG') === 'true',
       nexus: Cookies.get('enableNexus') === 'true'
     };
@@ -3310,7 +3310,7 @@ export default function FleetBuilder({
         arc: Cookies.get('enableArc') === 'true',
         legacy: Cookies.get('enableLegacy') === 'true',
         legends: Cookies.get('enableLegends') === 'true',
-        oldLegacy: Cookies.get('enableOldLegacy') === 'true',
+        legacyBeta: Cookies.get('enableLegacyBeta') === 'true',
         amg: Cookies.get('enableAMG') === 'true',
         nexus: Cookies.get('enableNexus') === 'true'
       };

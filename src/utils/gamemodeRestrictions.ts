@@ -11,7 +11,7 @@ export interface GamemodeRestrictions {
     tournamentMode: boolean;
     enableLegacy: boolean;
     enableLegends: boolean;
-    enableOldLegacy: boolean;
+    enableLegacyBeta: boolean;
     enableArc: boolean;
     enableCustomFactions: boolean;
     enableLocalContent: boolean;
@@ -129,4 +129,12 @@ export function checkFleetViolations(gamemode: Gamemode, fleet: FleetState): str
   }
 
   return violations;
+}
+
+interface ContentSources {
+  enableLegacy: boolean;
+  enableLegends: boolean;
+  enableNexus: boolean;
+  enableLegacyBeta: boolean;
+  enableArc: boolean;
 } 

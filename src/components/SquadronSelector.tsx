@@ -43,13 +43,26 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
   });
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [contentSources, setContentSources] = useState({
-    arc: Cookies.get('enableArc') === 'true',
-    legacy: Cookies.get('enableLegacy') === 'true',
-    legends: Cookies.get('enableLegends') === 'true',
-    nexus: Cookies.get('enableNexus') === 'true',
-    oldLegacy: Cookies.get('enableOldLegacy') === 'true',
-    amg: Cookies.get('enableAMG') === 'true'
+  const contentSourcesEnabled = useMemo(() => {
+    return {
+      arc: Cookies.get('enableArc') === 'true',
+      legacy: Cookies.get('enableLegacy') === 'true',
+      legends: Cookies.get('enableLegends') === 'true',
+      legacyBeta: Cookies.get('enableLegacyBeta') === 'true',
+      amg: Cookies.get('enableAMG') === 'true',
+      nexus: Cookies.get('enableNexus') === 'true'
+    };
+  }, []);
+
+  const [loadingState, setLoadingState] = useState(() => {
+    return {
+      arc: Cookies.get('enableArc') === 'true',
+      legacy: Cookies.get('enableLegacy') === 'true',
+      legends: Cookies.get('enableLegends') === 'true',
+      legacyBeta: Cookies.get('enableLegacyBeta') === 'true',
+      amg: Cookies.get('enableAMG') === 'true',
+      nexus: Cookies.get('enableNexus') === 'true'
+    };
   });
 
   useEffect(() => {
@@ -58,27 +71,27 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
         arc: Cookies.get('enableArc') === 'true',
         legacy: Cookies.get('enableLegacy') === 'true',
         legends: Cookies.get('enableLegends') === 'true',
-        nexus: Cookies.get('enableNexus') === 'true',
-        oldLegacy: Cookies.get('enableOldLegacy') === 'true',
-        amg: Cookies.get('enableAMG') === 'true'
+        legacyBeta: Cookies.get('enableLegacyBeta') === 'true',
+        amg: Cookies.get('enableAMG') === 'true',
+        nexus: Cookies.get('enableNexus') === 'true'
       };
 
-      if (JSON.stringify(newContentSources) !== JSON.stringify(contentSources)) {
-        setContentSources(newContentSources);
+      if (JSON.stringify(newContentSources) !== JSON.stringify(contentSourcesEnabled)) {
+        setLoadingState(newContentSources);
       }
     };
 
     checkCookies();
     const interval = setInterval(checkCookies, 1000);
     return () => clearInterval(interval);
-  }, [contentSources]);
+  }, [contentSourcesEnabled]);
 
   useEffect(() => {
     const fetchSquadrons = () => {
       const cachedSquadrons = localStorage.getItem('squadrons');
       const cachedLegacySquadrons = localStorage.getItem('legacySquadrons');
       const cachedLegendsSquadrons = localStorage.getItem('legendsSquadrons');
-      const cachedOldLegacySquadrons = localStorage.getItem('oldLegacySquadrons');
+      const cachedLegacyBetaSquadrons = localStorage.getItem('legacyBetaSquadrons');
       const cachedArcSquadrons = localStorage.getItem('arcSquadrons');
       const cachedAMGSquadrons = localStorage.getItem('amgSquadrons');
       const cachedNexusSquadrons = localStorage.getItem('nexusSquadrons');
@@ -148,9 +161,9 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
         processSquadrons(legendsSquadronData, 'legends');
       }
 
-      if (cachedOldLegacySquadrons) {
-        const oldLegacySquadronData = JSON.parse(cachedOldLegacySquadrons);
-        processSquadrons(oldLegacySquadronData, 'oldLegacy');
+      if (cachedLegacyBetaSquadrons) {
+        const legacyBetaSquadronData = JSON.parse(cachedLegacyBetaSquadrons);
+        processSquadrons(legacyBetaSquadronData, 'legacyBeta');
       }
 
       if (cachedAMGSquadrons) {
@@ -180,7 +193,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
 
       squadronsArray.forEach(squadron => {
         // Extract base name without any prefixes or errata suffixes
-        const baseName = squadron.id.replace(/^(legacy|legends|oldLegacy|arc|nexus|amg)-/, '').replace(/-errata(-[^-]+)?$/, '');
+        const baseName = squadron.id.replace(/^(legacy|legends|legacyBeta|arc|nexus|amg)-/, '').replace(/-errata(-[^-]+)?$/, '');
         
         if (!squadronGroups.has(baseName)) {
           squadronGroups.set(baseName, []);
@@ -201,7 +214,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
           }
           // Otherwise check content source settings
           const source = matchingSquadron.source;
-          return source ? contentSources[source as keyof typeof contentSources] : true;
+          return source ? contentSourcesEnabled[source as keyof typeof contentSourcesEnabled] : true;
         });
 
         if (hasErrata) {
@@ -210,7 +223,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
             squadronErrataKeys.includes(squadron.id) && 
             (squadron.id.endsWith('-errata') ? 
               Cookies.get('enableAMG') === 'true' : 
-              contentSources[squadron.source as keyof typeof contentSources])
+              contentSourcesEnabled[squadron.source as keyof typeof contentSourcesEnabled])
           );
         }
         
@@ -225,7 +238,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
           const allowedFactions = [...baseFactions];
           
           // Include scum faction if custom content is enabled
-          if (contentSources.legends) {
+          if (contentSourcesEnabled.legends) {
             allowedFactions.push('scum');
             allowedFactions.push('new-republic');
           }
@@ -252,7 +265,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
     };
 
     fetchSquadrons();
-  }, [faction, filter.minPoints, filter.maxPoints, contentSources]);
+  }, [faction, filter.minPoints, filter.maxPoints, contentSourcesEnabled]);
 
   const processedSquadrons = useMemo(() => {
     let filtered = allSquadrons;

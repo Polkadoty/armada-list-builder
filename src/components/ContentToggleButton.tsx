@@ -9,13 +9,15 @@ import Cookies from 'js-cookie';
 import { flushCacheAndReload } from '../utils/dataFetcher';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue, SelectLabel, SelectGroup } from "@/components/ui/select";
 import ContentAdditionWindow from './ContentAdditionWindow';
+import { useUser } from '@auth0/nextjs-auth0/client';
+import { isUserWhitelistedForLegacyBeta } from '../utils/whitelist';
 
 // Configuration flags
 const CONFIG = {
   showLegacyToggle: true,
   showLegendsToggle: true,
   showNexusToggle: true,
-  showOldLegacyToggle: true,
+  showLegacyBetaToggle: true,
   showArcToggle: false,
   showLocalContentToggle: false,
   showProxyToggle: false,
@@ -31,13 +33,15 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
   setGamemode: (mode: string) => void;
 }) {
   const [enableLegacy, setEnableLegacy] = useState(false);
-  const [enableOldLegacy, setEnableOldLegacy] = useState(false);
+  const [enableLegacyBeta, setEnableLegacyBeta] = useState(false);
   const [enableArc, setEnableArc] = useState(false);
   const [enableLegends, setEnableLegends] = useState(false);
   const [enableProxy, setEnableProxy] = useState(false);
   const [enableNexus, setEnableNexus] = useState(false);
+  const [isLegacyBetaWhitelisted, setIsLegacyBetaWhitelisted] = useState(false);
   // const [enableAMG, setEnableAMG] = useState(false);
   const { theme, resolvedTheme } = useTheme();
+  const { user } = useUser();
   const [mounted, setMounted] = useState(false);
   const [selectedGamemode, setSelectedGamemode] = useState<string>(gamemode || "Standard");
   const [infoOpen, setInfoOpen] = useState<string | null>(null);
@@ -46,20 +50,36 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
   useEffect(() => {
     setMounted(true);
     const legacyCookie = Cookies.get('enableLegacy');
-    const oldLegacyCookie = Cookies.get('enableOldLegacy');
+    const legacyBetaCookie = Cookies.get('enableLegacyBeta');
     const arcCookie = Cookies.get('enableArc');
     const legendsCookie = Cookies.get('enableLegends');
     const proxyCookie = Cookies.get('enableProxy');
     const nexusCookie = Cookies.get('enableNexus');
     // const amgCookie = Cookies.get('enableAMG');
     setEnableLegacy(CONFIG.showLegacyToggle && legacyCookie === 'true');
-    setEnableOldLegacy(CONFIG.showOldLegacyToggle && oldLegacyCookie === 'true');
+    setEnableLegacyBeta(CONFIG.showLegacyBetaToggle && legacyBetaCookie === 'true');
     setEnableArc(CONFIG.showArcToggle && arcCookie === 'true');
     setEnableLegends(CONFIG.showLegendsToggle && legendsCookie === 'true');
     setEnableProxy(CONFIG.showProxyToggle && proxyCookie === 'true');
     setEnableNexus(nexusCookie === 'true');
     // setEnableAMG(CONFIG.showAMGToggle && amgCookie !== 'false');
   }, []);
+
+  // Check if user is whitelisted for LegacyBeta
+  useEffect(() => {
+    const checkWhitelist = async () => {
+      if (user?.sub) {
+        const whitelisted = await isUserWhitelistedForLegacyBeta(user.sub);
+        setIsLegacyBetaWhitelisted(whitelisted);
+      } else {
+        setIsLegacyBetaWhitelisted(false);
+      }
+    };
+
+    if (mounted) {
+      checkWhitelist();
+    }
+  }, [user?.sub, mounted]);
 
   useEffect(() => {
     setSelectedGamemode(gamemode);
@@ -107,10 +127,10 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
     }
   };
 
-  const handleOldLegacyToggle = (checked: boolean) => {
-    if (CONFIG.showOldLegacyToggle) {
-      setEnableOldLegacy(checked);
-      Cookies.set('enableOldLegacy', checked.toString(), { expires: 365 });
+  const handleLegacyBetaToggle = (checked: boolean) => {
+    if (CONFIG.showLegacyBetaToggle) {
+      setEnableLegacyBeta(checked);
+      Cookies.set('enableLegacyBeta', checked.toString(), { expires: 365 });
       flushCacheAndReload(() => {}, () => {}, () => {});
     }
   };
@@ -262,20 +282,20 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
                       />
                     </div>
                   )}
-                  {CONFIG.showOldLegacyToggle && (
+                  {CONFIG.showLegacyBetaToggle && isLegacyBetaWhitelisted && (
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
-                        <label htmlFor="old-legacy-toggle" className="text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                          Enable Deprecated Legacy Content
+                        <label htmlFor="legacy-beta-toggle" className="text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                          Enable Legacy Beta Content
                         </label>
-                        <button type="button" onClick={() => { setInfoOpen('old-legacy'); }} className="ml-1 p-1 hover:bg-zinc-700/20 rounded-full" aria-label="Info">
+                        <button type="button" onClick={() => { setInfoOpen('legacy-beta'); }} className="ml-1 p-1 hover:bg-zinc-700/20 rounded-full" aria-label="Info">
                           <Info className="w-4 h-4" />
                         </button>
                       </div>
                       <Switch
-                        id="old-legacy-toggle"
-                        checked={enableOldLegacy}
-                        onCheckedChange={handleOldLegacyToggle}
+                        id="legacy-beta-toggle"
+                        checked={enableLegacyBeta}
+                        onCheckedChange={handleLegacyBetaToggle}
                         className="custom-switch"
                       />
                     </div>

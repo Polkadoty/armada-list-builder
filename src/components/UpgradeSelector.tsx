@@ -68,9 +68,9 @@ export default function UpgradeSelector({
     arc: Cookies.get('enableArc') === 'true',
     legacy: Cookies.get('enableLegacy') === 'true',
     legends: Cookies.get('enableLegends') === 'true',
-    nexus: Cookies.get('enableNexus') === 'true',
-    oldLegacy: Cookies.get('enableOldLegacy') === 'true',
-    amg: Cookies.get('enableAMG') === 'true'
+    legacyBeta: Cookies.get('enableLegacyBeta') === 'true',
+    amg: Cookies.get('enableAMG') === 'true',
+    nexus: Cookies.get('enableNexus') === 'true'
   });
 
   useEffect(() => {
@@ -79,7 +79,7 @@ export default function UpgradeSelector({
       const cachedUpgrades = localStorage.getItem('upgrades');
       const cachedLegacyUpgrades = localStorage.getItem('legacyUpgrades');
       const cachedLegendsUpgrades = localStorage.getItem('legendsUpgrades');
-      const cachedOldLegacyUpgrades = localStorage.getItem('oldLegacyUpgrades');
+      const cachedLegacyBetaUpgrades = localStorage.getItem('legacyBetaUpgrades');
       const cachedArcUpgrades = localStorage.getItem('arcUpgrades');
       const cachedAMGUpgrades = localStorage.getItem('amgUpgrades');
       const cachedNexusUpgrades = localStorage.getItem('nexusUpgrades');
@@ -144,9 +144,9 @@ export default function UpgradeSelector({
         allUpgrades = [...allUpgrades, ...processUpgrades(legendsUpgradeData, 'legends')];
       }
 
-      if (cachedOldLegacyUpgrades) {
-        const oldLegacyUpgradeData = JSON.parse(cachedOldLegacyUpgrades);
-        allUpgrades = [...allUpgrades, ...processUpgrades(oldLegacyUpgradeData, 'oldLegacy')];
+      if (cachedLegacyBetaUpgrades) {
+        const legacyBetaUpgradeData = JSON.parse(cachedLegacyBetaUpgrades);
+        allUpgrades = [...allUpgrades, ...processUpgrades(legacyBetaUpgradeData, 'legacyBeta')];
       }
 
       if (cachedArcUpgrades) {
@@ -170,7 +170,7 @@ export default function UpgradeSelector({
       allUpgrades.forEach(upgrade => {
         // Extract base name by removing any source prefixes and errata suffixes
         const baseName = upgrade.id
-          .replace(/^(legacy|legends|oldLegacy|arc|amg|nexus)-/, '') // Remove source prefix
+          .replace(/^(legacy|legends|legacyBeta|arc|amg|nexus)-/, '') // Remove source prefix
           .replace(/-errata(-[^-]+)?$/, ''); // Remove both types of errata suffixes
         
         // console.log(`Processing upgrade: ${upgrade.id}, baseName: ${baseName}`);
@@ -471,9 +471,9 @@ export default function UpgradeSelector({
         arc: Cookies.get('enableArc') === 'true',
         legacy: Cookies.get('enableLegacy') === 'true',
         legends: Cookies.get('enableLegends') === 'true',
-        nexus: Cookies.get('enableNexus') === 'true',
-        oldLegacy: Cookies.get('enableOldLegacy') === 'true',
-        amg: Cookies.get('enableAMG') === 'true'
+        legacyBeta: Cookies.get('enableLegacyBeta') === 'true',
+        amg: Cookies.get('enableAMG') === 'true',
+        nexus: Cookies.get('enableNexus') === 'true'
       };
 
       if (JSON.stringify(newContentSources) !== JSON.stringify(contentSources)) {
