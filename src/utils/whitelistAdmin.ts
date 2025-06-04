@@ -5,6 +5,40 @@ import { supabase } from '../lib/supabase';
  * Note: These functions require service role permissions to work properly
  */
 
+// DEBUG: Simple function to check database connection and current user
+export async function debugWhitelistSystem(currentUserSub?: string): Promise<void> {
+  console.log('DEBUG: Testing Supabase connection...');
+  
+  try {
+    // Test basic connection
+    const { data: testData, error: testError } = await supabase
+      .from('legacy_beta_whitelist')
+      .select('count(*)', { count: 'exact' });
+
+    console.log('DEBUG: Connection test - data:', testData, 'error:', testError);
+
+    // List all whitelisted users
+    const { data: allUsers, error: allUsersError } = await supabase
+      .from('legacy_beta_whitelist')
+      .select('auth0_user_id');
+
+    console.log('DEBUG: All whitelisted users:', allUsers, 'error:', allUsersError);
+
+    // Check current user if provided
+    if (currentUserSub) {
+      console.log('DEBUG: Checking current user:', currentUserSub);
+      const { data: currentUserData, error: currentUserError } = await supabase
+        .from('legacy_beta_whitelist')
+        .select('auth0_user_id')
+        .eq('auth0_user_id', currentUserSub);
+
+      console.log('DEBUG: Current user query result:', currentUserData, 'error:', currentUserError);
+    }
+  } catch (error) {
+    console.error('DEBUG: Unexpected error in debug function:', error);
+  }
+}
+
 export async function addUserToWhitelist(auth0UserId: string): Promise<boolean> {
   try {
     const { error } = await supabase
