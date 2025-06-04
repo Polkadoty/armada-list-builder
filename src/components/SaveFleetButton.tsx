@@ -50,7 +50,7 @@ export const SaveFleetButton = forwardRef<HTMLButtonElement, SaveFleetButtonProp
               points,
               legends: contentTypes.legends,
               legacy: contentTypes.legacy,
-              old_legacy: contentTypes.old_legacy,
+              legacy_beta: contentTypes.legacy_beta,
               arc: contentTypes.arc
             })
             .eq('id', data.id);
@@ -68,7 +68,7 @@ export const SaveFleetButton = forwardRef<HTMLButtonElement, SaveFleetButtonProp
               points,
               legends: contentTypes.legends,
               legacy: contentTypes.legacy,
-              old_legacy: contentTypes.old_legacy,
+              legacy_beta: contentTypes.legacy_beta,
               arc: contentTypes.arc
             });
           if (error) throw error;
