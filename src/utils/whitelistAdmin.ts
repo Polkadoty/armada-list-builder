@@ -7,7 +7,7 @@ import { supabase } from '../lib/supabase';
 
 export async function addUserToWhitelist(auth0UserId: string): Promise<boolean> {
   try {
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('legacy_beta_whitelist')
       .insert([{ auth0_user_id: auth0UserId }]);
 

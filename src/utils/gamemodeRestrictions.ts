@@ -131,10 +131,10 @@ export function checkFleetViolations(gamemode: Gamemode, fleet: FleetState): str
   return violations;
 }
 
-interface ContentSources {
-  enableLegacy: boolean;
-  enableLegends: boolean;
-  enableNexus: boolean;
-  enableLegacyBeta: boolean;
-  enableArc: boolean;
-} 
+// interface ContentSources {
+//   enableLegacy: boolean;
+//   enableLegends: boolean;
+//   enableNexus: boolean;
+//   enableLegacyBeta: boolean;
+//   enableArc: boolean;
+// } 

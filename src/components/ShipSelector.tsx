@@ -73,7 +73,7 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
     };
   }, []);
 
-  const [loadingState, setLoadingState] = useState(() => {
+  const [, setLoadingState] = useState(() => {
     return {
       arc: Cookies.get('enableArc') === 'true',
       legacy: Cookies.get('enableLegacy') === 'true',

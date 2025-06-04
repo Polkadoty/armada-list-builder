@@ -54,7 +54,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
     };
   }, []);
 
-  const [loadingState, setLoadingState] = useState(() => {
+  const [, setLoadingState] = useState(() => {
     return {
       arc: Cookies.get('enableArc') === 'true',
       legacy: Cookies.get('enableLegacy') === 'true',
