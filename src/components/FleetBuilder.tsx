@@ -276,6 +276,7 @@ export default function FleetBuilder({
   const [showNotification, setShowNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState("");
   const [squadronIdCounter, setSquadronIdCounter] = useState(0);
+  const [shipIdCounter, setShipIdCounter] = useState(0);
   const [showRecoveryPopup, setShowRecoveryPopup] = useState(false);
   const [hasLoadedPage, setHasLoadedPage] = useState(false);
   const router = useRouter();
@@ -292,11 +293,14 @@ export default function FleetBuilder({
   const [showDeleteSquadronsConfirmation, setShowDeleteSquadronsConfirmation] = useState(false);
   const [greyUpgrades, setGreyUpgrades] = useState<Record<string, string[]>>({});
 
-  const commanderCount = selectedShips
-    .flatMap((ship) => ship.assignedUpgrades)
-    .filter((upgrade) => upgrade.type === "commander").length;
+  const commanderCount = useMemo(() => 
+    selectedShips
+      .flatMap((ship) => ship.assignedUpgrades)
+      .filter((upgrade) => upgrade.type === "commander").length,
+    [selectedShips]
+  );
 
-  const fleetViolations = checkFleetViolations(
+  const fleetViolations = useMemo(() => checkFleetViolations(
     gamemode as Gamemode,
     {
       points,
@@ -308,7 +312,64 @@ export default function FleetBuilder({
       selectedNavigationObjectives,
       commanderCount,
     }
-  );
+  ), [gamemode, points, totalSquadronPoints, selectedShips, selectedSquadrons, selectedAssaultObjectives, selectedDefenseObjectives, selectedNavigationObjectives, commanderCount]);
+
+  // Synchronize total points calculation
+  useEffect(() => {
+    const calculatedShipPoints = selectedShips.reduce((total, ship) => {
+      const shipUpgradePoints = ship.assignedUpgrades.reduce((upgradeTotal, upgrade) => upgradeTotal + upgrade.points, 0);
+      return total + ship.points + shipUpgradePoints;
+    }, 0);
+
+    const calculatedSquadronPoints = selectedSquadrons.reduce((total, squadron) => {
+      return total + (squadron.points * (squadron.count || 1));
+    }, 0);
+
+    const calculatedTotalPoints = calculatedShipPoints + calculatedSquadronPoints;
+
+    // Update if there's a discrepancy
+    if (calculatedShipPoints !== totalShipPoints) {
+      setTotalShipPoints(calculatedShipPoints);
+    }
+    if (calculatedSquadronPoints !== totalSquadronPoints) {
+      setTotalSquadronPoints(calculatedSquadronPoints);
+    }
+    if (calculatedTotalPoints !== points) {
+      setPoints(calculatedTotalPoints);
+    }
+  }, [selectedShips, selectedSquadrons, totalShipPoints, totalSquadronPoints, points]);
+
+  // Synchronize hasCommander state and disable commander slots on other ships
+  useEffect(() => {
+    const currentlyHasCommander = selectedShips.some(ship => 
+      ship.assignedUpgrades.some(upgrade => upgrade.type === "commander")
+    );
+    
+    if (currentlyHasCommander !== hasCommander) {
+      setHasCommander(currentlyHasCommander);
+    }
+
+    // Update disabled upgrades for commander slots
+    setDisabledUpgrades(prevDisabled => {
+      const newDisabledUpgrades = { ...prevDisabled };
+      selectedShips.forEach(ship => {
+        const shipHasCommander = ship.assignedUpgrades.some(upgrade => upgrade.type === "commander");
+        const currentDisabled = newDisabledUpgrades[ship.id] || [];
+        
+        if (currentlyHasCommander && !shipHasCommander) {
+          // Add commander to disabled if another ship has one and this ship doesn't
+          if (!currentDisabled.includes("commander")) {
+            newDisabledUpgrades[ship.id] = [...currentDisabled, "commander"];
+          }
+        } else if (!currentlyHasCommander) {
+          // Remove commander from disabled if no ship has a commander
+          newDisabledUpgrades[ship.id] = currentDisabled.filter(type => type !== "commander");
+        }
+      });
+      
+      return newDisabledUpgrades;
+    });
+  }, [selectedShips, hasCommander]);
 
   useEffect(() => {
     // Cleanup function to reset state when component unmounts
@@ -341,9 +402,11 @@ export default function FleetBuilder({
 
 
   const generateUniqueShipId = (): string => {
+    const newCounter = shipIdCounter + 1;
+    setShipIdCounter(newCounter);
     const timestamp = Date.now();
     const random = Math.random().toString(36).substring(2, 8);
-    return `ship_${timestamp}_${random}`;
+    return `ship_${timestamp}_${newCounter}_${random}`;
   };
 
   const handleAddShip = () => {
@@ -362,28 +425,15 @@ export default function FleetBuilder({
       source: ship.source || "regular",
     };
     setSelectedShips([...selectedShips, newShip]);
-    setPreviousPoints(points);
-    setPreviousShipPoints(totalShipPoints);
-    const newPoints = points + ship.points;
-    setPoints(newPoints);
-    setTotalShipPoints(totalShipPoints + ship.points);
     setShowShipSelector(false);
   };
 
   const handleRemoveShip = (id: string) => {
-    const shipToRemove = selectedShips.find((ship) => ship.id === id);
-    if (shipToRemove) {
-      const shipPoints =
-        shipToRemove.points +
-        shipToRemove.assignedUpgrades.reduce(
-          (total, upgrade) => total + upgrade.points,
-          0
-        );
-
-      // Check if the ship had a commander upgrade
-      const hadCommander = shipToRemove.assignedUpgrades.some(
-        (upgrade) => upgrade.type === "commander"
-      );
+    setSelectedShips((prevShips) => {
+      const shipToRemove = prevShips.find((ship) => ship.id === id);
+      if (!shipToRemove) {
+        return prevShips; // Ship not found, no changes
+      }
 
       // Remove unique class names for the ship and its upgrades
       if (shipToRemove.unique) {
@@ -398,30 +448,31 @@ export default function FleetBuilder({
         }
       });
 
-      setSelectedShips(selectedShips.filter((ship) => ship.id !== id));
-      setPreviousPoints(points);
-      setPreviousShipPoints(totalShipPoints);
-      const newPoints = points - shipPoints;
-      setPoints(newPoints);
-      setTotalShipPoints(totalShipPoints - shipPoints);
+      // Return the filtered array
+      return prevShips.filter((ship) => ship.id !== id);
+    });
 
-      // Clear disabled and enabled upgrades for the removed ship
-      setDisabledUpgrades((prev) => {
-        const newDisabled = { ...prev };
-        delete newDisabled[id];
-        return newDisabled;
-      });
-      setEnabledUpgrades((prev) => {
-        const newEnabled = { ...prev };
-        delete newEnabled[id];
-        return newEnabled;
-      });
-
-      // Set hasCommander to false if the removed ship had a commander
-      if (hadCommander) {
-        setHasCommander(false);
-      }
-    }
+    // Clear disabled and enabled upgrades for the removed ship
+    setDisabledUpgrades((prev) => {
+      const newDisabled = { ...prev };
+      delete newDisabled[id];
+      return newDisabled;
+    });
+    setEnabledUpgrades((prev) => {
+      const newEnabled = { ...prev };
+      delete newEnabled[id];
+      return newEnabled;
+    });
+    setFilledSlots((prev) => {
+      const newFilled = { ...prev };
+      delete newFilled[id];
+      return newFilled;
+    });
+    setGreyUpgrades((prev) => {
+      const newGrey = { ...prev };
+      delete newGrey[id];
+      return newGrey;
+    });
   };
 
   const handleUpgradeClick = (
@@ -439,7 +490,6 @@ export default function FleetBuilder({
   };
 
   const handleSelectUpgrade = (upgrade: Upgrade) => {
-    let totalPointDifference = 0;
 
     setSelectedShips((prevShips) =>
       prevShips.map((ship) => {
@@ -451,8 +501,6 @@ export default function FleetBuilder({
               u.type === currentUpgradeType &&
               u.slotIndex === currentUpgradeIndex
           );
-
-          let pointDifference = upgrade.points;
 
           // Remove old upgrade if it exists
           if (existingUpgradeIndex !== -1) {
@@ -471,7 +519,6 @@ export default function FleetBuilder({
                   );
                   const enabledUpgrade =
                     updatedAssignedUpgrades[lastEnabledUpgradeIndex];
-                  pointDifference -= enabledUpgrade.points;
                   handleRemoveUpgrade(
                     ship.id,
                     enabledUpgrade.type,
@@ -496,13 +543,10 @@ export default function FleetBuilder({
                 removeUniqueClassName(uc)
               );
             }
-            pointDifference = upgrade.points - oldUpgrade.points;
             updatedAssignedUpgrades[existingUpgradeIndex] = newUpgrade;
           } else {
             updatedAssignedUpgrades.push(newUpgrade);
           }
-
-          totalPointDifference += pointDifference;
 
           // Add new unique class
           if (upgrade.unique) {
@@ -603,14 +647,8 @@ export default function FleetBuilder({
       })
     );
 
-    setPreviousPoints(points);
-    setPreviousShipPoints(totalShipPoints);
-    setPoints((prevPoints) => prevPoints + totalPointDifference);
-    setTotalShipPoints((prevTotal) => prevTotal + totalPointDifference);
-
+    // Move ship with commander to the front if it's a commander upgrade
     if (upgrade.type === "commander") {
-      setHasCommander(true);
-      // Move ship with commander to the front
       setSelectedShips(prevShips => {
         const shipIndex = prevShips.findIndex(ship => ship.id === currentShipId);
         if (shipIndex > 0) {
@@ -626,13 +664,19 @@ export default function FleetBuilder({
     setShowUpgradeSelector(false);
 
     // Handle grey upgrades
-    const newGreyUpgrades = [...(greyUpgrades[currentShipId] || [])];
-    if (upgrade.restrictions?.grey_upgrades) {
-      newGreyUpgrades.push(...upgrade.restrictions.grey_upgrades);
-    }
-    setGreyUpgrades({
-      ...greyUpgrades,
-      [currentShipId]: newGreyUpgrades,
+    setGreyUpgrades(prevGrey => {
+      const newGreyUpgrades = [...(prevGrey[currentShipId] || [])];
+      if (upgrade.restrictions?.grey_upgrades) {
+        upgrade.restrictions.grey_upgrades.forEach(greyUpgrade => {
+          if (!newGreyUpgrades.includes(greyUpgrade)) {
+            newGreyUpgrades.push(greyUpgrade);
+          }
+        });
+      }
+      return {
+        ...prevGrey,
+        [currentShipId]: newGreyUpgrades,
+      };
     });
   };
 
@@ -753,10 +797,6 @@ export default function FleetBuilder({
             return aIndex - bIndex;
           });
 
-          if (upgrade.type === "commander") {
-            setHasCommander(true);
-          }
-
           return {
             ...ship,
             assignedUpgrades: sortedUpgrades,
@@ -766,10 +806,7 @@ export default function FleetBuilder({
         return ship;
       })
     );
-
-    setPoints((prevPoints) => prevPoints + upgrade.points);
-    setTotalShipPoints((prevTotal) => prevTotal + upgrade.points);
-  }, [enabledUpgrades, setEnabledUpgrades, setFilledSlots, setHasCommander]);
+      }, [enabledUpgrades, setEnabledUpgrades, setFilledSlots, addUniqueClassName, disabledUpgrades]);
 
   const handleRemoveUpgrade = useCallback(
     (shipId: string, upgradeType: string, upgradeIndex: number) => {
@@ -777,10 +814,6 @@ export default function FleetBuilder({
       const upgradeToRemove = shipToUpdate?.assignedUpgrades.find(
         (u) => u.type === upgradeType && u.slotIndex === upgradeIndex
       );
-
-      if (upgradeToRemove && upgradeToRemove.type === "commander") {
-        setHasCommander(false);
-      }
 
       // Find and remove all flagship upgrades from the ship, but only if the current upgrade is not itself a flagship upgrade
       const currentUpgradeIsFlagship = upgradeToRemove?.restrictions?.flagship === true;
@@ -796,7 +829,6 @@ export default function FleetBuilder({
         });
       }
 
-      console.log("Before removal:", selectedShips);
       setSelectedShips((prevShips) =>
         prevShips.map((ship) => {
           if (ship.id === shipId) {
@@ -804,10 +836,7 @@ export default function FleetBuilder({
               (u) => u.type === upgradeType && u.slotIndex === upgradeIndex
             );
             if (upgradeToRemove) {
-              console.log("Removing upgrade:", upgradeToRemove);
-
               let upgradesToRemove = [upgradeToRemove];
-              let pointsToRemove = upgradeToRemove.points;
 
               // Check for enabled upgrades
               if (upgradeToRemove.restrictions?.enable_upgrades) {
@@ -821,10 +850,6 @@ export default function FleetBuilder({
                   ...enabledUpgradesToRemove,
                   upgradeToRemove,
                 ];
-                pointsToRemove += enabledUpgradesToRemove.reduce(
-                  (sum, u) => sum + u.points,
-                  0
-                );
 
                 // Remove the enabled upgrade slots from availableUpgrades
                 upgradeToRemove.restrictions.enable_upgrades.forEach(
@@ -866,13 +891,17 @@ export default function FleetBuilder({
                   ),
                 }));
 
-                // Update grey_upgrades
-                setGreyUpgrades((prev) => ({
-                  ...prev,
-                  [shipId]: (prev[shipId] || []).filter(
+                // Update grey_upgrades properly
+                setGreyUpgrades((prev) => {
+                  const currentGrey = prev[shipId] || [];
+                  const updatedGrey = currentGrey.filter(
                     (u) => !upgrade.restrictions?.grey_upgrades?.includes(u)
-                  ),
-                }));
+                  );
+                  return {
+                    ...prev,
+                    [shipId]: updatedGrey,
+                  };
+                });
 
                 // If it's a title, remove the 'title' from disabled upgrades
                 if (upgrade.type === "title") {
@@ -922,11 +951,6 @@ export default function FleetBuilder({
                 });
               });
 
-              setPreviousPoints(points);
-              setPreviousShipPoints(totalShipPoints);
-              setPoints((prevPoints) => prevPoints - pointsToRemove);
-              setTotalShipPoints((prevTotal) => prevTotal - pointsToRemove);
-
               return {
                 ...ship,
                 points: ship.points, // Keep the ship's base points unchanged
@@ -940,19 +964,11 @@ export default function FleetBuilder({
           return ship;
         })
       );
-      console.log("After removal:", selectedShips);
     },
     [
-      points,
       removeUniqueClassName,
-      totalShipPoints,
       selectedShips,
       setSelectedShips,
-      setPreviousPoints,
-      setPoints,
-      setTotalShipPoints,
-      setHasCommander,
-      greyUpgrades
     ]
   );
 
@@ -1002,7 +1018,7 @@ export default function FleetBuilder({
       source: shipToCopy.source
     };
   
-    let pointsToAdd = newShip.points;
+
   
     // Copy over non-unique upgrades that don't add slots
     shipToCopy.assignedUpgrades.forEach((upgrade) => {
@@ -1030,14 +1046,9 @@ export default function FleetBuilder({
         slotIndex: upgrade.slotIndex,
         source: upgrade.source
       });
-      pointsToAdd += freshUpgrade.points;
     });
   
     setSelectedShips((prevShips) => [...prevShips, newShip]);
-    setPreviousPoints(points);
-    setPreviousShipPoints(totalShipPoints);
-    setPoints((prevPoints) => prevPoints + pointsToAdd);
-    setTotalShipPoints((prevTotal) => prevTotal + pointsToAdd);
   };
 
   const handleAddSquadron = () => {
@@ -1057,11 +1068,7 @@ export default function FleetBuilder({
               s["unique-class"].forEach((uc) => removeUniqueClassName(uc));
             }
 
-            const pointDifference = squadron.points - s.points;
-            setPreviousPoints(points);
-            setPreviousSquadronPoints(totalSquadronPoints);
-            setPoints((prevPoints) => prevPoints + pointDifference);
-            setTotalSquadronPoints((prevTotal) => prevTotal + pointDifference);
+
 
             // Add unique class names for the new squadron
             if (squadron.unique) {
@@ -1121,11 +1128,7 @@ export default function FleetBuilder({
       ];
     });
 
-    setPreviousPoints(points);
-    setPreviousSquadronPoints(totalSquadronPoints);
-    const newPoints = points + squadron.points;
-    setPoints(newPoints);
-    setTotalSquadronPoints(totalSquadronPoints + squadron.points);
+
 
     // Add unique class names for the new squadron
     if (squadron.unique) {
@@ -1136,13 +1139,17 @@ export default function FleetBuilder({
     }
     
     return squadronId;
-  }, [addUniqueClassName, points, selectedSquadrons, setPoints, setSelectedSquadrons, setTotalSquadronPoints, totalSquadronPoints]);
+  }, [addUniqueClassName, selectedSquadrons, setSelectedSquadrons]);
 
   const handleRemoveSquadron = (id: string) => {
-    const squadronToRemove = selectedSquadrons.find(
-      (squadron) => squadron.id === id
-    );
-    if (squadronToRemove) {
+    setSelectedSquadrons((prevSquadrons) => {
+      const squadronToRemove = prevSquadrons.find(
+        (squadron) => squadron.id === id
+      );
+      if (!squadronToRemove) {
+        return prevSquadrons; // Squadron not found, no changes
+      }
+
       if (squadronToRemove.unique) {
         removeUniqueClassName(squadronToRemove.name);
         if (squadronToRemove["ace-name"]) {
@@ -1155,18 +1162,8 @@ export default function FleetBuilder({
         );
       }
 
-      setSelectedSquadrons(
-        selectedSquadrons.filter((squadron) => squadron.id !== id)
-      );
-      setPreviousPoints(points);
-      setPreviousSquadronPoints(totalSquadronPoints);
-      const newPoints =
-        points - squadronToRemove.points * squadronToRemove.count;
-      setPoints(newPoints);
-      setTotalSquadronPoints(
-        totalSquadronPoints - squadronToRemove.points * squadronToRemove.count
-      );
-    }
+      return prevSquadrons.filter((squadron) => squadron.id !== id);
+    });
   };
 
   const handleIncrementSquadron = useCallback((id: string) => {
@@ -1177,52 +1174,37 @@ export default function FleetBuilder({
           : squadron
       )
     );
-    const squadron = selectedSquadrons.find((s) => s.id === id);
-    if (squadron) {
-      setPreviousPoints(points);
-      setPreviousSquadronPoints(totalSquadronPoints);
-      const newPoints = points + squadron.points;
-      setPoints(newPoints);
-      setTotalSquadronPoints(totalSquadronPoints + squadron.points);
-    }
-  }, [points, selectedSquadrons, setPoints, setSelectedSquadrons, setTotalSquadronPoints, totalSquadronPoints]);
+  }, [selectedSquadrons, setSelectedSquadrons]);
 
   const handleDecrementSquadron = (id: string) => {
     setSelectedSquadrons((prevSquadrons) => {
-      return prevSquadrons.reduce((acc, squadron) => {
-        if (squadron.id === id) {
-          const newCount = (squadron.count || 1) - 1;
-          if (newCount === 0) {
-            // Squadron will be removed
-            setPreviousPoints(points);
-            setPreviousSquadronPoints(totalSquadronPoints);
-            const newPoints = points - squadron.points;
-            setPoints(newPoints);
-            setTotalSquadronPoints(totalSquadronPoints - squadron.points);
+      const squadronIndex = prevSquadrons.findIndex(squadron => squadron.id === id);
+      if (squadronIndex === -1) {
+        return prevSquadrons; // Squadron not found
+      }
 
-            // Remove unique class names if it's the last squadron
-            if (squadron.unique) {
-              removeUniqueClassName(squadron.name);
-            }
-            if (squadron["unique-class"]) {
-              squadron["unique-class"].forEach((uc) =>
-                removeUniqueClassName(uc)
-              );
-            }
-            // Don't add this squadron to the accumulator
-            return acc;
-          } else {
-            // Squadron count is decremented
-            setPreviousPoints(points);
-            setPreviousSquadronPoints(totalSquadronPoints);
-            const newPoints = points - squadron.points;
-            setPoints(newPoints);
-            setTotalSquadronPoints(totalSquadronPoints - squadron.points);
-            return [...acc, { ...squadron, count: newCount }];
-          }
+      const squadron = prevSquadrons[squadronIndex];
+      const newCount = (squadron.count || 1) - 1;
+      
+      if (newCount === 0) {
+        // Squadron will be removed
+        // Remove unique class names if it's the last squadron
+        if (squadron.unique) {
+          removeUniqueClassName(squadron.name);
         }
-        return [...acc, squadron];
-      }, [] as Squadron[]);
+        if (squadron["unique-class"]) {
+          squadron["unique-class"].forEach((uc) =>
+            removeUniqueClassName(uc)
+          );
+        }
+        // Remove the squadron from the array
+        return prevSquadrons.filter((_, index) => index !== squadronIndex);
+      } else {
+        // Squadron count is decremented
+        const newSquadrons = [...prevSquadrons];
+        newSquadrons[squadronIndex] = { ...squadron, count: newCount };
+        return newSquadrons;
+      }
     });
   };
 
@@ -1295,13 +1277,13 @@ export default function FleetBuilder({
     });
 
     setSelectedShips([]);
-    setPreviousPoints(points);
-    setPreviousShipPoints(totalShipPoints);
-    setPoints(totalSquadronPoints); // Set points to just squadron points
     setTotalShipPoints(0);
-    setHasCommander(false);
+    setDisabledUpgrades({});
+    setEnabledUpgrades({});
+    setFilledSlots({});
+    setGreyUpgrades({});
     localStorage.removeItem(`savedFleet_${faction}`);
-  }, [points, totalShipPoints, totalSquadronPoints, removeUniqueClassName, faction, selectedShips]);
+      }, [removeUniqueClassName, faction, selectedShips]);
 
   const clearAllSquadrons = useCallback(() => {
     selectedSquadrons.forEach((squadron) => {
@@ -1313,13 +1295,10 @@ export default function FleetBuilder({
       }
     });
 
-    setPreviousPoints(points);
-    setPreviousSquadronPoints(totalSquadronPoints);
-    setPoints(totalShipPoints); // Set points to just ship points
     setTotalSquadronPoints(0);
     setSelectedSquadrons([]);
     localStorage.removeItem(`savedFleet_${faction}`);
-  }, [points, totalShipPoints, totalSquadronPoints, removeUniqueClassName, faction, selectedSquadrons]);
+  }, [removeUniqueClassName, faction, selectedSquadrons]);
 
   const handleMoveShip = (id: string, direction: 'up' | 'down') => {
     setSelectedShips(prevShips => {
@@ -1885,17 +1864,52 @@ export default function FleetBuilder({
 
     const skippedItems: string[] = [];
 
-    // Reset the fleet
+    // Reset the fleet immediately and synchronously
     console.log("Resetting fleet...");
-    clearAllShips();
-    clearAllSquadrons();
+    
+    // Clear unique class names for existing fleet before clearing
+    selectedShips.forEach((ship) => {
+      if (ship.unique) {
+        removeUniqueClassName(ship.name);
+      }
+      ship.assignedUpgrades.forEach((upgrade) => {
+        if (upgrade.unique) {
+          removeUniqueClassName(upgrade.name);
+        }
+        if (upgrade["unique-class"]) {
+          upgrade["unique-class"].forEach((uc) => removeUniqueClassName(uc));
+        }
+      });
+    });
+    
+    selectedSquadrons.forEach((squadron) => {
+      if (squadron.unique) {
+        removeUniqueClassName(squadron.name);
+      }
+      if (squadron["unique-class"]) {
+        squadron["unique-class"].forEach((uc) => removeUniqueClassName(uc));
+      }
+    });
+
+    // Clear all state synchronously
+    setSelectedShips([]);
+    setSelectedSquadrons([]);
     setSelectedAssaultObjectives([]);
     setSelectedDefenseObjectives([]);
     setSelectedNavigationObjectives([]);
+    setDisabledUpgrades({});
+    setEnabledUpgrades({});
+    setFilledSlots({});
+    setGreyUpgrades({});
+    setPoints(0);
+    setTotalShipPoints(0);
+    setTotalSquadronPoints(0);
+    
+    // Reset ID counters to avoid conflicts
+    setShipIdCounter(0);
+    setSquadronIdCounter(0);
 
     let processingSquadrons = false;
-    let totalPoints = 0;
-    let squadronPoints = 0;
     const shipsToAdd: Ship[] = [];
     const upgradesToAdd: { shipId: string; upgrade: Upgrade }[] = [];
     let currentShipId: string | null = null;
@@ -1955,8 +1969,7 @@ export default function FleetBuilder({
               points: parseInt(shipPoints) // Add this line to ensure points are set correctly
             };
             handleAddingSquadron(selectedSquadron);
-            // Add to squadron points total
-            squadronPoints += parseInt(shipPoints); // Add this line to update total squadron points
+
             return null;
           } else {
             console.log(`Neither ship nor squadron found: ${shipName}`);
@@ -1985,21 +1998,13 @@ export default function FleetBuilder({
         }
         continue;
       } else if (line.startsWith("Total Points:")) {
-        const pointsMatch = line.match(/Total Points:\s*(\d+)/);
-        if (pointsMatch) {
-          totalPoints = parseInt(pointsMatch[1]);
-          console.log(`Setting total points to: ${totalPoints}`);
-        }
+        // Skip total points line - will be calculated automatically
         continue;
       } else if (line.startsWith("Squadrons:")) {
         processingSquadrons = true;
         continue;
       } else if (line.startsWith("= ") && processingSquadrons) {
-        const squadronPointsMatch = line.match(/=\s*(\d+)\s*Points/);
-        if (squadronPointsMatch) {
-          squadronPoints = parseInt(squadronPointsMatch[1]);
-          console.log(`Setting squadron points to: ${squadronPoints}`);
-        }
+        // Skip squadron points line - will be calculated automatically
         continue;
       } else if (
         (line.startsWith("Assault:") || line.startsWith("Defense:") || line.startsWith("Navigation:") || 
@@ -2152,9 +2157,6 @@ export default function FleetBuilder({
           const count = countStr ? parseInt(countStr) : 1;
           const pointsPerSquadron = Math.round(parseInt(totalPoints) / count);
           
-          // Add to squadron points total
-          squadronPoints += parseInt(totalPoints);
-          
           const squadronKey = getAliasKey(
             aliases,
             `${squadronName} (${pointsPerSquadron})`
@@ -2203,27 +2205,17 @@ export default function FleetBuilder({
       }
     }
 
-    // Add all ships to the fleet
-    setSelectedShips(shipsToAdd);
+    // Add all ships to the fleet after a small delay to ensure state is cleared
+    setTimeout(() => {
+      setSelectedShips(shipsToAdd);
 
-    // Add upgrades to ships
-    upgradesToAdd.forEach(({ shipId, upgrade }) => {
-      handleAddUpgrade(shipId, upgrade);
-    });
-
-    // Calculate total ship points (ships + upgrades)
-    const totalShipPoints = shipsToAdd.reduce((total, ship) => {
-      const shipTotal = ship.points + 
-        upgradesToAdd
-          .filter(u => u.shipId === ship.id)
-          .reduce((upgradeTotal, { upgrade }) => upgradeTotal + upgrade.points, 0);
-      return total + shipTotal;
-    }, 0);
-
-    // Set all point values
-    setTotalShipPoints(totalShipPoints);
-    setTotalSquadronPoints(squadronPoints);
-    setPoints(totalShipPoints + squadronPoints);
+      // Add upgrades to ships after ships are set
+      setTimeout(() => {
+        upgradesToAdd.forEach(({ shipId, upgrade }) => {
+          handleAddUpgrade(shipId, upgrade);
+        });
+      }, 50);
+    }, 50);
 
     if (skippedItems.length > 0) {
       alert(
@@ -3262,9 +3254,10 @@ export default function FleetBuilder({
   }, [initializeUniqueClasses, resetUniqueClassNames]);
 
   const generateUniqueSquadronId = (): string => {
-    setSquadronIdCounter(prev => prev + 1);
+    const newCounter = squadronIdCounter + 1;
+    setSquadronIdCounter(newCounter);
     const randomPart = Math.floor(Math.random() * 10000).toString().padStart(4, "0");
-    return `squadron_${squadronIdCounter}_${randomPart}`;
+    return `squadron_${newCounter}_${randomPart}`;
   };
 
   const handleClearFleet = useCallback(() => {
@@ -3277,14 +3270,16 @@ export default function FleetBuilder({
     setPreviousPoints(0);
     setPreviousShipPoints(0);
     setPreviousSquadronPoints(0);
-    setHasCommander(false);
     setDisabledUpgrades({});
     setEnabledUpgrades({});
     setFilledSlots({});
+    setGreyUpgrades({});
     setSelectedAssaultObjectives([]);
     setSelectedDefenseObjectives([]);
     setSelectedNavigationObjectives([]);
     setUniqueClassNames([]);
+    setShipIdCounter(0);
+    setSquadronIdCounter(0);
     console.log("clearing fleet state");
   }, [setPoints, setTotalShipPoints, setTotalSquadronPoints]); // Add these dependencies
 
