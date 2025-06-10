@@ -19,9 +19,10 @@ interface SelectedSquadronProps {
   onMoveDown: (id: string) => void;
   isFirst: boolean;
   isLast: boolean;
+  selectedSquadrons: Squadron[];
 }
 
-export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement, onSwapSquadron, onMoveUp, onMoveDown, isFirst, isLast }: SelectedSquadronProps) {
+export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement, onSwapSquadron, onMoveUp, onMoveDown, isFirst, isLast, selectedSquadrons }: SelectedSquadronProps) {
   const [{ x }, api] = useSpring(() => ({ x: 0 }));
   const isDragging = useRef(false);
   const startX = useRef(0);
@@ -69,9 +70,9 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
           onDecrement(squadron.id);
         }
       } else if (currentX > SWIPE_THRESHOLD) {
-        if (squadron.unique) {
+        if (squadron.unique && (!squadron.unique_limit || squadron.unique_limit <= 1)) {
           onSwapSquadron(squadron.id);
-        } else {
+        } else if (shouldShowIncrementButtons() && canIncrement()) {
           onIncrement(squadron.id);
         }
       }
@@ -82,6 +83,39 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
 
   const count = squadron.count || 1;
   const totalPoints = squadron.points * count;
+
+  // Determine if increment/decrement buttons should be shown
+  const shouldShowIncrementButtons = () => {
+    if (!squadron.unique) {
+      return true; // Always show for non-unique squadrons
+    }
+    
+    if (squadron.unique_limit && squadron.unique_limit > 1) {
+      // For unique squadrons with unique_limit > 1, show buttons
+      return true;
+    }
+    
+    return false; // Don't show for unique squadrons without unique_limit > 1
+  };
+
+  // Calculate current count of this squadron type (for unique_limit checking)
+  const getCurrentSquadronTypeCount = () => {
+    return selectedSquadrons.reduce((count, s) => {
+      if (s.name === squadron.name) {
+        return count + (s.count || 1);
+      }
+      return count;
+    }, 0);
+  };
+
+  // Check if we can increment (for unique_limit checking)
+  const canIncrement = () => {
+    if (!squadron.unique || !squadron.unique_limit || squadron.unique_limit <= 1) {
+      return true; // No limit to check
+    }
+    
+    return getCurrentSquadronTypeCount() < squadron.unique_limit;
+  };
 
   const handleImageTouch = (e: React.TouchEvent) => {
     e.preventDefault();
@@ -140,13 +174,19 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
                     <div className="text-sm sm:text-base">
                       {totalPoints} {!squadron.unique ? 'pts' : 'points'}
                     </div>
-                    {!squadron.unique && (
+                    {shouldShowIncrementButtons() && (
                       <>
                         <Button variant="ghost" size="sm" onClick={() => onDecrement(squadron.id)} className="text-red-500 p-1">
                           <Minus size={16} />
                         </Button>
                         <span>{count}</span>
-                        <Button variant="ghost" size="sm" onClick={() => onIncrement(squadron.id)} className="text-blue-500 p-1">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => onIncrement(squadron.id)} 
+                          className="text-blue-500 p-1"
+                          disabled={!canIncrement()}
+                        >
                           <Plus size={16} />
                         </Button>
                       </>
@@ -183,7 +223,10 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
           </CardContent>
         </Card>
         <div className="absolute left-0 top-0 bottom-0 flex items-center justify-center w-12 bg-zinc-800 bg-opacity-75" style={{ transform: 'translateX(-100%)' }}>
-          {squadron.unique ? <ArrowLeftRight size={20} className="text-blue-500" /> : <Plus size={20} className="text-blue-500" />}
+          {squadron.unique && (!squadron.unique_limit || squadron.unique_limit <= 1) ? 
+            <ArrowLeftRight size={20} className="text-blue-500" /> : 
+            <Plus size={20} className="text-blue-500" />
+          }
         </div>
         <div className="absolute right-0 top-0 bottom-0 flex items-center justify-center w-12 bg-zinc-800 bg-opacity-75" style={{ transform: 'translateX(100%)' }}>
           {squadron.count === 1 ? <Trash2 size={20} className="text-red-500" /> : <Minus size={20} className="text-red-500" />}

@@ -111,6 +111,7 @@ export interface Squadron {
   };
   ace: boolean;
   "unique-class": string[];
+  unique_limit?: number;
   source: ContentSource;
   searchableText: string;
   release?: string;
@@ -1185,13 +1186,72 @@ export default function FleetBuilder({
   };
 
   const handleIncrementSquadron = useCallback((id: string) => {
-    setSelectedSquadrons((squadrons) =>
-      squadrons.map((squadron) =>
-        squadron.id === id
-          ? { ...squadron, count: (squadron.count || 1) + 1 }
-          : squadron
-      )
-    );
+    const squadron = selectedSquadrons.find(s => s.id === id);
+    if (!squadron) return;
+
+    // Check if this is a unique squadron with unique_limit > 1
+    if (squadron.unique && squadron.unique_limit && squadron.unique_limit > 1) {
+      // Count existing squadrons of the same type
+      const existingCount = selectedSquadrons.reduce((count, s) => {
+        if (s.name === squadron.name) {
+          return count + (s.count || 1);
+        }
+        return count;
+      }, 0);
+
+      // Check if we've reached the limit
+      if (existingCount >= squadron.unique_limit) {
+        return; // Don't increment if at limit
+      }
+
+      if (squadron.ace) {
+        // For ace squadrons with unique_limit > 1, create a new squadron
+        const newSquadron: Squadron = {
+          ...squadron,
+          id: generateUniqueSquadronId(),
+          count: 1,
+        };
+        
+        setSelectedSquadrons((squadrons) => {
+          // Find where to insert the new squadron (keep unique squadrons together and sorted)
+          const uniqueSquadrons = squadrons.filter(s => s.unique);
+          const regularSquadrons = squadrons.filter(s => !s.unique);
+          
+          const insertIndex = uniqueSquadrons.findIndex(s => {
+            const currentName = s['ace-name'] || s.name;
+            const newName = newSquadron['ace-name'] || newSquadron.name;
+            return currentName.localeCompare(newName) > 0;
+          });
+
+          if (insertIndex === -1) {
+            // Add to end of unique squadrons
+            return [...uniqueSquadrons, newSquadron, ...regularSquadrons];
+          }
+
+          // Insert at the correct position
+          return [
+            ...uniqueSquadrons.slice(0, insertIndex),
+            newSquadron,
+            ...uniqueSquadrons.slice(insertIndex),
+            ...regularSquadrons
+          ];
+        });
+      } else {
+        // For non-ace unique squadrons with unique_limit > 1, increment normally
+        setSelectedSquadrons((squadrons) =>
+          squadrons.map((s) =>
+            s.id === id ? { ...s, count: (s.count || 1) + 1 } : s
+          )
+        );
+      }
+    } else {
+      // Default behavior for non-unique squadrons or unique squadrons without unique_limit > 1
+      setSelectedSquadrons((squadrons) =>
+        squadrons.map((s) =>
+          s.id === id ? { ...s, count: (s.count || 1) + 1 } : s
+        )
+      );
+    }
   }, [selectedSquadrons, setSelectedSquadrons]);
 
   const handleDecrementSquadron = (id: string) => {
@@ -3522,6 +3582,7 @@ export default function FleetBuilder({
                       onMoveDown={() => handleMoveSquadron(squadron.id, 'down')}
                       isFirst={squadron.id === selectedSquadrons[0].id}
                       isLast={squadron.id === selectedSquadrons[selectedSquadrons.length - 1].id}
+                      selectedSquadrons={selectedSquadrons}
                     />
                   ))}
                 </div>
