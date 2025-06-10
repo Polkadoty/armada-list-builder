@@ -327,7 +327,7 @@ export default function UpgradeSelector({
       return false;
     }
 
-    if (upgrade["unique-class"]?.some(uc => uniqueClassNames.includes(uc))) {
+    if (upgrade["unique-class"]?.some(uc => uc !== "" && uniqueClassNames.includes(uc))) {
       return false;
     }
 

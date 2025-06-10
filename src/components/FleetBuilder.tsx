@@ -384,7 +384,9 @@ export default function FleetBuilder({
             removeUniqueClassName(upgrade.name);
           }
           if (upgrade["unique-class"]) {
-            upgrade["unique-class"].forEach(uc => removeUniqueClassName(uc));
+            upgrade["unique-class"]
+              .filter(uc => uc !== "")
+              .forEach(uc => removeUniqueClassName(uc));
           }
         });
       });
@@ -394,7 +396,9 @@ export default function FleetBuilder({
           removeUniqueClassName(squadron.name);
         }
         if (squadron["unique-class"]) {
-          squadron["unique-class"].forEach(uc => removeUniqueClassName(uc));
+          squadron["unique-class"]
+            .filter(uc => uc !== "")
+            .forEach(uc => removeUniqueClassName(uc));
         }
       });
     };
@@ -444,7 +448,9 @@ export default function FleetBuilder({
           removeUniqueClassName(upgrade.name);
         }
         if (upgrade["unique-class"]) {
-          upgrade["unique-class"].forEach((uc) => removeUniqueClassName(uc));
+          upgrade["unique-class"]
+            .filter(uc => uc !== "")
+            .forEach((uc) => removeUniqueClassName(uc));
         }
       });
 
@@ -539,9 +545,9 @@ export default function FleetBuilder({
               removeUniqueClassName(oldUpgrade.name);
             }
             if (oldUpgrade["unique-class"]) {
-              oldUpgrade["unique-class"].forEach((uc) =>
-                removeUniqueClassName(uc)
-              );
+              oldUpgrade["unique-class"]
+                .filter(uc => uc !== "")
+                .forEach((uc) => removeUniqueClassName(uc));
             }
             updatedAssignedUpgrades[existingUpgradeIndex] = newUpgrade;
           } else {
@@ -553,7 +559,9 @@ export default function FleetBuilder({
             addUniqueClassName(upgrade.name);
           }
           if (upgrade["unique-class"]) {
-            upgrade["unique-class"].forEach((uc) => addUniqueClassName(uc));
+            upgrade["unique-class"]
+              .filter(uc => uc !== "")
+              .forEach((uc) => addUniqueClassName(uc));
           }
 
           // Handle disabled upgrades
@@ -732,9 +740,11 @@ export default function FleetBuilder({
             setTimeout(() => addUniqueClassName(upgrade.name), 0);
           }
           if (upgrade["unique-class"]) {
-            upgrade["unique-class"].forEach((uc) => {
-              setTimeout(() => addUniqueClassName(uc), 0);
-            });
+            upgrade["unique-class"]
+              .filter(uc => uc !== "")
+              .forEach((uc) => {
+                setTimeout(() => addUniqueClassName(uc), 0);
+              });
           }
 
           // Handle disabled upgrades
@@ -870,9 +880,11 @@ export default function FleetBuilder({
                   setTimeout(() => removeUniqueClassName(upgrade.name), 0);
                 }
                 if (upgrade["unique-class"]) {
-                  upgrade["unique-class"].forEach((uc) => {
-                    setTimeout(() => removeUniqueClassName(uc), 0);
-                  });
+                  upgrade["unique-class"]
+                    .filter(uc => uc !== "")
+                    .forEach((uc) => {
+                      setTimeout(() => removeUniqueClassName(uc), 0);
+                    });
                 }
 
                 // Update disabled upgrades
@@ -1065,7 +1077,9 @@ export default function FleetBuilder({
               removeUniqueClassName(s.name);
             }
             if (s["unique-class"]) {
-              s["unique-class"].forEach((uc) => removeUniqueClassName(uc));
+              s["unique-class"]
+                .filter(uc => uc !== "")
+                .forEach((uc) => removeUniqueClassName(uc));
             }
 
 
@@ -1075,7 +1089,9 @@ export default function FleetBuilder({
               addUniqueClassName(squadron.name);
             }
             if (squadron["unique-class"]) {
-              squadron["unique-class"].forEach((uc) => addUniqueClassName(uc));
+              squadron["unique-class"]
+                .filter(uc => uc !== "")
+                .forEach((uc) => addUniqueClassName(uc));
             }
 
             return { ...squadron, id: generateUniqueSquadronId(), count: 1 };
@@ -1135,7 +1151,9 @@ export default function FleetBuilder({
       addUniqueClassName(squadron.name);
     }
     if (squadron["unique-class"]) {
-      squadron["unique-class"].forEach((uc) => addUniqueClassName(uc));
+      squadron["unique-class"]
+        .filter(uc => uc !== "")
+        .forEach((uc) => addUniqueClassName(uc));
     }
     
     return squadronId;
@@ -1157,9 +1175,9 @@ export default function FleetBuilder({
         }
       }
       if (squadronToRemove["unique-class"]) {
-        squadronToRemove["unique-class"].forEach((uc) =>
-          removeUniqueClassName(uc)
-        );
+        squadronToRemove["unique-class"]
+          .filter(uc => uc !== "")
+          .forEach((uc) => removeUniqueClassName(uc));
       }
 
       return prevSquadrons.filter((squadron) => squadron.id !== id);
@@ -1193,9 +1211,9 @@ export default function FleetBuilder({
           removeUniqueClassName(squadron.name);
         }
         if (squadron["unique-class"]) {
-          squadron["unique-class"].forEach((uc) =>
-            removeUniqueClassName(uc)
-          );
+          squadron["unique-class"]
+            .filter(uc => uc !== "")
+            .forEach((uc) => removeUniqueClassName(uc));
         }
         // Remove the squadron from the array
         return prevSquadrons.filter((_, index) => index !== squadronIndex);
@@ -1271,7 +1289,9 @@ export default function FleetBuilder({
           removeUniqueClassName(upgrade.name);
         }
         if (upgrade["unique-class"]) {
-          upgrade["unique-class"].forEach((uc) => removeUniqueClassName(uc));
+          upgrade["unique-class"]
+            .filter(uc => uc !== "")
+            .forEach((uc) => removeUniqueClassName(uc));
         }
       });
     });
@@ -1291,7 +1311,9 @@ export default function FleetBuilder({
         removeUniqueClassName(squadron.name);
       }
       if (squadron["unique-class"]) {
-        squadron["unique-class"].forEach((uc) => removeUniqueClassName(uc));
+        squadron["unique-class"]
+          .filter(uc => uc !== "")
+          .forEach((uc) => removeUniqueClassName(uc));
       }
     });
 
@@ -1877,7 +1899,9 @@ export default function FleetBuilder({
           removeUniqueClassName(upgrade.name);
         }
         if (upgrade["unique-class"]) {
-          upgrade["unique-class"].forEach((uc) => removeUniqueClassName(uc));
+          upgrade["unique-class"]
+            .filter(uc => uc !== "")
+            .forEach((uc) => removeUniqueClassName(uc));
         }
       });
     });
@@ -1887,7 +1911,9 @@ export default function FleetBuilder({
         removeUniqueClassName(squadron.name);
       }
       if (squadron["unique-class"]) {
-        squadron["unique-class"].forEach((uc) => removeUniqueClassName(uc));
+        squadron["unique-class"]
+          .filter(uc => uc !== "")
+          .forEach((uc) => removeUniqueClassName(uc));
       }
     });
 

@@ -358,7 +358,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
 
     // Check if any of the unique classes are already in use
     const hasConflictingUniqueClass = squadron['unique-class']?.some(uc => 
-      uniqueClassNames.includes(uc)
+      uc !== "" && uniqueClassNames.includes(uc)
     );
 
     // For non-unique squadrons, don't consider them conflicting
@@ -381,7 +381,7 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
           addUniqueClassName(squadron['ace-name']);
         }
       }
-      squadron['unique-class']?.forEach(addUniqueClassName);
+      squadron['unique-class']?.filter(uc => uc !== "").forEach(addUniqueClassName);
     }
   };
 
