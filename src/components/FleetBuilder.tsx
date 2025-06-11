@@ -2308,12 +2308,36 @@ export default function FleetBuilder({
               } else if (squadronName.includes("[Nexus]")) {
                 source = "nexus";
               }
-              const selectedSquadron = {
-                ...squadron,
-                source,
-                count: count, // Set the count directly instead of incrementing
-              };
-              handleAddingSquadron(selectedSquadron);
+              // Handle squadrons with count > 1 properly
+              if (count === 1) {
+                const selectedSquadron = {
+                  ...squadron,
+                  source,
+                  count: 1,
+                };
+                handleAddingSquadron(selectedSquadron);
+              } else {
+                // For squadrons with count > 1, we need to handle them differently
+                if (squadron.unique && squadron.unique_limit && squadron.unique_limit > 1 && squadron.ace) {
+                  // For ace squadrons with unique_limit > 1, create separate entries
+                  for (let i = 0; i < count; i++) {
+                    const selectedSquadron = {
+                      ...squadron,
+                      source,
+                      count: 1,
+                    };
+                    handleAddingSquadron(selectedSquadron);
+                  }
+                } else {
+                  // For regular squadrons or non-ace unique squadrons, set count directly
+                  const selectedSquadron = {
+                    ...squadron,
+                    source,
+                    count: count,
+                  };
+                  handleAddingSquadron(selectedSquadron);
+                }
+              }
             }
           } else {
             console.log(
