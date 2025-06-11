@@ -328,17 +328,11 @@ export default function FleetBuilder({
 
     const calculatedTotalPoints = calculatedShipPoints + calculatedSquadronPoints;
 
-    // Update if there's a discrepancy
-    if (calculatedShipPoints !== totalShipPoints) {
-      setTotalShipPoints(calculatedShipPoints);
-    }
-    if (calculatedSquadronPoints !== totalSquadronPoints) {
-      setTotalSquadronPoints(calculatedSquadronPoints);
-    }
-    if (calculatedTotalPoints !== points) {
-      setPoints(calculatedTotalPoints);
-    }
-  }, [selectedShips, selectedSquadrons, totalShipPoints, totalSquadronPoints, points]);
+    // Always update the points to ensure they stay in sync
+    setTotalShipPoints(calculatedShipPoints);
+    setTotalSquadronPoints(calculatedSquadronPoints);
+    setPoints(calculatedTotalPoints);
+  }, [selectedShips, selectedSquadrons]); // Remove current point values from dependencies
 
   // Synchronize hasCommander state and disable commander slots on other ships
   useEffect(() => {
@@ -455,8 +449,22 @@ export default function FleetBuilder({
         }
       });
 
-      // Return the filtered array
-      return prevShips.filter((ship) => ship.id !== id);
+      const newShips = prevShips.filter((ship) => ship.id !== id);
+      
+      // If this was the last ship, explicitly reset ship points and check if fleet is empty
+      if (newShips.length === 0) {
+        setTimeout(() => {
+          setTotalShipPoints(0);
+          setPreviousShipPoints(0);
+          // If there are also no squadrons, reset total points
+          if (selectedSquadrons.length === 0) {
+            setPoints(0);
+            setPreviousPoints(0);
+          }
+        }, 0);
+      }
+      
+      return newShips;
     });
 
     // Clear disabled and enabled upgrades for the removed ship
@@ -1112,7 +1120,7 @@ export default function FleetBuilder({
     const newSquadron: Squadron = {
       ...squadron,
       id: squadronId,
-      count: 1,
+      count: squadron.count || 1, // Use the count from the passed squadron, default to 1
       source: squadron.source,
     };
 
@@ -1181,7 +1189,22 @@ export default function FleetBuilder({
           .forEach((uc) => removeUniqueClassName(uc));
       }
 
-      return prevSquadrons.filter((squadron) => squadron.id !== id);
+      const newSquadrons = prevSquadrons.filter((squadron) => squadron.id !== id);
+      
+              // If this was the last squadron, explicitly reset squadron points and check if fleet is empty
+        if (newSquadrons.length === 0) {
+          setTimeout(() => {
+            setTotalSquadronPoints(0);
+            setPreviousSquadronPoints(0);
+            // If there are also no ships, reset total points
+            if (selectedShips.length === 0) {
+              setPoints(0);
+              setPreviousPoints(0);
+            }
+          }, 0);
+        }
+      
+      return newSquadrons;
     });
   };
 
@@ -1275,8 +1298,24 @@ export default function FleetBuilder({
             .filter(uc => uc !== "")
             .forEach((uc) => removeUniqueClassName(uc));
         }
+        
         // Remove the squadron from the array
-        return prevSquadrons.filter((_, index) => index !== squadronIndex);
+        const newSquadrons = prevSquadrons.filter((_, index) => index !== squadronIndex);
+        
+        // If this was the last squadron, explicitly reset squadron points and check if fleet is empty
+        if (newSquadrons.length === 0) {
+          setTimeout(() => {
+            setTotalSquadronPoints(0);
+            setPreviousSquadronPoints(0);
+            // If there are also no ships, reset total points
+            if (selectedShips.length === 0) {
+              setPoints(0);
+              setPreviousPoints(0);
+            }
+          }, 0);
+        }
+        
+        return newSquadrons;
       } else {
         // Squadron count is decremented
         const newSquadrons = [...prevSquadrons];
@@ -1358,6 +1397,7 @@ export default function FleetBuilder({
 
     setSelectedShips([]);
     setTotalShipPoints(0);
+    setPreviousShipPoints(0);
     setDisabledUpgrades({});
     setEnabledUpgrades({});
     setFilledSlots({});
@@ -1378,6 +1418,7 @@ export default function FleetBuilder({
     });
 
     setTotalSquadronPoints(0);
+    setPreviousSquadronPoints(0);
     setSelectedSquadrons([]);
     localStorage.removeItem(`savedFleet_${faction}`);
   }, [removeUniqueClassName, faction, selectedSquadrons]);
@@ -2270,16 +2311,9 @@ export default function FleetBuilder({
               const selectedSquadron = {
                 ...squadron,
                 source,
+                count: count, // Set the count directly instead of incrementing
               };
-              const squadronId = handleAddingSquadron(selectedSquadron);
-
-              // Increment the count for the remaining squadrons
-              if (squadronId) {
-                for (let i = 1; i < count; i++) {
-                  console.log(`Incrementing squadron count for ID: ${squadronId}`);
-                  handleIncrementSquadron(squadronId);
-                }
-              }
+              handleAddingSquadron(selectedSquadron);
             }
           } else {
             console.log(
@@ -3367,7 +3401,7 @@ export default function FleetBuilder({
     setShipIdCounter(0);
     setSquadronIdCounter(0);
     console.log("clearing fleet state");
-  }, [setPoints, setTotalShipPoints, setTotalSquadronPoints]); // Add these dependencies
+  }, []);
 
   // Memoize content source checking
   const contentSourcesEnabled = useMemo(() => {
