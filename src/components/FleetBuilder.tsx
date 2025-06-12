@@ -328,6 +328,11 @@ export default function FleetBuilder({
 
     const calculatedTotalPoints = calculatedShipPoints + calculatedSquadronPoints;
 
+    // Update previous points before changing current points to enable animation
+    setPreviousPoints(points);
+    setPreviousShipPoints(totalShipPoints);
+    setPreviousSquadronPoints(totalSquadronPoints);
+
     // Always update the points to ensure they stay in sync
     setTotalShipPoints(calculatedShipPoints);
     setTotalSquadronPoints(calculatedSquadronPoints);
@@ -450,19 +455,6 @@ export default function FleetBuilder({
       });
 
       const newShips = prevShips.filter((ship) => ship.id !== id);
-      
-      // If this was the last ship, explicitly reset ship points and check if fleet is empty
-      if (newShips.length === 0) {
-        setTimeout(() => {
-          setTotalShipPoints(0);
-          setPreviousShipPoints(0);
-          // If there are also no squadrons, reset total points
-          if (selectedSquadrons.length === 0) {
-            setPoints(0);
-            setPreviousPoints(0);
-          }
-        }, 0);
-      }
       
       return newShips;
     });
@@ -1191,19 +1183,6 @@ export default function FleetBuilder({
 
       const newSquadrons = prevSquadrons.filter((squadron) => squadron.id !== id);
       
-              // If this was the last squadron, explicitly reset squadron points and check if fleet is empty
-        if (newSquadrons.length === 0) {
-          setTimeout(() => {
-            setTotalSquadronPoints(0);
-            setPreviousSquadronPoints(0);
-            // If there are also no ships, reset total points
-            if (selectedShips.length === 0) {
-              setPoints(0);
-              setPreviousPoints(0);
-            }
-          }, 0);
-        }
-      
       return newSquadrons;
     });
   };
@@ -1301,19 +1280,6 @@ export default function FleetBuilder({
         
         // Remove the squadron from the array
         const newSquadrons = prevSquadrons.filter((_, index) => index !== squadronIndex);
-        
-        // If this was the last squadron, explicitly reset squadron points and check if fleet is empty
-        if (newSquadrons.length === 0) {
-          setTimeout(() => {
-            setTotalSquadronPoints(0);
-            setPreviousSquadronPoints(0);
-            // If there are also no ships, reset total points
-            if (selectedShips.length === 0) {
-              setPoints(0);
-              setPreviousPoints(0);
-            }
-          }, 0);
-        }
         
         return newSquadrons;
       } else {
