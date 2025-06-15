@@ -46,6 +46,7 @@ import { ExpansionSelector } from "./ExpansionSelector";
 import Cookies from 'js-cookie';
 import { checkFleetViolations, Gamemode } from "../utils/gamemodeRestrictions";
 import { GAMEMODE_RESTRICTIONS, getRestrictionsForGamemode } from "../utils/gamemodeRestrictions";
+import { forceReloadContent } from "../utils/contentManager";
 import { useUser } from '@auth0/nextjs-auth0/client';
 import { supabase } from '../lib/supabase';
 import { getContentTypes } from './FleetList';
@@ -1605,10 +1606,10 @@ export default function FleetBuilder({
     localStorage.setItem(`savedFleet_${faction}`, exportText);
   }, [faction, generateExportText]);
   
-  const handleRecoverFleet = () => {
+  const handleRecoverFleet = async () => {
     const savedFleet = localStorage.getItem(`savedFleet_${faction}`);
     if (savedFleet) {
-      handleImportFleet(savedFleet, 'kingston');
+      await handleImportFleet(savedFleet, 'kingston');
     }
     setShowRecoveryPopup(false);
   };
@@ -1916,7 +1917,7 @@ export default function FleetBuilder({
     }
   }, []);
 
-  const handleImportFleet = useCallback((importText: string, format: FleetFormat) => {
+  const handleImportFleet = useCallback(async (importText: string, format: FleetFormat) => {
     console.log("Starting fleet import with format:", format);
     
     // Load aliases first
@@ -2144,6 +2145,37 @@ export default function FleetBuilder({
           console.log("Found gamemode in import:", newGamemode);
           // Set the gamemode in localStorage which will be picked up by the faction page
           localStorage.setItem('selectedGamemode', newGamemode);
+          
+          // Check if this gamemode requires content changes and wait for them to load
+          const restrictions = getRestrictionsForGamemode(newGamemode as Gamemode);
+          if (restrictions?.forceToggles) {
+            console.log("Gamemode requires content changes, applying toggles and reloading content...");
+            
+            // Apply forced toggle settings immediately
+            if (restrictions.forceToggles.enableLegacy !== undefined) {
+              Cookies.set('enableLegacy', restrictions.forceToggles.enableLegacy.toString(), { expires: 365 });
+            }
+            if (restrictions.forceToggles.enableLegends !== undefined) {
+              Cookies.set('enableLegends', restrictions.forceToggles.enableLegends.toString(), { expires: 365 });
+            }
+            if (restrictions.forceToggles.enableLegacyBeta !== undefined) {
+              Cookies.set('enableLegacyBeta', restrictions.forceToggles.enableLegacyBeta.toString(), { expires: 365 });
+            }
+            if (restrictions.forceToggles.enableArc !== undefined) {
+              Cookies.set('enableArc', restrictions.forceToggles.enableArc.toString(), { expires: 365 });
+            }
+            if (restrictions.forceToggles.enableNexus !== undefined) {
+              Cookies.set('enableNexus', restrictions.forceToggles.enableNexus.toString(), { expires: 365 });
+            }
+            if (restrictions.forceToggles.enableProxy !== undefined) {
+              Cookies.set('enableProxy', restrictions.forceToggles.enableProxy.toString(), { expires: 365 });
+            }
+            
+            // Force reload content and wait for it to complete
+            console.log("Waiting for content to reload...");
+            await forceReloadContent(() => {}, () => {}, () => {});
+            console.log("Content reload complete, continuing with import...");
+          }
         }
         continue;
       } else if (line.startsWith("Name:")) {
@@ -2435,12 +2467,6 @@ export default function FleetBuilder({
   };
 
   const handleShareButtonClick = useCallback(() => {
-    if (!user) {
-      setNotificationMessage('Please sign in to share your fleet');
-      setShowNotification(true);
-      return;
-    }
-
     if (!fleetName.trim()) {
       setNotificationMessage('Please enter a fleet name before sharing');
       setShowNotification(true);
@@ -2460,11 +2486,9 @@ export default function FleetBuilder({
     }
 
     performShare(fleetName);
-  }, [user, fleetName, selectedShips, selectedSquadrons]);
+  }, [fleetName, selectedShips, selectedSquadrons]);
 
   const performShare = useCallback(async (nameToUse: string) => {
-    if (!user) return;
-
     try {
       const fleetData = generateExportText();
       const commander = selectedShips.find(ship => 
@@ -2473,43 +2497,69 @@ export default function FleetBuilder({
 
       const contentTypes = getContentTypes(fleetData);
 
-      // First, check if fleet exists
-      const { data: existingFleet } = await supabase
-        .from('fleets')
-        .select('id, numerical_id, shared')
-        .eq('user_id', user.sub)
-        .eq('fleet_name', nameToUse)
-        .single();
-
       let numericalId: string;
 
-      if (existingFleet) {
-        // Update existing fleet and enable sharing
-        const { error } = await supabase
+      if (user) {
+        // Logged in user - check for existing fleet and update/insert as before
+        const { data: existingFleet } = await supabase
           .from('fleets')
-          .update({ 
-            fleet_data: fleetData,
-            faction,
-            commander,
-            points,
-            shared: true,
-            legends: contentTypes.legends,
-            legacy: contentTypes.legacy,
-            legacy_beta: contentTypes.legacy_beta,
-            arc: contentTypes.arc,
-            nexus: contentTypes.nexus
-          })
-          .eq('id', existingFleet.id);
+          .select('id, numerical_id, shared')
+          .eq('user_id', user.sub)
+          .eq('fleet_name', nameToUse)
+          .single();
 
-        if (error) throw error;
-        
-        numericalId = existingFleet.numerical_id;
+        if (existingFleet) {
+          // Update existing fleet and enable sharing
+          const { error } = await supabase
+            .from('fleets')
+            .update({ 
+              fleet_data: fleetData,
+              faction,
+              commander,
+              points,
+              shared: true,
+              legends: contentTypes.legends,
+              legacy: contentTypes.legacy,
+              legacy_beta: contentTypes.legacy_beta,
+              arc: contentTypes.arc,
+              nexus: contentTypes.nexus
+            })
+            .eq('id', existingFleet.id);
+
+          if (error) throw error;
+          
+          numericalId = existingFleet.numerical_id;
+        } else {
+          // Create new fleet with sharing enabled for logged in user
+          const { data: newFleet, error } = await supabase
+            .from('fleets')
+            .insert({ 
+              user_id: user.sub,
+              fleet_name: nameToUse,
+              fleet_data: fleetData,
+              faction,
+              commander,
+              points,
+              shared: true,
+              legends: contentTypes.legends,
+              legacy: contentTypes.legacy,
+              legacy_beta: contentTypes.legacy_beta,
+              arc: contentTypes.arc,
+              nexus: contentTypes.nexus
+            })
+            .select('id, numerical_id')
+            .single();
+
+          if (error) throw error;
+          
+          numericalId = newFleet.numerical_id;
+        }
       } else {
-        // Create new fleet with sharing enabled
+        // Anonymous user - create new anonymous fleet
         const { data: newFleet, error } = await supabase
           .from('fleets')
           .insert({ 
-            user_id: user.sub,
+            user_id: null,
             fleet_name: nameToUse,
             fleet_data: fleetData,
             faction,
@@ -2535,7 +2585,12 @@ export default function FleetBuilder({
       const shareUrl = `${domain}/share/${numericalId}`;
       
       await navigator.clipboard.writeText(shareUrl);
-      setNotificationMessage(`Fleet shared! Link copied to clipboard:\n${shareUrl}`);
+      
+      if (user) {
+        setNotificationMessage(`Fleet shared! Link copied to clipboard:\n${shareUrl}`);
+      } else {
+        setNotificationMessage(`Fleet shared anonymously! Link copied to clipboard:\n${shareUrl}\n\nNote: You won't be able to edit this fleet later unless you create an account.`);
+      }
       setShowNotification(true);
 
     } catch (error) {
@@ -3405,15 +3460,21 @@ export default function FleetBuilder({
       }
     };
 
-    const checkForRecovery = () => {
+    const checkForRecovery = async () => {
       if (!isExpansionMode && !hasLoadedPage) {
         const retrievedFromList = document.cookie.includes('retrieved-from-list=true');
         const recovery = localStorage.getItem("fleetRecovery");
         const savedFleet = localStorage.getItem(`savedFleet_${faction}`);
+        const pendingImport = localStorage.getItem("pendingImport");
 
-        if (retrievedFromList && savedFleet) {
+        // Check for pending import first (highest priority)
+        if (pendingImport && !retrievedFromList) {
+          console.log("Processing pending import:", pendingImport);
+          await handleImportFleet(pendingImport, 'starforge');
+          localStorage.removeItem("pendingImport");
+        } else if (retrievedFromList && savedFleet) {
           const updatedFleet = applyUpdates(savedFleet);
-          handleImportFleet(updatedFleet, 'kingston');
+          await handleImportFleet(updatedFleet, 'kingston');
           document.cookie = "retrieved-from-list=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
         } else if (recovery && !retrievedFromList) {
           const data = JSON.parse(recovery);
@@ -3432,7 +3493,11 @@ export default function FleetBuilder({
     };
 
     window.addEventListener("beforeunload", handleBeforeUnload);
-    checkForRecovery();
+    
+    // Call async function from useEffect
+    (async () => {
+      await checkForRecovery();
+    })();
 
     // Mark page as loaded after initial check
     if (!hasLoadedPage) {

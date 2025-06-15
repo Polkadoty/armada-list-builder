@@ -26,9 +26,9 @@ export const SaveFleetButton = forwardRef<HTMLButtonElement, SaveFleetButtonProp
 
     const handleButtonClick = () => {
       if (!user) {
-        setNotificationMessage('Please sign in to save your fleet');
+        setNotificationMessage('Please sign in to save your fleet to your account and access it later.');
         setShowNotification(true);
-        return;
+
       }
 
       // Check if fleet name is "Untitled Fleet" and prompt for rename
@@ -41,42 +41,64 @@ export const SaveFleetButton = forwardRef<HTMLButtonElement, SaveFleetButtonProp
     };
 
     const performSave = async (nameToUse: string) => {
-      if (!user) return;
-      
       setIsSaving(true);
 
       try {
         const contentTypes = getContentTypes(fleetData);
-        const { data } = await supabase
-          .from('fleets')
-          .select('id')
-          .eq('user_id', user.sub)
-          .eq('fleet_name', nameToUse)
-          .single();
-
-        if (data) {
-          // Update existing fleet
-          const { error } = await supabase
+        
+        if (user) {
+          // Logged in user - check for existing fleet and update/insert as before
+          const { data } = await supabase
             .from('fleets')
-            .update({ 
-              fleet_data: fleetData, 
-              faction, 
-              commander, 
-              points,
-              legends: contentTypes.legends,
-              legacy: contentTypes.legacy,
-              legacy_beta: contentTypes.legacy_beta,
-              arc: contentTypes.arc,
-              nexus: contentTypes.nexus
-            })
-            .eq('id', data.id);
-          if (error) throw error;
+            .select('id')
+            .eq('user_id', user.sub)
+            .eq('fleet_name', nameToUse)
+            .single();
+
+          if (data) {
+            // Update existing fleet
+            const { error } = await supabase
+              .from('fleets')
+              .update({ 
+                fleet_data: fleetData, 
+                faction, 
+                commander, 
+                points,
+                legends: contentTypes.legends,
+                legacy: contentTypes.legacy,
+                legacy_beta: contentTypes.legacy_beta,
+                arc: contentTypes.arc,
+                nexus: contentTypes.nexus
+              })
+              .eq('id', data.id);
+            if (error) throw error;
+          } else {
+            // Insert new fleet for logged in user
+            const { error } = await supabase
+              .from('fleets')
+              .insert({ 
+                user_id: user.sub,
+                fleet_name: nameToUse,
+                fleet_data: fleetData,
+                faction,
+                commander,
+                points,
+                legends: contentTypes.legends,
+                legacy: contentTypes.legacy,
+                legacy_beta: contentTypes.legacy_beta,
+                arc: contentTypes.arc,
+                nexus: contentTypes.nexus
+              });
+            if (error) throw error;
+          }
+          
+          setNotificationMessage('Fleet saved successfully!');
         } else {
-          // Insert new fleet
+          // Anonymous user - insert new fleet with null user_id
           const { error } = await supabase
             .from('fleets')
             .insert({ 
-              user_id: user.sub,
+              user_id: null,
               fleet_name: nameToUse,
               fleet_data: fleetData,
               faction,
@@ -86,12 +108,14 @@ export const SaveFleetButton = forwardRef<HTMLButtonElement, SaveFleetButtonProp
               legacy: contentTypes.legacy,
               legacy_beta: contentTypes.legacy_beta,
               arc: contentTypes.arc,
-              nexus: contentTypes.nexus
+              nexus: contentTypes.nexus,
+              shared: true // Anonymous fleets are always shareable
             });
           if (error) throw error;
+          
+          setNotificationMessage('Fleet saved anonymously and is now shareable! Note: You won\'t be able to edit this fleet later unless you create an account.');
         }
 
-        setNotificationMessage('Fleet saved successfully!');
         setShowNotification(true);
       } catch (error) {
         console.error('Error saving fleet:', error);
@@ -117,7 +141,7 @@ export const SaveFleetButton = forwardRef<HTMLButtonElement, SaveFleetButtonProp
         <Button 
           ref={ref}
           onClick={handleButtonClick} 
-          disabled={isSaving || !user}
+          disabled={isSaving}
           variant="outline"
           className="bg-white/50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md"
         >

@@ -505,6 +505,7 @@ export function FleetList() {
         .from('fleets')
         .select('*')
         .eq('user_id', user.sub)
+        .not('user_id', 'is', null) // Explicitly exclude anonymous fleets
         .order('date_added', { ascending: false });
 
       if (error) {
