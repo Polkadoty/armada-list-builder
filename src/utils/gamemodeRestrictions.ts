@@ -1,4 +1,4 @@
-export type Gamemode = "Task Force" | "Standard" | "Sector Fleet" | "Battle for Naboo - Week 1";
+export type Gamemode = "Task Force" | "Standard" | "Sector Fleet" | "Battle for Naboo - Week 1" | "Unrestricted";
 // "Minivan" | "Campaign" | "Fighter Group"
 
 export interface GamemodeRestrictions {
@@ -53,6 +53,8 @@ export interface GamemodeRestrictions {
     enableLocalContent: boolean;
     enableProxy: boolean;
   }>;
+  allowedFactions?: string[];
+  disallowedFactions?: string[];
 }
 
 export const GAMEMODE_RESTRICTIONS: Record<Gamemode, GamemodeRestrictions> = {
@@ -133,7 +135,9 @@ export const GAMEMODE_RESTRICTIONS: Record<Gamemode, GamemodeRestrictions> = {
       },
     },
     forceToggles: { tournamentMode: true, enableLegacy: true},
+    allowedFactions: ["republic", "separatist"],
   },
+  "Unrestricted": {},
 };
 
 export function getRestrictionsForGamemode(gamemode: Gamemode): GamemodeRestrictions | undefined {
@@ -142,6 +146,25 @@ export function getRestrictionsForGamemode(gamemode: Gamemode): GamemodeRestrict
     console.warn(`No restrictions found for gamemode: "${gamemode}". Available gamemodes:`, Object.keys(GAMEMODE_RESTRICTIONS));
   }
   return restrictions;
+}
+
+export function isFactionAllowedInGamemode(faction: string, gamemode: Gamemode): boolean {
+  const restrictions = getRestrictionsForGamemode(gamemode);
+  if (!restrictions) {
+    return true; // If no restrictions, allow all factions
+  }
+
+  // Check if faction is explicitly disallowed
+  if (restrictions.disallowedFactions && restrictions.disallowedFactions.includes(faction)) {
+    return false;
+  }
+
+  // Check if there's an allowed factions list and faction is not in it
+  if (restrictions.allowedFactions && !restrictions.allowedFactions.includes(faction)) {
+    return false;
+  }
+
+  return true; // Faction is allowed
 }
 
 export interface FleetState {
@@ -168,13 +191,26 @@ export interface FleetState {
   commanderCount: number;
 }
 
-export function checkFleetViolations(gamemode: Gamemode, fleet: FleetState): string[] {
+export function checkFleetViolations(gamemode: Gamemode, fleet: FleetState, faction?: string): string[] {
   const restrictions = getRestrictionsForGamemode(gamemode);
   const violations: string[] = [];
 
   // Safety check - if no restrictions found for this gamemode, return empty violations
   if (!restrictions) {
     return violations;
+  }
+
+  // Check faction restrictions
+  if (faction && restrictions.allowedFactions) {
+    if (!restrictions.allowedFactions.includes(faction)) {
+      violations.push(`Faction "${faction}" is not allowed in this gamemode`);
+    }
+  }
+
+  if (faction && restrictions.disallowedFactions) {
+    if (restrictions.disallowedFactions.includes(faction)) {
+      violations.push(`Faction "${faction}" is not allowed in this gamemode`);
+    }
   }
 
   if (restrictions.pointsLimit !== undefined && fleet.points > restrictions.pointsLimit) {

@@ -27,7 +27,6 @@ export interface UpgradeSelectorProps {
   disabledUpgrades: string[];
   ship: Ship;
   gamemodeRestrictions?: GamemodeRestrictions;
-  id?: string;
 }
 
 interface UpgradeData {
@@ -49,7 +48,6 @@ export default function UpgradeSelector({
   disabledUpgrades,
   ship,
   gamemodeRestrictions,
-  id,
 }: UpgradeSelectorProps) {
   const [loading, setLoading] = useState(true);
   const { uniqueClassNames, addUniqueClassName } = useUniqueClassContext();
@@ -526,12 +524,7 @@ export default function UpgradeSelector({
     }
   };
 
-  const validateImageUrl = (url: string): string => {
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      return url;
-    }
-    return `https://api.swarmada.wiki${url.startsWith('/') ? '' : '/'}${url}`;
-  };
+
 
   const handleSortToggle = (option: SortOption) => {
     setActiveSorts(prevSorts => {

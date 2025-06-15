@@ -318,8 +318,9 @@ export default function FleetBuilder({
       selectedNavigationObjectives,
       selectedCampaignObjectives,
       commanderCount,
-    }
-  ), [gamemode, points, totalSquadronPoints, selectedShips, selectedSquadrons, selectedAssaultObjectives, selectedDefenseObjectives, selectedNavigationObjectives, selectedCampaignObjectives, commanderCount]);
+    },
+    faction
+  ), [gamemode, points, totalSquadronPoints, selectedShips, selectedSquadrons, selectedAssaultObjectives, selectedDefenseObjectives, selectedNavigationObjectives, selectedCampaignObjectives, commanderCount, faction]);
 
   // Synchronize total points calculation
   useEffect(() => {
@@ -3529,6 +3530,23 @@ export default function FleetBuilder({
     return GAMEMODE_RESTRICTIONS[gamemode as keyof typeof GAMEMODE_RESTRICTIONS];
   }, [gamemode]);
 
+  // Check if current faction is allowed in the gamemode
+  const isFactionAllowed = useMemo(() => {
+    if (!gamemodeRestrictions) return true;
+    
+    // Check if faction is explicitly disallowed
+    if (gamemodeRestrictions.disallowedFactions && gamemodeRestrictions.disallowedFactions.includes(faction)) {
+      return false;
+    }
+
+    // Check if there's an allowed factions list and faction is not in it
+    if (gamemodeRestrictions.allowedFactions && !gamemodeRestrictions.allowedFactions.includes(faction)) {
+      return false;
+    }
+
+    return true;
+  }, [gamemodeRestrictions, faction]);
+
   return (
     <div ref={contentRef} className="max-w-[2000px] mx-auto">
       <div className="flex flex-col sm:flex-row items-start sm:items-center mb-4">
@@ -3610,6 +3628,14 @@ export default function FleetBuilder({
           <PointsDisplay points={points} previousPoints={previousPoints} />
         )}
       </div>
+
+      {/* Faction restriction warning */}
+      {!isFactionAllowed && gamemode && gamemode !== 'standard' && (
+        <div className="mb-4 p-3 bg-yellow-100 text-yellow-800 rounded-lg text-center font-semibold">
+          This faction is not allowed in the current gamemode ({gamemode}). 
+          Fleet restrictions may not be properly enforced.
+        </div>
+      )}
 
       {faction === "sandbox" && (
         <ExpansionSelector 

@@ -49,7 +49,6 @@ interface ShipSelectorProps {
 
 export function ShipSelector({ faction, filter, onSelectShip, onClose, gamemodeRestrictions }: ShipSelectorProps) {
   const [allShips, setAllShips] = useState<ShipModel[]>([]);
-  const [displayedShips, setDisplayedShips] = useState<ShipModel[]>([]);
   const { uniqueClassNames, addUniqueClassName } = useUniqueClassContext();
   const [activeSorts, setActiveSorts] = useState<Record<SortOption, 'asc' | 'desc' | null>>(() => {
     const savedSorts = Cookies.get(`sortState_ships`);
@@ -322,7 +321,6 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose, gamemodeR
       });
 
       setAllShips(sortedShips);
-      setDisplayedShips(sortedShips);
     };
 
     fetchShips();
@@ -405,10 +403,7 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose, gamemodeR
     return sortedShips;
   }, [allShips, activeSorts, searchQuery, gamemodeRestrictions]);
 
-  // Update the useEffect to use the memoized value
-  useEffect(() => {
-    setDisplayedShips(processedShips);
-  }, [processedShips]);
+  // The processedShips are used directly in the render instead of displayedShips
 
   const handleSortToggle = (option: SortOption) => {
     setActiveSorts(prevSorts => {

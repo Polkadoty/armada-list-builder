@@ -11,7 +11,6 @@ import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue, SelectLa
 import ContentAdditionWindow from './ContentAdditionWindow';
 import { useUser } from '@auth0/nextjs-auth0/client';
 import { isUserWhitelistedForLegacyBeta } from '../utils/whitelist';
-import { Gamemode } from "@/utils/gamemodeRestrictions";
 
 // Configuration flags
 const CONFIG = {
@@ -196,6 +195,7 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
                         <SelectItem value="Standard">Standard</SelectItem>
                         <SelectItem value="Sector Fleet">Sector Fleet</SelectItem>
                         <SelectItem value="Battle for Naboo - Week 1">Battle for Naboo - Week 1</SelectItem>
+                        <SelectItem value="Unrestricted">Unrestricted</SelectItem>
                       </SelectGroup>
                     </SelectContent>
                   </Select>

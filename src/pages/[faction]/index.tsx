@@ -70,6 +70,28 @@ export default function FactionPage() {
     checkAndFetchData(setIsLoading, setLoadingProgress, setLoadingMessage);
   }, []);
 
+  // Auto-switch gamemode based on faction
+  useEffect(() => {
+    if (faction && mounted) {
+      console.log('Faction changed to:', faction);
+      
+      if (faction === 'sandbox') {
+        // Sandbox faction should always use Unrestricted gamemode
+        console.log('Sandbox detected, switching to Unrestricted');
+        setGamemode('Unrestricted');
+      }
+      // For non-sandbox factions, we'll handle the switch in a separate effect
+    }
+  }, [faction, mounted]);
+
+  // Handle switching away from Unrestricted when leaving sandbox
+  useEffect(() => {
+    if (faction && mounted && faction !== 'sandbox' && gamemode === 'Unrestricted') {
+      console.log('Non-sandbox faction with Unrestricted mode, switching to Standard');
+      setGamemode('Standard');
+    }
+  }, [faction, mounted, gamemode]);
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('selectedGamemode', gamemode || 'Standard');

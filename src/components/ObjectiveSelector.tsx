@@ -325,15 +325,16 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose, gamemodeRe
               {processedObjectives.map((objective) => {
                 const isMatchingForced = !forcedObjectiveName || objective.name === forcedObjectiveName;
                 const isDisabled = forcedObjectiveName && !isMatchingForced;
+                const isAllowed = isObjectiveAllowed(objective);
                 
                 return (
                   <div key={objective.id} className="w-full aspect-[2.5/3.5]">
                     <Button
-                      onClick={() => !isDisabled && onSelectObjective(objective)}
+                      onClick={() => !isDisabled && isAllowed && onSelectObjective(objective)}
                       className={`p-0 overflow-hidden relative w-full h-full rounded-lg bg-transparent ${
-                        isDisabled ? 'opacity-30 cursor-not-allowed' : ''
+                        isDisabled || !isAllowed ? 'opacity-30 cursor-not-allowed' : ''
                       }`}
-                      disabled={!!isDisabled}
+                      disabled={!!isDisabled || !isAllowed}
                     >
                       <div className="absolute inset-0 flex items-center justify-center">
                         <OptimizedImage

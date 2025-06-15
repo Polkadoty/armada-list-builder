@@ -96,7 +96,7 @@ export function SwipeableObjective({ type, selectedObjective, selectedObjectives
     <div className="relative overflow-hidden">
       {objectives.length > 0 ? (
         // Show selected objectives (which may include forced objectives that were properly fetched)
-        objectives.map((objective, index) => (
+        objectives.map((objective) => (
           <animated.div key={objective.id} style={{ x }} onTouchStart={isSelectionDisabled && !isForcedObjective ? undefined : handleTouchStart} onTouchMove={isSelectionDisabled && !isForcedObjective ? undefined : handleTouchMove} onTouchEnd={isSelectionDisabled && !isForcedObjective ? undefined : handleTouchEnd} className="relative mb-2">
             <Button 
               variant="outline" 
