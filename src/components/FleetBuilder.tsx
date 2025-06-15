@@ -1937,6 +1937,25 @@ export default function FleetBuilder({
     if (!gamemodeLineExists) {
       console.log("No gamemode found in import, defaulting to Standard");
       localStorage.setItem('selectedGamemode', 'Standard');
+      
+      // Explicitly reset any forced toggles from previous gamemode
+      const standardRestrictions = getRestrictionsForGamemode('Standard' as Gamemode);
+      if (standardRestrictions?.forceToggles) {
+        console.log("Applying Standard gamemode toggles...");
+        Object.entries(standardRestrictions.forceToggles).forEach(([key, value]) => {
+          if (value !== undefined) {
+            Cookies.set(`enable${key.charAt(0).toUpperCase()}${key.slice(1)}`, value.toString(), { expires: 365 });
+          }
+        });
+        
+        // Force reload content with new toggles
+        await forceReloadContent(() => {}, () => {}, () => {});
+        console.log("Standard gamemode content loaded");
+        
+        // Reload aliases after content reload since they were cleared
+        const reloadedAliases = JSON.parse(localStorage.getItem("aliases") || "{}");
+        Object.assign(aliases, reloadedAliases);
+      }
     }
 
     // Check faction first
