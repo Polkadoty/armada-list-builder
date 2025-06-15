@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
   Printer,
+  Share,
   FileText,
   Trash2,
   TriangleAlert,
@@ -45,6 +46,9 @@ import { ExpansionSelector } from "./ExpansionSelector";
 import Cookies from 'js-cookie';
 import { checkFleetViolations, Gamemode } from "../utils/gamemodeRestrictions";
 import { GAMEMODE_RESTRICTIONS, getRestrictionsForGamemode } from "../utils/gamemodeRestrictions";
+import { useUser } from '@auth0/nextjs-auth0/client';
+import { supabase } from '../lib/supabase';
+import { getContentTypes } from './FleetList';
 
 const DAMAGE_DECK = [
   { name: 'Blinded Gunners', count: 2 },
@@ -225,6 +229,7 @@ export default function FleetBuilder({
   setFleetName: React.Dispatch<React.SetStateAction<string>>;
   gamemode: string;
 }) {
+  const { user } = useUser();
   const [points, setPoints] = useState(0);
   const [previousPoints, setPreviousPoints] = useState(0);
   const [showShipSelector, setShowShipSelector] = useState(false);
@@ -2412,6 +2417,108 @@ export default function FleetBuilder({
     setShowPrintMenu(true);
   };
 
+  const handleShareFleet = useCallback(async () => {
+    if (!user) {
+      setNotificationMessage('Please sign in to share your fleet');
+      setShowNotification(true);
+      return;
+    }
+
+    if (!fleetName.trim()) {
+      setNotificationMessage('Please enter a fleet name before sharing');
+      setShowNotification(true);
+      return;
+    }
+
+    if (selectedShips.length === 0 && selectedSquadrons.length === 0) {
+      setNotificationMessage('Please add ships or squadrons before sharing');
+      setShowNotification(true);
+      return;
+    }
+
+    try {
+      const fleetData = generateExportText();
+      const commander = selectedShips.find(ship => 
+        ship.assignedUpgrades.some(upgrade => upgrade.type === "commander"))?.assignedUpgrades
+          .find(upgrade => upgrade.type === "commander")?.name || "";
+
+      const contentTypes = getContentTypes(fleetData);
+
+      // First, check if fleet exists
+      const { data: existingFleet } = await supabase
+        .from('fleets')
+        .select('id, numerical_id, shared')
+        .eq('user_id', user.sub)
+        .eq('fleet_name', fleetName)
+        .single();
+
+      let fleetId: string;
+      let numericalId: string;
+
+      if (existingFleet) {
+        // Update existing fleet and enable sharing
+        const { error } = await supabase
+          .from('fleets')
+          .update({ 
+            fleet_data: fleetData,
+            faction,
+            commander,
+            points,
+            shared: true,
+            legends: contentTypes.legends,
+            legacy: contentTypes.legacy,
+            legacy_beta: contentTypes.legacy_beta,
+            arc: contentTypes.arc,
+            nexus: contentTypes.nexus
+          })
+          .eq('id', existingFleet.id);
+
+        if (error) throw error;
+        
+        fleetId = existingFleet.id;
+        numericalId = existingFleet.numerical_id;
+      } else {
+        // Create new fleet with sharing enabled
+        const { data: newFleet, error } = await supabase
+          .from('fleets')
+          .insert({ 
+            user_id: user.sub,
+            fleet_name: fleetName,
+            fleet_data: fleetData,
+            faction,
+            commander,
+            points,
+            shared: true,
+            legends: contentTypes.legends,
+            legacy: contentTypes.legacy,
+            legacy_beta: contentTypes.legacy_beta,
+            arc: contentTypes.arc,
+            nexus: contentTypes.nexus
+          })
+          .select('id, numerical_id')
+          .single();
+
+        if (error) throw error;
+        
+        fleetId = newFleet.id;
+        numericalId = newFleet.numerical_id;
+      }
+
+      // Copy share link to clipboard
+      const domain = process.env.NEXT_PUBLIC_DOMAIN || window.location.origin;
+      const shareUrl = `${domain}/share/${numericalId}`;
+      
+      await navigator.clipboard.writeText(shareUrl);
+      setNotificationMessage(`Fleet shared! Link copied to clipboard:\n${shareUrl}`);
+      setShowNotification(true);
+
+    } catch (error) {
+      console.error('Error sharing fleet:', error);
+      setNotificationMessage('Failed to share fleet. Please try again.');
+      setShowNotification(true);
+    }
+  }, [user, fleetName, selectedShips, selectedSquadrons, generateExportText, faction, points]);
+
   const handlePrintList = () => {
     const printContent = generatePrintContent();
     const printWindow = window.open("", "_blank");
@@ -3564,16 +3671,29 @@ export default function FleetBuilder({
                 </TooltipContent>
               </Tooltip>
 
-              <Tooltip>
-                <TooltipTrigger asChild>
-                <Button variant="outline" className="bg-white/50 dark:bg-gray-900/50 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md" onClick={() => setShowExportPopup(true)}>
-                    <FileText className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Export Fleet</p>
-                </TooltipContent>
-              </Tooltip>
+              {user && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                  <Button variant="outline" className="bg-white/50 dark:bg-gray-900/50 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md" onClick={handleShareFleet}>
+                      <Share className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Share Fleet</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+              
+                             <Tooltip>
+                 <TooltipTrigger asChild>
+                 <Button variant="outline" className="bg-white/50 dark:bg-gray-900/50 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md" onClick={() => setShowExportPopup(true)}>
+                     <FileText className="h-4 w-4" />
+                   </Button>
+                 </TooltipTrigger>
+                 <TooltipContent>
+                   <p>Export Fleet</p>
+                 </TooltipContent>
+               </Tooltip>
 
               <Tooltip>
                 <TooltipTrigger asChild>
