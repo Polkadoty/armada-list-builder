@@ -10,22 +10,24 @@ import { Input } from "@/components/ui/input";
 import Cookies from 'js-cookie';
 import { OptimizedImage } from './OptimizedImage';
 import { sanitizeImageUrl } from '../utils/dataFetcher';
+import { GamemodeRestrictions } from '@/utils/gamemodeRestrictions';
 
 export interface UpgradeSelectorProps {
-  id: string;
   upgradeType: string;
   faction: string;
   onSelectUpgrade: (upgrade: Upgrade) => void;
   onClose: () => void;
   selectedUpgrades: Upgrade[];
-  shipType?: string;
-  chassis?: string;
-  shipSize?: string;
-  shipTraits?: string[];
+  shipType: string;
+  chassis: string;
+  shipSize: string;
+  shipTraits: string[];
   currentShipUpgrades: Upgrade[];
-  disqualifiedUpgrades: string[];
+  disqualifiedUpgrades?: string[];
   disabledUpgrades: string[];
-  ship: Ship
+  ship: Ship;
+  gamemodeRestrictions?: GamemodeRestrictions;
+  id?: string;
 }
 
 interface UpgradeData {
@@ -46,6 +48,8 @@ export default function UpgradeSelector({
   disqualifiedUpgrades,
   disabledUpgrades,
   ship,
+  gamemodeRestrictions,
+  id,
 }: UpgradeSelectorProps) {
   const [loading, setLoading] = useState(true);
   const { uniqueClassNames, addUniqueClassName } = useUniqueClassContext();
@@ -307,6 +311,43 @@ export default function UpgradeSelector({
   }, [allUpgrades, activeSorts, searchQuery]);
 
   const isUpgradeAvailable = (upgrade: Upgrade) => {
+    // Check commander restrictions
+    if (upgradeType === 'commander' && gamemodeRestrictions) {
+      if (gamemodeRestrictions.allowedCommanders && !gamemodeRestrictions.allowedCommanders.includes(upgrade.name)) {
+        return false;
+      }
+      if (gamemodeRestrictions.disallowedCommanders && gamemodeRestrictions.disallowedCommanders.includes(upgrade.name)) {
+        return false;
+      }
+    }
+
+    // Check gamemode unique-class restrictions
+    if (gamemodeRestrictions) {
+      // Check disallowed upgrade unique-classes
+      if (gamemodeRestrictions.disallowedUpgradeUniqueClasses && upgrade['unique-class']) {
+        for (const uniqueClass of gamemodeRestrictions.disallowedUpgradeUniqueClasses) {
+          if (upgrade['unique-class'].includes(uniqueClass)) {
+            return false;
+          }
+        }
+      }
+
+      // Check allowed upgrade unique-classes (if specified)
+      if (gamemodeRestrictions.allowedUpgradeUniqueClasses && upgrade['unique-class']) {
+        const hasAllowedUniqueClass = upgrade['unique-class'].some(uniqueClass => 
+          gamemodeRestrictions.allowedUpgradeUniqueClasses?.includes(uniqueClass)
+        );
+        if (!hasAllowedUniqueClass) {
+          return false;
+        }
+      }
+    }
+
+    // Check unique-class restrictions
+    if (upgrade["unique-class"]?.some(uc => uc !== "" && uniqueClassNames.includes(uc))) {
+      return false;
+    }
+
     // Add check for grey_upgrades availability
     if (upgrade.restrictions?.grey_upgrades) {
       for (const greyType of upgrade.restrictions.grey_upgrades) {
@@ -324,10 +365,6 @@ export default function UpgradeSelector({
 
     // Huge ships can't have enable_upgrades
     if (shipSize === 'huge' && upgrade.restrictions?.enable_upgrades && upgrade.restrictions.enable_upgrades.length > 0 && upgrade.restrictions.enable_upgrades.some(upgrade => upgrade.trim() !== '')) {
-      return false;
-    }
-
-    if (upgrade["unique-class"]?.some(uc => uc !== "" && uniqueClassNames.includes(uc))) {
       return false;
     }
 
@@ -358,7 +395,7 @@ export default function UpgradeSelector({
       if (upgrade.modification && currentShipUpgrades.some(su => su.modification)) {
         return false;
       }
-      if (disqualifiedUpgrades.includes(upgrade.type) || disabledUpgrades.includes(upgrade.type)) {
+      if (disqualifiedUpgrades && disqualifiedUpgrades.includes(upgrade.type)) {
         return false;
       }
     }
@@ -415,6 +452,39 @@ export default function UpgradeSelector({
   };
 
   const isUpgradeGreyedOut = (upgrade: Upgrade) => {
+    // Check if the upgrade is restricted by gamemode
+    if (upgradeType === 'commander' && gamemodeRestrictions) {
+      if (gamemodeRestrictions.allowedCommanders && !gamemodeRestrictions.allowedCommanders.includes(upgrade.name)) {
+        return true;
+      }
+      if (gamemodeRestrictions.disallowedCommanders && gamemodeRestrictions.disallowedCommanders.includes(upgrade.name)) {
+        return true;
+      }
+    }
+
+    // Check gamemode unique-class restrictions
+    if (gamemodeRestrictions) {
+      // Check disallowed upgrade unique-classes
+      if (gamemodeRestrictions.disallowedUpgradeUniqueClasses && upgrade['unique-class']) {
+        for (const uniqueClass of gamemodeRestrictions.disallowedUpgradeUniqueClasses) {
+          if (upgrade['unique-class'].includes(uniqueClass)) {
+            return true;
+          }
+        }
+      }
+
+      // Check allowed upgrade unique-classes (if specified)
+      if (gamemodeRestrictions.allowedUpgradeUniqueClasses && upgrade['unique-class']) {
+        const hasAllowedUniqueClass = upgrade['unique-class'].some(uniqueClass => 
+          gamemodeRestrictions.allowedUpgradeUniqueClasses?.includes(uniqueClass)
+        );
+        if (!hasAllowedUniqueClass) {
+          return true;
+        }
+      }
+    }
+
+    // Check unique-class restrictions
     if (upgrade["unique-class"] && upgrade["unique-class"].length > 0) {
       return upgrade["unique-class"].some(uc => 
         uc !== "" && uniqueClassNames.includes(uc) && 
@@ -431,13 +501,28 @@ export default function UpgradeSelector({
   const handleUpgradeClick = (upgrade: Upgrade) => {
     if (isUpgradeAvailable(upgrade) && !isUpgradeGreyedOut(upgrade)) {
       onSelectUpgrade(upgrade);
-      // Only add unique class names if the upgrade has them and they're not already in the context
       if (upgrade.unique) {
         addUniqueClassName(upgrade.name);
       }
       if (upgrade["unique-class"]) {
         upgrade["unique-class"].filter(uc => uc !== "").forEach(uc => addUniqueClassName(uc));
       }
+    } else {
+      // Show a message explaining why the upgrade can't be selected
+      let message = "This upgrade cannot be selected because:";
+      if (upgradeType === 'commander' && gamemodeRestrictions) {
+        if (gamemodeRestrictions.allowedCommanders && !gamemodeRestrictions.allowedCommanders.includes(upgrade.name)) {
+          message += `\n- This commander is not allowed in the current gamemode`;
+        }
+        if (gamemodeRestrictions.disallowedCommanders && gamemodeRestrictions.disallowedCommanders.includes(upgrade.name)) {
+          message += `\n- This commander is not allowed in the current gamemode`;
+        }
+      }
+      if (upgrade["unique-class"]?.some(uc => uc !== "" && uniqueClassNames.includes(uc))) {
+        message += `\n- A unique class from this upgrade is already in use`;
+      }
+      // ... add other restriction messages as needed ...
+      alert(message);
     }
   };
 
@@ -534,40 +619,47 @@ export default function UpgradeSelector({
           {loading ? (
             <p>Loading upgrades...</p>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2">
               {processedUpgrades.map((upgrade) => (
-                <div key={upgrade.id} className="w-full aspect-[2.5/3.5]">
+                <div key={upgrade.id} className="aspect-[2.5/3.5]">
                   <Button
                     onClick={() => handleUpgradeClick(upgrade)}
-                    className={`p-0 overflow-hidden relative w-full h-full rounded-lg bg-transparent ${
+                    className={`p-0 overflow-visible relative w-full h-full rounded-lg bg-transparent ${
                       !isUpgradeAvailable(upgrade) || isUpgradeGreyedOut(upgrade) ? 'opacity-50 cursor-not-allowed' : ''
                     }`}
                     disabled={!isUpgradeAvailable(upgrade) || isUpgradeGreyedOut(upgrade)}
                   >
                     <div className="absolute inset-0 flex items-center justify-center">
                       <OptimizedImage
-                        src={validateImageUrl(upgrade.cardimage)}
+                        src={upgrade.cardimage}
                         alt={upgrade.name}
-                        width={250}
-                        height={350}
-                        className="object-cover object-center"
+                        width={250}  // Standard poker card width (2.5 inches * 100)
+                        height={350} // Standard poker card height (3.5 inches * 100)
+                        className="object-cover object-center w-full h-full"
                         onError={() => {}}
                       />
-                    </div>
-                    <div className="absolute bottom-0 left-0 right-0 text-white p-1 sm:p-2 visually-hidden">
-                      <p className="text-xs sm:text-sm font-bold flex items-center justify-center">
-                        {upgrade.unique && <span className="mr-1 text-yellow-500 text-xs sm:text-sm">●</span>}
-                        <span className="break-words line-clamp-2 text-center">{upgrade.name}</span>
-                      </p>
-                      <p className="text-xs sm:text-sm text-center">{upgrade.points} points</p>
-                    </div>
-                    <div className="sr-only">
-                      <p>
-                        {upgrade.unique && "Unique "}
-                        {upgrade.name}
-                      </p>
-                      <p>{upgrade.points} points</p>
-                      {JSON.stringify(upgrade)}
+                      {(!isUpgradeAvailable(upgrade) || isUpgradeGreyedOut(upgrade)) && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
+                          <span className="text-white text-sm text-center px-2">
+                            {upgradeType === 'commander' && gamemodeRestrictions && (
+                              <>
+                                {gamemodeRestrictions.allowedCommanders && !gamemodeRestrictions.allowedCommanders.includes(upgrade.name) && 
+                                  "Not allowed in current gamemode"}
+                                {gamemodeRestrictions.disallowedCommanders && gamemodeRestrictions.disallowedCommanders.includes(upgrade.name) && 
+                                  "Not allowed in current gamemode"}
+                              </>
+                            )}
+                            {gamemodeRestrictions?.allowedUpgradeUniqueClasses && upgrade['unique-class'] &&
+                             !upgrade['unique-class'].some(uc => gamemodeRestrictions.allowedUpgradeUniqueClasses!.includes(uc)) && 
+                              "Upgrade unique class not allowed in this gamemode"}
+                            {gamemodeRestrictions?.disallowedUpgradeUniqueClasses && upgrade['unique-class'] &&
+                             upgrade['unique-class'].some(uc => gamemodeRestrictions.disallowedUpgradeUniqueClasses!.includes(uc)) && 
+                              "Upgrade unique class not allowed in this gamemode"}
+                            {upgrade["unique-class"]?.some(uc => uc !== "" && uniqueClassNames.includes(uc)) && 
+                              "Unique class already in use"}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </Button>
                 </div>

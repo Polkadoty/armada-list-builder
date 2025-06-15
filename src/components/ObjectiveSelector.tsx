@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { SortToggleGroup } from './SortToggleGroup';
 import Cookies from 'js-cookie';
 import { sanitizeImageUrl } from '@/utils/dataFetcher';
+import { GamemodeRestrictions } from '@/utils/gamemodeRestrictions';
 
 export interface ObjectiveModel {
   id: string;
@@ -18,14 +19,16 @@ export interface ObjectiveModel {
 }
 
 interface ObjectiveSelectorProps {
-  type: 'assault' | 'defense' | 'navigation';
+  type: 'assault' | 'defense' | 'navigation' | 'campaign';
   onSelectObjective: (objective: ObjectiveModel) => void;
   onClose: () => void;
+  gamemodeRestrictions?: GamemodeRestrictions;
+  forcedObjectiveName?: string;
 }
 
 type SortOption = 'alphabetical' | 'points' | 'unique' | 'custom';
 
-export function ObjectiveSelector({ type, onSelectObjective, onClose }: ObjectiveSelectorProps) {
+export function ObjectiveSelector({ type, onSelectObjective, onClose, gamemodeRestrictions, forcedObjectiveName }: ObjectiveSelectorProps) {
   const [objectives, setObjectives] = useState<ObjectiveModel[]>([]);
   const [loading, setLoading] = useState(true);
   const [showSearch, setShowSearch] = useState(false);
@@ -124,7 +127,12 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose }: Objectiv
 
             /* eslint-disable @typescript-eslint/no-explicit-any */
             Object.entries(objectivesData).forEach(([objectiveId, objective]: [string, any]) => {
-              if (objective.type === type && !objectiveId.includes('-errata-')) {
+              // For campaign type, include all objective types; otherwise filter by specific type
+              const shouldInclude = type === 'campaign' 
+                ? ['assault', 'defense', 'navigation'].includes(objective.type)
+                : objective.type === type;
+                
+              if (shouldInclude && !objectiveId.includes('-errata-')) {
                 objectiveMap.set(objectiveId, {
                   id: objectiveId,
                   name: objective.name,
@@ -153,7 +161,12 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose }: Objectiv
 
             /* eslint-disable @typescript-eslint/no-explicit-any */
             Object.entries(objectivesData).forEach(([objectiveId, objective]: [string, any]) => {
-              if (objective.type === type && objectiveId.includes('-errata-')) {
+              // For campaign type, include all objective types; otherwise filter by specific type
+              const shouldInclude = type === 'campaign' 
+                ? ['assault', 'defense', 'navigation'].includes(objective.type)
+                : objective.type === type;
+                
+              if (shouldInclude && objectiveId.includes('-errata-')) {
                 const baseId = objectiveId.replace(/-errata-(legacy|legends|legacyBeta|arc)$/, '');
                 
                 if (errataKeys.includes(objectiveId)) {
@@ -181,6 +194,31 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose }: Objectiv
 
     fetchObjectives();
   }, [type, contentSourcesEnabled]);
+
+  // Function to check if an objective is allowed
+  const isObjectiveAllowed = (objective: ObjectiveModel) => {
+    if (!gamemodeRestrictions?.objectiveRestrictions) return true;
+
+    const restrictions = gamemodeRestrictions.objectiveRestrictions;
+    
+    // Check allowed objectives
+    if (restrictions.allowedObjectives) {
+      const allowedForType = restrictions.allowedObjectives[type];
+      if (allowedForType && !allowedForType.includes(objective.name)) {
+        return false;
+      }
+    }
+
+    // Check disallowed objectives
+    if (restrictions.disallowedObjectives) {
+      const disallowedForType = restrictions.disallowedObjectives[type];
+      if (disallowedForType && disallowedForType.includes(objective.name)) {
+        return false;
+      }
+    }
+
+    return true;
+  };
 
   // Add useMemo for filtered and sorted objectives
   const processedObjectives = useMemo(() => {
@@ -284,30 +322,38 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose }: Objectiv
             <p>Loading objectives...</p>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-2">
-              {processedObjectives.map((objective) => (
-                <div key={objective.id} className="w-full aspect-[2.5/3.5]">
-                  <Button
-                    onClick={() => onSelectObjective(objective)}
-                    className="p-0 overflow-hidden relative w-full h-full rounded-lg bg-transparent"
-                  >
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <OptimizedImage
-                        src={objective.cardimage}
-                        alt={objective.name}
-                        width={250}
-                        height={350}
-                        className="object-cover object-center scale-[101%]"
-                        onError={() => {}}
-                      />
-                    </div>
-                    <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-1 sm:p-2 visually-hidden">
-                      <p className="text-xs sm:text-sm font-bold flex items-center justify-center">
-                        <span className="break-words line-clamp-2 text-center">{objective.name}</span>
-                      </p>
-                    </div>
-                  </Button>
-                </div>
-              ))}
+              {processedObjectives.map((objective) => {
+                const isMatchingForced = !forcedObjectiveName || objective.name === forcedObjectiveName;
+                const isDisabled = forcedObjectiveName && !isMatchingForced;
+                
+                return (
+                  <div key={objective.id} className="w-full aspect-[2.5/3.5]">
+                    <Button
+                      onClick={() => !isDisabled && onSelectObjective(objective)}
+                      className={`p-0 overflow-hidden relative w-full h-full rounded-lg bg-transparent ${
+                        isDisabled ? 'opacity-30 cursor-not-allowed' : ''
+                      }`}
+                      disabled={!!isDisabled}
+                    >
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <OptimizedImage
+                          src={objective.cardimage}
+                          alt={objective.name}
+                          width={250}
+                          height={350}
+                          className="object-cover object-center scale-[101%]"
+                          onError={() => {}}
+                        />
+                      </div>
+                      <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-1 sm:p-2 visually-hidden">
+                        <p className="text-xs sm:text-sm font-bold flex items-center justify-center">
+                          <span className="break-words line-clamp-2 text-center">{objective.name}</span>
+                        </p>
+                      </div>
+                    </Button>
+                  </div>
+                );
+              })}
             </div>
           )}
         </CardContent>

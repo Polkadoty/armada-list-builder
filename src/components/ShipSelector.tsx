@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import Cookies from 'js-cookie';
 import { ContentSource } from './FleetBuilder';
 import { sanitizeImageUrl } from '@/utils/dataFetcher';
+import { GamemodeRestrictions } from '@/utils/gamemodeRestrictions';
 
 export interface ShipModel {
   id: string;
@@ -19,13 +20,14 @@ export interface ShipModel {
   upgrades?: string[];
   unique: boolean;
   chassis: string;
-  size?: string;
+  size: "small" | "medium" | "large" | "huge" | "280-huge";
   traits?: string[];
   source: ContentSource;
   speed: Record<string, number[]>;
   tokens: Record<string, number>;
   armament: Record<string, number[]>;
   searchableText: string;
+  shipClass?: string;
 }
 
 interface ShipData {
@@ -34,7 +36,7 @@ interface ShipData {
 
 interface ChassisData {
   models: Record<string, ShipModel>;
-  size: string;
+  size: "small" | "medium" | "large" | "huge" | "280-huge";
 }
 
 interface ShipSelectorProps {
@@ -42,9 +44,10 @@ interface ShipSelectorProps {
   filter: { minPoints: number; maxPoints: number };
   onSelectShip: (ship: ShipModel) => void;
   onClose: () => void;
+  gamemodeRestrictions?: GamemodeRestrictions;
 }
 
-export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSelectorProps) {
+export function ShipSelector({ faction, filter, onSelectShip, onClose, gamemodeRestrictions }: ShipSelectorProps) {
   const [allShips, setAllShips] = useState<ShipModel[]>([]);
   const [displayedShips, setDisplayedShips] = useState<ShipModel[]>([]);
   const { uniqueClassNames, addUniqueClassName } = useUniqueClassContext();
@@ -325,6 +328,28 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
     fetchShips();
   }, [faction, filter.minPoints, filter.maxPoints, contentSourcesEnabled]);
 
+  const isShipAllowed = (ship: ShipModel) => {
+    if (!gamemodeRestrictions) return true;
+
+    // Check ship size restrictions
+    if (gamemodeRestrictions.allowedShipSizes && !gamemodeRestrictions.allowedShipSizes.includes(ship.size)) {
+      return false;
+    }
+    if (gamemodeRestrictions.disallowedShipSizes && gamemodeRestrictions.disallowedShipSizes.includes(ship.size)) {
+      return false;
+    }
+
+    // Check ship class restrictions
+    if (gamemodeRestrictions.allowedShipClasses && ship.shipClass && !gamemodeRestrictions.allowedShipClasses.includes(ship.shipClass)) {
+      return false;
+    }
+    if (gamemodeRestrictions.disallowedShipClasses && ship.shipClass && gamemodeRestrictions.disallowedShipClasses.includes(ship.shipClass)) {
+      return false;
+    }
+
+    return true;
+  };
+
   // Update the useMemo for filtered and sorted ships
   const processedShips = useMemo(() => {
     let sortedShips = [...allShips];
@@ -378,7 +403,7 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
     });
 
     return sortedShips;
-  }, [allShips, activeSorts, searchQuery]);
+  }, [allShips, activeSorts, searchQuery, gamemodeRestrictions]);
 
   // Update the useEffect to use the memoized value
   useEffect(() => {
@@ -401,7 +426,7 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
   };
 
   const handleShipClick = (ship: ShipModel) => {
-    if (isShipAvailable(ship)) {
+    if (isShipAvailable(ship) && isShipAllowed(ship)) {
       onSelectShip(ship);
       if (ship.unique) {
         addUniqueClassName(ship.name);
@@ -447,14 +472,14 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
         </div>
         <CardContent className="p-2 sm:p-4 flex-grow overflow-auto">
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-2">
-            {displayedShips.map((ship) => (
+            {processedShips.map((ship) => (
               <div key={ship.id} className={`w-full ${isHugeShip(ship) ? 'col-span-2 aspect-[5/4]' : 'aspect-[8.75/15]'}`}>
                 <Button
                   onClick={() => handleShipClick(ship)}
                   className={`p-0 overflow-visible relative w-full h-full rounded-lg bg-transparent ${
-                    !isShipAvailable(ship) ? 'opacity-50 cursor-not-allowed' : ''
+                    !isShipAvailable(ship) || !isShipAllowed(ship) ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
-                  disabled={!isShipAvailable(ship)}
+                  disabled={!isShipAvailable(ship) || !isShipAllowed(ship)}
                 >
                   <div className="absolute inset-0 flex items-center justify-center">
                     <OptimizedImage
@@ -465,6 +490,17 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose }: ShipSel
                       className="object-cover object-center scale-[101%]"
                       onError={() => {}}
                     />
+                    {!isShipAllowed(ship) && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
+                        <span className="text-white text-sm text-center px-2">
+                          {gamemodeRestrictions?.allowedShipSizes && !gamemodeRestrictions.allowedShipSizes.includes(ship.size) 
+                            ? 'Ship size not allowed in this gamemode'
+                            : gamemodeRestrictions?.disallowedShipSizes && gamemodeRestrictions.disallowedShipSizes.includes(ship.size)
+                            ? 'Ship size not allowed in this gamemode'
+                            : 'Ship not allowed in this gamemode'}
+                        </span>
+                      </div>
+                    )}
                   </div>
                   <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-1 sm:p-2 visually-hidden">
                     <p className="text-xs sm:text-xs font-bold flex items-center justify-center mb-0.5">

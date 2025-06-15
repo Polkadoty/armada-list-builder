@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import Cookies from 'js-cookie';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import { sanitizeImageUrl } from '@/utils/dataFetcher';
+import { GamemodeRestrictions } from '@/utils/gamemodeRestrictions';
 
 interface SquadronSelectorProps {
   faction: string;
@@ -18,13 +19,23 @@ interface SquadronSelectorProps {
   selectedSquadrons: Squadron[];
   aceLimit?: number;
   aceCount?: number;
+  gamemodeRestrictions?: GamemodeRestrictions;
 }
 
 interface SquadronData {
   squadrons: Record<string, Squadron>;
 }
 
-export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, selectedSquadrons, aceLimit = 0, aceCount = 0 }: SquadronSelectorProps) {
+export function SquadronSelector({ 
+  faction, 
+  filter, 
+  onSelectSquadron, 
+  onClose, 
+  selectedSquadrons, 
+  aceLimit = 0, 
+  aceCount = 0,
+  gamemodeRestrictions 
+}: SquadronSelectorProps) {
   const [allSquadrons, setAllSquadrons] = useState<Squadron[]>([]);
   const [showPopup, setShowPopup] = useState(false);
   const [popupMessage, setPopupMessage] = useState('');
@@ -267,21 +278,54 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
     fetchSquadrons();
   }, [faction, filter.minPoints, filter.maxPoints, contentSourcesEnabled]);
 
-  const processedSquadrons = useMemo(() => {
-    let filtered = allSquadrons;
-    
-    // Apply search filter if needed
-    if (searchQuery) {
-      filtered = filtered.filter(squadron =>
-        squadron.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const isSquadronAllowed = (squadron: Squadron, restrictions?: GamemodeRestrictions): boolean => {
+    if (!restrictions) return true;
+
+    // Check disallowed squadron keywords
+    if (restrictions.disallowedSquadronKeywords && squadron.keywords) {
+      for (const keyword of restrictions.disallowedSquadronKeywords) {
+        if (squadron.keywords.includes(keyword)) {
+          return false;
+        }
+      }
+    }
+
+    // Check allowed squadron keywords (if specified)
+    if (restrictions.allowedSquadronKeywords && squadron.keywords) {
+      return squadron.keywords.some(keyword => 
+        restrictions.allowedSquadronKeywords?.includes(keyword)
       );
     }
 
-    // Apply points filter
-    filtered = filtered.filter(squadron => 
-      squadron.points >= filter.minPoints && 
-      squadron.points <= filter.maxPoints
-    );
+    // Check disallowed squadron unique-classes
+    if (restrictions.disallowedSquadronUniqueClasses && squadron['unique-class']) {
+      for (const uniqueClass of restrictions.disallowedSquadronUniqueClasses) {
+        if (squadron['unique-class'].includes(uniqueClass)) {
+          return false;
+        }
+      }
+    }
+
+    // Check allowed squadron unique-classes (if specified)
+    if (restrictions.allowedSquadronUniqueClasses && squadron['unique-class']) {
+      return squadron['unique-class'].some(uniqueClass => 
+        restrictions.allowedSquadronUniqueClasses?.includes(uniqueClass)
+      );
+    }
+
+    return true;
+  };
+
+  const processedSquadrons = useMemo(() => {
+    let sortedSquadrons = [...allSquadrons];
+    
+    // Filter squadrons based on search query
+    if (searchQuery) {
+      sortedSquadrons = sortedSquadrons.filter(squadron => {
+        const searchLower = searchQuery.toLowerCase();
+        return squadron.searchableText.includes(searchLower);
+      });
+    }
 
     // Define sort functions
     const sortFunctions: Record<SortOption, (a: Squadron, b: Squadron) => number> = {
@@ -293,24 +337,14 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
       },
       unique: (a, b) => (a.unique === b.unique ? 0 : a.unique ? -1 : 1),
       points: (a, b) => a.points - b.points,
-      alphabetical: (a, b) => {
-        if (a['ace-name'] && b['ace-name']) {
-          return a['ace-name'].localeCompare(b['ace-name']);
-        } else if (a['ace-name']) {
-          return a['ace-name'].localeCompare(b.name);
-        } else if (b['ace-name']) {
-          return a.name.localeCompare(b['ace-name']);
-        } else {
-          return a.name.localeCompare(b.name);
-        }
-      },
+      alphabetical: (a, b) => a.name.localeCompare(b.name),
     };
 
     const sortPriority: SortOption[] = ['custom', 'unique', 'points', 'alphabetical'];
 
     // Apply sorting
-    filtered.sort((a, b) => {
-      // If no active sorts, use default sorting (by squadron_type, then alphabetical)
+    sortedSquadrons.sort((a, b) => {
+      // If no active sorts, use default sorting (unique first, then alphabetical)
       if (Object.values(activeSorts).every(sort => sort === null)) {
         if (a.squadron_type !== b.squadron_type) {
           return a.squadron_type.localeCompare(b.squadron_type);
@@ -330,8 +364,8 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
       return 0;
     });
 
-    return filtered;
-  }, [allSquadrons, activeSorts, searchQuery, filter.minPoints, filter.maxPoints]);
+    return sortedSquadrons;
+  }, [allSquadrons, activeSorts, searchQuery, gamemodeRestrictions]);
 
   const handleSortToggle = (option: SortOption) => {
     setActiveSorts(prevSorts => {
@@ -370,8 +404,12 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
   };
 
   const handleSquadronClick = (squadron: Squadron) => {
-    if (isSquadronSelected(squadron)) {
-      setPopupMessage("You can't select multiple unique items or conflicting squadrons.");
+    if (isSquadronSelected(squadron) || !isSquadronAllowed(squadron, gamemodeRestrictions)) {
+      setPopupMessage(
+        !isSquadronAllowed(squadron, gamemodeRestrictions) 
+          ? "This squadron is not allowed in the current gamemode."
+          : "You can't select multiple unique items or conflicting squadrons."
+      );
       setShowPopup(true);
       setTimeout(() => setShowPopup(false), 2000);
     } else {
@@ -425,15 +463,15 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
               You have {aceCount} aces equipped (limit: {aceLimit}). You must remove an ace to add another.
             </div>
           )}
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2">
             {processedSquadrons.map((squadron) => (
-              <div key={squadron.id} className="w-full aspect-[2.5/3.5]">
+              <div key={squadron.id} className="aspect-[2.5/3.5]">
                 <Button
                   onClick={() => handleSquadronClick(squadron)}
-                  className={`p-0 overflow-hidden relative w-full h-full rounded-lg bg-transparent ${
-                    (isSquadronSelected(squadron) || (aceLimit > 0 && aceCount >= aceLimit && squadron.ace)) ? 'opacity-50 cursor-not-allowed' : ''
+                  className={`p-0 overflow-visible relative w-full h-full rounded-lg bg-transparent ${
+                    isSquadronSelected(squadron) || !isSquadronAllowed(squadron, gamemodeRestrictions) ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
-                  disabled={isSquadronSelected(squadron) || (aceLimit > 0 && aceCount >= aceLimit && squadron.ace)}
+                  disabled={isSquadronSelected(squadron) || !isSquadronAllowed(squadron, gamemodeRestrictions)}
                 >
                   <div className="absolute inset-0 flex items-center justify-center">
                     <OptimizedImage
@@ -444,21 +482,34 @@ export function SquadronSelector({ faction, filter, onSelectSquadron, onClose, s
                       className="object-cover object-center w-full h-full"
                       onError={() => {}}
                     />
+                    {!isSquadronAllowed(squadron, gamemodeRestrictions) && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
+                        <span className="text-white text-sm text-center px-2">
+                          {gamemodeRestrictions?.allowedSquadronKeywords && squadron.keywords && 
+                           !squadron.keywords.some(keyword => gamemodeRestrictions.allowedSquadronKeywords!.includes(keyword))
+                            ? 'Squadron type not allowed in this gamemode'
+                            : gamemodeRestrictions?.disallowedSquadronKeywords && squadron.keywords &&
+                              squadron.keywords.some(keyword => gamemodeRestrictions.disallowedSquadronKeywords!.includes(keyword))
+                            ? 'Squadron type not allowed in this gamemode'
+                            : gamemodeRestrictions?.allowedSquadronUniqueClasses && squadron['unique-class'] &&
+                              !squadron['unique-class'].some(uc => gamemodeRestrictions.allowedSquadronUniqueClasses!.includes(uc))
+                            ? 'Squadron not allowed in this gamemode'
+                            : gamemodeRestrictions?.disallowedSquadronUniqueClasses && squadron['unique-class'] &&
+                              squadron['unique-class'].some(uc => gamemodeRestrictions.disallowedSquadronUniqueClasses!.includes(uc))
+                            ? 'Squadron not allowed in this gamemode'
+                            : 'Squadron not allowed in this gamemode'}
+                        </span>
+                      </div>
+                    )}
                   </div>
                   <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-1 sm:p-2 visually-hidden">
                     {squadron['ace-name'] && (
-                      <p className="text-[10px] sm:text-xs font-bold flex items-center justify-center mb-0.5">
+                      <p className="text-xs sm:text-xs font-bold flex items-center justify-center mb-0.5">
                         {squadron.unique && <span className="mr-1 text-yellow-500 text-[10px] sm:text-xs">●</span>}
-                        <span className="break-words text-center">{squadron['ace-name']}</span>
+                        <span className="break-words text-center">{squadron.name}</span>
                       </p>
                     )}
-                    <p className="text-[10px] sm:text-xs font-bold flex items-center justify-center mb-0.5">
-                      <span className="break-words text-center">{squadron.name}</span>
-                    </p>
-                    <p className="text-[10px] sm:text-xs text-center">{squadron.points} points</p>
-                  </div>
-                  <div className="sr-only">
-                    {JSON.stringify(squadron)}
+                    <p className="text-xs sm:text-sm text-center">{squadron.points} points</p>
                   </div>
                 </Button>
               </div>

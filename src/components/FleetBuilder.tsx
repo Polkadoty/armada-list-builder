@@ -43,7 +43,8 @@ import { useRouter } from 'next/router';
 import { PrintMenu } from "./PrintMenu";
 import { ExpansionSelector } from "./ExpansionSelector";
 import Cookies from 'js-cookie';
-import { checkFleetViolations, Gamemode, getRestrictionsForGamemode } from "../utils/gamemodeRestrictions";
+import { checkFleetViolations, Gamemode } from "../utils/gamemodeRestrictions";
+import { GAMEMODE_RESTRICTIONS, getRestrictionsForGamemode } from "../utils/gamemodeRestrictions";
 
 const DAMAGE_DECK = [
   { name: 'Blinded Gunners', count: 2 },
@@ -80,7 +81,7 @@ export interface Ship {
   assignedUpgrades: Upgrade[];
   unique: boolean;
   chassis: string;
-  size: string;
+  size: "small" | "medium" | "large" | "huge" | "280-huge";
   traits?: string[];
   source: ContentSource;
   searchableText: string;
@@ -115,6 +116,7 @@ export interface Squadron {
   source: ContentSource;
   searchableText: string;
   release?: string;
+  keywords?: string[]; // Derived from abilities
 }
 
 interface Objective {
@@ -250,9 +252,12 @@ export default function FleetBuilder({
     useState(false);
   const [showNavigationObjectiveSelector, setShowNavigationObjectiveSelector] =
     useState(false);
+  const [showCampaignObjectiveSelector, setShowCampaignObjectiveSelector] =
+    useState(false);
   const [selectedAssaultObjectives, setSelectedAssaultObjectives] = useState<ObjectiveModel[]>([]);
   const [selectedDefenseObjectives, setSelectedDefenseObjectives] = useState<ObjectiveModel[]>([]);
   const [selectedNavigationObjectives, setSelectedNavigationObjectives] = useState<ObjectiveModel[]>([]);
+  const [selectedCampaignObjectives, setSelectedCampaignObjectives] = useState<ObjectiveModel[]>([]);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [uniqueClassNames, setUniqueClassNames] = useState<string[]>([]);
   const [showUpgradeSelector, setShowUpgradeSelector] = useState(false);
@@ -311,9 +316,10 @@ export default function FleetBuilder({
       selectedAssaultObjectives,
       selectedDefenseObjectives,
       selectedNavigationObjectives,
+      selectedCampaignObjectives,
       commanderCount,
     }
-  ), [gamemode, points, totalSquadronPoints, selectedShips, selectedSquadrons, selectedAssaultObjectives, selectedDefenseObjectives, selectedNavigationObjectives, commanderCount]);
+  ), [gamemode, points, totalSquadronPoints, selectedShips, selectedSquadrons, selectedAssaultObjectives, selectedDefenseObjectives, selectedNavigationObjectives, selectedCampaignObjectives, commanderCount]);
 
   // Synchronize total points calculation
   useEffect(() => {
@@ -424,7 +430,7 @@ export default function FleetBuilder({
       availableUpgrades: [...(ship.upgrades || [])], // Create new array
       assignedUpgrades: [],
       chassis: ship.chassis,
-      size: ship.size || "",
+      size: (ship.size || "small") as "small" | "medium" | "large" | "huge" | "280-huge",
       traits: ship.traits || [],
       source: ship.source || "regular",
     };
@@ -840,6 +846,11 @@ export default function FleetBuilder({
         });
       }
 
+      // If this is a commander being removed, update hasCommander state immediately
+      if (upgradeType === "commander") {
+        setHasCommander(false);
+      }
+
       setSelectedShips((prevShips) =>
         prevShips.map((ship) => {
           if (ship.id === shipId) {
@@ -889,12 +900,21 @@ export default function FleetBuilder({
                 }
 
                 // Update disabled upgrades
-                setDisabledUpgrades((prev) => ({
-                  ...prev,
-                  [shipId]: (prev[shipId] || []).filter(
-                    (u) => !upgrade.restrictions?.disable_upgrades?.includes(u)
-                  ),
-                }));
+                setDisabledUpgrades((prev) => {
+                  const newDisabled = { ...prev };
+                  // If this is a commander being removed, ensure commander is removed from disabled upgrades for all ships
+                  if (upgrade.type === "commander") {
+                    Object.keys(newDisabled).forEach(shipId => {
+                      newDisabled[shipId] = (newDisabled[shipId] || []).filter(type => type !== "commander");
+                    });
+                  } else {
+                    // For non-commander upgrades, just remove their specific disabled upgrades
+                    newDisabled[shipId] = (newDisabled[shipId] || []).filter(
+                      (u) => !upgrade.restrictions?.disable_upgrades?.includes(u)
+                    );
+                  }
+                  return newDisabled;
+                });
 
                 // Update enabled upgrades
                 setEnabledUpgrades((prev) => ({
@@ -982,6 +1002,7 @@ export default function FleetBuilder({
       removeUniqueClassName,
       selectedShips,
       setSelectedShips,
+      setHasCommander,
     ]
   );
 
@@ -1026,7 +1047,7 @@ export default function FleetBuilder({
       id: Date.now().toString(),
       assignedUpgrades: [],
       availableUpgrades: freshShipModel.upgrades || [],
-      size: freshShipModel.size || "unknown",
+      size: (freshShipModel.size || "small") as "small" | "medium" | "large" | "huge" | "280-huge",
       searchableText: freshShipModel.searchableText || "",
       source: shipToCopy.source
     };
@@ -1335,6 +1356,19 @@ export default function FleetBuilder({
     setSelectedNavigationObjectives([]);
   };
 
+  const handleSelectCampaignObjective = (objective: ObjectiveModel) => {
+    if (faction === "sandbox") {
+      setSelectedCampaignObjectives(prev => [...prev, objective]);
+    } else {
+      setSelectedCampaignObjectives([objective]);
+    }
+    setShowCampaignObjectiveSelector(false);
+  };
+
+  const handleRemoveCampaignObjective = () => {
+    setSelectedCampaignObjectives([]);
+  };
+
     // Modify the SectionHeader click handlers
   const handleClearAllShips = () => {
     setShowDeleteShipsConfirmation(true);
@@ -1467,6 +1501,10 @@ export default function FleetBuilder({
       const sourceTag = formatSource(selectedNavigationObjectives[0].source);
       text += `Navigation: ${selectedNavigationObjectives.map(obj => obj.name).join(", ")}${sourceTag ? ` ${sourceTag}` : ''}\n`;
     }
+    if (selectedCampaignObjectives.length > 0) {
+      const sourceTag = formatSource(selectedCampaignObjectives[0].source);
+      text += `Campaign: ${selectedCampaignObjectives.map(obj => obj.name).join(", ")}${sourceTag ? ` ${sourceTag}` : ''}\n`;
+    }
 
     // Add ships and their upgrades
     if (selectedShips.length > 0) {
@@ -1541,6 +1579,7 @@ export default function FleetBuilder({
     selectedAssaultObjectives, 
     selectedDefenseObjectives, 
     selectedNavigationObjectives,
+    selectedCampaignObjectives,
     faction,
     fleetName,
     points,
@@ -1990,6 +2029,7 @@ export default function FleetBuilder({
     setSelectedAssaultObjectives([]);
     setSelectedDefenseObjectives([]);
     setSelectedNavigationObjectives([]);
+    setSelectedCampaignObjectives([]);
     setDisabledUpgrades({});
     setEnabledUpgrades({});
     setFilledSlots({});
@@ -2034,7 +2074,7 @@ export default function FleetBuilder({
             id: generateUniqueShipId(),
             assignedUpgrades: [],
             availableUpgrades: shipModel.upgrades || [],
-            size: shipModel.size || "small",
+            size: (shipModel.size || "small") as "small" | "medium" | "large" | "huge" | "280-huge",
             searchableText: shipModel.searchableText || "",
             source: source,
           };
@@ -2100,8 +2140,8 @@ export default function FleetBuilder({
         // Skip squadron points line - will be calculated automatically
         continue;
       } else if (
-        (line.startsWith("Assault:") || line.startsWith("Defense:") || line.startsWith("Navigation:") || 
-         line.startsWith("Assault Objective:") || line.startsWith("Defense Objective:") || line.startsWith("Navigation Objective:"))
+        (line.startsWith("Assault:") || line.startsWith("Defense:") || line.startsWith("Navigation:") || line.startsWith("Campaign:") ||
+         line.startsWith("Assault Objective:") || line.startsWith("Defense Objective:") || line.startsWith("Navigation Objective:") || line.startsWith("Campaign Objective:"))
       ) {
         // Handle objectives
         const [type, namesString] = line.split(":");
@@ -2143,6 +2183,13 @@ export default function FleetBuilder({
                     setSelectedNavigationObjectives(prev => [...prev, objective]);
                   } else {
                     setSelectedNavigationObjectives([objective]);
+                  }
+                  break;
+                case "campaign":
+                  if (faction === "sandbox") {
+                    setSelectedCampaignObjectives(prev => [...prev, objective]);
+                  } else {
+                    setSelectedCampaignObjectives([objective]);
                   }
                   break;
               }
@@ -2353,6 +2400,7 @@ export default function FleetBuilder({
     setSelectedAssaultObjectives,
     setSelectedDefenseObjectives,
     setSelectedNavigationObjectives,
+    setSelectedCampaignObjectives,
     setSelectedShips,
     setShowNotification,
     setTotalShipPoints,
@@ -2443,8 +2491,8 @@ export default function FleetBuilder({
         }
 
         .objectives {
-          display: flex;
-          justify-content: space-between;
+          display: grid;
+          grid-template-columns: repeat(${selectedCampaignObjectives.length > 0 ? '4' : '3'}, 1fr);
           gap: 1em;
           margin-top: 1.5em;
           border-top: 1px solid #ddd;
@@ -2527,6 +2575,12 @@ export default function FleetBuilder({
             <h4>Navigation</h4>
             <p>${selectedNavigationObjectives.length > 0 ? selectedNavigationObjectives.map(obj => obj.name).join(", ") : "None"}</p>
           </div>
+          ${selectedCampaignObjectives.length > 0 ? `
+          <div class="objective-card">
+            <h4>Campaign</h4>
+            <p>${selectedCampaignObjectives.map(obj => obj.name).join(", ")}</p>
+          </div>
+          ` : ''}
         </div>
       ` : ''}
 
@@ -3433,6 +3487,48 @@ export default function FleetBuilder({
   const restrictions = getRestrictionsForGamemode(gamemode as Gamemode);
   const aceCount = selectedSquadrons.filter((s) => s.ace).length;
 
+  // Effect to set forced objectives when gamemode changes
+  useEffect(() => {
+    const forcedObjectives = restrictions?.objectiveRestrictions?.forcedObjectives;
+    if (forcedObjectives) {
+      // Fetch actual objective objects for forced objectives
+      const setForcedObjective = (objectiveName: string, setterFunction: (objectives: ObjectiveModel[]) => void) => {
+        // Try to find the objective in localStorage using the same logic as fetchObjective
+        const aliases = JSON.parse(localStorage.getItem('aliases') || '{}');
+        const objectiveKey = getAliasKey(aliases, objectiveName);
+        
+        if (objectiveKey) {
+          const objective = fetchObjective(objectiveKey);
+          if (objective) {
+            setterFunction([objective]);
+          } else {
+            console.warn(`Forced objective "${objectiveName}" not found in game data`);
+          }
+        } else {
+          console.warn(`Forced objective "${objectiveName}" not found in aliases`);
+        }
+      };
+
+      if (forcedObjectives.assault) {
+        setForcedObjective(forcedObjectives.assault, setSelectedAssaultObjectives);
+      }
+      if (forcedObjectives.defense) {
+        setForcedObjective(forcedObjectives.defense, setSelectedDefenseObjectives);
+      }
+      if (forcedObjectives.navigation) {
+        setForcedObjective(forcedObjectives.navigation, setSelectedNavigationObjectives);
+      }
+      if (forcedObjectives.campaign) {
+        setForcedObjective(forcedObjectives.campaign, setSelectedCampaignObjectives);
+      }
+    }
+  }, [gamemode, restrictions]);
+
+  // Get gamemode restrictions
+  const gamemodeRestrictions = useMemo(() => {
+    return GAMEMODE_RESTRICTIONS[gamemode as keyof typeof GAMEMODE_RESTRICTIONS];
+  }, [gamemode]);
+
   return (
     <div ref={contentRef} className="max-w-[2000px] mx-auto">
       <div className="flex flex-col sm:flex-row items-start sm:items-center mb-4">
@@ -3535,7 +3631,7 @@ export default function FleetBuilder({
                 show={true}
                 onClearAll={handleClearAllShips}
                 onAdd={handleAddShip}
-                pointsLimit={restrictions.pointsLimit ?? 0}
+                pointsLimit={restrictions?.pointsLimit ?? 0}
               />
               <div className="relative">
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 4xl:grid-cols-5 gap-4">
@@ -3590,7 +3686,7 @@ export default function FleetBuilder({
                 show={true}
                 onClearAll={handleClearAllSquadrons}
                 onAdd={handleAddSquadron}
-                pointsLimit={restrictions.squadronPointsLimit ?? 0}
+                pointsLimit={restrictions?.squadronPointsLimit ?? 0}
               />
               <div className="relative">
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
@@ -3632,32 +3728,55 @@ export default function FleetBuilder({
           )}
 
           <div className="mb-4 relative">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-xl">
-              <SwipeableObjective
-                type="assault"
-                selectedObjective={selectedAssaultObjectives[0]}
-                selectedObjectives={faction === "sandbox" ? selectedAssaultObjectives : undefined}
-                onRemove={handleRemoveAssaultObjective}
-                onOpen={() => setShowAssaultObjectiveSelector(true)}
-                color="#EB3F3A"
-              />
-              <SwipeableObjective
-                type="defense"
-                selectedObjective={selectedDefenseObjectives[0]}
-                selectedObjectives={faction === "sandbox" ? selectedDefenseObjectives : undefined}
-                onRemove={handleRemoveDefenseObjective}
-                onOpen={() => setShowDefenseObjectiveSelector(true)}
-                color="#FAEE13"
-              />
-              <SwipeableObjective
-                type="navigation"
-                selectedObjective={selectedNavigationObjectives[0]}
-                selectedObjectives={faction === "sandbox" ? selectedNavigationObjectives : undefined}
-                onRemove={handleRemoveNavigationObjective}
-                onOpen={() => setShowNavigationObjectiveSelector(true)}
-                color="#C2E1F4"
-              />
-            </div>
+            {(() => {
+              // Check if campaign objectives are enabled
+              const campaignEnabled = restrictions?.objectiveRestrictions?.enableCampaignObjectives === true;
+              
+              const gridCols = campaignEnabled ? "lg:grid-cols-4" : "lg:grid-cols-3";
+              
+              return (
+                <div className={`grid grid-cols-1 sm:grid-cols-2 ${gridCols} gap-2 text-xl`}>
+                  <SwipeableObjective
+                    type="assault"
+                    selectedObjective={selectedAssaultObjectives[0]}
+                    selectedObjectives={faction === "sandbox" ? selectedAssaultObjectives : undefined}
+                    onRemove={handleRemoveAssaultObjective}
+                    onOpen={() => setShowAssaultObjectiveSelector(true)}
+                    color="#EB3F3A"
+                    gamemodeRestrictions={restrictions}
+                  />
+                  <SwipeableObjective
+                    type="defense"
+                    selectedObjective={selectedDefenseObjectives[0]}
+                    selectedObjectives={faction === "sandbox" ? selectedDefenseObjectives : undefined}
+                    onRemove={handleRemoveDefenseObjective}
+                    onOpen={() => setShowDefenseObjectiveSelector(true)}
+                    color="#FAEE13"
+                    gamemodeRestrictions={restrictions}
+                  />
+                  <SwipeableObjective
+                    type="navigation"
+                    selectedObjective={selectedNavigationObjectives[0]}
+                    selectedObjectives={faction === "sandbox" ? selectedNavigationObjectives : undefined}
+                    onRemove={handleRemoveNavigationObjective}
+                    onOpen={() => setShowNavigationObjectiveSelector(true)}
+                    color="#C2E1F4"
+                    gamemodeRestrictions={restrictions}
+                  />
+                  {campaignEnabled && (
+                    <SwipeableObjective
+                      type="campaign"
+                      selectedObjective={selectedCampaignObjectives[0]}
+                      selectedObjectives={faction === "sandbox" ? selectedCampaignObjectives : undefined}
+                      onRemove={handleRemoveCampaignObjective}
+                      onOpen={() => setShowCampaignObjectiveSelector(true)}
+                      color="#27AE60"
+                      gamemodeRestrictions={restrictions}
+                    />
+                  )}
+                </div>
+              );
+            })()}
           </div>
         </>
       )}
@@ -3676,6 +3795,7 @@ export default function FleetBuilder({
           filter={shipFilter}
           onSelectShip={handleSelectShip}
           onClose={() => setShowShipSelector(false)}
+          gamemodeRestrictions={gamemodeRestrictions}
         />
       )}
 
@@ -3686,8 +3806,9 @@ export default function FleetBuilder({
           onSelectSquadron={handleSelectSquadron}
           onClose={() => setShowSquadronSelector(false)}
           selectedSquadrons={selectedSquadrons}
-          aceLimit={restrictions.aceLimit ?? 0}
+          aceLimit={gamemodeRestrictions?.aceLimit}
           aceCount={aceCount}
+          gamemodeRestrictions={gamemodeRestrictions}
         />
       )}
 
@@ -3696,6 +3817,8 @@ export default function FleetBuilder({
           type="assault"
           onSelectObjective={handleSelectAssaultObjective}
           onClose={() => setShowAssaultObjectiveSelector(false)}
+          gamemodeRestrictions={restrictions}
+          forcedObjectiveName={restrictions?.objectiveRestrictions?.forcedObjectives?.assault}
         />
       )}
 
@@ -3704,6 +3827,8 @@ export default function FleetBuilder({
           type="defense"
           onSelectObjective={handleSelectDefenseObjective}
           onClose={() => setShowDefenseObjectiveSelector(false)}
+          gamemodeRestrictions={restrictions}
+          forcedObjectiveName={restrictions?.objectiveRestrictions?.forcedObjectives?.defense}
         />
       )}
 
@@ -3712,38 +3837,36 @@ export default function FleetBuilder({
           type="navigation"
           onSelectObjective={handleSelectNavigationObjective}
           onClose={() => setShowNavigationObjectiveSelector(false)}
+          gamemodeRestrictions={restrictions}
+          forcedObjectiveName={restrictions?.objectiveRestrictions?.forcedObjectives?.navigation}
+        />
+      )}
+
+      {showCampaignObjectiveSelector && (
+        <ObjectiveSelector
+          type="campaign"
+          onSelectObjective={handleSelectCampaignObjective}
+          onClose={() => setShowCampaignObjectiveSelector(false)}
+          gamemodeRestrictions={restrictions}
+          forcedObjectiveName={restrictions?.objectiveRestrictions?.forcedObjectives?.campaign}
         />
       )}
 
       {showUpgradeSelector && (
         <UpgradeSelector
-          id={currentShipId}
           upgradeType={currentUpgradeType}
           faction={faction}
           onSelectUpgrade={handleSelectUpgrade}
           onClose={() => setShowUpgradeSelector(false)}
-          selectedUpgrades={selectedShips.flatMap(
-            (ship) => ship.assignedUpgrades
-          )}
-          shipType={
-            selectedShips.find((ship) => ship.id === currentShipId)?.name
-          }
-          chassis={
-            selectedShips.find((ship) => ship.id === currentShipId)?.chassis
-          }
-          shipSize={
-            selectedShips.find((ship) => ship.id === currentShipId)?.size
-          }
-          shipTraits={
-            selectedShips.find((ship) => ship.id === currentShipId)?.traits
-          }
-          currentShipUpgrades={
-            selectedShips.find((ship) => ship.id === currentShipId)
-              ?.assignedUpgrades || []
-          }
-          disqualifiedUpgrades={disabledUpgrades[currentShipId] || []}
+          selectedUpgrades={selectedShips.flatMap(ship => ship.assignedUpgrades)}
+          shipType={selectedShips.find(s => s.id === currentShipId)?.chassis || ''}
+          chassis={selectedShips.find(s => s.id === currentShipId)?.chassis || ''}
+          shipSize={selectedShips.find(s => s.id === currentShipId)?.size || ''}
+          shipTraits={selectedShips.find(s => s.id === currentShipId)?.traits || []}
+          currentShipUpgrades={selectedShips.find(s => s.id === currentShipId)?.assignedUpgrades || []}
           disabledUpgrades={disabledUpgrades[currentShipId] || []}
-          ship={selectedShips.find((ship) => ship.id === currentShipId)!}
+          ship={selectedShips.find(s => s.id === currentShipId)!}
+          gamemodeRestrictions={gamemodeRestrictions}
         />
       )}
 
