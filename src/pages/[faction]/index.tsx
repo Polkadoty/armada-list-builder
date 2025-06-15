@@ -12,7 +12,7 @@ import { Pencil } from 'lucide-react';
 import { UserAvatar } from '../../components/UserAvatar';
 import Link from 'next/link';
 import Head from 'next/head';
-import { checkAndFetchData } from '../../utils/dataFetcher';
+import { smartCheckAndFetchData } from '../../utils/contentManager';
 
 const shouldInvertImage = (logoPath: string) => {
   return !logoPath.endsWith('.webp');
@@ -67,7 +67,7 @@ export default function FactionPage() {
 
   useEffect(() => {
     setMounted(true);
-    checkAndFetchData(setIsLoading, setLoadingProgress, setLoadingMessage);
+    smartCheckAndFetchData(setIsLoading, setLoadingProgress, setLoadingMessage);
   }, []);
 
   // Auto-switch gamemode based on faction

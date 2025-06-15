@@ -5,29 +5,44 @@ import { supabase } from '../lib/supabase';
 import { Save } from 'lucide-react';
 import { NotificationWindow } from '@/components/NotificationWindow';
 import { getContentTypes } from './FleetList';
+import { FleetNamePrompt } from './FleetNamePrompt';
 
 interface SaveFleetButtonProps {
     fleetData: string;
     faction: string;
     fleetName: string;
+    setFleetName: (name: string) => void;
     commander: string;
     points: number;
 }
 
 export const SaveFleetButton = forwardRef<HTMLButtonElement, SaveFleetButtonProps>(
-  ({ fleetData, faction, fleetName, commander, points }, ref) => {
+  ({ fleetData, faction, fleetName, setFleetName, commander, points }, ref) => {
     const { user } = useUser();
     const [isSaving, setIsSaving] = useState(false);
     const [showNotification, setShowNotification] = useState(false);
     const [notificationMessage, setNotificationMessage] = useState("");
+    const [showNamePrompt, setShowNamePrompt] = useState(false);
 
-    const handleSaveFleet = async () => {
+    const handleButtonClick = () => {
       if (!user) {
         setNotificationMessage('Please sign in to save your fleet');
         setShowNotification(true);
         return;
       }
 
+      // Check if fleet name is "Untitled Fleet" and prompt for rename
+      if (fleetName === 'Untitled Fleet') {
+        setShowNamePrompt(true);
+        return;
+      }
+
+      performSave(fleetName);
+    };
+
+    const performSave = async (nameToUse: string) => {
+      if (!user) return;
+      
       setIsSaving(true);
 
       try {
@@ -36,7 +51,7 @@ export const SaveFleetButton = forwardRef<HTMLButtonElement, SaveFleetButtonProp
           .from('fleets')
           .select('id')
           .eq('user_id', user.sub)
-          .eq('fleet_name', fleetName)
+          .eq('fleet_name', nameToUse)
           .single();
 
         if (data) {
@@ -62,7 +77,7 @@ export const SaveFleetButton = forwardRef<HTMLButtonElement, SaveFleetButtonProp
             .from('fleets')
             .insert({ 
               user_id: user.sub,
-              fleet_name: fleetName,
+              fleet_name: nameToUse,
               fleet_data: fleetData,
               faction,
               commander,
@@ -87,11 +102,21 @@ export const SaveFleetButton = forwardRef<HTMLButtonElement, SaveFleetButtonProp
       }
     };
 
+    const handleNameConfirm = (newName: string) => {
+      setFleetName(newName);
+      setShowNamePrompt(false);
+      performSave(newName);
+    };
+
+    const handleNameCancel = () => {
+      setShowNamePrompt(false);
+    };
+
     return (
       <>
         <Button 
           ref={ref}
-          onClick={handleSaveFleet} 
+          onClick={handleButtonClick} 
           disabled={isSaving || !user}
           variant="outline"
           className="bg-white/50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md"
@@ -102,6 +127,14 @@ export const SaveFleetButton = forwardRef<HTMLButtonElement, SaveFleetButtonProp
           <NotificationWindow
             message={notificationMessage}
             onClose={() => setShowNotification(false)}
+          />
+        )}
+        {showNamePrompt && (
+          <FleetNamePrompt
+            currentName={fleetName}
+            onConfirm={handleNameConfirm}
+            onCancel={handleNameCancel}
+            action="save"
           />
         )}
       </>

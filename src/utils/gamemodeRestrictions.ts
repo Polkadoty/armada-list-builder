@@ -49,6 +49,7 @@ export interface GamemodeRestrictions {
     enableLegends: boolean;
     enableLegacyBeta: boolean;
     enableArc: boolean;
+    enableNexus: boolean;
     enableCustomFactions: boolean;
     enableLocalContent: boolean;
     enableProxy: boolean;
@@ -134,7 +135,15 @@ export const GAMEMODE_RESTRICTIONS: Record<Gamemode, GamemodeRestrictions> = {
         assault: "Surprise Attack",
       },
     },
-    forceToggles: { tournamentMode: true, enableLegacy: true},
+    forceToggles: { 
+      tournamentMode: true, 
+      enableLegacy: true,
+      enableLegends: false,
+      enableLegacyBeta: false,
+      enableArc: false,
+      enableNexus: false,
+      enableProxy: false,
+    },
     allowedFactions: ["republic", "separatist"],
   },
   "Unrestricted": {},

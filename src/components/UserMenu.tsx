@@ -13,7 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { useState, useEffect } from 'react';
 import Cookies from 'js-cookie';
 import { Switch } from "@/components/ui/switch";
-import { flushCacheAndReload } from '@/utils/dataFetcher';
+import { forceReloadContent } from '@/utils/contentManager';
 import { NotificationWindow } from "@/components/NotificationWindow";
 
 export function UserMenu() {
@@ -30,7 +30,7 @@ export function UserMenu() {
     setUseLowRes(checked);
     Cookies.set('useLowResImages', checked.toString(), { expires: 365 });
     // Flush cache to reload images
-    flushCacheAndReload(() => {}, () => {}, () => {});
+    forceReloadContent(() => {}, () => {}, () => {});
   };
 
   const handleSignOutClick = (e: React.MouseEvent) => {

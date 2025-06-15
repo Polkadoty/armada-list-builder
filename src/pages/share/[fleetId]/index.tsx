@@ -2,7 +2,7 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { LoadingScreen } from '../../../components/LoadingScreen';
-import { checkAndFetchData } from '../../../utils/dataFetcher';
+import { smartCheckAndFetchData } from '../../../utils/contentManager';
 
 export default function SharedFleetPage() {
   const router = useRouter();
@@ -18,7 +18,7 @@ export default function SharedFleetPage() {
 
       try {
         // First check if we need to fetch new data
-        await checkAndFetchData(setIsLoading, setLoadingProgress, setLoadingMessage);
+        await smartCheckAndFetchData(setIsLoading, setLoadingProgress, setLoadingMessage);
 
         const { data, error } = await supabase
           .from('fleets')

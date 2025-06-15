@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import StarryBackground from '../components/StarryBackground';
 import Link from 'next/link';
 import { LoadingScreen } from '../components/LoadingScreen';
-import { checkAndFetchData } from '../utils/dataFetcher';
+import { smartCheckAndFetchData } from '../utils/contentManager';
 import { ContentToggleButton } from '../components/ContentToggleButton';
 import { TextImportWindow } from '../components/TextImportWindow';
 import { Import, Ship } from 'lucide-react';
@@ -56,7 +56,7 @@ export default function Home() {
     const handleResize = () => setIsWideScreen(window.innerWidth >= 1024);
     handleResize();
     window.addEventListener('resize', handleResize);
-    checkAndFetchData(setIsLoading, setLoadingProgress, setLoadingMessage);
+    smartCheckAndFetchData(setIsLoading, setLoadingProgress, setLoadingMessage);
     if (typeof window !== 'undefined') {
       localStorage.setItem('selectedGamemode', gamemode || 'Standard');
       // Initialize enableLegends from cookie

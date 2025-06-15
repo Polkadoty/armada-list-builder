@@ -6,11 +6,12 @@ import { ListPlus, Info } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import Cookies from 'js-cookie';
-import { flushCacheAndReload } from '../utils/dataFetcher';
+import { forceReloadContent } from '../utils/contentManager';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue, SelectLabel, SelectGroup } from "@/components/ui/select";
 import ContentAdditionWindow from './ContentAdditionWindow';
 import { useUser } from '@auth0/nextjs-auth0/client';
 import { isUserWhitelistedForLegacyBeta } from '../utils/whitelist';
+import { getRestrictionsForGamemode, type Gamemode } from '../utils/gamemodeRestrictions';
 
 // Configuration flags
 const CONFIG = {
@@ -87,6 +88,48 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
 
   useEffect(() => {
     setGamemode(selectedGamemode);
+  }, [selectedGamemode, setGamemode]);
+
+  // Apply gamemode restrictions when gamemode changes
+  useEffect(() => {
+    const restrictions = getRestrictionsForGamemode(selectedGamemode as Gamemode);
+    const forceToggles = restrictions?.forceToggles;
+    
+    if (forceToggles) {
+      // Apply forced toggle settings
+      if (forceToggles.enableLegacy !== undefined) {
+        setEnableLegacy(forceToggles.enableLegacy);
+        Cookies.set('enableLegacy', forceToggles.enableLegacy.toString(), { expires: 365 });
+      }
+      
+      if (forceToggles.enableLegends !== undefined) {
+        setEnableLegends(forceToggles.enableLegends);
+        Cookies.set('enableLegends', forceToggles.enableLegends.toString(), { expires: 365 });
+      }
+      
+      if (forceToggles.enableLegacyBeta !== undefined) {
+        setEnableLegacyBeta(forceToggles.enableLegacyBeta);
+        Cookies.set('enableLegacyBeta', forceToggles.enableLegacyBeta.toString(), { expires: 365 });
+      }
+      
+      if (forceToggles.enableArc !== undefined) {
+        setEnableArc(forceToggles.enableArc);
+        Cookies.set('enableArc', forceToggles.enableArc.toString(), { expires: 365 });
+      }
+      
+      if (forceToggles.enableNexus !== undefined) {
+        setEnableNexus(forceToggles.enableNexus);
+        Cookies.set('enableNexus', forceToggles.enableNexus.toString(), { expires: 365 });
+      }
+      
+      if (forceToggles.enableProxy !== undefined) {
+        setEnableProxy(forceToggles.enableProxy);
+        Cookies.set('enableProxy', forceToggles.enableProxy.toString(), { expires: 365 });
+      }
+      
+      // Reload content after forcing toggles
+      forceReloadContent(() => {}, () => {}, () => {});
+    }
   }, [selectedGamemode]);
 
   useEffect(() => {
@@ -98,6 +141,15 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
   }
 
   const isDarkTheme = theme === 'dark' || resolvedTheme === 'dark';
+
+  // Get gamemode restrictions
+  const restrictions = getRestrictionsForGamemode(selectedGamemode as Gamemode);
+  const forceToggles = restrictions?.forceToggles;
+
+  // Helper function to check if a toggle is disabled by gamemode
+  const isToggleDisabled = (toggleName: keyof NonNullable<typeof forceToggles>) => {
+    return forceToggles && forceToggles[toggleName] !== undefined;
+  };
 
   // const handleAMGToggle = (checked: boolean) => {
   //   if (CONFIG.showAMGToggle) {
@@ -111,7 +163,7 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
     if (CONFIG.showLegacyToggle) {
       setEnableLegacy(checked);
       Cookies.set('enableLegacy', checked.toString(), { expires: 365 });
-      flushCacheAndReload(() => {}, () => {}, () => {});
+      forceReloadContent(() => {}, () => {}, () => {});
     }
   };
 
@@ -123,7 +175,7 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
         setEnableLegends(false);
         Cookies.set('enableLegends', 'false', { expires: 365 });
       }
-      flushCacheAndReload(() => {}, () => {}, () => {});
+      forceReloadContent(() => {}, () => {}, () => {});
     }
   };
 
@@ -131,7 +183,7 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
     if (CONFIG.showLegacyBetaToggle) {
       setEnableLegacyBeta(checked);
       Cookies.set('enableLegacyBeta', checked.toString(), { expires: 365 });
-      flushCacheAndReload(() => {}, () => {}, () => {});
+      forceReloadContent(() => {}, () => {}, () => {});
     }
   };
 
@@ -139,7 +191,7 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
     if (CONFIG.showArcToggle) {
       setEnableArc(checked);
       Cookies.set('enableArc', checked.toString(), { expires: 365 });
-      flushCacheAndReload(() => {}, () => {}, () => {});
+      forceReloadContent(() => {}, () => {}, () => {});
     }
   };
 
@@ -147,18 +199,18 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
     if (CONFIG.showProxyToggle) {
       setEnableProxy(checked);
       Cookies.set('enableProxy', checked.toString(), { expires: 365 });
-      flushCacheAndReload(() => {}, () => {}, () => {});
+      forceReloadContent(() => {}, () => {}, () => {});
     }
   };
 
   const handleNexusToggle = (checked: boolean) => {
     setEnableNexus(checked);
     Cookies.set('enableNexus', checked.toString(), { expires: 365 });
-    flushCacheAndReload(() => {}, () => {}, () => {});
+    forceReloadContent(() => {}, () => {}, () => {});
   };
 
   const handleFlushCache = async () => {
-    await flushCacheAndReload(setIsLoading, setLoadingProgress, setLoadingMessage);
+    await forceReloadContent(setIsLoading, setLoadingProgress, setLoadingMessage);
   };
 
   return (
@@ -207,8 +259,9 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
                   {CONFIG.showLegacyToggle && (
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
-                        <label htmlFor="legacy-toggle" className="text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                        <label htmlFor="legacy-toggle" className={`text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${isToggleDisabled('enableLegacy') ? 'opacity-50' : ''}`}>
                           Enable Legacy Content
+                          {isToggleDisabled('enableLegacy') && <span className="text-xs text-muted-foreground ml-2">(Controlled by gamemode)</span>}
                         </label>
                         <button type="button" onClick={() => { setInfoOpen('legacy'); }} className="ml-1 p-1 hover:bg-zinc-700/20 rounded-full" aria-label="Info">
                           <Info className="w-4 h-4" />
@@ -218,6 +271,7 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
                         id="legacy-toggle"
                         checked={enableLegacy}
                         onCheckedChange={handleLegacyToggle}
+                        disabled={isToggleDisabled('enableLegacy')}
                         className="custom-switch"
                       />
                     </div>
@@ -225,8 +279,9 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
                   {CONFIG.showArcToggle && (
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
-                        <label htmlFor="arc-toggle" className="text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                        <label htmlFor="arc-toggle" className={`text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${isToggleDisabled('enableArc') ? 'opacity-50' : ''}`}>
                           Enable Arc Tournament Content (Beta)
+                          {isToggleDisabled('enableArc') && <span className="text-xs text-muted-foreground ml-2">(Controlled by gamemode)</span>}
                         </label>
                         <button type="button" onClick={() => { setInfoOpen('arc'); }} className="ml-1 p-1 hover:bg-zinc-700/20 rounded-full" aria-label="Info">
                           <Info className="w-4 h-4" />
@@ -236,6 +291,7 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
                         id="arc-toggle"
                         checked={enableArc}
                         onCheckedChange={handleArcToggle}
+                        disabled={isToggleDisabled('enableArc')}
                         className="custom-switch"
                       />
                     </div>
@@ -243,8 +299,9 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
                   {CONFIG.showNexusToggle && (
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
-                        <label htmlFor="nexus-toggle" className="text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                        <label htmlFor="nexus-toggle" className={`text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${isToggleDisabled('enableNexus') ? 'opacity-50' : ''}`}>
                           Enable Nexus Content
+                          {isToggleDisabled('enableNexus') && <span className="text-xs text-muted-foreground ml-2">(Controlled by gamemode)</span>}
                         </label>
                         <button type="button" onClick={() => { setInfoOpen('nexus'); }} className="ml-1 p-1 hover:bg-zinc-700/20 rounded-full" aria-label="Info">
                           <Info className="w-4 h-4" />
@@ -254,6 +311,7 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
                         id="nexus-toggle"
                         checked={enableNexus}
                         onCheckedChange={handleNexusToggle}
+                        disabled={isToggleDisabled('enableNexus')}
                         className="custom-switch"
                       />
                     </div>
@@ -266,8 +324,9 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
                   {CONFIG.showLegendsToggle && (
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
-                        <label htmlFor="legends-toggle" className="text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                        <label htmlFor="legends-toggle" className={`text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${isToggleDisabled('enableLegends') ? 'opacity-50' : ''}`}>
                           Enable Legends Content
+                          {isToggleDisabled('enableLegends') && <span className="text-xs text-muted-foreground ml-2">(Controlled by gamemode)</span>}
                         </label>
                         <button type="button" onClick={() => { setInfoOpen('legends'); }} className="ml-1 p-1 hover:bg-zinc-700/20 rounded-full" aria-label="Info">
                           <Info className="w-4 h-4" />
@@ -277,6 +336,7 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
                         id="legends-toggle"
                         checked={enableLegends}
                         onCheckedChange={handleLegendsToggle}
+                        disabled={isToggleDisabled('enableLegends')}
                         className="custom-switch"
                       />
                     </div>
@@ -284,8 +344,9 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
                   {CONFIG.showLegacyBetaToggle && isLegacyBetaWhitelisted && (
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
-                        <label htmlFor="legacy-beta-toggle" className="text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                        <label htmlFor="legacy-beta-toggle" className={`text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${isToggleDisabled('enableLegacyBeta') ? 'opacity-50' : ''}`}>
                           Enable Legacy Beta Content
+                          {isToggleDisabled('enableLegacyBeta') && <span className="text-xs text-muted-foreground ml-2">(Controlled by gamemode)</span>}
                         </label>
                         <button type="button" onClick={() => { setInfoOpen('legacy-beta'); }} className="ml-1 p-1 hover:bg-zinc-700/20 rounded-full" aria-label="Info">
                           <Info className="w-4 h-4" />
@@ -295,6 +356,7 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
                         id="legacy-beta-toggle"
                         checked={enableLegacyBeta}
                         onCheckedChange={handleLegacyBetaToggle}
+                        disabled={isToggleDisabled('enableLegacyBeta')}
                         className="custom-switch"
                       />
                     </div>
@@ -302,8 +364,9 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
                   {CONFIG.showProxyToggle && (
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
-                        <label htmlFor="proxy-toggle" className="text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                        <label htmlFor="proxy-toggle" className={`text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${isToggleDisabled('enableProxy') ? 'opacity-50' : ''}`}>
                           Enable Card Proxies
+                          {isToggleDisabled('enableProxy') && <span className="text-xs text-muted-foreground ml-2">(Controlled by gamemode)</span>}
                         </label>
                         <button type="button" onClick={() => { setInfoOpen('proxy'); }} className="ml-1 p-1 hover:bg-zinc-700/20 rounded-full" aria-label="Info">
                           <Info className="w-4 h-4" />
@@ -313,6 +376,7 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
                         id="proxy-toggle"
                         checked={enableProxy}
                         onCheckedChange={handleProxyToggle}
+                        disabled={isToggleDisabled('enableProxy')}
                         className="custom-switch"
                       />
                     </div>

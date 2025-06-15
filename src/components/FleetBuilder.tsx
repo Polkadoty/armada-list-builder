@@ -49,6 +49,7 @@ import { GAMEMODE_RESTRICTIONS, getRestrictionsForGamemode } from "../utils/game
 import { useUser } from '@auth0/nextjs-auth0/client';
 import { supabase } from '../lib/supabase';
 import { getContentTypes } from './FleetList';
+import { FleetNamePrompt } from './FleetNamePrompt';
 
 const DAMAGE_DECK = [
   { name: 'Blinded Gunners', count: 2 },
@@ -286,6 +287,7 @@ export default function FleetBuilder({
   const [showImportWindow, setShowImportWindow] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState("");
+  const [showShareNamePrompt, setShowShareNamePrompt] = useState(false);
   const [squadronIdCounter, setSquadronIdCounter] = useState(0);
   const [shipIdCounter, setShipIdCounter] = useState(0);
   const [showRecoveryPopup, setShowRecoveryPopup] = useState(false);
@@ -2417,7 +2419,7 @@ export default function FleetBuilder({
     setShowPrintMenu(true);
   };
 
-  const handleShareFleet = useCallback(async () => {
+  const handleShareButtonClick = useCallback(() => {
     if (!user) {
       setNotificationMessage('Please sign in to share your fleet');
       setShowNotification(true);
@@ -2430,11 +2432,23 @@ export default function FleetBuilder({
       return;
     }
 
+    // Check if fleet name is "Untitled Fleet" and prompt for rename
+    if (fleetName === 'Untitled Fleet') {
+      setShowShareNamePrompt(true);
+      return;
+    }
+
     if (selectedShips.length === 0 && selectedSquadrons.length === 0) {
       setNotificationMessage('Please add ships or squadrons before sharing');
       setShowNotification(true);
       return;
     }
+
+    performShare(fleetName);
+  }, [user, fleetName, selectedShips, selectedSquadrons]);
+
+  const performShare = useCallback(async (nameToUse: string) => {
+    if (!user) return;
 
     try {
       const fleetData = generateExportText();
@@ -2449,7 +2463,7 @@ export default function FleetBuilder({
         .from('fleets')
         .select('id, numerical_id, shared')
         .eq('user_id', user.sub)
-        .eq('fleet_name', fleetName)
+        .eq('fleet_name', nameToUse)
         .single();
 
       let numericalId: string;
@@ -2481,7 +2495,7 @@ export default function FleetBuilder({
           .from('fleets')
           .insert({ 
             user_id: user.sub,
-            fleet_name: fleetName,
+            fleet_name: nameToUse,
             fleet_data: fleetData,
             faction,
             commander,
@@ -2514,7 +2528,17 @@ export default function FleetBuilder({
       setNotificationMessage('Failed to share fleet. Please try again.');
       setShowNotification(true);
     }
-  }, [user, fleetName, selectedShips, selectedSquadrons, generateExportText, faction, points]);
+  }, [user, generateExportText, faction, points]);
+
+  const handleShareNameConfirm = useCallback((newName: string) => {
+    setFleetName(newName);
+    setShowShareNamePrompt(false);
+    performShare(newName);
+  }, [setFleetName, performShare]);
+
+  const handleShareNameCancel = useCallback(() => {
+    setShowShareNamePrompt(false);
+  }, []);
 
   const handlePrintList = () => {
     const printContent = generatePrintContent();
@@ -3671,7 +3695,7 @@ export default function FleetBuilder({
               {user && (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                                     <Button variant="outline" className="bg-white/50 dark:bg-gray-900/50 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md" onClick={handleShareFleet}>
+                                     <Button variant="outline" className="bg-white/50 dark:bg-gray-900/50 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md" onClick={handleShareButtonClick}>
                       <Share2 className="h-4 w-4" />
                     </Button>
                   </TooltipTrigger>
@@ -3708,6 +3732,7 @@ export default function FleetBuilder({
                     fleetData={generateExportText()}
                     faction={faction}
                     fleetName={fleetName}
+                    setFleetName={setFleetName}
                     commander={selectedShips.find(ship => 
                       ship.assignedUpgrades.some(upgrade => upgrade.type === "commander"))?.assignedUpgrades
                         .find(upgrade => upgrade.type === "commander")?.name || ""}
@@ -4086,6 +4111,15 @@ export default function FleetBuilder({
           clearAllSquadrons();
           setShowDeleteSquadronsConfirmation(false);
         }}
+      />
+    )}
+
+    {showShareNamePrompt && (
+      <FleetNamePrompt
+        currentName={fleetName}
+        onConfirm={handleShareNameConfirm}
+        onCancel={handleShareNameCancel}
+        action="share"
       />
     )}
     </div>
