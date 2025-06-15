@@ -2175,6 +2175,10 @@ export default function FleetBuilder({
             console.log("Waiting for content to reload...");
             await forceReloadContent(() => {}, () => {}, () => {});
             console.log("Content reload complete, continuing with import...");
+            
+            // Reload aliases after content reload since they were cleared
+            const reloadedAliases = JSON.parse(localStorage.getItem("aliases") || "{}");
+            Object.assign(aliases, reloadedAliases);
           }
         }
         continue;
