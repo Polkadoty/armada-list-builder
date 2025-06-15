@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
   Printer,
-  Share,
+  Share2,
   FileText,
   Trash2,
   TriangleAlert,
@@ -3671,8 +3671,8 @@ export default function FleetBuilder({
               {user && (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                  <Button variant="outline" className="bg-white/50 dark:bg-gray-900/50 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md" onClick={handleShareFleet}>
-                      <Share className="h-4 w-4" />
+                                     <Button variant="outline" className="bg-white/50 dark:bg-gray-900/50 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md" onClick={handleShareFleet}>
+                      <Share2 className="h-4 w-4" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
