@@ -90,6 +90,28 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
     setGamemode(selectedGamemode);
   }, [selectedGamemode, setGamemode]);
 
+  // Watch for localStorage changes and update gamemode accordingly
+  useEffect(() => {
+    const checkGamemodeChanges = () => {
+      const storedGamemode = localStorage.getItem('selectedGamemode');
+      if (storedGamemode && storedGamemode !== selectedGamemode) {
+        console.log('Gamemode changed in localStorage, updating to:', storedGamemode);
+        setSelectedGamemode(storedGamemode);
+      }
+    };
+
+    // Check periodically for localStorage changes
+    const interval = setInterval(checkGamemodeChanges, 500);
+    
+    // Also check on storage events (though these typically only fire for other tabs)
+    window.addEventListener('storage', checkGamemodeChanges);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('storage', checkGamemodeChanges);
+    };
+  }, [selectedGamemode]);
+
   // Apply gamemode restrictions when gamemode changes
   useEffect(() => {
     const restrictions = getRestrictionsForGamemode(selectedGamemode as Gamemode);

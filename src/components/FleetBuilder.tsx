@@ -2058,6 +2058,7 @@ export default function FleetBuilder({
     setSquadronIdCounter(0);
 
     let processingSquadrons = false;
+    let gamemodeFound = false;
     const shipsToAdd: Ship[] = [];
     const upgradesToAdd: { shipId: string; upgrade: Upgrade }[] = [];
     let currentShipId: string | null = null;
@@ -2143,6 +2144,7 @@ export default function FleetBuilder({
         if (gamemodeMatch) {
           const newGamemode = gamemodeMatch[1].trim();
           console.log("Found gamemode in import:", newGamemode);
+          gamemodeFound = true;
           // Set the gamemode in localStorage which will be picked up by the faction page
           localStorage.setItem('selectedGamemode', newGamemode);
           
@@ -2419,6 +2421,12 @@ export default function FleetBuilder({
           }
         }
       }
+    }
+
+    // Set default gamemode to "Standard" if no gamemode was found in the import
+    if (!gamemodeFound) {
+      console.log("No gamemode found in import, defaulting to Standard");
+      localStorage.setItem('selectedGamemode', 'Standard');
     }
 
     // Add all ships to the fleet after a small delay to ensure state is cleared
