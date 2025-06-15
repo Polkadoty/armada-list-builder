@@ -96,6 +96,14 @@ export default function Home() {
   }, []);
 
   const handleImportFleet = (importText: string) => {
+    // Check for gamemode in the import text and set it
+    const gamemodeMatch = importText.match(/Gamemode:\s*(.+)/);
+    if (gamemodeMatch) {
+      const newGamemode = gamemodeMatch[1].trim();
+      console.log("Found gamemode in import:", newGamemode);
+      localStorage.setItem('selectedGamemode', newGamemode);
+    }
+    
     // Save the import text temporarily
     localStorage.setItem('pendingImport', importText);
     // Redirect to sandbox faction

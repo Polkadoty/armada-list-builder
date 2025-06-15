@@ -1482,6 +1482,11 @@ export default function FleetBuilder({
   const generateExportText = useCallback(() => {
     let text = " Name: " + fleetName + "\n";
     text += "Faction: " + faction.charAt(0).toUpperCase() + faction.slice(1) + "\n";
+    
+    // Add gamemode if it's not Standard
+    if (gamemode && gamemode !== "Standard") {
+      text += "Gamemode: " + gamemode + "\n";
+    }
 
     // Handle commander
     const commander = selectedShips
@@ -1591,7 +1596,8 @@ export default function FleetBuilder({
     faction,
     fleetName,
     points,
-    totalSquadronPoints
+    totalSquadronPoints,
+    gamemode
   ]);
 
   const saveFleetToLocalStorage = useCallback(() => {
@@ -2130,6 +2136,15 @@ export default function FleetBuilder({
 
       if (line.startsWith("Faction:") || line.startsWith("Commander:")) {
         console.log("Skipping line:", line);
+        continue;
+      } else if (line.startsWith("Gamemode:")) {
+        const gamemodeMatch = line.match(/Gamemode:\s*(.+)/);
+        if (gamemodeMatch) {
+          const newGamemode = gamemodeMatch[1].trim();
+          console.log("Found gamemode in import:", newGamemode);
+          // Set the gamemode in localStorage which will be picked up by the faction page
+          localStorage.setItem('selectedGamemode', newGamemode);
+        }
         continue;
       } else if (line.startsWith("Name:")) {
         const fleetNameMatch = line.match(/Name:\s*(.+)/);
