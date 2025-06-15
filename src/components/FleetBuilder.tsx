@@ -2452,7 +2452,6 @@ export default function FleetBuilder({
         .eq('fleet_name', fleetName)
         .single();
 
-      let fleetId: string;
       let numericalId: string;
 
       if (existingFleet) {
@@ -2475,7 +2474,6 @@ export default function FleetBuilder({
 
         if (error) throw error;
         
-        fleetId = existingFleet.id;
         numericalId = existingFleet.numerical_id;
       } else {
         // Create new fleet with sharing enabled
@@ -2500,7 +2498,6 @@ export default function FleetBuilder({
 
         if (error) throw error;
         
-        fleetId = newFleet.id;
         numericalId = newFleet.numerical_id;
       }
 
