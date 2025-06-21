@@ -306,6 +306,7 @@ export default function FleetBuilder({
   const [showDeleteShipsConfirmation, setShowDeleteShipsConfirmation] = useState(false);
   const [showDeleteSquadronsConfirmation, setShowDeleteSquadronsConfirmation] = useState(false);
   const [greyUpgrades, setGreyUpgrades] = useState<Record<string, string[]>>({});
+  const [isImporting, setIsImporting] = useState(false);
 
   const commanderCount = useMemo(() => 
     selectedShips
@@ -353,6 +354,143 @@ export default function FleetBuilder({
     setTotalSquadronPoints(calculatedSquadronPoints);
     setPoints(calculatedTotalPoints);
   }, [selectedShips, selectedSquadrons]); // Remove current point values from dependencies
+
+  // Function to recalculate disabled upgrades for a specific set of ships (used during import)
+  const recalculateDisabledUpgradesForShips = useCallback((ships: Ship[]) => {
+    console.log("=== RECALCULATING DISABLED UPGRADES ===");
+    console.log("recalculateDisabledUpgradesForShips called with ships:", ships);
+    const newDisabledUpgrades: Record<string, string[]> = {};
+    const newEnabledUpgrades: Record<string, string[]> = {};
+    const newGreyUpgrades: Record<string, string[]> = {};
+    const newFilledSlots: Record<string, Record<string, number[]>> = {};
+
+    // Check if any ship has a commander
+    const currentlyHasCommander = ships.some(ship => 
+      ship.assignedUpgrades.some(upgrade => upgrade.type === "commander")
+    );
+
+    ships.forEach(ship => {
+      console.log(`Processing ship ${ship.name} with ${ship.assignedUpgrades.length} upgrades:`, ship.assignedUpgrades);
+      const shipDisabled: string[] = [];
+      const shipEnabled: string[] = [];
+      const shipGrey: string[] = [];
+      const shipSlots: Record<string, number[]> = {};
+
+      // Check commander restrictions
+      const shipHasCommander = ship.assignedUpgrades.some(upgrade => upgrade.type === "commander");
+      if (currentlyHasCommander && !shipHasCommander) {
+        shipDisabled.push("commander");
+      }
+
+      // Process each equipped upgrade
+      ship.assignedUpgrades.forEach(upgrade => {
+        console.log(`Processing upgrade ${upgrade.name} (type: ${upgrade.type}):`, upgrade.restrictions);
+        // Handle disabled upgrades
+        if (upgrade.restrictions?.disable_upgrades) {
+          console.log(`*** FOUND DISABLE_UPGRADES from ${upgrade.name}:`, upgrade.restrictions.disable_upgrades);
+          // Filter out empty strings
+          const validDisabledUpgrades = upgrade.restrictions.disable_upgrades.filter(u => u.trim() !== "");
+          shipDisabled.push(...validDisabledUpgrades);
+        }
+
+        // Handle title restrictions
+        if (upgrade.type === "title") {
+          console.log(`*** FOUND TITLE ${upgrade.name} - adding title to disabled`);
+          shipDisabled.push("title");
+        }
+
+        // Handle enabled upgrades (just track them for state)
+        if (upgrade.restrictions?.enable_upgrades) {
+          shipEnabled.push(...upgrade.restrictions.enable_upgrades);
+        }
+
+        // Handle grey upgrades
+        if (upgrade.restrictions?.grey_upgrades) {
+          shipGrey.push(...upgrade.restrictions.grey_upgrades);
+        }
+
+        // Handle filled slots
+        const upgradeTypeSlots = shipSlots[upgrade.type] || [];
+        const slotIndex = upgrade.slotIndex || 0;
+        if (!upgradeTypeSlots.includes(slotIndex)) {
+          upgradeTypeSlots.push(slotIndex);
+          shipSlots[upgrade.type] = upgradeTypeSlots;
+        }
+      });
+
+      // Remove duplicates
+      newDisabledUpgrades[ship.id] = [...new Set(shipDisabled)];
+      newEnabledUpgrades[ship.id] = [...new Set(shipEnabled)];
+      newGreyUpgrades[ship.id] = [...new Set(shipGrey)];
+      newFilledSlots[ship.id] = shipSlots;
+      
+      console.log(`*** FINAL - Ship ${ship.name} (${ship.id}) disabled upgrades:`, newDisabledUpgrades[ship.id]);
+    });
+
+    console.log("*** SETTING DISABLED UPGRADES STATE:", newDisabledUpgrades);
+    setDisabledUpgrades(newDisabledUpgrades);
+    setEnabledUpgrades(newEnabledUpgrades);
+    setGreyUpgrades(newGreyUpgrades);
+    setFilledSlots(newFilledSlots);
+    setHasCommander(currentlyHasCommander);
+    console.log("=== RECALCULATION COMPLETE ===");
+  }, []);
+
+  // Function to recalculate disabled upgrades based on currently equipped upgrades (for page refresh/import)
+  const recalculateDisabledUpgrades = useCallback(() => {
+    recalculateDisabledUpgradesForShips(selectedShips);
+  }, [selectedShips, recalculateDisabledUpgradesForShips]);
+
+  // Detect when ships with disabling upgrades appear but no disabled upgrades are set
+  useEffect(() => {
+    // Don't run recalculation during import operations
+    if (isImporting) {
+      console.log("Skipping disabled upgrade detection during import");
+      return;
+    }
+
+    const hasShipsWithDisablingUpgrades = selectedShips.some(ship => 
+      ship.assignedUpgrades.some(upgrade => 
+        upgrade.restrictions?.disable_upgrades || upgrade.type === "title"
+      )
+    );
+    
+    console.log("Disabled upgrade detection - ships:", selectedShips.length, "hasDisabling:", hasShipsWithDisablingUpgrades);
+    console.log("Current disabledUpgrades state:", disabledUpgrades);
+    
+    if (hasShipsWithDisablingUpgrades) {
+      // Check for meaningful disabled upgrades (not empty strings)
+      const hasAnyDisabledUpgrades = Object.values(disabledUpgrades).some(disabled => 
+        disabled.some(upgrade => upgrade.trim() !== "")
+      );
+      console.log("hasAnyDisabledUpgrades:", hasAnyDisabledUpgrades);
+      
+      // Let's also check what specific disabled upgrades exist for each ship
+      selectedShips.forEach(ship => {
+        const shipDisabled = disabledUpgrades[ship.id] || [];
+        console.log(`Ship ${ship.name} (${ship.id}) disabled upgrades:`, shipDisabled);
+        
+        // Check what upgrades this ship has that should disable things
+        ship.assignedUpgrades.forEach(upgrade => {
+          if (upgrade.restrictions?.disable_upgrades || upgrade.type === "title") {
+            console.log(`Ship ${ship.name} has disabling upgrade ${upgrade.name}:`, upgrade.restrictions?.disable_upgrades);
+          }
+        });
+      });
+      
+      if (!hasAnyDisabledUpgrades) {
+        console.log("Found ships with disabling upgrades but no disabled upgrades set - recalculating...");
+        // Use a small delay to ensure all state updates are complete
+        setTimeout(() => {
+          recalculateDisabledUpgrades();
+        }, 100);
+      } else {
+        console.log("Disabled upgrades already set, skipping recalculation");
+      }
+    }
+  }, [selectedShips, disabledUpgrades, recalculateDisabledUpgrades, isImporting]);
+
+
 
   // Synchronize hasCommander state and disable commander slots on other ships
   useEffect(() => {
@@ -583,7 +721,9 @@ export default function FleetBuilder({
           // Handle disabled upgrades
           const newDisabledUpgrades = [...(disabledUpgrades[ship.id] || [])];
           if (upgrade.restrictions?.disable_upgrades) {
-            newDisabledUpgrades.push(...upgrade.restrictions.disable_upgrades);
+            // Filter out empty strings
+            const validDisabledUpgrades = upgrade.restrictions.disable_upgrades.filter(u => u.trim() !== "");
+            newDisabledUpgrades.push(...validDisabledUpgrades);
           }
           if (upgrade.type === "title") {
             newDisabledUpgrades.push("title");
@@ -766,7 +906,9 @@ export default function FleetBuilder({
           // Handle disabled upgrades
           const newDisabledUpgrades = [...(disabledUpgrades[ship.id] || [])];
           if (upgrade.restrictions?.disable_upgrades) {
-            newDisabledUpgrades.push(...upgrade.restrictions.disable_upgrades);
+            // Filter out empty strings
+            const validDisabledUpgrades = upgrade.restrictions.disable_upgrades.filter(u => u.trim() !== "");
+            newDisabledUpgrades.push(...validDisabledUpgrades);
           }
           if (upgrade.type === "title") {
             newDisabledUpgrades.push("title");
@@ -787,10 +929,10 @@ export default function FleetBuilder({
                 if (!updatedAvailableUpgrades.includes(enabledUpgrade)) {
                   updatedAvailableUpgrades.push(enabledUpgrade);
                 }
-                // Remove this part - don't add to newEnabledUpgrades
-                // if (!newEnabledUpgrades.includes(enabledUpgrade)) {
-                //   newEnabledUpgrades.push(enabledUpgrade);
-                // }
+                // Track enabled upgrades for state management
+                if (!newEnabledUpgrades.includes(enabledUpgrade)) {
+                  newEnabledUpgrades.push(enabledUpgrade);
+                }
               });
           }
 
@@ -1920,6 +2062,9 @@ export default function FleetBuilder({
   const handleImportFleet = useCallback(async (importText: string, format: FleetFormat) => {
     console.log("Starting fleet import with format:", format);
     
+    // Set import flag to prevent automatic recalculations
+    setIsImporting(true);
+    
     // Load aliases first
     const aliases = JSON.parse(localStorage.getItem("aliases") || "{}");
     const processedText = preprocessFleetText(importText, format);
@@ -2449,16 +2594,64 @@ export default function FleetBuilder({
 
 
 
-    // Add all ships to the fleet after a small delay to ensure state is cleared
+    // Add all ships with their upgrades properly calculated
     setTimeout(() => {
-      setSelectedShips(shipsToAdd);
-
-      // Add upgrades to ships after ships are set
+             // First, build ships with their final availableUpgrades calculated correctly
+       const shipsWithUpgrades = shipsToAdd.map(ship => {
+         // Get all upgrades for this ship
+         const shipUpgrades = upgradesToAdd.filter(({ shipId }) => shipId === ship.id);
+         
+         console.log(`*** IMPORT DEBUG - Ship ${ship.name}:`);
+         console.log(`  Base upgrades:`, ship.upgrades || []);
+         console.log(`  Assigned upgrades:`, shipUpgrades.map(({ upgrade }) => upgrade.name));
+         
+         // Start with base upgrades
+         const baseUpgrades = [...(ship.upgrades || [])];
+         const finalAvailableUpgrades = [...baseUpgrades];
+         
+         console.log(`  Starting availableUpgrades:`, finalAvailableUpgrades);
+         
+         // Add enabled upgrade slots from equipped upgrades
+         shipUpgrades.forEach(({ upgrade }) => {
+           if (upgrade.restrictions?.enable_upgrades) {
+             console.log(`  ${upgrade.name} enables:`, upgrade.restrictions.enable_upgrades);
+             upgrade.restrictions.enable_upgrades
+               .filter(enabledUpgrade => enabledUpgrade.trim() !== "")
+               .forEach(enabledUpgrade => {
+                 console.log(`    Checking if should add ${enabledUpgrade} (currently has: ${finalAvailableUpgrades.includes(enabledUpgrade)})`);
+                 // Only add if not already present
+                 if (!finalAvailableUpgrades.includes(enabledUpgrade)) {
+                   finalAvailableUpgrades.push(enabledUpgrade);
+                   console.log(`    Added ${enabledUpgrade}`);
+                 } else {
+                   console.log(`    Skipped ${enabledUpgrade} (already present)`);
+                 }
+               });
+           }
+         });
+         
+         console.log(`  Final availableUpgrades:`, finalAvailableUpgrades);
+         
+         // Return ship with properly assigned upgrades and corrected availableUpgrades
+         return {
+           ...ship,
+           availableUpgrades: finalAvailableUpgrades,
+           assignedUpgrades: shipUpgrades.map(({ upgrade }) => upgrade)
+         };
+       });
+      
+      setSelectedShips(shipsWithUpgrades);
+      
+      // Clear import flag and run final recalculation
       setTimeout(() => {
-        upgradesToAdd.forEach(({ shipId, upgrade }) => {
-          handleAddUpgrade(shipId, upgrade);
-        });
-      }, 50);
+        setIsImporting(false);
+        console.log("Import complete, running final recalculation...");
+        
+        // Run recalculation after import is complete
+        setTimeout(() => {
+          recalculateDisabledUpgrades();
+        }, 50);
+      }, 100);
     }, 50);
 
     if (skippedItems.length > 0) {
@@ -2491,7 +2684,9 @@ export default function FleetBuilder({
     setSelectedShips,
     setShowNotification,
     setTotalShipPoints,
-    setTotalSquadronPoints
+    setTotalSquadronPoints,
+    recalculateDisabledUpgradesForShips,
+    recalculateDisabledUpgrades
   ]);
 
   const handlePrint = () => {

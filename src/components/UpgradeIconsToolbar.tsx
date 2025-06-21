@@ -20,14 +20,9 @@ export default function UpgradeIconsToolbar({ upgrades, onUpgradeClick, assigned
     return acc;
   }, {} as Record<string, number>);
 
-  // Filter out empty strings and add enabled upgrades to the counts
-  enabledUpgrades.filter(upgrade => upgrade.trim() !== '').forEach(upgrade => {
-    if (!upgradeCounts[upgrade]) {
-      upgradeCounts[upgrade] = 1;
-    } else {
-      upgradeCounts[upgrade]++;
-    }
-  });
+  // Note: We don't add enabledUpgrades to the counts here because they should already be 
+  // included in the ship.availableUpgrades array that gets passed as the 'upgrades' prop.
+  // Adding them again would cause duplication.
 
   const assignedUpgradeCounts = assignedUpgrades.reduce((acc, upgrade) => {
     acc[upgrade.type] = (acc[upgrade.type] || 0) + 1;
