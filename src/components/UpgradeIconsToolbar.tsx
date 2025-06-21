@@ -7,14 +7,13 @@ interface UpgradeIconsToolbarProps {
   onUpgradeClick: (upgrade: string, index: number) => void;
   assignedUpgrades: Upgrade[];
   disabledUpgrades: string[];
-  enabledUpgrades: string[];
   filledSlots: Record<string, number[]>;
   hasCommander: boolean;
   traits: string[];
   greyUpgrades: string[];
 }
 
-export default function UpgradeIconsToolbar({ upgrades, onUpgradeClick, assignedUpgrades, disabledUpgrades, enabledUpgrades, filledSlots, hasCommander, greyUpgrades }: UpgradeIconsToolbarProps) {
+export default function UpgradeIconsToolbar({ upgrades, onUpgradeClick, assignedUpgrades, disabledUpgrades, filledSlots, hasCommander, greyUpgrades }: UpgradeIconsToolbarProps) {
   const upgradeCounts = upgrades.reduce((acc, upgrade) => {
     acc[upgrade] = (acc[upgrade] || 0) + 1;
     return acc;

@@ -353,7 +353,7 @@ export default function FleetBuilder({
     setTotalShipPoints(calculatedShipPoints);
     setTotalSquadronPoints(calculatedSquadronPoints);
     setPoints(calculatedTotalPoints);
-  }, [selectedShips, selectedSquadrons]); // Remove current point values from dependencies
+  }, [selectedShips, selectedSquadrons, points, totalShipPoints, totalSquadronPoints]);
 
   // Function to recalculate disabled upgrades for a specific set of ships (used during import)
   const recalculateDisabledUpgradesForShips = useCallback((ships: Ship[]) => {
@@ -564,6 +564,13 @@ export default function FleetBuilder({
     const timestamp = Date.now();
     const random = Math.random().toString(36).substring(2, 8);
     return `ship_${timestamp}_${newCounter}_${random}`;
+  };
+
+  const generateUniqueSquadronId = (): string => {
+    const newCounter = squadronIdCounter + 1;
+    setSquadronIdCounter(newCounter);
+    const randomPart = Math.floor(Math.random() * 10000).toString().padStart(4, "0");
+    return `squadron_${newCounter}_${randomPart}`;
   };
 
   const handleAddShip = () => {
@@ -1330,7 +1337,7 @@ export default function FleetBuilder({
     }
     
     return squadronId;
-  }, [addUniqueClassName, selectedSquadrons, setSelectedSquadrons]);
+  }, [addUniqueClassName, selectedSquadrons, setSelectedSquadrons, generateUniqueSquadronId]);
 
   const handleRemoveSquadron = (id: string) => {
     setSelectedSquadrons((prevSquadrons) => {
@@ -1426,7 +1433,7 @@ export default function FleetBuilder({
         )
       );
     }
-  }, [selectedSquadrons, setSelectedSquadrons]);
+  }, [selectedSquadrons, setSelectedSquadrons, generateUniqueSquadronId]);
 
   const handleDecrementSquadron = (id: string) => {
     setSelectedSquadrons((prevSquadrons) => {
@@ -2686,7 +2693,12 @@ export default function FleetBuilder({
     setTotalShipPoints,
     setTotalSquadronPoints,
     recalculateDisabledUpgradesForShips,
-    recalculateDisabledUpgrades
+    recalculateDisabledUpgrades,
+    applyUpdates,
+    generateUniqueShipId,
+    removeUniqueClassName,
+    selectedShips,
+    selectedSquadrons
   ]);
 
   const handlePrint = () => {
@@ -3852,13 +3864,6 @@ export default function FleetBuilder({
       resetUniqueClassNames();
     };
   }, [initializeUniqueClasses, resetUniqueClassNames]);
-
-  const generateUniqueSquadronId = (): string => {
-    const newCounter = squadronIdCounter + 1;
-    setSquadronIdCounter(newCounter);
-    const randomPart = Math.floor(Math.random() * 10000).toString().padStart(4, "0");
-    return `squadron_${newCounter}_${randomPart}`;
-  };
 
   const handleClearFleet = useCallback(() => {
     // Reset all state when clearing the fleet
