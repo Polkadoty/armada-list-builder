@@ -4124,7 +4124,6 @@ export default function FleetBuilder({
                       onCopy={handleCopyShip}
                       handleRemoveUpgrade={handleRemoveUpgrade}
                       disabledUpgrades={disabledUpgrades[ship.id] || []}
-                      enabledUpgrades={enabledUpgrades[ship.id] || []}
                       filledSlots={filledSlots[ship.id] || {}}
                       hasCommander={hasCommander}
                       traits={ship.traits || []}

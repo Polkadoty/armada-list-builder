@@ -15,7 +15,6 @@ interface SelectedShipProps {
   onCopy: (ship: Ship) => void;
   handleRemoveUpgrade: (shipId: string, upgradeType: string, index: number) => void;
   disabledUpgrades: string[];
-  enabledUpgrades: string[];
   filledSlots: Record<string, number[]>;
   hasCommander: boolean;
   traits: string[];
@@ -26,7 +25,7 @@ interface SelectedShipProps {
   greyUpgrades: string[];
 }
 
-function SelectedShipComponent({ ship, onRemove, onUpgradeClick, onCopy, handleRemoveUpgrade, disabledUpgrades, enabledUpgrades, filledSlots, hasCommander, onMoveUp, onMoveDown, isFirst, isLast, greyUpgrades }: SelectedShipProps) {
+function SelectedShipComponent({ ship, onRemove, onUpgradeClick, onCopy, handleRemoveUpgrade, disabledUpgrades, filledSlots, hasCommander, onMoveUp, onMoveDown, isFirst, isLast, greyUpgrades }: SelectedShipProps) {
   const [isToolbarVisible, setIsToolbarVisible] = useState(true);
   const [{ x }, api] = useSpring(() => ({ x: 0 }));
   
@@ -232,7 +231,6 @@ function SelectedShipComponent({ ship, onRemove, onUpgradeClick, onCopy, handleR
                 onUpgradeClick={(upgrade, index) => onUpgradeClick(ship.id, upgrade, index)}
                 assignedUpgrades={ship.assignedUpgrades}
                 disabledUpgrades={disabledUpgrades}
-                enabledUpgrades={enabledUpgrades}
                 filledSlots={filledSlots}
                 hasCommander={hasCommander}
                 traits={ship.traits || []}
@@ -303,9 +301,6 @@ function arePropsEqual(prevProps: SelectedShipProps, nextProps: SelectedShipProp
   
   // Compare disabled upgrades arrays
   if (prevProps.disabledUpgrades?.length !== nextProps.disabledUpgrades?.length) return false;
-  
-  // Compare enabled upgrades arrays
-  if (prevProps.enabledUpgrades?.length !== nextProps.enabledUpgrades?.length) return false;
   
   // Compare grey upgrades arrays
   if (prevProps.greyUpgrades?.length !== nextProps.greyUpgrades?.length) return false;
