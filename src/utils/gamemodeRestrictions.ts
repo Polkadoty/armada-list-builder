@@ -150,7 +150,7 @@ export const GAMEMODE_RESTRICTIONS: Record<Gamemode, GamemodeRestrictions> = {
     disallowedShipSizes: ["large"],
     disallowedSquadronKeywords: ["adept"],
     allowedCommanders: ["Ki-Adi-Mundi", "Daultay Dofine"],
-    disallowedSquadronUniqueClasses: ["Anakin Skywalker", "Ahsoka Tano", "Kit Fisto", "Luminara Unduli", "Plo Koon", "General Grievous", "Wat Tambor", "Count Dooku", "Jango Fett", "Darth Maul"],
+    disallowedSquadronUniqueClasses: ["Anakin Skywalker", "Ahsoka Tano", "Kit Fisto", "Luminara Unduli", "Plo Koon", "General Grievous", "Wat Tambor", "Count Dooku", "Jango Fett", "Darth Maul", "Naboo N-1 Squadron"],
     objectiveRestrictions: {
       disableSelection: true,
       hideDetails: true,
@@ -200,17 +200,16 @@ export const GAMEMODE_RESTRICTIONS: Record<Gamemode, GamemodeRestrictions> = {
       factionSpecific: {
         republic: {
           additionalLines: {
-            afterSquadrons: ["", "• 2x Naboo N-1 Squadron [Naboo] (30)", ""],
+            afterSquadrons: ["• 2x Naboo N-1 Squadron [Naboo] (30)", ""],
           },
         },
         separatist: {
           additionalLines: {
-            afterSquadrons: ["", "• Darth Maul - Scimitar [Legacy] (24)", ""],
+            afterSquadrons: ["• Darth Maul - Scimitar [Legacy] (24)", ""],
           },
         },
       },
     },
-    
     forceToggles: { 
       tournamentMode: true, 
       enableLegacy: true,
