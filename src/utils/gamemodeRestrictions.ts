@@ -184,7 +184,7 @@ export const GAMEMODE_RESTRICTIONS: Record<Gamemode, GamemodeRestrictions> = {
     disallowedShipSizes: ["large"],
     disallowedSquadronKeywords: ["adept"],
     allowedCommanders: ["Ki-Adi-Mundi", "Admiral Tarkin", "Daultay Dofine"],
-    disallowedSquadronUniqueClasses: ["Anakin Skywalker", "Ahsoka Tano", "Kit Fisto", "Luminara Unduli", "Plo Koon", "General Grievous", "Wat Tambor", "Count Dooku", "Jango Fett", "Darth Maul"],
+    disallowedSquadronUniqueClasses: ["Anakin Skywalker", "Ahsoka Tano", "Kit Fisto", "Luminara Unduli", "Plo Koon", "General Grievous", "Wat Tambor", "Count Dooku", "Jango Fett", "Darth Maul", "Naboo N-1 Squadron"],
     objectiveRestrictions: {
       disableSelection: true,
       hideDetails: true,
