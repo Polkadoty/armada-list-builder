@@ -268,7 +268,9 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
                         <SelectItem value="Task Force">Task Force</SelectItem>
                         <SelectItem value="Standard">Standard</SelectItem>
                         <SelectItem value="Sector Fleet">Sector Fleet</SelectItem>
+                        <SelectItem value="Campaign">Campaign</SelectItem>
                         <SelectItem value="Battle for Naboo - Week 1">Battle for Naboo - Week 1</SelectItem>
+                        <SelectItem value="Battle for Naboo - Week 2">Battle for Naboo - Week 2</SelectItem>
                         <SelectItem value="Unrestricted">Unrestricted</SelectItem>
                       </SelectGroup>
                     </SelectContent>

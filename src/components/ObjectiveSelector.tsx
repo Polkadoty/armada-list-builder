@@ -127,9 +127,9 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose, gamemodeRe
 
             /* eslint-disable @typescript-eslint/no-explicit-any */
             Object.entries(objectivesData).forEach(([objectiveId, objective]: [string, any]) => {
-              // For campaign type, include all objective types; otherwise filter by specific type
+              // For campaign type, include all objective types including actual campaign objectives; otherwise filter by specific type
               const shouldInclude = type === 'campaign' 
-                ? ['assault', 'defense', 'navigation'].includes(objective.type)
+                ? ['campaign'].includes(objective.type)
                 : objective.type === type;
                 
               if (shouldInclude && !objectiveId.includes('-errata-')) {
@@ -161,9 +161,9 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose, gamemodeRe
 
             /* eslint-disable @typescript-eslint/no-explicit-any */
             Object.entries(objectivesData).forEach(([objectiveId, objective]: [string, any]) => {
-              // For campaign type, include all objective types; otherwise filter by specific type
+              // For campaign type, include all objective types including actual campaign objectives; otherwise filter by specific type
               const shouldInclude = type === 'campaign' 
-                ? ['assault', 'defense', 'navigation'].includes(objective.type)
+                ? ['assault', 'defense', 'navigation', 'campaign'].includes(objective.type)
                 : objective.type === type;
                 
               if (shouldInclude && objectiveId.includes('-errata-')) {

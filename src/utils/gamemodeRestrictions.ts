@@ -1,4 +1,4 @@
-export type Gamemode = "Task Force" | "Standard" | "Sector Fleet" | "Battle for Naboo - Week 1" | "Unrestricted";
+export type Gamemode = "Task Force" | "Standard" | "Sector Fleet" | "Battle for Naboo - Week 1" | "Battle for Naboo - Week 2" | "Campaign" | "Unrestricted";
 // "Minivan" | "Campaign" | "Fighter Group"
 
 export interface GamemodeRestrictions {
@@ -42,6 +42,17 @@ export interface GamemodeRestrictions {
       navigation?: string[];
       campaign?: string[];
     };
+  };
+  exportTextModifications?: {
+    additionalLines?: {
+      afterHeader?: string[]; // Lines to add after fleet name/faction/gamemode
+      afterCommander?: string[]; // Lines to add after commander section
+      afterObjectives?: string[]; // Lines to add after objectives section
+      afterShips?: string[]; // Lines to add after ships section
+      afterSquadrons?: string[]; // Lines to add after squadrons section
+      beforeTotal?: string[]; // Lines to add before total points
+    };
+    squadronSuffix?: string; // Text to append to each squadron line
   };
   forceToggles?: Partial<{
     tournamentMode: boolean;
@@ -94,15 +105,18 @@ export const GAMEMODE_RESTRICTIONS: Record<Gamemode, GamemodeRestrictions> = {
   //   requireObjectives: true,
   //   requireCommander: true
   // },
-  // "Campaign": {
-  //   pointsLimit: 600,
-  //   squadronPointsLimit: 200,
-  //   flotillaLimit: 3,
-  //   aceLimit: 6,
-  //   requireObjectives: false,
-  //   requireCommander: false,
-  //   forceToggles: { tournamentMode: false },
-  // },
+  "Campaign": {
+    pointsLimit: 600,
+    squadronPointsLimit: 200,
+    flotillaLimit: 3,
+    aceLimit: 6,
+    requireObjectives: false,
+    requireCommander: false,
+    objectiveRestrictions: {
+      enableCampaignObjectives: true,
+    },
+    forceToggles: { tournamentMode: false },
+  },
   // "Fighter Group": {
   //   pointsLimit: 134,
   //   squadronPointsLimit: 134,
@@ -133,6 +147,45 @@ export const GAMEMODE_RESTRICTIONS: Record<Gamemode, GamemodeRestrictions> = {
       },
       forcedObjectives: {
         assault: "Surprise Attack",
+      },
+    },
+    forceToggles: { 
+      tournamentMode: true, 
+      enableLegacy: true,
+      enableLegends: false,
+      enableLegacyBeta: false,
+      enableArc: false,
+      enableNexus: false,
+      enableProxy: false,
+    },
+    allowedFactions: ["republic", "separatist"],
+  },
+  "Battle for Naboo - Week 2": {
+    pointsLimit: 300,
+    squadronPointsLimit: 100,
+    flotillaLimit: 1,
+    aceLimit: 2,
+    requireObjectives: true,
+    requireCommander: true,
+    allowedShipSizes: ["small", "medium"],
+    disallowedShipSizes: ["large"],
+    disallowedSquadronKeywords: ["adept"],
+    allowedCommanders: ["Ki-Adi-Mundi", "Admiral Tarkin", "Daultay Dofine"],
+    disallowedSquadronUniqueClasses: ["Anakin Skywalker", "Ahsoka Tano", "Kit Fisto", "Luminara Unduli", "Plo Koon", "General Grievous", "Wat Tambor", "Count Dooku", "Jango Fett", "Darth Maul"],
+    objectiveRestrictions: {
+      disableSelection: true,
+      hideDetails: true,
+      enableCampaignObjectives: true,
+      allowedObjectives: {
+        campaign: ["Base Defense - Armed Station (RITR)"],
+      },
+      forcedObjectives: {
+        campaign: "Base Defense - Armed Station (RITR)",
+      },
+    },
+    exportTextModifications: {
+      additionalLines: {
+        afterSquadrons: ["", "• 2x Naboo N-1 Squadron [Nexus] (30)", ""],
       },
     },
     forceToggles: { 
