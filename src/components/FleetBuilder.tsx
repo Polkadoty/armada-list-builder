@@ -1633,6 +1633,19 @@ export default function FleetBuilder({
     // Get gamemode restrictions for export modifications
     const restrictions = getRestrictionsForGamemode(gamemode as Gamemode);
     const exportMods = restrictions?.exportTextModifications;
+    
+    // Get faction-specific modifications if available
+    const factionSpecificMods = exportMods?.factionSpecific?.[faction];
+    
+    // Helper function to merge global and faction-specific lines
+    const getLines = (section: 'afterHeader' | 'afterCommander' | 'afterObjectives' | 'afterShips' | 'afterSquadrons' | 'beforeTotal'): string[] => {
+      const globalLines = exportMods?.additionalLines?.[section] || [];
+      const factionLines = factionSpecificMods?.additionalLines?.[section] || [];
+      return [...globalLines, ...factionLines];
+    };
+    
+    // Get squadron suffix (faction-specific overrides global)
+    const squadronSuffix = factionSpecificMods?.squadronSuffix || exportMods?.squadronSuffix || "";
 
     let text = " Name: " + fleetName + "\n";
     text += "Faction: " + faction.charAt(0).toUpperCase() + faction.slice(1) + "\n";
@@ -1643,11 +1656,9 @@ export default function FleetBuilder({
     }
 
     // Add custom lines after header
-    if (exportMods?.additionalLines?.afterHeader) {
-      exportMods.additionalLines.afterHeader.forEach(line => {
-        text += line + "\n";
-      });
-    }
+    getLines('afterHeader').forEach(line => {
+      text += line + "\n";
+    });
 
     // Handle commander
     const commander = selectedShips
@@ -1661,11 +1672,9 @@ export default function FleetBuilder({
     }
 
     // Add custom lines after commander
-    if (exportMods?.additionalLines?.afterCommander) {
-      exportMods.additionalLines.afterCommander.forEach(line => {
-        text += line + "\n";
-      });
-    }
+    getLines('afterCommander').forEach(line => {
+      text += line + "\n";
+    });
 
     text += '\n';
 
@@ -1688,11 +1697,9 @@ export default function FleetBuilder({
     }
 
     // Add custom lines after objectives
-    if (exportMods?.additionalLines?.afterObjectives) {
-      exportMods.additionalLines.afterObjectives.forEach(line => {
-        text += line + "\n";
-      });
-    }
+    getLines('afterObjectives').forEach(line => {
+      text += line + "\n";
+    });
 
     // Add ships and their upgrades
     if (selectedShips.length > 0) {
@@ -1718,11 +1725,9 @@ export default function FleetBuilder({
     }
 
     // Add custom lines after ships
-    if (exportMods?.additionalLines?.afterShips) {
-      exportMods.additionalLines.afterShips.forEach(line => {
-        text += line + "\n";
-      });
-    }
+    getLines('afterShips').forEach(line => {
+      text += line + "\n";
+    });
 
     text += "Squadrons:\n";
     if (selectedSquadrons.length > 0) {
@@ -1754,7 +1759,6 @@ export default function FleetBuilder({
 
       Object.entries(groupedSquadrons).forEach(
         ([squadronKey, { count, isUnique }]) => {
-          const squadronSuffix = exportMods?.squadronSuffix || "";
           if (isUnique) {
             text += "• " + squadronKey + squadronSuffix + "\n";
           } else {
@@ -1766,18 +1770,14 @@ export default function FleetBuilder({
     text += "= " + totalSquadronPoints + " Points\n\n";
 
     // Add custom lines after squadrons
-    if (exportMods?.additionalLines?.afterSquadrons) {
-      exportMods.additionalLines.afterSquadrons.forEach(line => {
-        text += line + "\n";
-      });
-    }
+    getLines('afterSquadrons').forEach(line => {
+      text += line + "\n";
+    });
 
     // Add custom lines before total
-    if (exportMods?.additionalLines?.beforeTotal) {
-      exportMods.additionalLines.beforeTotal.forEach(line => {
-        text += line + "\n";
-      });
-    }
+    getLines('beforeTotal').forEach(line => {
+      text += line + "\n";
+    });
 
     text += "Total Points: " + points;
 

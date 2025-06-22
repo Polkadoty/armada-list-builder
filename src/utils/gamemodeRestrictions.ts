@@ -53,6 +53,19 @@ export interface GamemodeRestrictions {
       beforeTotal?: string[]; // Lines to add before total points
     };
     squadronSuffix?: string; // Text to append to each squadron line
+    factionSpecific?: {
+      [faction: string]: {
+        additionalLines?: {
+          afterHeader?: string[];
+          afterCommander?: string[];
+          afterObjectives?: string[];
+          afterShips?: string[];
+          afterSquadrons?: string[];
+          beforeTotal?: string[];
+        };
+        squadronSuffix?: string;
+      };
+    };
   };
   forceToggles?: Partial<{
     tournamentMode: boolean;
@@ -184,10 +197,20 @@ export const GAMEMODE_RESTRICTIONS: Record<Gamemode, GamemodeRestrictions> = {
       },
     },
     exportTextModifications: {
-      additionalLines: {
-        afterSquadrons: ["", "• 2x Naboo N-1 Squadron [Nexus] (30)", ""],
+      factionSpecific: {
+        republic: {
+          additionalLines: {
+            afterSquadrons: ["", "• 2x Naboo N-1 Squadron [Naboo] (30)", ""],
+          },
+        },
+        separatist: {
+          additionalLines: {
+            afterSquadrons: ["", "• Darth Maul - Scimitar [Legacy] (24)", ""],
+          },
+        },
       },
     },
+    
     forceToggles: { 
       tournamentMode: true, 
       enableLegacy: true,
