@@ -150,7 +150,8 @@ export function SquadronSelector({
                   // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     .filter(([_, value]) => value > 0)
                     .reduce((acc, [key, value]) => ({ ...acc, [key.replace('def_', '')]: value }), {})
-                }).toLowerCase()
+                }).toLowerCase(),
+                keywords: extractKeywordsFromAbilities(squadron.abilities)
               });
             }
           });
@@ -421,6 +422,20 @@ export function SquadronSelector({
       }
       squadron['unique-class']?.filter(uc => uc !== "").forEach(addUniqueClassName);
     }
+  };
+
+  // Add utility function to extract keywords from squadron abilities
+  const extractKeywordsFromAbilities = (abilities: Record<string, boolean | number>): string[] => {
+    const keywords: string[] = [];
+    
+    Object.entries(abilities || {}).forEach(([key, value]) => {
+      // Only include abilities that are active (true for boolean, > 0 for number)
+      if ((typeof value === 'boolean' && value) || (typeof value === 'number' && value > 0)) {
+        keywords.push(key);
+      }
+    });
+    
+    return keywords;
   };
 
   return (

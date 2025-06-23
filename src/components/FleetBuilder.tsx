@@ -1306,7 +1306,12 @@ export default function FleetBuilder({
                 .forEach((uc) => addUniqueClassName(uc));
             }
 
-            return { ...squadron, id: generateUniqueSquadronId(), count: 1 };
+            return { 
+              ...squadron, 
+              id: generateUniqueSquadronId(), 
+              count: 1,
+              keywords: extractKeywordsFromAbilities(squadron.abilities) // Ensure keywords are populated
+            };
           }
           return s;
         })
@@ -1318,6 +1323,20 @@ export default function FleetBuilder({
     setShowSquadronSelector(false);
   };
 
+  // Add utility function to extract keywords from squadron abilities
+  const extractKeywordsFromAbilities = (abilities: Record<string, boolean | number>): string[] => {
+    const keywords: string[] = [];
+    
+    Object.entries(abilities || {}).forEach(([key, value]) => {
+      // Only include abilities that are active (true for boolean, > 0 for number)
+      if ((typeof value === 'boolean' && value) || (typeof value === 'number' && value > 0)) {
+        keywords.push(key);
+      }
+    });
+    
+    return keywords;
+  };
+
   const handleAddingSquadron = useCallback((squadron: Squadron) => {
     const squadronId = generateUniqueSquadronId();
     const newSquadron: Squadron = {
@@ -1325,6 +1344,7 @@ export default function FleetBuilder({
       id: squadronId,
       count: squadron.count || 1, // Use the count from the passed squadron, default to 1
       source: squadron.source,
+      keywords: extractKeywordsFromAbilities(squadron.abilities), // Ensure keywords are populated
     };
 
     setSelectedSquadrons((prevSquadrons) => {
@@ -1424,6 +1444,7 @@ export default function FleetBuilder({
           ...squadron,
           id: generateUniqueSquadronId(),
           count: 1,
+          keywords: extractKeywordsFromAbilities(squadron.abilities), // Ensure keywords are populated
         };
         
         setSelectedSquadrons((squadrons) => {
@@ -2823,6 +2844,7 @@ export default function FleetBuilder({
                 source,
                 count: count,
                 assignedUpgrades: [], // Initialize empty upgrades array for leaders
+                keywords: extractKeywordsFromAbilities(squadron.abilities), // Ensure keywords are populated
               };
               
               squadronsToAdd.push(selectedSquadron);
@@ -2944,7 +2966,8 @@ export default function FleetBuilder({
       // Return squadron with assigned leader upgrades
       return {
         ...squadron,
-        assignedUpgrades: squadronLeaders.map(({ upgrade }) => upgrade)
+        assignedUpgrades: squadronLeaders.map(({ upgrade }) => upgrade),
+        keywords: extractKeywordsFromAbilities(squadron.abilities), // Ensure keywords are populated
       };
     });
     
