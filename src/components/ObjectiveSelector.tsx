@@ -19,7 +19,7 @@ export interface ObjectiveModel {
 }
 
 interface ObjectiveSelectorProps {
-  type: 'assault' | 'defense' | 'navigation' | 'campaign';
+  type: 'assault' | 'defense' | 'navigation' | 'campaign' | 'skirmish';
   onSelectObjective: (objective: ObjectiveModel) => void;
   onClose: () => void;
   gamemodeRestrictions?: GamemodeRestrictions;
@@ -130,6 +130,8 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose, gamemodeRe
               // For campaign type, include all objective types including actual campaign objectives; otherwise filter by specific type
               const shouldInclude = type === 'campaign' 
                 ? ['campaign'].includes(objective.type)
+                : type === 'skirmish'
+                ? ['skirmish'].includes(objective.type)
                 : objective.type === type;
                 
               if (shouldInclude && !objectiveId.includes('-errata-')) {
@@ -164,6 +166,8 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose, gamemodeRe
               // For campaign type, include all objective types including actual campaign objectives; otherwise filter by specific type
               const shouldInclude = type === 'campaign' 
                 ? ['assault', 'defense', 'navigation', 'campaign'].includes(objective.type)
+                : type === 'skirmish'
+                ? ['skirmish'].includes(objective.type)
                 : objective.type === type;
                 
               if (shouldInclude && objectiveId.includes('-errata-')) {
@@ -203,7 +207,7 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose, gamemodeRe
     
     // Check allowed objectives
     if (restrictions.allowedObjectives) {
-      const allowedForType = restrictions.allowedObjectives[type];
+      const allowedForType = restrictions.allowedObjectives[type as keyof typeof restrictions.allowedObjectives];
       if (allowedForType && !allowedForType.includes(objective.name)) {
         return false;
       }
@@ -211,7 +215,7 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose, gamemodeRe
 
     // Check disallowed objectives
     if (restrictions.disallowedObjectives) {
-      const disallowedForType = restrictions.disallowedObjectives[type];
+      const disallowedForType = restrictions.disallowedObjectives[type as keyof typeof restrictions.disallowedObjectives];
       if (disallowedForType && disallowedForType.includes(objective.name)) {
         return false;
       }

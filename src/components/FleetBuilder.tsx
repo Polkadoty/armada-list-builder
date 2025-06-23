@@ -123,6 +123,7 @@ export interface Squadron {
   searchableText: string;
   release?: string;
   keywords?: string[]; // Derived from abilities
+  assignedUpgrades?: Upgrade[]; // Add support for squadron upgrades (leaders)
 }
 
 interface Objective {
@@ -155,6 +156,8 @@ export interface Upgrade {
     grey_upgrades?: string[]; // Add this new property
     size?: string[];
     traits?: string[];
+    keywords?: string[]; // Add keyword restrictions for squadrons
+    "disallowed-keywords"?: string[]; // Add disallowed keyword restrictions for squadrons
     disqualify_if?: {
       size?: string[];
       has_upgrade_type?: string[];
@@ -261,15 +264,19 @@ export default function FleetBuilder({
     useState(false);
   const [showCampaignObjectiveSelector, setShowCampaignObjectiveSelector] =
     useState(false);
+  const [showSkirmishObjectiveSelector, setShowSkirmishObjectiveSelector] =
+    useState(false);
   const [selectedAssaultObjectives, setSelectedAssaultObjectives] = useState<ObjectiveModel[]>([]);
   const [selectedDefenseObjectives, setSelectedDefenseObjectives] = useState<ObjectiveModel[]>([]);
   const [selectedNavigationObjectives, setSelectedNavigationObjectives] = useState<ObjectiveModel[]>([]);
   const [selectedCampaignObjectives, setSelectedCampaignObjectives] = useState<ObjectiveModel[]>([]);
+  const [selectedSkirmishObjectives, setSelectedSkirmishObjectives] = useState<ObjectiveModel[]>([]);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [uniqueClassNames, setUniqueClassNames] = useState<string[]>([]);
   const [showUpgradeSelector, setShowUpgradeSelector] = useState(false);
   const [currentUpgradeType, setCurrentUpgradeType] = useState("");
   const [currentShipId, setCurrentShipId] = useState("");
+  const [currentSquadronId, setCurrentSquadronId] = useState("");
   const [showExportPopup, setShowExportPopup] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { addUniqueClassName, removeUniqueClassName, resetUniqueClassNames } = useUniqueClassContext();
@@ -339,7 +346,9 @@ export default function FleetBuilder({
     }, 0);
 
     const calculatedSquadronPoints = selectedSquadrons.reduce((total, squadron) => {
-      return total + (squadron.points * (squadron.count || 1));
+      const squadronPoints = squadron.points * (squadron.count || 1);
+      const upgradePoints = (squadron.assignedUpgrades || []).reduce((upgradeTotal, upgrade) => upgradeTotal + upgrade.points, 0);
+      return total + squadronPoints + upgradePoints;
     }, 0);
 
     const calculatedTotalPoints = calculatedShipPoints + calculatedSquadronPoints;
@@ -657,7 +666,47 @@ export default function FleetBuilder({
   };
 
   const handleSelectUpgrade = (upgrade: Upgrade) => {
+    // Handle squadron upgrades (leaders) for Fighter Group mode
+    if (currentSquadronId) {
+      setSelectedSquadrons((prevSquadrons) =>
+        prevSquadrons.map((squadron) => {
+          if (squadron.id === currentSquadronId) {
+            const newUpgrade = { ...upgrade, slotIndex: currentUpgradeIndex };
+            const updatedAssignedUpgrades = [...(squadron.assignedUpgrades || [])];
+            const existingUpgradeIndex = updatedAssignedUpgrades.findIndex(
+              (u) => u.type === currentUpgradeType
+            );
 
+            if (existingUpgradeIndex !== -1) {
+              // Remove the old unique class name if it exists
+              const oldUpgrade = updatedAssignedUpgrades[existingUpgradeIndex];
+              if (oldUpgrade.unique) {
+                removeUniqueClassName(oldUpgrade.name);
+              }
+              if (oldUpgrade["unique-class"]) {
+                oldUpgrade["unique-class"]
+                  .filter(uc => uc !== "")
+                  .forEach((uc) => removeUniqueClassName(uc));
+              }
+              updatedAssignedUpgrades[existingUpgradeIndex] = newUpgrade;
+            } else {
+              updatedAssignedUpgrades.push(newUpgrade);
+            }
+
+            return {
+              ...squadron,
+              assignedUpgrades: updatedAssignedUpgrades,
+            };
+          }
+          return squadron;
+        })
+      );
+      setShowUpgradeSelector(false);
+      setCurrentSquadronId("");
+      return;
+    }
+
+    // Handle ship upgrades (existing logic)
     setSelectedShips((prevShips) =>
       prevShips.map((ship) => {
         if (ship.id === currentShipId) {
@@ -1475,6 +1524,30 @@ export default function FleetBuilder({
     setSquadronToSwap(id);
   };
 
+  const handleSquadronUpgradeClick = (squadronId: string, upgradeType: string) => {
+    setCurrentSquadronId(squadronId);
+    setCurrentUpgradeType(upgradeType);
+    setCurrentUpgradeIndex(0); // Leaders only have one slot
+    setShowUpgradeSelector(true);
+  };
+
+  const handleRemoveSquadronUpgrade = (squadronId: string, upgradeType: string) => {
+    setSelectedSquadrons((prevSquadrons) =>
+      prevSquadrons.map((squadron) => {
+        if (squadron.id === squadronId) {
+          const updatedAssignedUpgrades = (squadron.assignedUpgrades || []).filter(
+            (upgrade) => upgrade.type !== upgradeType
+          );
+          return {
+            ...squadron,
+            assignedUpgrades: updatedAssignedUpgrades,
+          };
+        }
+        return squadron;
+      })
+    );
+  };
+
   const handleSelectAssaultObjective = (objective: ObjectiveModel) => {
     if (faction === "sandbox") {
       setSelectedAssaultObjectives(prev => [...prev, objective]);
@@ -1525,6 +1598,19 @@ export default function FleetBuilder({
 
   const handleRemoveCampaignObjective = () => {
     setSelectedCampaignObjectives([]);
+  };
+
+  const handleSelectSkirmishObjective = (objective: ObjectiveModel) => {
+    if (faction === "sandbox") {
+      setSelectedSkirmishObjectives(prev => [...prev, objective]);
+    } else {
+      setSelectedSkirmishObjectives([objective]);
+    }
+    setShowSkirmishObjectiveSelector(false);
+  };
+
+  const handleRemoveSkirmishObjective = () => {
+    setSelectedSkirmishObjectives([]);
   };
 
     // Modify the SectionHeader click handlers
@@ -1695,11 +1781,20 @@ export default function FleetBuilder({
       const sourceTag = formatSource(selectedCampaignObjectives[0].source);
       text += `Campaign: ${selectedCampaignObjectives.map(obj => obj.name).join(", ")}${sourceTag ? ` ${sourceTag}` : ''}\n`;
     }
+    if (selectedSkirmishObjectives.length > 0) {
+      const sourceTag = formatSource(selectedSkirmishObjectives[0].source);
+      text += `Skirmish: ${selectedSkirmishObjectives.map(obj => obj.name).join(", ")}${sourceTag ? ` ${sourceTag}` : ''}\n`;
+    }
 
     // Add custom lines after objectives
     getLines('afterObjectives').forEach(line => {
       text += line + "\n";
     });
+
+    // Add extra newline after objectives if no ships are present
+    if (selectedShips.length === 0) {
+      text += "\n";
+    }
 
     // Add ships and their upgrades
     if (selectedShips.length > 0) {
@@ -1731,41 +1826,82 @@ export default function FleetBuilder({
 
     text += "Squadrons:\n";
     if (selectedSquadrons.length > 0) {
-      const groupedSquadrons = selectedSquadrons.reduce((acc, squadron) => {
-        const sourceSpace = squadron.release === "AMG Final Errata" ? "" : " ";
-        const key =
-          squadron.unique || squadron["ace-name"]
-            ? (squadron["ace-name"] || squadron.name) + 
+      // For Fighter Group gamemode, handle squadrons individually to show leaders
+      if (gamemode === "Fighter Group") {
+        selectedSquadrons.forEach((squadron) => {
+          const sourceSpace = squadron.release === "AMG Final Errata" ? "" : " ";
+          const squadronPoints = squadron.points * (squadron.count || 1);
+          const leaderPoints = (squadron.assignedUpgrades || [])
+            .filter(upgrade => upgrade.type === "leader")
+            .reduce((total, upgrade) => total + upgrade.points, 0);
+          const totalSquadronPoints = squadronPoints + leaderPoints;
+
+          if (squadron.unique || squadron["ace-name"]) {
+            text += "• " + (squadron["ace-name"] || squadron.name) + 
               " - " + squadron.name + 
               (squadron.source && squadron.source !== "regular" && squadron.source !== "amg" 
                 ? sourceSpace + formatSource(squadron.source) 
                 : "") + 
-              " (" + squadron.points + ")"
-            : squadron.name + 
+              " (" + totalSquadronPoints + ")" + squadronSuffix + "\n";
+          } else {
+            const count = squadron.count || 1;
+            text += "• " + (count > 1 ? count + " x " : "") + squadron.name + 
               (squadron.source && squadron.source !== "regular" && squadron.source !== "amg"
                 ? sourceSpace + formatSource(squadron.source) 
                 : "") + 
-              " (" + (squadron.points * (squadron.count || 1)) + ")";
-        if (!acc[key]) {
-          acc[key] = {
-            count: 0,
-            isUnique: squadron.unique || !!squadron["ace-name"],
-            points: squadron.points,
-          };
-        }
-        acc[key].count += squadron.count || 1;
-        return acc;
-      }, {} as Record<string, { count: number; isUnique: boolean; points: number }>);
-
-      Object.entries(groupedSquadrons).forEach(
-        ([squadronKey, { count, isUnique }]) => {
-          if (isUnique) {
-            text += "• " + squadronKey + squadronSuffix + "\n";
-          } else {
-            text += "• " + count + " x " + squadronKey + squadronSuffix + "\n";
+              " (" + totalSquadronPoints + ")" + squadronSuffix + "\n";
           }
-        }
-      );
+
+          // Add leader upgrades
+          (squadron.assignedUpgrades || [])
+            .filter(upgrade => upgrade.type === "leader")
+            .forEach(leader => {
+              const leaderSourceSpace = leader.release === "AMG Final Errata" ? "" : " ";
+              text += "• " + leader.name + 
+                (leader.source && leader.source !== "regular" 
+                  ? leaderSourceSpace + formatSource(leader.source) 
+                  : "") + 
+                " (" + leader.points + ")\n";
+            });
+        });
+      } else {
+        // Standard squadron grouping for other game modes
+        const groupedSquadrons = selectedSquadrons.reduce((acc, squadron) => {
+          const sourceSpace = squadron.release === "AMG Final Errata" ? "" : " ";
+          const key =
+            squadron.unique || squadron["ace-name"]
+              ? (squadron["ace-name"] || squadron.name) + 
+                " - " + squadron.name + 
+                (squadron.source && squadron.source !== "regular" && squadron.source !== "amg" 
+                  ? sourceSpace + formatSource(squadron.source) 
+                  : "") + 
+                " (" + squadron.points + ")"
+              : squadron.name + 
+                (squadron.source && squadron.source !== "regular" && squadron.source !== "amg"
+                  ? sourceSpace + formatSource(squadron.source) 
+                  : "") + 
+                " (" + (squadron.points * (squadron.count || 1)) + ")";
+          if (!acc[key]) {
+            acc[key] = {
+              count: 0,
+              isUnique: squadron.unique || !!squadron["ace-name"],
+              points: squadron.points,
+            };
+          }
+          acc[key].count += squadron.count || 1;
+          return acc;
+        }, {} as Record<string, { count: number; isUnique: boolean; points: number }>);
+
+        Object.entries(groupedSquadrons).forEach(
+          ([squadronKey, { count, isUnique }]) => {
+            if (isUnique) {
+              text += "• " + squadronKey + squadronSuffix + "\n";
+            } else {
+              text += "• " + count + " x " + squadronKey + squadronSuffix + "\n";
+            }
+          }
+        );
+      }
     }
     text += "= " + totalSquadronPoints + " Points\n\n";
 
@@ -2065,7 +2201,7 @@ export default function FleetBuilder({
             .replace(/^-\s+/, '• ')
             .replace(/\[\s*flagship\s*\]\s*/, '')
             .replace(/\(\s*(\d+)\s*points?\)/, '($1)')
-            .replace(/^(Assault|Defense|Navigation) Objective:/, '$1:');
+            .replace(/^(Assault|Defense|Navigation|Campaign|Skirmish) Objective:/, '$1:');
           
           // Convert objective lines
           if (line.match(/^(Assault|Defense|Navigation):/)) {
@@ -2286,7 +2422,10 @@ export default function FleetBuilder({
     let processingSquadrons = false;
     const shipsToAdd: Ship[] = [];
     const upgradesToAdd: { shipId: string; upgrade: Upgrade }[] = [];
+    const squadronsToAdd: Squadron[] = [];
+    const squadronLeadersToAdd: { squadronId: string; upgrade: Upgrade }[] = [];
     let currentShipId: string | null = null;
+    let lastAddedSquadronId: string | null = null;
 
     const addShipToFleet = (
       shipName: string,
@@ -2425,8 +2564,8 @@ export default function FleetBuilder({
         // Skip squadron points line - will be calculated automatically
         continue;
       } else if (
-        (line.startsWith("Assault:") || line.startsWith("Defense:") || line.startsWith("Navigation:") || line.startsWith("Campaign:") ||
-         line.startsWith("Assault Objective:") || line.startsWith("Defense Objective:") || line.startsWith("Navigation Objective:") || line.startsWith("Campaign Objective:"))
+        (line.startsWith("Assault:") || line.startsWith("Defense:") || line.startsWith("Navigation:") || line.startsWith("Campaign:") || line.startsWith("Skirmish:") ||
+         line.startsWith("Assault Objective:") || line.startsWith("Defense Objective:") || line.startsWith("Navigation Objective:") || line.startsWith("Campaign Objective:") || line.startsWith("Skirmish Objective:"))
       ) {
         // Handle objectives
         const [type, namesString] = line.split(":");
@@ -2475,6 +2614,13 @@ export default function FleetBuilder({
                     setSelectedCampaignObjectives(prev => [...prev, objective]);
                   } else {
                     setSelectedCampaignObjectives([objective]);
+                  }
+                  break;
+                case "skirmish":
+                  if (faction === "sandbox") {
+                    setSelectedSkirmishObjectives(prev => [...prev, objective]);
+                  } else {
+                    setSelectedSkirmishObjectives([objective]);
                   }
                   break;
               }
@@ -2606,36 +2752,18 @@ export default function FleetBuilder({
               } else if (squadronName.includes("[Nexus]")) {
                 source = "nexus";
               }
-              // Handle squadrons with count > 1 properly
-              if (count === 1) {
-                const selectedSquadron = {
-                  ...squadron,
-                  source,
-                  count: 1,
-                };
-                handleAddingSquadron(selectedSquadron);
-              } else {
-                // For squadrons with count > 1, we need to handle them differently
-                if (squadron.unique && squadron.unique_limit && squadron.unique_limit > 1 && squadron.ace) {
-                  // For ace squadrons with unique_limit > 1, create separate entries
-                  for (let i = 0; i < count; i++) {
-                    const selectedSquadron = {
-                      ...squadron,
-                      source,
-                      count: 1,
-                    };
-                    handleAddingSquadron(selectedSquadron);
-                  }
-                } else {
-                  // For regular squadrons or non-ace unique squadrons, set count directly
-                  const selectedSquadron = {
-                    ...squadron,
-                    source,
-                    count: count,
-                  };
-                  handleAddingSquadron(selectedSquadron);
-                }
-              }
+              
+              // For Fighter Group mode, handle squadrons individually to support leaders
+              const selectedSquadron = {
+                ...squadron,
+                id: generateUniqueSquadronId(),
+                source,
+                count: count,
+                assignedUpgrades: [], // Initialize empty upgrades array for leaders
+              };
+              
+              squadronsToAdd.push(selectedSquadron);
+              lastAddedSquadronId = selectedSquadron.id;
             }
           } else {
             console.log(
@@ -2643,59 +2771,126 @@ export default function FleetBuilder({
             );
             skippedItems.push(`${squadronName} (${pointsPerSquadron})`);
           }
+        } else {
+          // Check for leader upgrades (bullet items ending with - Leader)
+          const leaderMatch = line.match(/^•\s*(.+?)\s*-\s*Leader\s*\((\d+)\)/);
+          if (leaderMatch && lastAddedSquadronId) {
+            const [, leaderName, leaderPoints] = leaderMatch;
+            const leaderKey = getAliasKey(aliases, `${leaderName} (${leaderPoints})`);
+            
+            console.log(`Found leader upgrade: ${leaderName} (${leaderPoints}) for squadron ${lastAddedSquadronId}`);
+            
+            if (leaderKey) {
+              const leaderUpgrade = fetchUpgrade(leaderKey);
+              if (leaderUpgrade && leaderUpgrade.type === "leader") {
+                // Extract source from leader name
+                let source: ContentSource = "regular";
+                const sourceMatch = leaderName.match(/\[(.*?)\]/);
+                if (sourceMatch) {
+                  const sourceTag = sourceMatch[1].toLowerCase();
+                  switch (sourceTag) {
+                    case 'legacybeta':
+                      source = 'legacyBeta';
+                      break;
+                    case 'legacy':
+                      source = 'legacy';
+                      break;
+                    case 'legends':
+                      source = 'legends';
+                      break;
+                    case 'arc':
+                      source = 'arc';
+                      break;
+                    case 'nexus':
+                      source = 'nexus';
+                      break;
+                  }
+                }
+
+                squadronLeadersToAdd.push({
+                  squadronId: lastAddedSquadronId,
+                  upgrade: { ...leaderUpgrade, source }
+                });
+                
+                console.log(`Added leader ${leaderName} to squadron ${lastAddedSquadronId}`);
+              } else {
+                console.log(`Leader upgrade not found or not a leader type: ${leaderName}`);
+                skippedItems.push(`${leaderName} - Leader`);
+              }
+            } else {
+              console.log(`Leader key not found in aliases: ${leaderName} (${leaderPoints})`);
+              skippedItems.push(`${leaderName} - Leader`);
+            }
+          }
         }
       }
     }
 
 
 
-    // Add all ships with their upgrades properly calculated
+    // Add all ships and squadrons with their upgrades properly calculated
     setTimeout(() => {
-             // First, build ships with their final availableUpgrades calculated correctly
-       const shipsWithUpgrades = shipsToAdd.map(ship => {
-         // Get all upgrades for this ship
-         const shipUpgrades = upgradesToAdd.filter(({ shipId }) => shipId === ship.id);
-         
-         console.log(`*** IMPORT DEBUG - Ship ${ship.name}:`);
-         console.log(`  Base upgrades:`, ship.upgrades || []);
-         console.log(`  Assigned upgrades:`, shipUpgrades.map(({ upgrade }) => upgrade.name));
-         
-         // Start with base upgrades
-         const baseUpgrades = [...(ship.upgrades || [])];
-         const finalAvailableUpgrades = [...baseUpgrades];
-         
-         console.log(`  Starting availableUpgrades:`, finalAvailableUpgrades);
-         
-         // Add enabled upgrade slots from equipped upgrades
-         shipUpgrades.forEach(({ upgrade }) => {
-           if (upgrade.restrictions?.enable_upgrades) {
-             console.log(`  ${upgrade.name} enables:`, upgrade.restrictions.enable_upgrades);
-             upgrade.restrictions.enable_upgrades
-               .filter(enabledUpgrade => enabledUpgrade.trim() !== "")
-               .forEach(enabledUpgrade => {
-                 console.log(`    Checking if should add ${enabledUpgrade} (currently has: ${finalAvailableUpgrades.includes(enabledUpgrade)})`);
-                 // Only add if not already present
-                 if (!finalAvailableUpgrades.includes(enabledUpgrade)) {
-                   finalAvailableUpgrades.push(enabledUpgrade);
-                   console.log(`    Added ${enabledUpgrade}`);
-                 } else {
-                   console.log(`    Skipped ${enabledUpgrade} (already present)`);
-                 }
-               });
-           }
-         });
-         
-         console.log(`  Final availableUpgrades:`, finalAvailableUpgrades);
-         
-         // Return ship with properly assigned upgrades and corrected availableUpgrades
-         return {
-           ...ship,
-           availableUpgrades: finalAvailableUpgrades,
-           assignedUpgrades: shipUpgrades.map(({ upgrade }) => upgrade)
-         };
-       });
+      // First, build ships with their final availableUpgrades calculated correctly
+      const shipsWithUpgrades = shipsToAdd.map(ship => {
+        // Get all upgrades for this ship
+        const shipUpgrades = upgradesToAdd.filter(({ shipId }) => shipId === ship.id);
+        
+        console.log(`*** IMPORT DEBUG - Ship ${ship.name}:`);
+        console.log(`  Base upgrades:`, ship.upgrades || []);
+        console.log(`  Assigned upgrades:`, shipUpgrades.map(({ upgrade }) => upgrade.name));
+        
+        // Start with base upgrades
+        const baseUpgrades = [...(ship.upgrades || [])];
+        const finalAvailableUpgrades = [...baseUpgrades];
+        
+        console.log(`  Starting availableUpgrades:`, finalAvailableUpgrades);
+        
+        // Add enabled upgrade slots from equipped upgrades
+        shipUpgrades.forEach(({ upgrade }) => {
+          if (upgrade.restrictions?.enable_upgrades) {
+            console.log(`  ${upgrade.name} enables:`, upgrade.restrictions.enable_upgrades);
+            upgrade.restrictions.enable_upgrades
+              .filter(enabledUpgrade => enabledUpgrade.trim() !== "")
+              .forEach(enabledUpgrade => {
+                console.log(`    Checking if should add ${enabledUpgrade} (currently has: ${finalAvailableUpgrades.includes(enabledUpgrade)})`);
+                // Only add if not already present
+                if (!finalAvailableUpgrades.includes(enabledUpgrade)) {
+                  finalAvailableUpgrades.push(enabledUpgrade);
+                  console.log(`    Added ${enabledUpgrade}`);
+                } else {
+                  console.log(`    Skipped ${enabledUpgrade} (already present)`);
+                }
+              });
+          }
+        });
+        
+        console.log(`  Final availableUpgrades:`, finalAvailableUpgrades);
+        
+        // Return ship with properly assigned upgrades and corrected availableUpgrades
+        return {
+          ...ship,
+          availableUpgrades: finalAvailableUpgrades,
+          assignedUpgrades: shipUpgrades.map(({ upgrade }) => upgrade)
+        };
+      });
+
+      // Build squadrons with their leader upgrades
+      const squadronsWithLeaders = squadronsToAdd.map(squadron => {
+        // Get all leader upgrades for this squadron
+        const squadronLeaders = squadronLeadersToAdd.filter(({ squadronId }) => squadronId === squadron.id);
+        
+        console.log(`*** IMPORT DEBUG - Squadron ${squadron.name}:`);
+        console.log(`  Assigned leaders:`, squadronLeaders.map(({ upgrade }) => upgrade.name));
+        
+        // Return squadron with assigned leader upgrades
+        return {
+          ...squadron,
+          assignedUpgrades: squadronLeaders.map(({ upgrade }) => upgrade)
+        };
+      });
       
       setSelectedShips(shipsWithUpgrades);
+      setSelectedSquadrons(squadronsWithLeaders);
       
       // Clear import flag and run final recalculation
       setTimeout(() => {
@@ -4010,6 +4205,9 @@ export default function FleetBuilder({
       if (forcedObjectives.campaign) {
         setForcedObjective(forcedObjectives.campaign, setSelectedCampaignObjectives);
       }
+      if (forcedObjectives.skirmish) {
+        setForcedObjective(forcedObjectives.skirmish, setSelectedSkirmishObjectives);
+      }
     }
   }, [gamemode, restrictions]);
 
@@ -4189,11 +4387,16 @@ export default function FleetBuilder({
           ) : (
             <Card className="mb-4 relative">
               <Button
-                className="w-full justify-between bg-white/50 dark:bg-gray-900/50 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md text-lg py-6"
+                className={`w-full justify-between bg-white/50 dark:bg-gray-900/50 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md text-lg py-6 ${
+                  gamemode === "Fighter Group" ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
                 variant="outline"
                 onClick={handleAddShip}
+                disabled={gamemode === "Fighter Group"}
               >
-                <span className="text-lg">ADD SHIP</span>
+                <span className="text-lg">
+                  {gamemode === "Fighter Group" ? "SHIPS NOT ALLOWED" : "ADD SHIP"}
+                </span>
               </Button>
               {showFilter && (
                 <ShipFilter
@@ -4230,6 +4433,9 @@ export default function FleetBuilder({
                       isFirst={squadron.id === selectedSquadrons[0].id}
                       isLast={squadron.id === selectedSquadrons[selectedSquadrons.length - 1].id}
                       selectedSquadrons={selectedSquadrons}
+                      gamemode={gamemode}
+                      onUpgradeClick={handleSquadronUpgradeClick}
+                      handleRemoveUpgrade={handleRemoveSquadronUpgrade}
                     />
                   ))}
                 </div>
@@ -4256,6 +4462,26 @@ export default function FleetBuilder({
 
           <div className="mb-4 relative">
             {(() => {
+              // Check if skirmish objectives are enabled (Fighter Group mode)
+              const skirmishEnabled = restrictions?.objectiveRestrictions?.enableSkirmishObjectives === true;
+              
+              // If skirmish is enabled, only show skirmish objective
+              if (skirmishEnabled) {
+                return (
+                  <div className="grid grid-cols-1 gap-2 text-xl">
+                    <SwipeableObjective
+                      type="skirmish"
+                      selectedObjective={selectedSkirmishObjectives[0]}
+                      selectedObjectives={faction === "sandbox" ? selectedSkirmishObjectives : undefined}
+                      onRemove={handleRemoveSkirmishObjective}
+                      onOpen={() => setShowSkirmishObjectiveSelector(true)}
+                      color="#8B5CF6"
+                      gamemodeRestrictions={restrictions}
+                    />
+                  </div>
+                );
+              }
+              
               // Check if campaign objectives are enabled
               const campaignEnabled = restrictions?.objectiveRestrictions?.enableCampaignObjectives === true;
               
@@ -4379,21 +4605,48 @@ export default function FleetBuilder({
         />
       )}
 
+      {showSkirmishObjectiveSelector && (
+        <ObjectiveSelector
+          type="skirmish"
+          onSelectObjective={handleSelectSkirmishObjective}
+          onClose={() => setShowSkirmishObjectiveSelector(false)}
+          gamemodeRestrictions={restrictions}
+          forcedObjectiveName={restrictions?.objectiveRestrictions?.forcedObjectives?.skirmish}
+        />
+      )}
+
       {showUpgradeSelector && (
         <UpgradeSelector
           upgradeType={currentUpgradeType}
           faction={faction}
           onSelectUpgrade={handleSelectUpgrade}
-          onClose={() => setShowUpgradeSelector(false)}
-          selectedUpgrades={selectedShips.flatMap(ship => ship.assignedUpgrades)}
-          shipType={selectedShips.find(s => s.id === currentShipId)?.chassis || ''}
-          chassis={selectedShips.find(s => s.id === currentShipId)?.chassis || ''}
-          shipSize={selectedShips.find(s => s.id === currentShipId)?.size || ''}
-          shipTraits={selectedShips.find(s => s.id === currentShipId)?.traits || []}
-          currentShipUpgrades={selectedShips.find(s => s.id === currentShipId)?.assignedUpgrades || []}
-          disabledUpgrades={disabledUpgrades[currentShipId] || []}
-          ship={selectedShips.find(s => s.id === currentShipId)!}
+          onClose={() => {
+            setShowUpgradeSelector(false);
+            setCurrentSquadronId("");
+          }}
+          selectedUpgrades={[
+            ...selectedShips.flatMap(ship => ship.assignedUpgrades),
+            ...selectedSquadrons.flatMap(squadron => squadron.assignedUpgrades || [])
+          ]}
+          shipType={currentSquadronId ? 
+            selectedSquadrons.find(squadron => squadron.id === currentSquadronId)?.name || "" :
+            selectedShips.find(s => s.id === currentShipId)?.chassis || ''
+          }
+          chassis={currentSquadronId ? "" : selectedShips.find(s => s.id === currentShipId)?.chassis || ''}
+          shipSize={currentSquadronId ? "small" : selectedShips.find(s => s.id === currentShipId)?.size || ''}
+          shipTraits={currentSquadronId ? [] : selectedShips.find(s => s.id === currentShipId)?.traits || []}
+          currentShipUpgrades={currentSquadronId ? 
+            selectedSquadrons.find(squadron => squadron.id === currentSquadronId)?.assignedUpgrades || [] :
+            selectedShips.find(s => s.id === currentShipId)?.assignedUpgrades || []
+          }
+          disabledUpgrades={currentSquadronId ? [] : disabledUpgrades[currentShipId] || []}
+          ship={currentSquadronId ? {} as Ship : selectedShips.find(s => s.id === currentShipId)!}
           gamemodeRestrictions={gamemodeRestrictions}
+          isSquadronUpgrade={!!currentSquadronId}
+          squadronKeywords={currentSquadronId ? 
+            selectedSquadrons.find(squadron => squadron.id === currentSquadronId)?.keywords || [] :
+            []
+          }
         />
       )}
 

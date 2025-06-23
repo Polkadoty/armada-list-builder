@@ -1,4 +1,4 @@
-export type Gamemode = "Task Force" | "Standard" | "Sector Fleet" | "Battle for Naboo - Week 1" | "Battle for Naboo - Week 2" | "Campaign" | "Unrestricted";
+export type Gamemode = "Task Force" | "Standard" | "Sector Fleet" | "Battle for Naboo - Week 1" | "Battle for Naboo - Week 2" | "Campaign" | "Unrestricted" | "Fighter Group";
 // "Minivan" | "Campaign" | "Fighter Group"
 
 export interface GamemodeRestrictions {
@@ -6,6 +6,7 @@ export interface GamemodeRestrictions {
   squadronPointsLimit?: number;
   flotillaLimit?: number;
   aceLimit?: number;
+  leaderLimit?: number;
   requireObjectives?: boolean;
   requireCommander?: boolean;
   allowedShipClasses?: string[];
@@ -24,23 +25,27 @@ export interface GamemodeRestrictions {
     disableSelection?: boolean; // Completely disable objective selection
     hideDetails?: boolean; // Show generic "Chosen Objective" instead of actual cards
     enableCampaignObjectives?: boolean; // Enable the campaign objective slot
+    enableSkirmishObjectives?: boolean; // Enable skirmish objectives for Fighter Group
     forcedObjectives?: {
       assault?: string;
       defense?: string;
       navigation?: string;
       campaign?: string;
+      skirmish?: string; // Add skirmish objective support
     };
     allowedObjectives?: {
       assault?: string[];
       defense?: string[];
       navigation?: string[];
       campaign?: string[];
+      skirmish?: string[]; // Add skirmish objective support
     };
     disallowedObjectives?: {
       assault?: string[];
       defense?: string[];
       navigation?: string[];
       campaign?: string[];
+      skirmish?: string[]; // Add skirmish objective support
     };
   };
   exportTextModifications?: {
@@ -130,15 +135,19 @@ export const GAMEMODE_RESTRICTIONS: Record<Gamemode, GamemodeRestrictions> = {
     },
     forceToggles: { tournamentMode: false },
   },
-  // "Fighter Group": {
-  //   pointsLimit: 134,
-  //   squadronPointsLimit: 134,
-  //   flotillaLimit: 0,
-  //   aceLimit: 4,
-  //   requireObjectives: false,
-  //   requireCommander: false,
-  //   forceToggles: { tournamentMode: false },
-  // },
+  "Fighter Group": {
+    pointsLimit: 120,
+    squadronPointsLimit: 120,
+    flotillaLimit: 0,
+    leaderLimit: 1,
+    aceLimit: 3,
+    requireObjectives: false,
+    requireCommander: false,
+    objectiveRestrictions: {
+      enableSkirmishObjectives: true,
+    },
+    forceToggles: { tournamentMode: true },
+  },
   "Battle for Naboo - Week 1": {
     pointsLimit: 250,
     squadronPointsLimit: 90,
@@ -190,10 +199,10 @@ export const GAMEMODE_RESTRICTIONS: Record<Gamemode, GamemodeRestrictions> = {
       hideDetails: true,
       enableCampaignObjectives: true,
       allowedObjectives: {
-        campaign: ["Base Defense - Armed Station (RITR)"],
+        campaign: ["Base Defense - Armed Station (CC)"],
       },
       forcedObjectives: {
-        campaign: "Base Defense - Armed Station (RITR)",
+        campaign: "Base Defense - Armed Station (CC)",
       },
     },
     exportTextModifications: {
@@ -316,6 +325,16 @@ export function checkFleetViolations(gamemode: Gamemode, fleet: FleetState, fact
     const aceSquadronCount = fleet.selectedSquadrons.filter((squadron) => squadron.ace === true).length;
     if (aceSquadronCount > restrictions.aceLimit) {
       violations.push(`More than ${restrictions.aceLimit} aces in fleet`);
+    }
+  }
+
+  if (restrictions.leaderLimit !== undefined) {
+    const leaderCount = fleet.selectedSquadrons.reduce((count, squadron) => {
+      const squadronLeaders = (squadron as any).assignedUpgrades?.filter((upgrade: any) => upgrade.type === "leader").length || 0;
+      return count + squadronLeaders;
+    }, 0);
+    if (leaderCount > restrictions.leaderLimit) {
+      violations.push(`More than ${restrictions.leaderLimit} leader(s) in fleet`);
     }
   }
 

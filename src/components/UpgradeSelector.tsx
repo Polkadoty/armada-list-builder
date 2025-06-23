@@ -27,6 +27,8 @@ export interface UpgradeSelectorProps {
   disabledUpgrades: string[];
   ship: Ship;
   gamemodeRestrictions?: GamemodeRestrictions;
+  isSquadronUpgrade?: boolean; // Add prop for squadron upgrade context
+  squadronKeywords?: string[]; // Add squadron keywords for leader upgrade restrictions
 }
 
 interface UpgradeData {
@@ -48,6 +50,8 @@ export default function UpgradeSelector({
   disabledUpgrades,
   ship,
   gamemodeRestrictions,
+  isSquadronUpgrade = false,
+  squadronKeywords = [],
 }: UpgradeSelectorProps) {
   const [loading, setLoading] = useState(true);
   const { uniqueClassNames, addUniqueClassName } = useUniqueClassContext();
@@ -423,6 +427,28 @@ export default function UpgradeSelector({
         }
       }
 
+      // Check keyword restrictions for squadron upgrades (leaders)
+      if (isSquadronUpgrade && upgrade.restrictions?.keywords && upgrade.restrictions.keywords.length > 0) {
+        const validKeywords = upgrade.restrictions.keywords.filter(keyword => keyword.trim() !== '');
+        if (validKeywords.length > 0) {
+          const hasRequiredKeyword = validKeywords.some(keyword => squadronKeywords.includes(keyword));
+          if (!hasRequiredKeyword) {
+            return false;
+          }
+        }
+      }
+
+      // Check disallowed keyword restrictions for squadron upgrades (leaders)
+      if (isSquadronUpgrade && upgrade.restrictions?.["disallowed-keywords"] && upgrade.restrictions["disallowed-keywords"].length > 0) {
+        const disallowedKeywords = upgrade.restrictions["disallowed-keywords"].filter(keyword => keyword.trim() !== '');
+        if (disallowedKeywords.length > 0) {
+          const hasDisallowedKeyword = disallowedKeywords.some(keyword => squadronKeywords.includes(keyword));
+          if (hasDisallowedKeyword) {
+            return false;
+          }
+        }
+      }
+
       if (upgrade.restrictions.flagship === true) {
         const hasCommander = currentShipUpgrades.some(u => u.type === 'commander');
         if (!hasCommander) {
@@ -612,9 +638,17 @@ export default function UpgradeSelector({
           {loading ? (
             <p>Loading upgrades...</p>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2">
+            <div className={`grid gap-2 ${
+              upgradeType === "leader" && isSquadronUpgrade 
+                ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" 
+                : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"
+            }`}>
               {processedUpgrades.map((upgrade) => (
-                <div key={upgrade.id} className="aspect-[2.5/3.5]">
+                <div key={upgrade.id} className={
+                  upgradeType === "leader" && isSquadronUpgrade 
+                    ? "aspect-[3.5/2.5]"  // Landscape aspect ratio for leaders
+                    : "aspect-[2.5/3.5]"  // Portrait aspect ratio for other upgrades
+                }>
                   <Button
                     onClick={() => handleUpgradeClick(upgrade)}
                     className={`p-0 overflow-visible relative w-full h-full rounded-lg bg-transparent ${
@@ -626,8 +660,8 @@ export default function UpgradeSelector({
                       <OptimizedImage
                         src={upgrade.cardimage}
                         alt={upgrade.name}
-                        width={250}  // Standard poker card width (2.5 inches * 100)
-                        height={350} // Standard poker card height (3.5 inches * 100)
+                        width={upgradeType === "leader" && isSquadronUpgrade ? 350 : 250}  // Landscape width for leaders
+                        height={upgradeType === "leader" && isSquadronUpgrade ? 250 : 350} // Landscape height for leaders
                         className="object-cover object-center w-full h-full"
                         onError={() => {}}
                       />

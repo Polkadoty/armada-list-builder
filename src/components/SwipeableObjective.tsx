@@ -7,7 +7,7 @@ import { GamemodeRestrictions } from '@/utils/gamemodeRestrictions';
 import { ImageModal } from './ImageModal';
 
 interface SwipeableObjectiveProps {
-  type: 'assault' | 'defense' | 'navigation' | 'campaign';
+  type: 'assault' | 'defense' | 'navigation' | 'campaign' | 'skirmish';
   selectedObjective: ObjectiveModel | null;
   selectedObjectives?: ObjectiveModel[];
   onRemove: () => void;

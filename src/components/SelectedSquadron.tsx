@@ -1,10 +1,11 @@
 import React, { useRef, useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { useSpring, animated } from 'react-spring';
-import { Squadron } from './FleetBuilder';
+import { Squadron, Upgrade } from './FleetBuilder';
 import { Plus, Minus, ArrowLeftRight, Trash2, Eye, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { OptimizedImage } from './OptimizedImage';
+import Image from 'next/image';
 
 // Add this line at the top of the file
 /** @jsxImportSource react */
@@ -20,9 +21,12 @@ interface SelectedSquadronProps {
   isFirst: boolean;
   isLast: boolean;
   selectedSquadrons: Squadron[];
+  gamemode?: string; // Add gamemode prop for Fighter Group detection
+  onUpgradeClick?: (squadronId: string, upgradeType: string) => void;
+  handleRemoveUpgrade?: (squadronId: string, upgradeType: string) => void;
 }
 
-export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement, onSwapSquadron, onMoveUp, onMoveDown, isFirst, isLast, selectedSquadrons }: SelectedSquadronProps) {
+export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement, onSwapSquadron, onMoveUp, onMoveDown, isFirst, isLast, selectedSquadrons, gamemode, onUpgradeClick, handleRemoveUpgrade }: SelectedSquadronProps) {
   const [{ x }, api] = useSpring(() => ({ x: 0 }));
   const isDragging = useRef(false);
   const startX = useRef(0);
@@ -82,7 +86,9 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
   };
 
   const count = squadron.count || 1;
-  const totalPoints = squadron.points * count;
+  const squadronBasePoints = squadron.points * count;
+  const upgradePoints = (squadron.assignedUpgrades || []).reduce((total, upgrade) => total + upgrade.points, 0);
+  const totalPoints = squadronBasePoints + upgradePoints;
 
   // Determine if increment/decrement buttons should be shown
   const shouldShowIncrementButtons = () => {
@@ -222,6 +228,84 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
             </div>
           </CardContent>
         </Card>
+        
+        {/* Fighter Group upgrade toolbar for leaders - only show on aces */}
+        {gamemode === "Fighter Group" && squadron.ace && onUpgradeClick && (() => {
+          const hasLeaderInFleet = selectedSquadrons.some(s => s.assignedUpgrades?.some(u => u.type === "leader"));
+          const thisSquadronHasLeader = squadron.assignedUpgrades?.some(u => u.type === "leader");
+          const isDisabled = hasLeaderInFleet && !thisSquadronHasLeader;
+          
+          return (
+            <div 
+              className="bg-white dark:bg-zinc-900 p-2 flex flex-wrap justify-left backdrop-blur-md bg-opacity-30 dark:bg-opacity-30"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Button
+                variant="ghost"
+                size="icon"
+                className={`m-1 ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                style={{
+                  width: '32px',
+                  height: '32px',
+                  padding: '4px',
+                  minWidth: '32px',
+                  flexGrow: 0,
+                  flexShrink: 0,
+                }}
+                onClick={() => !isDisabled && onUpgradeClick(squadron.id, "leader")}
+                disabled={isDisabled}
+              >
+                <Image
+                  src="/icons/leader.svg"
+                  alt="leader"
+                  width={32}
+                  height={40}
+                  className={`dark:invert ${isDisabled ? 'opacity-50' : ''}`}
+                />
+              </Button>
+            </div>
+          );
+        })()}
+        
+        {/* Show assigned leader upgrades for aces */}
+        {gamemode === "Fighter Group" && squadron.ace && squadron.assignedUpgrades && squadron.assignedUpgrades.filter(u => u.type === "leader").length > 0 && (
+          <div className="p-2 space-y-2">
+            {squadron.assignedUpgrades.filter(u => u.type === "leader").map((upgrade, index) => (
+              <div key={`leader-${index}`} className="flex items-center justify-between bg-gray-100 dark:bg-gray-700 rounded p-2">
+                <div className="flex items-center min-w-0">
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <Image
+                      src="/icons/leader.svg"
+                      alt="leader"
+                      width={24}
+                      height={24}
+                      className="dark:invert"
+                    />
+                  </div>
+                  <span className="title-font text-xl flex items-center ml-2">
+                    {upgrade.unique && <span className="mr-1 text-yellow-500">●</span>}
+                    {upgrade.name}
+                  </span>
+                </div>
+                
+                <div className="flex items-center gap-1">
+                  {handleRemoveUpgrade && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => handleRemoveUpgrade(squadron.id, "leader")} 
+                      className="text-red-500 p-1"
+                    >
+                      <X size={16} />
+                    </Button>
+                  )}
+                  <span>{upgrade.points}<span className="hidden sm:inline"> pts</span></span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        
         <div className="absolute left-0 top-0 bottom-0 flex items-center justify-center w-12 bg-zinc-800 bg-opacity-75" style={{ transform: 'translateX(-100%)' }}>
           {squadron.unique && (!squadron.unique_limit || squadron.unique_limit <= 1) ? 
             <ArrowLeftRight size={20} className="text-blue-500" /> : 
