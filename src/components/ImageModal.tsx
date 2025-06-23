@@ -1,5 +1,4 @@
 // components/ImageModal.tsx
-import { useState } from 'react';
 import { X } from 'lucide-react';
 import { OptimizedImage } from './OptimizedImage';
 
