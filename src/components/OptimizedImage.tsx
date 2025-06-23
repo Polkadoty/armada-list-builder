@@ -60,14 +60,7 @@ const imageCache = new Map<string, boolean>();
 let globalObserver: IntersectionObserver | null = null;
 const observedElements = new Map<Element, (visible: boolean) => void>();
 
-// Lightweight debounce utility - less aggressive than before
-const debounce = (func: (...args: any[]) => void, wait: number) => {
-  let timeout: NodeJS.Timeout;
-  return (...args: any[]) => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => func(...args), wait);
-  };
-};
+
 
 // Enhanced global observer with better error handling
 const initGlobalObserver = () => {
