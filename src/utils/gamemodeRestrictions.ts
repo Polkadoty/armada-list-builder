@@ -32,6 +32,7 @@ export interface GamemodeRestrictions {
       navigation?: string;
       campaign?: string;
       skirmish?: string; // Add skirmish objective support
+      skirmish2?: string; // Add second skirmish objective support
     };
     allowedObjectives?: {
       assault?: string[];
@@ -39,6 +40,7 @@ export interface GamemodeRestrictions {
       navigation?: string[];
       campaign?: string[];
       skirmish?: string[]; // Add skirmish objective support
+      skirmish2?: string[]; // Add second skirmish objective support
     };
     disallowedObjectives?: {
       assault?: string[];
@@ -46,6 +48,7 @@ export interface GamemodeRestrictions {
       navigation?: string[];
       campaign?: string[];
       skirmish?: string[]; // Add skirmish objective support
+      skirmish2?: string[]; // Add second skirmish objective support
     };
   };
   exportTextModifications?: {
@@ -281,6 +284,8 @@ export interface FleetState {
   selectedDefenseObjectives?: { name?: string }[];
   selectedNavigationObjectives?: { name?: string }[];
   selectedCampaignObjectives?: { name?: string }[];
+  selectedSkirmishObjectives?: { name?: string }[];
+  selectedSkirmish2Objectives?: { name?: string }[];
   commanderCount: number;
 }
 
@@ -370,6 +375,16 @@ export function checkFleetViolations(gamemode: Gamemode, fleet: FleetState, fact
            fleet.selectedCampaignObjectives[0].name !== objRestrictions.forcedObjectives.campaign)) {
         violations.push(`Required campaign objective "${objRestrictions.forcedObjectives.campaign}" is missing`);
       }
+      if (objRestrictions.forcedObjectives.skirmish && 
+          (!fleet.selectedSkirmishObjectives || fleet.selectedSkirmishObjectives.length === 0 || 
+           fleet.selectedSkirmishObjectives[0].name !== objRestrictions.forcedObjectives.skirmish)) {
+        violations.push(`Required skirmish objective "${objRestrictions.forcedObjectives.skirmish}" is missing`);
+      }
+      if (objRestrictions.forcedObjectives.skirmish2 && 
+          (!fleet.selectedSkirmish2Objectives || fleet.selectedSkirmish2Objectives.length === 0 || 
+           fleet.selectedSkirmish2Objectives[0].name !== objRestrictions.forcedObjectives.skirmish2)) {
+        violations.push(`Required skirmish 2 objective "${objRestrictions.forcedObjectives.skirmish2}" is missing`);
+      }
     }
     
     // Check allowed objectives
@@ -409,6 +424,24 @@ export function checkFleetViolations(gamemode: Gamemode, fleet: FleetState, fact
           violations.push(`Fleet contains disallowed campaign objectives`);
         }
       }
+
+      if (objRestrictions.allowedObjectives.skirmish && fleet.selectedSkirmishObjectives) {
+        const invalidSkirmish = fleet.selectedSkirmishObjectives.filter(
+          obj => obj.name && !objRestrictions.allowedObjectives!.skirmish!.includes(obj.name)
+        );
+        if (invalidSkirmish.length > 0) {
+          violations.push(`Fleet contains disallowed skirmish objectives`);
+        }
+      }
+
+      if (objRestrictions.allowedObjectives.skirmish2 && fleet.selectedSkirmish2Objectives) {
+        const invalidSkirmish2 = fleet.selectedSkirmish2Objectives.filter(
+          obj => obj.name && !objRestrictions.allowedObjectives!.skirmish2!.includes(obj.name)
+        );
+        if (invalidSkirmish2.length > 0) {
+          violations.push(`Fleet contains disallowed skirmish 2 objectives`);
+        }
+      }
     }
 
     // Check disallowed objectives
@@ -446,6 +479,24 @@ export function checkFleetViolations(gamemode: Gamemode, fleet: FleetState, fact
         );
         if (invalidCampaign.length > 0) {
           violations.push(`Fleet contains disallowed campaign objectives`);
+        }
+      }
+
+      if (objRestrictions.disallowedObjectives.skirmish && fleet.selectedSkirmishObjectives) {
+        const invalidSkirmish = fleet.selectedSkirmishObjectives.filter(
+          obj => obj.name && objRestrictions.disallowedObjectives!.skirmish!.includes(obj.name)
+        );
+        if (invalidSkirmish.length > 0) {
+          violations.push(`Fleet contains disallowed skirmish objectives`);
+        }
+      }
+
+      if (objRestrictions.disallowedObjectives.skirmish2 && fleet.selectedSkirmish2Objectives) {
+        const invalidSkirmish2 = fleet.selectedSkirmish2Objectives.filter(
+          obj => obj.name && objRestrictions.disallowedObjectives!.skirmish2!.includes(obj.name)
+        );
+        if (invalidSkirmish2.length > 0) {
+          violations.push(`Fleet contains disallowed skirmish 2 objectives`);
         }
       }
     }

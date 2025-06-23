@@ -24,11 +24,12 @@ interface ObjectiveSelectorProps {
   onClose: () => void;
   gamemodeRestrictions?: GamemodeRestrictions;
   forcedObjectiveName?: string;
+  selectedObjectives?: ObjectiveModel[]; // Array of already selected objectives to grey out
 }
 
 type SortOption = 'alphabetical' | 'points' | 'unique' | 'custom';
 
-export function ObjectiveSelector({ type, onSelectObjective, onClose, gamemodeRestrictions, forcedObjectiveName }: ObjectiveSelectorProps) {
+export function ObjectiveSelector({ type, onSelectObjective, onClose, gamemodeRestrictions, forcedObjectiveName, selectedObjectives = [] }: ObjectiveSelectorProps) {
   const [objectives, setObjectives] = useState<ObjectiveModel[]>([]);
   const [loading, setLoading] = useState(true);
   const [showSearch, setShowSearch] = useState(false);
@@ -224,6 +225,11 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose, gamemodeRe
     return true;
   };
 
+  // Function to check if an objective is already selected
+  const isObjectiveAlreadySelected = (objective: ObjectiveModel) => {
+    return selectedObjectives.some(selected => selected.name === objective.name);
+  };
+
   // Add useMemo for filtered and sorted objectives
   const processedObjectives = useMemo(() => {
     let filtered = objectives;
@@ -330,15 +336,16 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose, gamemodeRe
                 const isMatchingForced = !forcedObjectiveName || objective.name === forcedObjectiveName;
                 const isDisabled = forcedObjectiveName && !isMatchingForced;
                 const isAllowed = isObjectiveAllowed(objective);
+                const isAlreadySelected = isObjectiveAlreadySelected(objective);
                 
                 return (
                   <div key={objective.id} className="w-full aspect-[2.5/3.5]">
                     <Button
-                      onClick={() => !isDisabled && isAllowed && onSelectObjective(objective)}
+                      onClick={() => !isDisabled && isAllowed && !isAlreadySelected && onSelectObjective(objective)}
                       className={`p-0 overflow-hidden relative w-full h-full rounded-lg bg-transparent ${
-                        isDisabled || !isAllowed ? 'opacity-30 cursor-not-allowed' : ''
+                        isDisabled || !isAllowed || isAlreadySelected ? 'opacity-30 cursor-not-allowed' : ''
                       }`}
-                      disabled={!!isDisabled || !isAllowed}
+                      disabled={!!isDisabled || !isAllowed || isAlreadySelected}
                     >
                       <div className="absolute inset-0 flex items-center justify-center">
                         <OptimizedImage

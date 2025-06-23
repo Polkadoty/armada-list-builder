@@ -266,11 +266,14 @@ export default function FleetBuilder({
     useState(false);
   const [showSkirmishObjectiveSelector, setShowSkirmishObjectiveSelector] =
     useState(false);
+  const [showSkirmish2ObjectiveSelector, setShowSkirmish2ObjectiveSelector] =
+    useState(false);
   const [selectedAssaultObjectives, setSelectedAssaultObjectives] = useState<ObjectiveModel[]>([]);
   const [selectedDefenseObjectives, setSelectedDefenseObjectives] = useState<ObjectiveModel[]>([]);
   const [selectedNavigationObjectives, setSelectedNavigationObjectives] = useState<ObjectiveModel[]>([]);
   const [selectedCampaignObjectives, setSelectedCampaignObjectives] = useState<ObjectiveModel[]>([]);
   const [selectedSkirmishObjectives, setSelectedSkirmishObjectives] = useState<ObjectiveModel[]>([]);
+  const [selectedSkirmish2Objectives, setSelectedSkirmish2Objectives] = useState<ObjectiveModel[]>([]);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [uniqueClassNames, setUniqueClassNames] = useState<string[]>([]);
   const [showUpgradeSelector, setShowUpgradeSelector] = useState(false);
@@ -1594,6 +1597,19 @@ export default function FleetBuilder({
     setSelectedSkirmishObjectives([]);
   };
 
+  const handleSelectSkirmish2Objective = (objective: ObjectiveModel) => {
+    if (faction === "sandbox") {
+      setSelectedSkirmish2Objectives(prev => [...prev, objective]);
+    } else {
+      setSelectedSkirmish2Objectives([objective]);
+    }
+    setShowSkirmish2ObjectiveSelector(false);
+  };
+
+  const handleRemoveSkirmish2Objective = () => {
+    setSelectedSkirmish2Objectives([]);
+  };
+
     // Modify the SectionHeader click handlers
   const handleClearAllShips = () => {
     setShowDeleteShipsConfirmation(true);
@@ -1766,6 +1782,10 @@ export default function FleetBuilder({
       const sourceTag = formatSource(selectedSkirmishObjectives[0].source);
       text += `Skirmish: ${selectedSkirmishObjectives.map(obj => obj.name).join(", ")}${sourceTag ? ` ${sourceTag}` : ''}\n`;
     }
+    if (selectedSkirmish2Objectives.length > 0) {
+      const sourceTag = formatSource(selectedSkirmish2Objectives[0].source);
+      text += `Skirmish 2: ${selectedSkirmish2Objectives.map(obj => obj.name).join(", ")}${sourceTag ? ` ${sourceTag}` : ''}\n`;
+    }
 
     // Add custom lines after objectives
     getLines('afterObjectives').forEach(line => {
@@ -1907,6 +1927,8 @@ export default function FleetBuilder({
     selectedDefenseObjectives, 
     selectedNavigationObjectives,
     selectedCampaignObjectives,
+    selectedSkirmishObjectives,
+    selectedSkirmish2Objectives,
     faction,
     fleetName,
     points,
@@ -2597,7 +2619,9 @@ export default function FleetBuilder({
         continue;
       } else if (
         (line.startsWith("Assault:") || line.startsWith("Defense:") || line.startsWith("Navigation:") || line.startsWith("Campaign:") || line.startsWith("Skirmish:") ||
-         line.startsWith("Assault Objective:") || line.startsWith("Defense Objective:") || line.startsWith("Navigation Objective:") || line.startsWith("Campaign Objective:") || line.startsWith("Skirmish Objective:"))
+         line.startsWith("Skirmish 2:") ||
+         line.startsWith("Assault Objective:") || line.startsWith("Defense Objective:") || line.startsWith("Navigation Objective:") || line.startsWith("Campaign Objective:") || line.startsWith("Skirmish Objective:") ||
+         line.startsWith("Skirmish 2 Objective:"))
       ) {
         // Handle objectives
         const [type, namesString] = line.split(":");
@@ -2653,6 +2677,13 @@ export default function FleetBuilder({
                     setSelectedSkirmishObjectives(prev => [...prev, objective]);
                   } else {
                     setSelectedSkirmishObjectives([objective]);
+                  }
+                  break;
+                case "skirmish 2":
+                  if (faction === "sandbox") {
+                    setSelectedSkirmish2Objectives(prev => [...prev, objective]);
+                  } else {
+                    setSelectedSkirmish2Objectives([objective]);
                   }
                   break;
               }
@@ -4217,6 +4248,9 @@ export default function FleetBuilder({
       if (forcedObjectives.skirmish) {
         setForcedObjective(forcedObjectives.skirmish, setSelectedSkirmishObjectives);
       }
+      if (forcedObjectives.skirmish2) {
+        setForcedObjective(forcedObjectives.skirmish2, setSelectedSkirmish2Objectives);
+      }
     }
   }, [gamemode, restrictions]);
 
@@ -4477,13 +4511,22 @@ export default function FleetBuilder({
               // If skirmish is enabled, only show skirmish objective
               if (skirmishEnabled) {
                 return (
-                  <div className="grid grid-cols-1 gap-2 text-xl">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xl">
                     <SwipeableObjective
                       type="skirmish"
                       selectedObjective={selectedSkirmishObjectives[0]}
                       selectedObjectives={faction === "sandbox" ? selectedSkirmishObjectives : undefined}
                       onRemove={handleRemoveSkirmishObjective}
                       onOpen={() => setShowSkirmishObjectiveSelector(true)}
+                      color="#8B5CF6"
+                      gamemodeRestrictions={restrictions}
+                    />
+                    <SwipeableObjective
+                      type="skirmish"
+                      selectedObjective={selectedSkirmish2Objectives[0]}
+                      selectedObjectives={faction === "sandbox" ? selectedSkirmish2Objectives : undefined}
+                      onRemove={handleRemoveSkirmish2Objective}
+                      onOpen={() => setShowSkirmish2ObjectiveSelector(true)}
                       color="#8B5CF6"
                       gamemodeRestrictions={restrictions}
                     />
@@ -4581,6 +4624,14 @@ export default function FleetBuilder({
           onClose={() => setShowAssaultObjectiveSelector(false)}
           gamemodeRestrictions={restrictions}
           forcedObjectiveName={restrictions?.objectiveRestrictions?.forcedObjectives?.assault}
+          selectedObjectives={[
+            ...selectedAssaultObjectives,
+            ...selectedDefenseObjectives,
+            ...selectedNavigationObjectives,
+            ...selectedCampaignObjectives,
+            ...selectedSkirmishObjectives,
+            ...selectedSkirmish2Objectives
+          ]}
         />
       )}
 
@@ -4591,6 +4642,14 @@ export default function FleetBuilder({
           onClose={() => setShowDefenseObjectiveSelector(false)}
           gamemodeRestrictions={restrictions}
           forcedObjectiveName={restrictions?.objectiveRestrictions?.forcedObjectives?.defense}
+          selectedObjectives={[
+            ...selectedAssaultObjectives,
+            ...selectedDefenseObjectives,
+            ...selectedNavigationObjectives,
+            ...selectedCampaignObjectives,
+            ...selectedSkirmishObjectives,
+            ...selectedSkirmish2Objectives
+          ]}
         />
       )}
 
@@ -4601,6 +4660,14 @@ export default function FleetBuilder({
           onClose={() => setShowNavigationObjectiveSelector(false)}
           gamemodeRestrictions={restrictions}
           forcedObjectiveName={restrictions?.objectiveRestrictions?.forcedObjectives?.navigation}
+          selectedObjectives={[
+            ...selectedAssaultObjectives,
+            ...selectedDefenseObjectives,
+            ...selectedNavigationObjectives,
+            ...selectedCampaignObjectives,
+            ...selectedSkirmishObjectives,
+            ...selectedSkirmish2Objectives
+          ]}
         />
       )}
 
@@ -4611,6 +4678,14 @@ export default function FleetBuilder({
           onClose={() => setShowCampaignObjectiveSelector(false)}
           gamemodeRestrictions={restrictions}
           forcedObjectiveName={restrictions?.objectiveRestrictions?.forcedObjectives?.campaign}
+          selectedObjectives={[
+            ...selectedAssaultObjectives,
+            ...selectedDefenseObjectives,
+            ...selectedNavigationObjectives,
+            ...selectedCampaignObjectives,
+            ...selectedSkirmishObjectives,
+            ...selectedSkirmish2Objectives
+          ]}
         />
       )}
 
@@ -4621,6 +4696,32 @@ export default function FleetBuilder({
           onClose={() => setShowSkirmishObjectiveSelector(false)}
           gamemodeRestrictions={restrictions}
           forcedObjectiveName={restrictions?.objectiveRestrictions?.forcedObjectives?.skirmish}
+          selectedObjectives={[
+            ...selectedAssaultObjectives,
+            ...selectedDefenseObjectives,
+            ...selectedNavigationObjectives,
+            ...selectedCampaignObjectives,
+            ...selectedSkirmishObjectives,
+            ...selectedSkirmish2Objectives
+          ]}
+        />
+      )}
+
+      {showSkirmish2ObjectiveSelector && (
+        <ObjectiveSelector
+          type="skirmish"
+          onSelectObjective={handleSelectSkirmish2Objective}
+          onClose={() => setShowSkirmish2ObjectiveSelector(false)}
+          gamemodeRestrictions={restrictions}
+          forcedObjectiveName={restrictions?.objectiveRestrictions?.forcedObjectives?.skirmish2}
+          selectedObjectives={[
+            ...selectedAssaultObjectives,
+            ...selectedDefenseObjectives,
+            ...selectedNavigationObjectives,
+            ...selectedCampaignObjectives,
+            ...selectedSkirmishObjectives,
+            ...selectedSkirmish2Objectives
+          ]}
         />
       )}
 
