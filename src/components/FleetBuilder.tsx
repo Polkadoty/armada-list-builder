@@ -1463,7 +1463,7 @@ export default function FleetBuilder({
         )
       );
     }
-  }, [setSelectedSquadrons, generateUniqueSquadronId]);
+  }, [selectedSquadrons, setSelectedSquadrons, generateUniqueSquadronId]);
 
   const handleDecrementSquadron = (id: string) => {
     setSelectedSquadrons((prevSquadrons) => {
