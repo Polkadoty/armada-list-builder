@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { useSpring, animated } from 'react-spring';
-import { Squadron, Upgrade } from './FleetBuilder';
+import { Squadron } from './FleetBuilder';
 import { Plus, Minus, ArrowLeftRight, Trash2, Eye, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { OptimizedImage } from './OptimizedImage';

@@ -401,7 +401,7 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose, gamemodeR
     });
 
     return sortedShips;
-  }, [allShips, activeSorts, searchQuery, gamemodeRestrictions]);
+  }, [allShips, activeSorts, searchQuery]);
 
   // The processedShips are used directly in the render instead of displayedShips
 

@@ -296,7 +296,7 @@ export default function FleetBuilder({
   const [showNotification, setShowNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState("");
   const [showShareNamePrompt, setShowShareNamePrompt] = useState(false);
-  const [squadronIdCounter, setSquadronIdCounter] = useState(0);
+
   const [shipIdCounter, setShipIdCounter] = useState(0);
   const [showRecoveryPopup, setShowRecoveryPopup] = useState(false);
   const [hasLoadedPage, setHasLoadedPage] = useState(false);
@@ -556,12 +556,11 @@ export default function FleetBuilder({
     return `ship_${timestamp}_${newCounter}_${random}`;
   };
 
-  const generateUniqueSquadronId = (): string => {
-    const newCounter = squadronIdCounter + 1;
-    setSquadronIdCounter(newCounter);
-    const randomPart = Math.floor(Math.random() * 10000).toString().padStart(4, "0");
-    return `squadron_${newCounter}_${randomPart}`;
-  };
+  const generateUniqueSquadronId = useCallback((): string => {
+    const timestamp = Date.now();
+    const randomNum = Math.floor(Math.random() * 1000);
+    return `squadron_${timestamp}_${randomNum}`;
+  }, []);
 
   const handleAddShip = () => {
     setShowShipSelector(true);
@@ -881,137 +880,137 @@ export default function FleetBuilder({
     });
   };
 
-  const handleAddUpgrade = useCallback((shipId: string, upgrade: Upgrade) => {
-    setSelectedShips((prevShips) =>
-      prevShips.map((ship) => {
-        if (ship.id === shipId) {
-          const exhaustType = upgrade.exhaust?.type || "";
-          const isModification = upgrade.modification ? "modification" : "";
+  // const handleAddUpgrade = useCallback((shipId: string, upgrade: Upgrade) => {
+  //   setSelectedShips((prevShips) =>
+  //     prevShips.map((ship) => {
+  //       if (ship.id === shipId) {
+  //         const exhaustType = upgrade.exhaust?.type || "";
+  //         const isModification = upgrade.modification ? "modification" : "";
 
-          // Determine the source based on the alias
-          let source: ContentSource = "regular";
-          if (upgrade.alias) {
-            if (upgrade.alias.includes("LegacyBeta")) {
-              source = "legacyBeta";
-            } else if (upgrade.alias.includes("Legacy")) {
-              source = "legacy";
-            } else if (upgrade.alias.includes("Legends")) {
-              source = "legends";
-            } else if (upgrade.alias.includes("ARC")) {
-              source = "arc";
-            } else if (upgrade.alias.includes("Nexus")) {
-              source = "nexus";
-            }
-          }
+  //         // Determine the source based on the alias
+  //         let source: ContentSource = "regular";
+  //         if (upgrade.alias) {
+  //           if (upgrade.alias.includes("LegacyBeta")) {
+  //             source = "legacyBeta";
+  //           } else if (upgrade.alias.includes("Legacy")) {
+  //             source = "legacy";
+  //           } else if (upgrade.alias.includes("Legends")) {
+  //             source = "legends";
+  //           } else if (upgrade.alias.includes("ARC")) {
+  //             source = "arc";
+  //           } else if (upgrade.alias.includes("Nexus")) {
+  //             source = "nexus";
+  //           }
+  //         }
 
-          const newUpgrade: Upgrade = {
-            ...upgrade,
-            slotIndex: upgrade.slotIndex !== undefined ? upgrade.slotIndex : ship.assignedUpgrades.length,
-            source: source,
-            searchableText: JSON.stringify({
-              ...upgrade,
-              name: upgrade.name,
-              ability: upgrade.ability,
-              exhaustType: exhaustType,
-              isModification: isModification,
-            }).toLowerCase(),
-          };
+  //         const newUpgrade: Upgrade = {
+  //           ...upgrade,
+  //           slotIndex: upgrade.slotIndex !== undefined ? upgrade.slotIndex : ship.assignedUpgrades.length,
+  //           source: source,
+  //           searchableText: JSON.stringify({
+  //             ...upgrade,
+  //             name: upgrade.name,
+  //             ability: upgrade.ability,
+  //             exhaustType: exhaustType,
+  //             isModification: isModification,
+  //           }).toLowerCase(),
+  //         };
 
-          const updatedAssignedUpgrades = [...ship.assignedUpgrades];
-          const existingUpgradeIndex = updatedAssignedUpgrades.findIndex(
-            (u) => u.type === upgrade.type && u.slotIndex === newUpgrade.slotIndex
-          );
+  //         const updatedAssignedUpgrades = [...ship.assignedUpgrades];
+  //         const existingUpgradeIndex = updatedAssignedUpgrades.findIndex(
+  //           (u) => u.type === upgrade.type && u.slotIndex === newUpgrade.slotIndex
+  //         );
 
-          if (existingUpgradeIndex !== -1) {
-            updatedAssignedUpgrades[existingUpgradeIndex] = newUpgrade;
-          } else {
-            updatedAssignedUpgrades.push(newUpgrade);
-          }
+  //         if (existingUpgradeIndex !== -1) {
+  //           updatedAssignedUpgrades[existingUpgradeIndex] = newUpgrade;
+  //         } else {
+  //           updatedAssignedUpgrades.push(newUpgrade);
+  //         }
 
-          // Add new unique class names using setTimeout to avoid React state updates during render
-          if (upgrade.unique) {
-            setTimeout(() => addUniqueClassName(upgrade.name), 0);
-          }
-          if (upgrade["unique-class"]) {
-            upgrade["unique-class"]
-              .filter(uc => uc !== "")
-              .forEach((uc) => {
-                setTimeout(() => addUniqueClassName(uc), 0);
-              });
-          }
+  //         // Add new unique class names using setTimeout to avoid React state updates during render
+  //         if (upgrade.unique) {
+  //           setTimeout(() => addUniqueClassName(upgrade.name), 0);
+  //         }
+  //         if (upgrade["unique-class"]) {
+  //           upgrade["unique-class"]
+  //             .filter(uc => uc !== "")
+  //             .forEach((uc) => {
+  //               setTimeout(() => addUniqueClassName(uc), 0);
+  //             });
+  //         }
 
-          // Handle disabled upgrades
-          const newDisabledUpgrades = [...(disabledUpgrades[ship.id] || [])];
-          if (upgrade.restrictions?.disable_upgrades) {
-            // Filter out empty strings
-            const validDisabledUpgrades = upgrade.restrictions.disable_upgrades.filter(u => u.trim() !== "");
-            newDisabledUpgrades.push(...validDisabledUpgrades);
-          }
-          if (upgrade.type === "title") {
-            newDisabledUpgrades.push("title");
-          }
-          setDisabledUpgrades({
-            ...disabledUpgrades,
-            [ship.id]: newDisabledUpgrades,
-          });
+  //         // Handle disabled upgrades
+  //         const newDisabledUpgrades = [...(disabledUpgrades[ship.id] || [])];
+  //         if (upgrade.restrictions?.disable_upgrades) {
+  //           // Filter out empty strings
+  //           const validDisabledUpgrades = upgrade.restrictions.disable_upgrades.filter(u => u.trim() !== "");
+  //           newDisabledUpgrades.push(...validDisabledUpgrades);
+  //         }
+  //         if (upgrade.type === "title") {
+  //           newDisabledUpgrades.push("title");
+  //         }
+  //         setDisabledUpgrades({
+  //           ...disabledUpgrades,
+  //           [ship.id]: newDisabledUpgrades,
+  //         });
 
-          // Handle enabled upgrades
-          const newEnabledUpgrades = [...(enabledUpgrades[ship.id] || [])];
-          const updatedAvailableUpgrades = [...ship.availableUpgrades];
-          if (upgrade.restrictions?.enable_upgrades) {
-            upgrade.restrictions.enable_upgrades
-              .filter((enabledUpgrade) => enabledUpgrade.trim() !== "")
-              .forEach((enabledUpgrade) => {
-                // Only add to availableUpgrades if it's not already there
-                if (!updatedAvailableUpgrades.includes(enabledUpgrade)) {
-                  updatedAvailableUpgrades.push(enabledUpgrade);
-                }
-                // Track enabled upgrades for state management
-                if (!newEnabledUpgrades.includes(enabledUpgrade)) {
-                  newEnabledUpgrades.push(enabledUpgrade);
-                }
-              });
-          }
+  //         // Handle enabled upgrades
+  //         const newEnabledUpgrades = [...(enabledUpgrades[ship.id] || [])];
+  //         const updatedAvailableUpgrades = [...ship.availableUpgrades];
+  //         if (upgrade.restrictions?.enable_upgrades) {
+  //           upgrade.restrictions.enable_upgrades
+  //             .filter((enabledUpgrade) => enabledUpgrade.trim() !== "")
+  //             .forEach((enabledUpgrade) => {
+  //               // Only add to availableUpgrades if it's not already there
+  //               if (!updatedAvailableUpgrades.includes(enabledUpgrade)) {
+  //                 updatedAvailableUpgrades.push(enabledUpgrade);
+  //               }
+  //               // Track enabled upgrades for state management
+  //               if (!newEnabledUpgrades.includes(enabledUpgrade)) {
+  //                 newEnabledUpgrades.push(enabledUpgrade);
+  //               }
+  //             });
+  //         }
 
-          setEnabledUpgrades({
-            ...enabledUpgrades,
-            [ship.id]: newEnabledUpgrades,
-          });
+  //         setEnabledUpgrades({
+  //           ...enabledUpgrades,
+  //           [ship.id]: newEnabledUpgrades,
+  //         });
 
-          // Update filledSlots
-          setFilledSlots((prevFilledSlots) => {
-            const shipSlots = prevFilledSlots[ship.id] || {};
-            const upgradeTypeSlots = shipSlots[upgrade.type] || [];
-            const updatedSlots = [
-              ...upgradeTypeSlots,
-              ship.assignedUpgrades.length,
-            ];
-            return {
-              ...prevFilledSlots,
-              [ship.id]: {
-                ...shipSlots,
-                [upgrade.type]: updatedSlots,
-              },
-            };
-          });
+  //         // Update filledSlots
+  //         setFilledSlots((prevFilledSlots) => {
+  //           const shipSlots = prevFilledSlots[ship.id] || {};
+  //           const upgradeTypeSlots = shipSlots[upgrade.type] || [];
+  //           const updatedSlots = [
+  //             ...upgradeTypeSlots,
+  //             ship.assignedUpgrades.length,
+  //           ];
+  //           return {
+  //             ...prevFilledSlots,
+  //             [ship.id]: {
+  //               ...shipSlots,
+  //               [upgrade.type]: updatedSlots,
+  //             },
+  //           };
+  //         });
 
-          // Sort the upgrades based on the order of availableUpgrades
-          const sortedUpgrades = [...updatedAssignedUpgrades].sort((a, b) => {
-            const aIndex = ship.availableUpgrades.indexOf(a.type);
-            const bIndex = ship.availableUpgrades.indexOf(b.type);
-            return aIndex - bIndex;
-          });
+  //         // Sort the upgrades based on the order of availableUpgrades
+  //         const sortedUpgrades = [...updatedAssignedUpgrades].sort((a, b) => {
+  //           const aIndex = ship.availableUpgrades.indexOf(a.type);
+  //           const bIndex = ship.availableUpgrades.indexOf(b.type);
+  //           return aIndex - bIndex;
+  //         });
 
-          return {
-            ...ship,
-            assignedUpgrades: sortedUpgrades,
-            availableUpgrades: updatedAvailableUpgrades,
-          };
-        }
-        return ship;
-      })
-    );
-      }, [enabledUpgrades, setEnabledUpgrades, setFilledSlots, addUniqueClassName, disabledUpgrades]);
+  //         return {
+  //           ...ship,
+  //           assignedUpgrades: sortedUpgrades,
+  //           availableUpgrades: updatedAvailableUpgrades,
+  //         };
+  //       }
+  //       return ship;
+  //     })
+  //   );
+  //     }, [enabledUpgrades, setEnabledUpgrades, setFilledSlots, addUniqueClassName, disabledUpgrades]);
 
   const handleRemoveUpgrade = useCallback(
     (shipId: string, upgradeType: string, upgradeIndex: number) => {
@@ -1464,7 +1463,7 @@ export default function FleetBuilder({
         )
       );
     }
-  }, [selectedSquadrons, setSelectedSquadrons, generateUniqueSquadronId]);
+  }, [setSelectedSquadrons, generateUniqueSquadronId]);
 
   const handleDecrementSquadron = (id: string) => {
     setSelectedSquadrons((prevSquadrons) => {
@@ -1647,7 +1646,7 @@ export default function FleetBuilder({
     setPreviousSquadronPoints(0);
     setSelectedSquadrons([]);
     localStorage.removeItem(`savedFleet_${faction}`);
-  }, [removeUniqueClassName, faction, selectedSquadrons]);
+  }, [removeUniqueClassName, faction]);
 
   const handleMoveShip = (id: string, direction: 'up' | 'down') => {
     setSelectedShips(prevShips => {
@@ -2451,7 +2450,6 @@ export default function FleetBuilder({
     
     // Reset ID counters to avoid conflicts
     setShipIdCounter(0);
-    setSquadronIdCounter(0);
 
     let processingSquadrons = false;
     const shipsToAdd: Ship[] = [];
@@ -2967,7 +2965,8 @@ export default function FleetBuilder({
     generateUniqueShipId,
     removeUniqueClassName,
     selectedShips,
-    selectedSquadrons
+    selectedSquadrons,
+    generateUniqueSquadronId
   ]);
 
   const handlePrint = () => {
@@ -3928,23 +3927,7 @@ export default function FleetBuilder({
       }, 2500);
     }
     setShowPrintMenu(false);
-  }, [
-    generatePrintnPlayContent,
-    selectedShips,
-    selectedSquadrons,
-    selectedAssaultObjectives,
-    selectedDefenseObjectives,
-    selectedNavigationObjectives,
-    faction,
-    fleetName,
-    points,
-    showPrintRestrictions,
-    showPrintObjectives,
-    showCardBacks,
-    showDamageDeck,
-    paperSize,
-    expandCardBacks
-  ]);
+  }, [generatePrintnPlayContent]);
 
 // ${baseTokensHTML}
 
@@ -4024,7 +4007,8 @@ export default function FleetBuilder({
     selectedNavigationObjectives,
     isExpansionMode,
     hasLoadedPage,
-    handleImportFleet
+    handleImportFleet,
+    applyUpdates
   ]);
 
   useEffect(() => {
@@ -4153,7 +4137,6 @@ export default function FleetBuilder({
     setSelectedNavigationObjectives([]);
     setUniqueClassNames([]);
     setShipIdCounter(0);
-    setSquadronIdCounter(0);
     console.log("clearing fleet state");
   }, []);
 

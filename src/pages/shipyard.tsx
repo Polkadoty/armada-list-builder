@@ -130,7 +130,7 @@ export default function Shipyard() {
     };
 
     fetchItems();
-  }, [contentType, selectedFaction, filters, sortBy, standardFactions]);
+  }, [contentType, selectedFaction, filters, sortBy]);
 
   return (
     <>

@@ -365,7 +365,7 @@ export function SquadronSelector({
     });
 
     return sortedSquadrons;
-  }, [allSquadrons, activeSorts, searchQuery, gamemodeRestrictions]);
+  }, [allSquadrons, activeSorts, searchQuery]);
 
   const handleSortToggle = (option: SortOption) => {
     setActiveSorts(prevSorts => {

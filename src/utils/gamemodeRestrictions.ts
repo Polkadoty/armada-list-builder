@@ -330,7 +330,7 @@ export function checkFleetViolations(gamemode: Gamemode, fleet: FleetState, fact
 
   if (restrictions.leaderLimit !== undefined) {
     const leaderCount = fleet.selectedSquadrons.reduce((count, squadron) => {
-      const squadronLeaders = (squadron as any).assignedUpgrades?.filter((upgrade: any) => upgrade.type === "leader").length || 0;
+      const squadronLeaders = (squadron as { assignedUpgrades?: { type: string }[] }).assignedUpgrades?.filter((upgrade: { type: string }) => upgrade.type === "leader").length || 0;
       return count + squadronLeaders;
     }, 0);
     if (leaderCount > restrictions.leaderLimit) {

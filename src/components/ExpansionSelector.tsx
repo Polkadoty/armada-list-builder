@@ -147,7 +147,7 @@ export function ExpansionSelector({
     checkCookies();
     const interval = setInterval(checkCookies, 1000);
     return () => clearInterval(interval);
-  }, [contentSources]);
+  }, [contentSources, loadExpansions]);
 
   // Initial load of expansions
   useEffect(() => {
