@@ -140,8 +140,27 @@ export async function forceReloadContent(
   setLoadingMessage: (message: string) => void
 ): Promise<void> {
   console.log('Force reloading content...');
-  await flushCacheAndReload(setIsLoading, setLoadingProgress, setLoadingMessage);
+  
+  // Check if we really need to reload
   const currentState = getCurrentContentState();
+  const previousState = lastLoadedContentState;
+  
+  // Only reload if the content state actually changed or essential data is missing
+  const contentStateChanged = hasContentStateChanged(currentState, previousState);
+  const isDataMissing =
+    !localStorage.getItem("ships") ||
+    !localStorage.getItem("squadrons") ||
+    !localStorage.getItem("objectives") ||
+    !localStorage.getItem("upgrades") ||
+    !localStorage.getItem("imageLinks") ||
+    !localStorage.getItem("aliases");
+  
+  if (contentStateChanged || isDataMissing) {
+    await flushCacheAndReload(setIsLoading, setLoadingProgress, setLoadingMessage);
+  } else {
+    console.log('Content state unchanged, skipping reload');
+  }
+  
   setLoadedContentState(currentState);
 }
 

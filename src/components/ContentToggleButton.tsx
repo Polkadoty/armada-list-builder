@@ -149,8 +149,8 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
         Cookies.set('enableProxy', forceToggles.enableProxy.toString(), { expires: 365 });
       }
       
-      // Reload content after forcing toggles
-      forceReloadContent(() => {}, () => {}, () => {});
+      // Reload content after forcing toggles if needed
+      forceReloadContent(setIsLoading, setLoadingProgress, setLoadingMessage);
     }
   }, [selectedGamemode]);
 
@@ -185,7 +185,7 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
     if (CONFIG.showLegacyToggle) {
       setEnableLegacy(checked);
       Cookies.set('enableLegacy', checked.toString(), { expires: 365 });
-      forceReloadContent(() => {}, () => {}, () => {});
+      forceReloadContent(setIsLoading, setLoadingProgress, setLoadingMessage);
     }
   };
 
@@ -197,7 +197,7 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
         setEnableLegends(false);
         Cookies.set('enableLegends', 'false', { expires: 365 });
       }
-      forceReloadContent(() => {}, () => {}, () => {});
+      forceReloadContent(setIsLoading, setLoadingProgress, setLoadingMessage);
     }
   };
 
@@ -205,7 +205,7 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
     if (CONFIG.showLegacyBetaToggle) {
       setEnableLegacyBeta(checked);
       Cookies.set('enableLegacyBeta', checked.toString(), { expires: 365 });
-      forceReloadContent(() => {}, () => {}, () => {});
+      forceReloadContent(setIsLoading, setLoadingProgress, setLoadingMessage);
     }
   };
 
@@ -213,7 +213,7 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
     if (CONFIG.showArcToggle) {
       setEnableArc(checked);
       Cookies.set('enableArc', checked.toString(), { expires: 365 });
-      forceReloadContent(() => {}, () => {}, () => {});
+      forceReloadContent(setIsLoading, setLoadingProgress, setLoadingMessage);
     }
   };
 
@@ -221,14 +221,14 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
     if (CONFIG.showProxyToggle) {
       setEnableProxy(checked);
       Cookies.set('enableProxy', checked.toString(), { expires: 365 });
-      forceReloadContent(() => {}, () => {}, () => {});
+      forceReloadContent(setIsLoading, setLoadingProgress, setLoadingMessage);
     }
   };
 
   const handleNexusToggle = (checked: boolean) => {
     setEnableNexus(checked);
     Cookies.set('enableNexus', checked.toString(), { expires: 365 });
-    forceReloadContent(() => {}, () => {}, () => {});
+    forceReloadContent(setIsLoading, setLoadingProgress, setLoadingMessage);
   };
 
   const handleFlushCache = async () => {

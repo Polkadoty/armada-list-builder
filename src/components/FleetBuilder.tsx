@@ -464,37 +464,18 @@ export default function FleetBuilder({
       )
     );
     
-    console.log("Disabled upgrade detection - ships:", selectedShips.length, "hasDisabling:", hasShipsWithDisablingUpgrades);
-    console.log("Current disabledUpgrades state:", disabledUpgrades);
-    
     if (hasShipsWithDisablingUpgrades) {
       // Check for meaningful disabled upgrades (not empty strings)
       const hasAnyDisabledUpgrades = Object.values(disabledUpgrades).some(disabled => 
         disabled.some(upgrade => upgrade.trim() !== "")
       );
-      console.log("hasAnyDisabledUpgrades:", hasAnyDisabledUpgrades);
-      
-      // Let's also check what specific disabled upgrades exist for each ship
-      selectedShips.forEach(ship => {
-        const shipDisabled = disabledUpgrades[ship.id] || [];
-        console.log(`Ship ${ship.name} (${ship.id}) disabled upgrades:`, shipDisabled);
-        
-        // Check what upgrades this ship has that should disable things
-        ship.assignedUpgrades.forEach(upgrade => {
-          if (upgrade.restrictions?.disable_upgrades || upgrade.type === "title") {
-            console.log(`Ship ${ship.name} has disabling upgrade ${upgrade.name}:`, upgrade.restrictions?.disable_upgrades);
-          }
-        });
-      });
       
       if (!hasAnyDisabledUpgrades) {
         console.log("Found ships with disabling upgrades but no disabled upgrades set - recalculating...");
-        // Use a small delay to ensure all state updates are complete
-        setTimeout(() => {
+        // Use requestAnimationFrame for better performance
+        requestAnimationFrame(() => {
           recalculateDisabledUpgrades();
-        }, 100);
-      } else {
-        console.log("Disabled upgrades already set, skipping recalculation");
+        });
       }
     }
   }, [selectedShips, disabledUpgrades, recalculateDisabledUpgrades, isImporting]);
@@ -1373,20 +1354,21 @@ export default function FleetBuilder({
       ];
     });
 
-
-
     // Add unique class names for the new squadron
-    if (squadron.unique) {
-      addUniqueClassName(squadron.name);
-    }
-    if (squadron["unique-class"]) {
-      squadron["unique-class"]
-        .filter(uc => uc !== "")
-        .forEach((uc) => addUniqueClassName(uc));
-    }
+    // Use setTimeout to avoid React state updates during render
+    setTimeout(() => {
+      if (squadron.unique) {
+        addUniqueClassName(squadron.name);
+      }
+      if (squadron["unique-class"]) {
+        squadron["unique-class"]
+          .filter(uc => uc !== "")
+          .forEach((uc) => addUniqueClassName(uc));
+      }
+    }, 0);
     
     return squadronId;
-  }, [addUniqueClassName, selectedSquadrons, setSelectedSquadrons, generateUniqueSquadronId]);
+  }, [addUniqueClassName, generateUniqueSquadronId]);
 
   const handleRemoveSquadron = (id: string) => {
     setSelectedSquadrons((prevSquadrons) => {
@@ -1981,26 +1963,39 @@ export default function FleetBuilder({
   };
 
   const fetchObjective = (key: string): ObjectiveModel | null => {
+    const cacheKey = `objective_${key}`;
+    
+    // Check cache first
+    if (storageCache.has(cacheKey)) {
+      return storageCache.get(cacheKey);
+    }
+
     console.log(`Fetching objective for key: ${key}`);
     
-    // Get all localStorage keys that contain 'objectives'
-    const objectiveKeys = Object.keys(localStorage).filter(k => 
-      k.toLowerCase().includes('objectives')
-    );
+    // Define objective storage keys to check
+    const objectiveStorageKeys = [
+      'objectives',
+      'arcObjectives',
+      'legacyObjectives',
+      'legendsObjectives',
+      'legacyBetaObjectives',
+      'nexusObjectives'
+    ];
     
     // Search through all objective-related localStorage items
-    for (const storageKey of objectiveKeys) {
+    for (const storageKey of objectiveStorageKeys) {
+      const rawData = localStorage.getItem(storageKey);
+      if (!rawData) continue;
+
       try {
-        const data = JSON.parse(localStorage.getItem(storageKey) || "{}");
-        console.log(`Checking objectives in ${storageKey}`);
+        const data = JSON.parse(rawData);
         
         // Handle both direct objectives and nested objectives structure
         const objectivesData = data.objectives || data;
         
         // Check if the objective exists in this data
         if (objectivesData[key]) {
-          console.log(`Found objective in ${storageKey}:`, objectivesData[key]);
-          return {
+          const objective = {
             ...objectivesData[key],
             // Set source based on storage key
             source: storageKey.includes('arc') ? 'arc' :
@@ -2009,74 +2004,111 @@ export default function FleetBuilder({
                    storageKey.includes('legends') ? 'legends' :
                    storageKey.includes('nexus') ? 'nexus' : 'regular'
           } as ObjectiveModel;
+          
+          // Cache the result
+          storageCache.set(cacheKey, objective);
+          return objective;
         }
       } catch (error) {
         console.error(`Error parsing JSON for key ${storageKey}:`, error);
       }
     }
     
-    console.log(`Objective not found for key: ${key}`);
+    // Cache null result
+    storageCache.set(cacheKey, null);
     return null;
   };
+  
+  // Optimized localStorage fetching with caching
+  const storageCache = useMemo(() => new Map(), []);
   
   const fetchFromLocalStorage = useCallback((
     key: string,
     type: "ships" | "upgrades" | "squadrons"
   ) => {
-    console.log(`Fetching ${type} for key: ${key}`);
-    for (let i = 0; i < localStorage.length; i++) {
-      const storageKey = localStorage.key(i);
-      if (storageKey && storageKey.toLowerCase().includes(type)) {
-        try {
-          const data = JSON.parse(localStorage.getItem(storageKey) || "{}");
-          console.log(`Parsed ${type} data for ${storageKey}:`, data);
-          const itemsData = data[type] || data;
+    const cacheKey = `${type}_${key}`;
+    
+    // Check cache first
+    if (storageCache.has(cacheKey)) {
+      return storageCache.get(cacheKey);
+    }
 
-          if (type === "ships") {
-            for (const chassisKey in itemsData) {
-              const chassis = itemsData[chassisKey];
-              const models = chassis.models;
-              if (models && models[key]) {
-                const item = models[key];
-                return {
-                  ...item,
-                  // Include chassis data
-                  size: chassis.size || "small",
-                  hull: chassis.hull,
-                  speed: chassis.speed,
-                  shields: chassis.shields,
-                  hull_zones: chassis.hull_zones,
-                  silhouette: chassis.silhouette,
-                  blueprint: chassis.blueprint,
-                  // Add source information
-                  source: storageKey.includes('arc') ? 'arc' :
-                          storageKey.includes('legacyBeta') ? 'legacyBeta' :
-                          storageKey.includes('legacy') ? 'legacy' :
-                          storageKey.includes('legends') ? 'legends' :
-                          storageKey.includes('nexus') ? 'nexus' : 'regular'
-                };
-              }
-            }
-          } else {
-            if (itemsData[key]) {
-              const item = itemsData[key];
-              return {
-                ...item,
+    console.log(`Fetching ${type} for key: ${key}`);
+    
+    // Define storage keys to check based on type
+    const storageKeysToCheck = [
+      type, // regular
+      `legacy${type.charAt(0).toUpperCase() + type.slice(1)}`,
+      `legends${type.charAt(0).toUpperCase() + type.slice(1)}`,
+      `legacyBeta${type.charAt(0).toUpperCase() + type.slice(1)}`,
+      `arc${type.charAt(0).toUpperCase() + type.slice(1)}`,
+      `nexus${type.charAt(0).toUpperCase() + type.slice(1)}`,
+      `amg${type.charAt(0).toUpperCase() + type.slice(1)}`
+    ];
+
+    for (const storageKey of storageKeysToCheck) {
+      const rawData = localStorage.getItem(storageKey);
+      if (!rawData) continue;
+
+      try {
+        const data = JSON.parse(rawData);
+        const itemsData = data[type] || data;
+
+        if (type === "ships") {
+          for (const chassisKey in itemsData) {
+            const chassis = itemsData[chassisKey];
+            const models = chassis.models;
+            if (models && models[key]) {
+              const item = {
+                ...models[key],
+                // Include chassis data
+                size: chassis.size || "small",
+                hull: chassis.hull,
+                speed: chassis.speed,
+                shields: chassis.shields,
+                hull_zones: chassis.hull_zones,
+                silhouette: chassis.silhouette,
+                blueprint: chassis.blueprint,
+                // Add source information
                 source: storageKey.includes('arc') ? 'arc' :
                         storageKey.includes('legacyBeta') ? 'legacyBeta' :
                         storageKey.includes('legacy') ? 'legacy' :
                         storageKey.includes('legends') ? 'legends' :
-                        storageKey.includes('nexus') ? 'nexus' : 'regular'
+                        storageKey.includes('nexus') ? 'nexus' :
+                        storageKey.includes('amg') ? 'amg' : 'regular'
               };
+              
+              // Cache the result
+              storageCache.set(cacheKey, item);
+              return item;
             }
           }
-        } catch (error) {
-          console.error(`Error parsing JSON for key ${storageKey}:`, error);
+        } else {
+          if (itemsData[key]) {
+            const item = {
+              ...itemsData[key],
+              source: storageKey.includes('arc') ? 'arc' :
+                      storageKey.includes('legacyBeta') ? 'legacyBeta' :
+                      storageKey.includes('legacy') ? 'legacy' :
+                      storageKey.includes('legends') ? 'legends' :
+                      storageKey.includes('nexus') ? 'nexus' :
+                      storageKey.includes('amg') ? 'amg' : 'regular'
+            };
+            
+            // Cache the result
+            storageCache.set(cacheKey, item);
+            return item;
+          }
         }
+      } catch (error) {
+        console.error(`Error parsing JSON for key ${storageKey}:`, error);
       }
     }
+    
+    // Cache null result to avoid repeated lookups
+    storageCache.set(cacheKey, null);
     return null;
-  }, []);
+  }, [storageCache]);
 
   // Cache the results
   const cachedResults = useMemo(() => {
@@ -2347,6 +2379,7 @@ export default function FleetBuilder({
       if (!firstItemMatch) {
         setNotificationMessage("Could not determine faction from fleet list. Import cancelled.");
         setShowNotification(true);
+        setIsImporting(false);
         return;
       }
     }
@@ -2364,6 +2397,7 @@ export default function FleetBuilder({
           router.push(`/${normalizedImportedFaction}`);
         }, 250);
       });
+      setIsImporting(false);
       return;
     }
 
@@ -2826,83 +2860,77 @@ export default function FleetBuilder({
       }
     }
 
-
-
-    // Add all ships and squadrons with their upgrades properly calculated
-    setTimeout(() => {
-      // First, build ships with their final availableUpgrades calculated correctly
-      const shipsWithUpgrades = shipsToAdd.map(ship => {
-        // Get all upgrades for this ship
-        const shipUpgrades = upgradesToAdd.filter(({ shipId }) => shipId === ship.id);
-        
-        console.log(`*** IMPORT DEBUG - Ship ${ship.name}:`);
-        console.log(`  Base upgrades:`, ship.upgrades || []);
-        console.log(`  Assigned upgrades:`, shipUpgrades.map(({ upgrade }) => upgrade.name));
-        
-        // Start with base upgrades
-        const baseUpgrades = [...(ship.upgrades || [])];
-        const finalAvailableUpgrades = [...baseUpgrades];
-        
-        console.log(`  Starting availableUpgrades:`, finalAvailableUpgrades);
-        
-        // Add enabled upgrade slots from equipped upgrades
-        shipUpgrades.forEach(({ upgrade }) => {
-          if (upgrade.restrictions?.enable_upgrades) {
-            console.log(`  ${upgrade.name} enables:`, upgrade.restrictions.enable_upgrades);
-            upgrade.restrictions.enable_upgrades
-              .filter(enabledUpgrade => enabledUpgrade.trim() !== "")
-              .forEach(enabledUpgrade => {
-                console.log(`    Checking if should add ${enabledUpgrade} (currently has: ${finalAvailableUpgrades.includes(enabledUpgrade)})`);
-                // Only add if not already present
-                if (!finalAvailableUpgrades.includes(enabledUpgrade)) {
-                  finalAvailableUpgrades.push(enabledUpgrade);
-                  console.log(`    Added ${enabledUpgrade}`);
-                } else {
-                  console.log(`    Skipped ${enabledUpgrade} (already present)`);
-                }
-              });
-          }
-        });
-        
-        console.log(`  Final availableUpgrades:`, finalAvailableUpgrades);
-        
-        // Return ship with properly assigned upgrades and corrected availableUpgrades
-        return {
-          ...ship,
-          availableUpgrades: finalAvailableUpgrades,
-          assignedUpgrades: shipUpgrades.map(({ upgrade }) => upgrade)
-        };
-      });
-
-      // Build squadrons with their leader upgrades
-      const squadronsWithLeaders = squadronsToAdd.map(squadron => {
-        // Get all leader upgrades for this squadron
-        const squadronLeaders = squadronLeadersToAdd.filter(({ squadronId }) => squadronId === squadron.id);
-        
-        console.log(`*** IMPORT DEBUG - Squadron ${squadron.name}:`);
-        console.log(`  Assigned leaders:`, squadronLeaders.map(({ upgrade }) => upgrade.name));
-        
-        // Return squadron with assigned leader upgrades
-        return {
-          ...squadron,
-          assignedUpgrades: squadronLeaders.map(({ upgrade }) => upgrade)
-        };
+    // Build ships with their final availableUpgrades calculated correctly
+    const shipsWithUpgrades = shipsToAdd.map(ship => {
+      // Get all upgrades for this ship
+      const shipUpgrades = upgradesToAdd.filter(({ shipId }) => shipId === ship.id);
+      
+      console.log(`*** IMPORT DEBUG - Ship ${ship.name}:`);
+      console.log(`  Base upgrades:`, ship.upgrades || []);
+      console.log(`  Assigned upgrades:`, shipUpgrades.map(({ upgrade }) => upgrade.name));
+      
+      // Start with base upgrades
+      const baseUpgrades = [...(ship.upgrades || [])];
+      const finalAvailableUpgrades = [...baseUpgrades];
+      
+      console.log(`  Starting availableUpgrades:`, finalAvailableUpgrades);
+      
+      // Add enabled upgrade slots from equipped upgrades
+      shipUpgrades.forEach(({ upgrade }) => {
+        if (upgrade.restrictions?.enable_upgrades) {
+          console.log(`  ${upgrade.name} enables:`, upgrade.restrictions.enable_upgrades);
+          upgrade.restrictions.enable_upgrades
+            .filter(enabledUpgrade => enabledUpgrade.trim() !== "")
+            .forEach(enabledUpgrade => {
+              console.log(`    Checking if should add ${enabledUpgrade} (currently has: ${finalAvailableUpgrades.includes(enabledUpgrade)})`);
+              // Only add if not already present
+              if (!finalAvailableUpgrades.includes(enabledUpgrade)) {
+                finalAvailableUpgrades.push(enabledUpgrade);
+                console.log(`    Added ${enabledUpgrade}`);
+              } else {
+                console.log(`    Skipped ${enabledUpgrade} (already present)`);
+              }
+            });
+        }
       });
       
-      setSelectedShips(shipsWithUpgrades);
-      setSelectedSquadrons(squadronsWithLeaders);
+      console.log(`  Final availableUpgrades:`, finalAvailableUpgrades);
       
-      // Clear import flag and run final recalculation
-      setTimeout(() => {
-        setIsImporting(false);
-        console.log("Import complete, running final recalculation...");
-        
-        // Run recalculation after import is complete
-        setTimeout(() => {
-          recalculateDisabledUpgrades();
-        }, 50);
-      }, 100);
-    }, 50);
+      // Return ship with properly assigned upgrades and corrected availableUpgrades
+      return {
+        ...ship,
+        availableUpgrades: finalAvailableUpgrades,
+        assignedUpgrades: shipUpgrades.map(({ upgrade }) => upgrade)
+      };
+    });
+
+    // Build squadrons with their leader upgrades
+    const squadronsWithLeaders = squadronsToAdd.map(squadron => {
+      // Get all leader upgrades for this squadron
+      const squadronLeaders = squadronLeadersToAdd.filter(({ squadronId }) => squadronId === squadron.id);
+      
+      console.log(`*** IMPORT DEBUG - Squadron ${squadron.name}:`);
+      console.log(`  Assigned leaders:`, squadronLeaders.map(({ upgrade }) => upgrade.name));
+      
+      // Return squadron with assigned leader upgrades
+      return {
+        ...squadron,
+        assignedUpgrades: squadronLeaders.map(({ upgrade }) => upgrade)
+      };
+    });
+    
+    // Set all fleet data synchronously
+    setSelectedShips(shipsWithUpgrades);
+    setSelectedSquadrons(squadronsWithLeaders);
+    
+    // Clear import flag and run final recalculation immediately
+    setIsImporting(false);
+    
+    // Force a recalculation of disabled upgrades with the new fleet data
+    // Use requestAnimationFrame to ensure state has been set
+    requestAnimationFrame(() => {
+      recalculateDisabledUpgradesForShips(shipsWithUpgrades);
+    });
 
     if (skippedItems.length > 0) {
       alert(
@@ -2920,7 +2948,6 @@ export default function FleetBuilder({
     clearAllSquadrons,
     preprocessFleetText,
     faction,
-    handleAddUpgrade,
     handleAddingSquadron,
     handleIncrementSquadron,
     router,
@@ -2936,7 +2963,6 @@ export default function FleetBuilder({
     setTotalShipPoints,
     setTotalSquadronPoints,
     recalculateDisabledUpgradesForShips,
-    recalculateDisabledUpgrades,
     applyUpdates,
     generateUniqueShipId,
     removeUniqueClassName,
@@ -4387,7 +4413,7 @@ export default function FleetBuilder({
           ) : (
             <Card className="mb-4 relative">
               <Button
-                className={`w-full justify-between bg-white/50 dark:bg-gray-900/50 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md text-lg py-6 ${
+                className={`w-full justify-between bg-white/50 dark:bg-gray-900/50 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-md text-lg py-6 ${
                   gamemode === "Fighter Group" ? 'opacity-50 cursor-not-allowed' : ''
                 }`}
                 variant="outline"
