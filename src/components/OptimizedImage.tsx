@@ -18,30 +18,83 @@ interface OptimizedImageProps {
   debug?: boolean;
 }
 
-// Cache management
-async function cacheImage(src: string): Promise<string> {
-  try {
-    const cache = await caches.open('optimized-images');
-    const cachedResponse = await cache.match(src);
-    
-    if (cachedResponse) {
-      return src; // Use original URL if already cached
+// Request queue to limit concurrent image loading
+class ImageRequestQueue {
+  private queue: Array<() => void> = [];
+  private activeRequests = 0;
+  private readonly maxConcurrent = 6; // Limit concurrent requests
+
+  add(request: () => void) {
+    this.queue.push(request);
+    this.processQueue();
+  }
+
+  private processQueue() {
+    if (this.activeRequests >= this.maxConcurrent || this.queue.length === 0) {
+      return;
     }
 
-    const response = await fetch(src);
-    if (!response.ok) throw new Error('Network response was not ok');
-    await cache.put(src, response.clone());
-    return src;
-  } catch (error) {
-    console.error('Error caching image:', error);
-    return src; // Fallback to original URL on error
+    const request = this.queue.shift();
+    if (request) {
+      this.activeRequests++;
+      request();
+    }
+  }
+
+  complete() {
+    this.activeRequests--;
+    this.processQueue();
   }
 }
+
+// Global request queue instance
+const imageQueue = new ImageRequestQueue();
+
+// Simple in-memory cache for loaded images
+const imageCache = new Map<string, boolean>();
 
 // Extract just the filename from the path
 const getImageKey = (src: string) => {
   // Remove file extension and get just the base filename
   return src.split('/').pop()?.split('.')[0] || src;
+};
+
+// Preload image with queue management
+const queueImageLoad = (src: string): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    // Check if already cached
+    if (imageCache.has(src)) {
+      resolve();
+      return;
+    }
+
+    imageQueue.add(() => {
+      const img = new Image();
+      
+      const cleanup = () => {
+        imageQueue.complete();
+      };
+
+      img.onload = () => {
+        imageCache.set(src, true);
+        cleanup();
+        resolve();
+      };
+
+      img.onerror = () => {
+        cleanup();
+        reject(new Error('Failed to load image'));
+      };
+
+      // Add timeout to prevent hanging requests
+      setTimeout(() => {
+        cleanup();
+        reject(new Error('Image load timeout'));
+      }, 10000); // 10 second timeout
+
+      img.src = src;
+    });
+  });
 };
 
 export const OptimizedImage = memo(({ 
@@ -65,83 +118,38 @@ export const OptimizedImage = memo(({
     return placeholderMap[imageKey];
   }, [src]);
   
-  // Use a ref for tracking loading state to prevent unnecessary rerenders
-  const loadingRef = useRef(true);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
+  const [isVisible, setIsVisible] = useState(priority); // Start visible if priority
   const [shouldLoad, setShouldLoad] = useState(priority);
-  const [imageSrc, setImageSrc] = useState<string | null>(null);
+  const [imageReady, setImageReady] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Add a new state for placeholder visibility
   const [showPlaceholder, setShowPlaceholder] = useState(true);
 
-  // Batch visibility updates
-  const handleVisibilityChange = useCallback((isVisible: boolean) => {
-    requestAnimationFrame(() => {
-      setIsVisible(isVisible);
-    });
-  }, []);
-
-  // Optimize intersection observer
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          handleVisibilityChange(entry.isIntersecting);
-        });
-      },
-      { rootMargin: '50px' }
-    );
-
-    if (containerRef.current) {
-      observer.observe(containerRef.current);
+  // Simplified visibility change handler
+  const handleVisibilityChange = useCallback((visible: boolean) => {
+    if (visible && !shouldLoad) {
+      setIsVisible(true);
+      setShouldLoad(true);
+    } else if (visible) {
+      setIsVisible(true);
     }
+  }, [shouldLoad, src]);
 
-    return () => observer.disconnect();
-  }, [handleVisibilityChange]);
-
-  // Modify the handleLoad callback
-  const handleLoad = useCallback(() => {
-    requestAnimationFrame(() => {
-      loadingRef.current = false;
-      setIsLoading(false);
-      // Add a small delay before hiding placeholder for smooth transition
-      setTimeout(() => {
-        setShowPlaceholder(false);
-      }, 300);
-      onLoad?.();
-    });
-  }, [onLoad]);
-
-  // Calculate dynamic rootMargin based on viewport height
-  const getRootMargin = () => {
-    if (typeof window === 'undefined') return '200px 0px';
-    const viewportHeight = window.innerHeight;
-    const margin = Math.max(200, viewportHeight * 0.5); // At least 200px or 50% of viewport
-    return `${margin}px 0px`;
-  };
-
+  // Single intersection observer for lazy loading
   useEffect(() => {
-    if (priority) {
-      cacheImage(processedImageSrc).then(setImageSrc);
-      return;
-    }
+    if (priority) return; // Skip intersection observer for priority images
 
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           handleVisibilityChange(entry.isIntersecting);
-          if (entry.isIntersecting && !shouldLoad) {
-            setShouldLoad(true);
-            // Only cache and set image source when the image comes into view
-            cacheImage(processedImageSrc).then(setImageSrc);
-          }
         });
       },
       {
-        rootMargin: getRootMargin(),
+        rootMargin: '100px', // Simplified static margin
         threshold: 0.1
       }
     );
@@ -150,57 +158,59 @@ export const OptimizedImage = memo(({
       observer.observe(containerRef.current);
     }
 
-    return () => {
-      observer.disconnect();
-    };
-  }, [priority, shouldLoad, processedImageSrc, handleVisibilityChange]);
+    return () => observer.disconnect();
+  }, [priority, handleVisibilityChange]);
 
-  // Update rootMargin on window resize
+  // Queue-based image loading
   useEffect(() => {
-    if (priority) return;
+    if (!shouldLoad) return;
 
-    const handleResize = () => {
-      if (containerRef.current) {
-        const observer = new IntersectionObserver(
-          (entries) => {
-            entries.forEach((entry) => {
-              handleVisibilityChange(entry.isIntersecting);
-              if (entry.isIntersecting && !shouldLoad) {
-                setShouldLoad(true);
-                cacheImage(processedImageSrc).then(setImageSrc);
-              }
-            });
-          },
-          {
-            rootMargin: getRootMargin(),
-            threshold: 0.1
-          }
-        );
-        observer.observe(containerRef.current);
-        return () => observer.disconnect();
-      }
-    };
+    // Check if already cached
+    if (imageCache.has(processedImageSrc)) {
+      setImageReady(true);
+      setIsLoading(false);
+      return;
+    }
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [priority, shouldLoad, processedImageSrc, handleVisibilityChange]);
+    queueImageLoad(processedImageSrc)
+      .then(() => {
+        setImageReady(true);
+        setIsLoading(false);
+      })
+      .catch(() => {
+        setHasError(true);
+        setIsLoading(false);
+      });
+  }, [shouldLoad, processedImageSrc]);
 
-  // Add loading priority for visible images
-  const shouldPrioritize = useMemo(() => {
-    return isVisible || priority;
-  }, [isVisible, priority]);
+  // Simplified load handler
+  const handleLoad = useCallback(() => {
+    setIsLoading(false);
+    setTimeout(() => {
+      setShowPlaceholder(false);
+    }, 100); // Reduced delay
+    onLoad?.();
+  }, [onLoad, src]);
+
+  // Simplified error handler
+  const handleError = useCallback(() => {
+    setHasError(true);
+    setIsLoading(false);
+    setShowPlaceholder(false);
+    onError?.();
+  }, [onError, src]);
 
   return (
     <div ref={containerRef} className="relative w-full h-full overflow-hidden">
       {debug && (
         <div className="absolute top-0 left-0 z-50 bg-black/80 text-white text-xs p-1">
-          {isLoading ? 'Loading' : 'Loaded'} | {isVisible ? 'Visible' : 'Hidden'}
+          {isLoading ? 'Loading' : 'Loaded'} | {isVisible ? 'Visible' : 'Hidden'} | {shouldLoad ? 'Should Load' : 'No Load'}
         </div>
       )}
       
       {placeholderUrl && (
         <div 
-          className={`absolute inset-0 w-full h-full transition-opacity duration-100 ${
+          className={`absolute inset-0 w-full h-full transition-opacity duration-150 ${
             showPlaceholder ? 'opacity-100' : 'opacity-0'
           }`}
           style={{
@@ -219,24 +229,19 @@ export const OptimizedImage = memo(({
         </div>
       )}
       
-      {!hasError && shouldLoad && imageSrc && (
+      {!hasError && shouldLoad && imageReady && (
         <img
           src={processedImageSrc}
           alt={alt}
           width={width}
           height={height}
-          className={`${className} relative w-full h-full transition-opacity duration-100 ease-in rounded-lg ${
+          className={`${className} relative w-full h-full transition-opacity duration-150 ease-in rounded-lg ${
             isLoading || !isVisible ? 'opacity-0' : 'opacity-100'
           }`}
-          loading={shouldPrioritize ? "eager" : "lazy"}
+          loading={priority ? "eager" : "lazy"}
           decoding="async"
           onLoad={handleLoad}
-          onError={() => {
-            setHasError(true);
-            setIsLoading(false);
-            setShowPlaceholder(false);
-            onError?.();
-          }}
+          onError={handleError}
           onClick={onClick}
         />
       )}
