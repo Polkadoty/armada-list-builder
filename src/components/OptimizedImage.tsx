@@ -16,13 +16,16 @@ interface OptimizedImageProps {
   onError?: () => void;
   onLoad?: () => void;
   debug?: boolean;
+  // New props for animation control
+  fadeInDuration?: number;
+  blurAmount?: number;
 }
 
 // Request queue to limit concurrent image loading
 class ImageRequestQueue {
   private queue: Array<() => void> = [];
   private activeRequests = 0;
-  private readonly maxConcurrent = 6; // Limit concurrent requests
+  private readonly maxConcurrent = 12; // Allow more concurrent requests for better performance
 
   add(request: () => void) {
     this.queue.push(request);
@@ -52,6 +55,46 @@ const imageQueue = new ImageRequestQueue();
 
 // Simple in-memory cache for loaded images
 const imageCache = new Map<string, boolean>();
+
+// Improved global intersection observer for better reliability
+let globalObserver: IntersectionObserver | null = null;
+const observedElements = new Map<Element, (visible: boolean) => void>();
+
+// Lightweight debounce utility - less aggressive than before
+const debounce = (func: (...args: any[]) => void, wait: number) => {
+  let timeout: NodeJS.Timeout;
+  return (...args: any[]) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
+};
+
+// Enhanced global observer with better error handling
+const initGlobalObserver = () => {
+  if (globalObserver) return globalObserver;
+  
+  globalObserver = new IntersectionObserver(
+    (entries: IntersectionObserverEntry[]) => {
+      // Process immediately without debouncing to prevent missing loads
+      entries.forEach((entry) => {
+        const callback = observedElements.get(entry.target);
+        if (callback) {
+          try {
+            callback(entry.isIntersecting);
+          } catch (error) {
+            console.warn('OptimizedImage observer callback error:', error);
+          }
+        }
+      });
+    },
+    {
+      rootMargin: '100px', // Increased back to ensure images load reliably
+      threshold: [0, 0.1] // Multiple thresholds for smoother transitions
+    }
+  );
+  
+  return globalObserver;
+};
 
 // Extract just the filename from the path
 const getImageKey = (src: string) => {
@@ -107,7 +150,9 @@ export const OptimizedImage = memo(({
   onClick,
   onError,
   onLoad,
-  debug = false
+  debug = false,
+  fadeInDuration = 200,
+  blurAmount = 8
 }: OptimizedImageProps) => {
   // Memoize the processed source URL
   const processedImageSrc = useMemo(() => sanitizeImageUrl(src), [src]);
@@ -123,12 +168,13 @@ export const OptimizedImage = memo(({
   const [isVisible, setIsVisible] = useState(priority); // Start visible if priority
   const [shouldLoad, setShouldLoad] = useState(priority);
   const [imageReady, setImageReady] = useState(false);
+  const [showFullImage, setShowFullImage] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Add a new state for placeholder visibility
-  const [showPlaceholder, setShowPlaceholder] = useState(true);
+  // Enhanced state management for smooth transitions
+  const [transitionState, setTransitionState] = useState<'placeholder' | 'loading' | 'ready' | 'error'>('placeholder');
 
-  // Simplified visibility change handler
+  // Simplified visibility change handler - removed debouncing for reliability
   const handleVisibilityChange = useCallback((visible: boolean) => {
     if (visible && !shouldLoad) {
       setIsVisible(true);
@@ -136,39 +182,55 @@ export const OptimizedImage = memo(({
     } else if (visible) {
       setIsVisible(true);
     }
-  }, [shouldLoad, src]);
+  }, [shouldLoad]);
 
-  // Single intersection observer for lazy loading
+  // Enhanced intersection observer with fallback and better cleanup
   useEffect(() => {
     if (priority) return; // Skip intersection observer for priority images
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          handleVisibilityChange(entry.isIntersecting);
-        });
-      },
-      {
-        rootMargin: '100px', // Simplified static margin
-        threshold: 0.1
-      }
-    );
+    const observer = initGlobalObserver();
+    const element = containerRef.current;
+    
+    if (element && observer) {
+      // Add to map first, then observe
+      observedElements.set(element, handleVisibilityChange);
+      observer.observe(element);
+      
+      // Fallback: If not visible after a short delay, force load anyway
+      const fallbackTimer = setTimeout(() => {
+        if (!isVisible && !shouldLoad) {
+          console.warn('OptimizedImage fallback load triggered for:', src);
+          handleVisibilityChange(true);
+        }
+      }, 2000); // 2 second fallback
 
-    if (containerRef.current) {
-      observer.observe(containerRef.current);
+      return () => {
+        clearTimeout(fallbackTimer);
+        if (element && observer) {
+          observer.unobserve(element);
+          observedElements.delete(element);
+        }
+      };
     }
 
-    return () => observer.disconnect();
-  }, [priority, handleVisibilityChange]);
+    // Fallback if observer creation failed
+    if (!observer) {
+      console.warn('OptimizedImage: Global observer failed, using fallback');
+      handleVisibilityChange(true);
+    }
+  }, [priority, handleVisibilityChange, isVisible, shouldLoad, src]);
 
-  // Queue-based image loading
+  // Queue-based image loading with enhanced error handling
   useEffect(() => {
     if (!shouldLoad) return;
+
+    setTransitionState('loading');
 
     // Check if already cached
     if (imageCache.has(processedImageSrc)) {
       setImageReady(true);
       setIsLoading(false);
+      setTransitionState('ready');
       return;
     }
 
@@ -176,68 +238,118 @@ export const OptimizedImage = memo(({
       .then(() => {
         setImageReady(true);
         setIsLoading(false);
+        setTransitionState('ready');
       })
-      .catch(() => {
+      .catch((error) => {
+        console.warn('OptimizedImage load failed:', error, 'for src:', processedImageSrc);
         setHasError(true);
         setIsLoading(false);
+        setTransitionState('error');
       });
   }, [shouldLoad, processedImageSrc]);
 
-  // Simplified load handler
+  // Enhanced load handler with smooth transition timing
   const handleLoad = useCallback(() => {
     setIsLoading(false);
-    setTimeout(() => {
-      setShowPlaceholder(false);
-    }, 100); // Reduced delay
+    setTransitionState('ready');
+    
+    // Trigger the fade-in with a small delay for better visual effect
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        setShowFullImage(true);
+      }, 50); // Small delay to ensure image is fully rendered
+    });
+    
     onLoad?.();
-  }, [onLoad, src]);
+  }, [onLoad]);
 
-  // Simplified error handler
+  // Enhanced error handler
   const handleError = useCallback(() => {
     setHasError(true);
     setIsLoading(false);
-    setShowPlaceholder(false);
+    setTransitionState('error');
+    setShowFullImage(false);
     onError?.();
-  }, [onError, src]);
+  }, [onError]);
+
+  // Optimized transition styles for Firefox and better performance
+  const transitionStyles = useMemo(() => ({
+    transition: `opacity ${fadeInDuration}ms cubic-bezier(0.4, 0, 0.2, 1)`,
+    // Remove transform transitions during scroll to prevent repaints
+    willChange: showFullImage ? 'auto' : 'opacity', 
+    // Force GPU layer for better performance
+    backfaceVisibility: 'hidden' as const,
+    // Optimize for Firefox specifically
+    WebkitBackfaceVisibility: 'hidden' as const,
+    WebkitPerspective: 1000,
+  }), [fadeInDuration, showFullImage]);
+
+  // Simplified placeholder styles without transform during scroll
+  const placeholderStyles = useMemo(() => ({
+    backgroundImage: `url(${placeholderUrl})`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    filter: `blur(${blurAmount}px)`,
+    // Remove scale transform to prevent repaints during scroll
+    opacity: showFullImage ? 0 : 1,
+    ...transitionStyles
+  }), [placeholderUrl, blurAmount, showFullImage, transitionStyles]);
+
+  // Main image styles optimized for scroll performance
+  const imageStyles = useMemo(() => ({
+    opacity: showFullImage ? 1 : 0,
+    // Only apply scale transform when not scrolling
+    transform: showFullImage ? 'scale(1)' : 'scale(1.02)',
+    ...transitionStyles
+  }), [showFullImage, transitionStyles]);
 
   return (
-    <div ref={containerRef} className="relative w-full h-full overflow-hidden">
+    <div 
+      ref={containerRef} 
+      className="relative w-full h-full overflow-hidden"
+      style={{
+        // Contain layout and paint to prevent reflows
+        contain: 'layout style paint',
+        // Optimize for smooth scrolling
+        scrollBehavior: 'smooth'
+      }}
+    >
       {debug && (
         <div className="absolute top-0 left-0 z-50 bg-black/80 text-white text-xs p-1">
-          {isLoading ? 'Loading' : 'Loaded'} | {isVisible ? 'Visible' : 'Hidden'} | {shouldLoad ? 'Should Load' : 'No Load'}
+          State: {transitionState} | {isVisible ? 'Visible' : 'Hidden'} | {shouldLoad ? 'Should Load' : 'No Load'}
         </div>
       )}
       
+      {/* Optimized placeholder */}
       {placeholderUrl && (
         <div 
-          className={`absolute inset-0 w-full h-full transition-opacity duration-150 ${
-            showPlaceholder ? 'opacity-100' : 'opacity-0'
-          }`}
-          style={{
-            backgroundImage: `url(${placeholderUrl})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            filter: 'blur(8px)',
-            transform: 'scale(1.1)',
-          }}
+          className="absolute inset-0 w-full h-full"
+          style={placeholderStyles}
         />
       )}
       
+      {/* Optimized loading state */}
       {isLoading && !placeholderUrl && (
-        <div className="absolute inset-0 flex items-center justify-center border-2 border-primary/20 rounded-lg backdrop-blur-sm">
-          <div className="w-4 h-4 rounded-full animate-spin" />
+        <div 
+          className="absolute inset-0 flex items-center justify-center border-2 border-primary/20 rounded-lg backdrop-blur-sm bg-gradient-to-br from-gray-100/50 to-gray-200/50 dark:from-gray-800/50 dark:to-gray-900/50"
+          style={{
+            opacity: showFullImage ? 0 : 1,
+            ...transitionStyles
+          }}
+        >
+          <div className="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
         </div>
       )}
       
+      {/* Optimized main image */}
       {!hasError && shouldLoad && imageReady && (
         <img
           src={processedImageSrc}
           alt={alt}
           width={width}
           height={height}
-          className={`${className} relative w-full h-full transition-opacity duration-150 ease-in rounded-lg ${
-            isLoading || !isVisible ? 'opacity-0' : 'opacity-100'
-          }`}
+          className={`${className} relative w-full h-full rounded-lg`}
+          style={imageStyles}
           loading={priority ? "eager" : "lazy"}
           decoding="async"
           onLoad={handleLoad}
@@ -246,19 +358,28 @@ export const OptimizedImage = memo(({
         />
       )}
       
+      {/* Enhanced error state */}
       {hasError && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center border-2 border-red-500/20 rounded-lg">
-          <AlertCircle className="w-12 h-12 text-red-500 mb-2" />
-          <span className="text-sm text-zinc-500">Failed to load image</span>
+        <div 
+          className="absolute inset-0 flex flex-col items-center justify-center border-2 border-red-500/20 rounded-lg bg-gradient-to-br from-red-50/50 to-red-100/50 dark:from-red-900/20 dark:to-red-800/20"
+          style={{
+            opacity: 1,
+            ...transitionStyles
+          }}
+        >
+          <AlertCircle className="w-8 h-8 text-red-500 mb-2" />
+          <span className="text-xs text-zinc-500 text-center px-2">Failed to load image</span>
         </div>
       )}
     </div>
   );
 }, (prevProps, nextProps) => {
-  // Custom memo comparison to prevent unnecessary rerenders
+  // Enhanced memo comparison
   return prevProps.src === nextProps.src && 
          prevProps.className === nextProps.className &&
-         prevProps.priority === nextProps.priority;
+         prevProps.priority === nextProps.priority &&
+         prevProps.fadeInDuration === nextProps.fadeInDuration &&
+         prevProps.blurAmount === nextProps.blurAmount;
 });
 
 OptimizedImage.displayName = 'OptimizedImage';
