@@ -1805,7 +1805,7 @@ export default function FleetBuilder({
     }
     if (selectedSkirmish2Objectives.length > 0) {
       const sourceTag = formatSource(selectedSkirmish2Objectives[0].source);
-      text += `Skirmish 2: ${selectedSkirmish2Objectives.map(obj => obj.name).join(", ")}${sourceTag ? ` ${sourceTag}` : ''}\n`;
+      text += `Skirmish: ${selectedSkirmish2Objectives.map(obj => obj.name).join(", ")}${sourceTag ? ` ${sourceTag}` : ''}\n`;
     }
 
     // Add custom lines after objectives
@@ -2501,6 +2501,7 @@ export default function FleetBuilder({
     const squadronLeadersToAdd: { squadronId: string; upgrade: Upgrade }[] = [];
     let currentShipId: string | null = null;
     let lastAddedSquadronId: string | null = null;
+    let globalSkirmishCount = 0; // Track skirmish objectives across all lines
 
     const addShipToFleet = (
       shipName: string,
@@ -2695,10 +2696,19 @@ export default function FleetBuilder({
                   break;
                 case "skirmish":
                   if (faction === "sandbox") {
-                    setSelectedSkirmishObjectives(prev => [...prev, objective]);
+                    if (globalSkirmishCount === 0) {
+                      setSelectedSkirmishObjectives(prev => [...prev, objective]);
+                    } else {
+                      setSelectedSkirmish2Objectives(prev => [...prev, objective]);
+                    }
                   } else {
-                    setSelectedSkirmishObjectives([objective]);
+                    if (globalSkirmishCount === 0) {
+                      setSelectedSkirmishObjectives([objective]);
+                    } else {
+                      setSelectedSkirmish2Objectives([objective]);
+                    }
                   }
+                  globalSkirmishCount++;
                   break;
                 case "skirmish 2":
                   if (faction === "sandbox") {
