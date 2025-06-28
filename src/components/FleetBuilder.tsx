@@ -2813,108 +2813,108 @@ export default function FleetBuilder({
           }
         }
       } else if (processingSquadrons && !line.startsWith("=")) {
-        // Handle squadrons
-        const squadronMatch = line.match(
-          /^•?\s*(?:(\d+)\s*x\s*)?(.+?)\s*\((\d+)\)/
-        );
-        if (squadronMatch) {
-          const [, countStr, squadronName, totalPoints] = squadronMatch;
-          const count = countStr ? parseInt(countStr) : 1;
-          const pointsPerSquadron = Math.round(parseInt(totalPoints) / count);
+        // Check for leader upgrades FIRST (bullet items ending with - Leader)
+        const leaderMatch = line.match(/^•\s*(.+?)\s*-\s*Leader\s*\((\d+)\)/);
+        if (leaderMatch && lastAddedSquadronId) {
+          const [, leaderName, leaderPoints] = leaderMatch;
+          const leaderKey = getAliasKey(aliases, `${leaderName} (${leaderPoints})`);
           
-          const squadronKey = getAliasKey(
-            aliases,
-            `${squadronName} (${pointsPerSquadron})`
-          );
-          console.log(
-            `Found squadron: ${squadronName} (${pointsPerSquadron}) (count: ${count})`
-          );
-          if (squadronKey) {
-            const squadron = fetchSquadron(squadronKey);
-            console.log(`Fetched squadron for key: ${squadronKey}`, squadron);
-            if (squadron) {
-              console.log(`Selecting squadron:`, squadron);
+          console.log(`Found leader upgrade: ${leaderName} (${leaderPoints}) for squadron ${lastAddedSquadronId}`);
+          
+          if (leaderKey) {
+            const leaderUpgrade = fetchUpgrade(leaderKey);
+            if (leaderUpgrade && leaderUpgrade.type === "leader") {
+              // Extract source from leader name
               let source: ContentSource = "regular";
-              if (squadronName.includes("[LegacyBeta]")) {
-                source = "legacyBeta";
-              } else if (squadronName.includes("[Legacy]")) {
-                source = "legacy";
-              } else if (squadronName.includes("[Legends]")) {
-                source = "legends";
-              } else if (squadronName.includes("[ARC]")) {
-                source = "arc";
-              } else if (squadronName.includes("[Nexus]")) {
-                source = "nexus";
+              const sourceMatch = leaderName.match(/\[(.*?)\]/);
+              if (sourceMatch) {
+                const sourceTag = sourceMatch[1].toLowerCase();
+                switch (sourceTag) {
+                  case 'legacybeta':
+                    source = 'legacyBeta';
+                    break;
+                  case 'legacy':
+                    source = 'legacy';
+                    break;
+                  case 'legends':
+                    source = 'legends';
+                    break;
+                  case 'arc':
+                    source = 'arc';
+                    break;
+                  case 'nexus':
+                    source = 'nexus';
+                    break;
+                }
               }
+
+              squadronLeadersToAdd.push({
+                squadronId: lastAddedSquadronId,
+                upgrade: { ...leaderUpgrade, source }
+              });
               
-              // For Fighter Group mode, handle squadrons individually to support leaders
-              const selectedSquadron = {
-                ...squadron,
-                id: generateUniqueSquadronId(),
-                source,
-                count: count,
-                assignedUpgrades: [], // Initialize empty upgrades array for leaders
-                keywords: extractKeywordsFromAbilities(squadron.abilities), // Ensure keywords are populated
-              };
-              
-              squadronsToAdd.push(selectedSquadron);
-              lastAddedSquadronId = selectedSquadron.id;
+              console.log(`Added leader ${leaderName} to squadron ${lastAddedSquadronId}`);
+            } else {
+              console.log(`Leader upgrade not found or not a leader type: ${leaderName}`);
+              skippedItems.push(`${leaderName} - Leader`);
             }
           } else {
-            console.log(
-              `Squadron key not found in aliases: ${squadronName} (${pointsPerSquadron})`
-            );
-            skippedItems.push(`${squadronName} (${pointsPerSquadron})`);
+            console.log(`Leader key not found in aliases: ${leaderName} (${leaderPoints})`);
+            skippedItems.push(`${leaderName} - Leader`);
           }
         } else {
-          // Check for leader upgrades (bullet items ending with - Leader)
-          const leaderMatch = line.match(/^•\s*(.+?)\s*-\s*Leader\s*\((\d+)\)/);
-          if (leaderMatch && lastAddedSquadronId) {
-            const [, leaderName, leaderPoints] = leaderMatch;
-            const leaderKey = getAliasKey(aliases, `${leaderName} (${leaderPoints})`);
+          // Handle squadrons
+          const squadronMatch = line.match(
+            /^•?\s*(?:(\d+)\s*x\s*)?(.+?)\s*\((\d+)\)/
+          );
+          if (squadronMatch) {
+            const [, countStr, squadronName, totalPoints] = squadronMatch;
+            const count = countStr ? parseInt(countStr) : 1;
+            const pointsPerSquadron = Math.round(parseInt(totalPoints) / count);
             
-            console.log(`Found leader upgrade: ${leaderName} (${leaderPoints}) for squadron ${lastAddedSquadronId}`);
-            
-            if (leaderKey) {
-              const leaderUpgrade = fetchUpgrade(leaderKey);
-              if (leaderUpgrade && leaderUpgrade.type === "leader") {
-                // Extract source from leader name
+            const squadronKey = getAliasKey(
+              aliases,
+              `${squadronName} (${pointsPerSquadron})`
+            );
+            console.log(
+              `Found squadron: ${squadronName} (${pointsPerSquadron}) (count: ${count})`
+            );
+            if (squadronKey) {
+              const squadron = fetchSquadron(squadronKey);
+              console.log(`Fetched squadron for key: ${squadronKey}`, squadron);
+              if (squadron) {
+                console.log(`Selecting squadron:`, squadron);
                 let source: ContentSource = "regular";
-                const sourceMatch = leaderName.match(/\[(.*?)\]/);
-                if (sourceMatch) {
-                  const sourceTag = sourceMatch[1].toLowerCase();
-                  switch (sourceTag) {
-                    case 'legacybeta':
-                      source = 'legacyBeta';
-                      break;
-                    case 'legacy':
-                      source = 'legacy';
-                      break;
-                    case 'legends':
-                      source = 'legends';
-                      break;
-                    case 'arc':
-                      source = 'arc';
-                      break;
-                    case 'nexus':
-                      source = 'nexus';
-                      break;
-                  }
+                if (squadronName.includes("[LegacyBeta]")) {
+                  source = "legacyBeta";
+                } else if (squadronName.includes("[Legacy]")) {
+                  source = "legacy";
+                } else if (squadronName.includes("[Legends]")) {
+                  source = "legends";
+                } else if (squadronName.includes("[ARC]")) {
+                  source = "arc";
+                } else if (squadronName.includes("[Nexus]")) {
+                  source = "nexus";
                 }
-
-                squadronLeadersToAdd.push({
-                  squadronId: lastAddedSquadronId,
-                  upgrade: { ...leaderUpgrade, source }
-                });
                 
-                console.log(`Added leader ${leaderName} to squadron ${lastAddedSquadronId}`);
-              } else {
-                console.log(`Leader upgrade not found or not a leader type: ${leaderName}`);
-                skippedItems.push(`${leaderName} - Leader`);
+                // For Fighter Group mode, handle squadrons individually to support leaders
+                const selectedSquadron = {
+                  ...squadron,
+                  id: generateUniqueSquadronId(),
+                  source,
+                  count: count,
+                  assignedUpgrades: [], // Initialize empty upgrades array for leaders
+                  keywords: extractKeywordsFromAbilities(squadron.abilities), // Ensure keywords are populated
+                };
+                
+                squadronsToAdd.push(selectedSquadron);
+                lastAddedSquadronId = selectedSquadron.id;
               }
             } else {
-              console.log(`Leader key not found in aliases: ${leaderName} (${leaderPoints})`);
-              skippedItems.push(`${leaderName} - Leader`);
+              console.log(
+                `Squadron key not found in aliases: ${squadronName} (${pointsPerSquadron})`
+              );
+              skippedItems.push(`${squadronName} (${pointsPerSquadron})`);
             }
           }
         }
