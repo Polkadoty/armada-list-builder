@@ -299,9 +299,12 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose, gamemodeR
           const baseFactions = ['rebel', 'empire', 'republic', 'separatist', 'sandbox'];
           const allowedFactions = [...baseFactions];
           
-          // Include scum faction if custom content is enabled
-          if (contentSourcesEnabled.legends) {
+          // Include nexus factions if nexus content is enabled
+          if (contentSourcesEnabled.nexus) {
             allowedFactions.push('scum');
+            allowedFactions.push('new-republic');
+            allowedFactions.push('first-order');
+            allowedFactions.push('resistance');
           }
           
           return allowedFactions.includes(ship.faction);

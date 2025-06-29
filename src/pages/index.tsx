@@ -29,6 +29,8 @@ const factionShips = {
   sandbox: '/images/dreadnaught.webp',
   scum: '/images/action-vi.webp',
   'new-republic': '/images/nebula.webp',
+  'first-order': '/images/star-destroyer.webp',
+  'resistance': '/images/cr90.webp',
 };
 
 export default function Home() {

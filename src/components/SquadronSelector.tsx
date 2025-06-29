@@ -249,10 +249,14 @@ export function SquadronSelector({
           const baseFactions = ['rebel', 'empire', 'republic', 'separatist'];
           const allowedFactions = [...baseFactions];
           
-          // Include scum faction if custom content is enabled
-          if (contentSourcesEnabled.legends) {
+          // Include scum faction if legends content is enabled
+          
+          // Include nexus factions if nexus content is enabled
+          if (contentSourcesEnabled.nexus) {
             allowedFactions.push('scum');
             allowedFactions.push('new-republic');
+            allowedFactions.push('first-order');
+            allowedFactions.push('resistance');
           }
           
           return allowedFactions.includes(squadron.faction) &&

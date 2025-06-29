@@ -22,7 +22,7 @@ import { cn } from "@/lib/utils";
 import { UserAvatar } from "@/components/UserAvatar";
 import Link from 'next/link';
 
-const standardFactions = ['empire', 'rebel', 'republic', 'separatist', 'scum', 'new-republic'];
+const standardFactions = ['empire', 'rebel', 'republic', 'separatist', 'scum', 'new-republic', 'first-order', 'resistance'];
 
 interface ShipyardItem {
   id: string;

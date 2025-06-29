@@ -24,7 +24,9 @@ const factionColors = {
   cylon: '#CC0000',
   sandbox: '#4A5568',
   scum: '#FFD700',
-  'new-republic': '#b35605'
+  'new-republic': '#27E6FF',
+  'first-order': '#FF0000',
+  'resistance': '#FF8C00'
 };
 
 const customFactionIcons = [

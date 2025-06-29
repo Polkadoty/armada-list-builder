@@ -10,9 +10,11 @@ const baseFactions = [
 
 const sandboxFaction = { name: 'Sandbox Mode', logo: '/icons/sandbox.webp', slug: 'sandbox', shipImage: '/images/sandbox.webp' };
 
-const legendsFactions = [
+const nexusFactions = [
   { name: 'Scum and Villainy', logo: '/icons/scum.svg', slug: 'scum', shipImage: '/images/action-vi.webp' },
   { name: 'New Republic', logo: '/icons/new-republic.svg', slug: 'new-republic', shipImage: '/images/nebula.webp' },
+  { name: 'First Order', logo: '/icons/first-order.svg', slug: 'first-order', shipImage: '/images/star-destroyer.webp' },
+  { name: 'Resistance', logo: '/icons/resistance.svg', slug: 'resistance', shipImage: '/images/cr90.webp' },
 ];
 
 const customFactions = [
@@ -36,7 +38,7 @@ export default function FactionSelection({ onHover, enableLegends, enableNexus }
 
   const availableFactions = {
     base: baseFactions,
-    legends: enableNexus ? legendsFactions : [],
+    nexus: enableNexus ? nexusFactions : [],
     sandbox: [sandboxFaction],
     custom: enableLegends ? customFactions : []
   };
@@ -57,11 +59,11 @@ export default function FactionSelection({ onHover, enableLegends, enableNexus }
           ))}
         </div>
 
-        {availableFactions.legends.length > 0 && (
+        {availableFactions.nexus.length > 0 && (
           <>
             <Separator className="bg-gray-600/30 dark:bg-gray-400/30 h-[2px]" />
             <div className="grid grid-cols-2 gap-4 justify-items-center">
-              {availableFactions.legends.map((faction) => (
+              {availableFactions.nexus.map((faction) => (
                 <FactionIcon key={faction.slug} faction={faction} onHover={handleHover} />
               ))}
             </div>
