@@ -272,6 +272,7 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
                         <SelectItem value="Fighter Group">Fighter Group</SelectItem>
                         <SelectItem value="Battle for Naboo - Week 1">Battle for Naboo - Week 1</SelectItem>
                         <SelectItem value="Battle for Naboo - Week 2">Battle for Naboo - Week 2</SelectItem>
+                        <SelectItem value="Battle for Naboo - Week 3">Battle for Naboo - Week 3</SelectItem>
                         <SelectItem value="Unrestricted">Unrestricted</SelectItem>
                       </SelectGroup>
                     </SelectContent>

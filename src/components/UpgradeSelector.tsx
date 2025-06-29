@@ -666,8 +666,9 @@ export default function UpgradeSelector({
                         onError={() => {}}
                       />
                       {(!isUpgradeAvailable(upgrade) || isUpgradeGreyedOut(upgrade)) && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
-                          <span className="text-white text-sm text-center px-2">
+                        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 p-2">
+                          <div className="text-white text-xs text-center leading-tight w-full px-1">
+                            <span className="break-words block" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', whiteSpace: 'normal' }}>
                             {upgradeType === 'commander' && gamemodeRestrictions && (
                               <>
                                 {gamemodeRestrictions.allowedCommanders && !gamemodeRestrictions.allowedCommanders.includes(upgrade.name) && 
@@ -684,7 +685,8 @@ export default function UpgradeSelector({
                               "Upgrade unique class not allowed in this gamemode"}
                             {upgrade["unique-class"]?.some(uc => uc !== "" && uniqueClassNames.includes(uc)) && 
                               "Unique class already in use"}
-                          </span>
+                            </span>
+                          </div>
                         </div>
                       )}
                     </div>

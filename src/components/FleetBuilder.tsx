@@ -4634,6 +4634,7 @@ export default function FleetBuilder({
           onSelectShip={handleSelectShip}
           onClose={() => setShowShipSelector(false)}
           gamemodeRestrictions={gamemodeRestrictions}
+          selectedShips={selectedShips}
         />
       )}
 

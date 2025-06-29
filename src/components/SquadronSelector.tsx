@@ -498,8 +498,9 @@ export function SquadronSelector({
                       onError={() => {}}
                     />
                     {!isSquadronAllowed(squadron, gamemodeRestrictions) && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
-                        <span className="text-white text-sm text-center px-2">
+                      <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 p-2">
+                        <div className="text-white text-xs text-center leading-tight w-full px-1">
+                          <span className="break-words block" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', whiteSpace: 'normal' }}>
                           {gamemodeRestrictions?.allowedSquadronKeywords && squadron.keywords && 
                            !squadron.keywords.some(keyword => gamemodeRestrictions.allowedSquadronKeywords!.includes(keyword))
                             ? 'Squadron type not allowed in this gamemode'
@@ -513,7 +514,8 @@ export function SquadronSelector({
                               squadron['unique-class'].some(uc => gamemodeRestrictions.disallowedSquadronUniqueClasses!.includes(uc))
                             ? 'Squadron not allowed in this gamemode'
                             : 'Squadron not allowed in this gamemode'}
-                        </span>
+                          </span>
+                        </div>
                       </div>
                     )}
                   </div>

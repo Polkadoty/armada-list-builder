@@ -1,4 +1,4 @@
-export type Gamemode = "Task Force" | "Standard" | "Sector Fleet" | "Battle for Naboo - Week 1" | "Battle for Naboo - Week 2" | "Campaign" | "Unrestricted" | "Fighter Group";
+export type Gamemode = "Task Force" | "Standard" | "Sector Fleet" | "Battle for Naboo - Week 1" | "Battle for Naboo - Week 2" | "Battle for Naboo - Week 3" | "Campaign" | "Unrestricted" | "Fighter Group";
 // "Minivan" | "Campaign" | "Fighter Group"
 
 export interface GamemodeRestrictions {
@@ -13,6 +13,7 @@ export interface GamemodeRestrictions {
   disallowedShipClasses?: string[];
   allowedShipSizes?: ("small" | "medium" | "large" | "huge" | "280-huge")[];
   disallowedShipSizes?: ("small" | "medium" | "large" | "huge" | "280-huge")[];
+  shipSizeLimits?: Partial<Record<("small" | "medium" | "large" | "huge" | "280-huge"), number>>;
   allowedSquadronKeywords?: string[];
   disallowedSquadronKeywords?: string[];
   allowedCommanders?: string[];
@@ -219,6 +220,41 @@ export const GAMEMODE_RESTRICTIONS: Record<Gamemode, GamemodeRestrictions> = {
             afterSquadrons: ["• Darth Maul - Scimitar [Legacy] (24)", ""],
           },
         },
+      },
+    },
+    forceToggles: { 
+      tournamentMode: true, 
+      enableLegacy: true,
+      enableLegends: false,
+      enableLegacyBeta: false,
+      enableArc: false,
+      enableNexus: false,
+      enableProxy: false,
+    },
+    allowedFactions: ["republic", "separatist"],
+  },
+  "Battle for Naboo - Week 3": {
+    pointsLimit: 350,
+    squadronPointsLimit: 110,
+    flotillaLimit: 2,
+    aceLimit: 3,
+    requireObjectives: true,
+    requireCommander: true,
+    allowedShipSizes: ["small", "medium", "large"],
+    disallowedShipSizes: [],
+    shipSizeLimits: { large: 1 },
+    allowedCommanders: ["Ki-Adi-Mundi", "Admiral Tarkin", "Obi-Wan Kenobi", "Daultay Dofine", "General Grievous", "TF-1726"],
+    disallowedSquadronUniqueClasses: ["Anakin Skywalker", "Kit Fisto", "Luminara Unduli", "Plo Koon", "Wat Tambor", "Count Dooku", "Jango Fett"],
+    disallowedUpgradeUniqueClasses: ["Resolute", "Tranquility", "Patriot Fist", "Nova Defiant", "Invincible", "Lucid Voice", "Mercy Mission"],
+    objectiveRestrictions: {
+      disableSelection: true,
+      hideDetails: true,
+      enableCampaignObjectives: true,
+      allowedObjectives: {
+        navigation: ["Volatile Deposits"],
+      },
+      forcedObjectives: {
+        navigation: "Volatile Deposits",
       },
     },
     forceToggles: { 
@@ -543,6 +579,17 @@ export function checkFleetViolations(gamemode: Gamemode, fleet: FleetState, fact
     if (invalidShips.length > 0) {
       violations.push(`Fleet contains disallowed ship sizes: ${invalidShips.map(s => s.size).join(", ")}`);
     }
+  }
+
+  // Validate ship size limits
+  if (restrictions.shipSizeLimits) {
+    Object.entries(restrictions.shipSizeLimits).forEach(([size, limit]) => {
+      const shipSize = size as "small" | "medium" | "large" | "huge" | "280-huge";
+      const shipsOfSize = fleet.selectedShips.filter(ship => ship.size === shipSize);
+      if (shipsOfSize.length > limit) {
+        violations.push(`More than ${limit} ${size} ship(s) in fleet (${shipsOfSize.length} found)`);
+      }
+    });
   }
 
   // Validate squadron keyword restrictions

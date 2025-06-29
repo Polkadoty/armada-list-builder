@@ -45,9 +45,10 @@ interface ShipSelectorProps {
   onSelectShip: (ship: ShipModel) => void;
   onClose: () => void;
   gamemodeRestrictions?: GamemodeRestrictions;
+  selectedShips?: ShipModel[];
 }
 
-export function ShipSelector({ faction, filter, onSelectShip, onClose, gamemodeRestrictions }: ShipSelectorProps) {
+export function ShipSelector({ faction, filter, onSelectShip, onClose, gamemodeRestrictions, selectedShips = [] }: ShipSelectorProps) {
   const [allShips, setAllShips] = useState<ShipModel[]>([]);
   const { uniqueClassNames, addUniqueClassName } = useUniqueClassContext();
   const [activeSorts, setActiveSorts] = useState<Record<SortOption, 'asc' | 'desc' | null>>(() => {
@@ -337,6 +338,17 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose, gamemodeR
       return false;
     }
 
+    // Check ship size limits
+    if (gamemodeRestrictions.shipSizeLimits) {
+      const sizeLimit = gamemodeRestrictions.shipSizeLimits[ship.size];
+      if (sizeLimit !== undefined) {
+        const currentSizeCount = selectedShips.filter(selectedShip => selectedShip.size === ship.size).length;
+        if (currentSizeCount >= sizeLimit) {
+          return false;
+        }
+      }
+    }
+
     // Check ship class restrictions
     if (gamemodeRestrictions.allowedShipClasses && ship.shipClass && !gamemodeRestrictions.allowedShipClasses.includes(ship.shipClass)) {
       return false;
@@ -431,6 +443,29 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose, gamemodeR
 
   const isHugeShip = (ship: ShipModel) => ship.size === 'huge' || ship.size === '280-huge';
 
+  // Helper function to generate ship size limit messages
+  const getShipSizeLimitMessages = () => {
+    if (!gamemodeRestrictions?.shipSizeLimits) return [];
+    
+    const messages: string[] = [];
+    const sizeCounts: Record<string, number> = {};
+    
+    // Count current ships by size
+    selectedShips.forEach(ship => {
+      sizeCounts[ship.size] = (sizeCounts[ship.size] || 0) + 1;
+    });
+    
+    // Check each size limit
+    Object.entries(gamemodeRestrictions.shipSizeLimits).forEach(([size, limit]) => {
+      const currentCount = sizeCounts[size] || 0;
+      if (currentCount >= limit) {
+        messages.push(`${size.charAt(0).toUpperCase() + size.slice(1)} ship limit reached: ${currentCount}/${limit}`);
+      }
+    });
+    
+    return messages;
+  };
+
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-md bg-opacity-30 dark:bg-opacity-30">
       <Card className="w-full h-full sm:w-[95%] sm:h-[90%] lg:w-[85%] lg:h-[85%] flex flex-col">
@@ -466,6 +501,11 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose, gamemodeR
           </div>
         </div>
         <CardContent className="p-2 sm:p-4 flex-grow overflow-auto">
+          {getShipSizeLimitMessages().map((message, index) => (
+            <div key={index} className="mb-2 p-2 bg-yellow-100 text-yellow-800 rounded text-center font-semibold">
+              {message}
+            </div>
+          ))}
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-2">
             {processedShips.map((ship) => (
               <div key={ship.id} className={`w-full ${isHugeShip(ship) ? 'col-span-2 aspect-[5/4]' : 'aspect-[8.75/15]'}`}>
@@ -486,14 +526,20 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose, gamemodeR
                       onError={() => {}}
                     />
                     {!isShipAllowed(ship) && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
-                        <span className="text-white text-sm text-center px-2">
+                      <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 p-2">
+                        <div className="text-white text-xs text-center leading-tight w-full px-1">
+                          <span className="break-words block" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', whiteSpace: 'normal' }}>
                           {gamemodeRestrictions?.allowedShipSizes && !gamemodeRestrictions.allowedShipSizes.includes(ship.size) 
                             ? 'Ship size not allowed in this gamemode'
                             : gamemodeRestrictions?.disallowedShipSizes && gamemodeRestrictions.disallowedShipSizes.includes(ship.size)
                             ? 'Ship size not allowed in this gamemode'
+                            : gamemodeRestrictions?.shipSizeLimits && 
+                              gamemodeRestrictions.shipSizeLimits[ship.size] !== undefined &&
+                              selectedShips.filter(selectedShip => selectedShip.size === ship.size).length >= gamemodeRestrictions.shipSizeLimits[ship.size]!
+                            ? `${ship.size.charAt(0).toUpperCase() + ship.size.slice(1)} ship limit reached (${gamemodeRestrictions.shipSizeLimits[ship.size]})`
                             : 'Ship not allowed in this gamemode'}
-                        </span>
+                          </span>
+                        </div>
                       </div>
                     )}
                   </div>
