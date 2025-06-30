@@ -84,8 +84,8 @@ export function FactionIcon({ faction, onHover }: FactionIconProps) {
             <Image 
               src={faction.logo} 
               alt={faction.name} 
-              width={64} 
-              height={64} 
+              width={faction.slug === 'resistance' ? 77 : 64} 
+              height={faction.slug === 'resistance' ? 77 : 64} 
               className={`transition-all duration-200 hover:drop-shadow-[0_0_8px_var(--glow-color)] ${
                 !mounted ? '' : 
                 customFactionIcons.includes(faction.logo)
