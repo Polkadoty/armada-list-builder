@@ -13,8 +13,8 @@ const sandboxFaction = { name: 'Sandbox Mode', logo: '/icons/sandbox.webp', slug
 const nexusFactions = [
   { name: 'Scum and Villainy', logo: '/icons/scum.svg', slug: 'scum', shipImage: '/images/action-vi.webp' },
   { name: 'New Republic', logo: '/icons/new-republic.svg', slug: 'new-republic', shipImage: '/images/nebula.webp' },
-  { name: 'First Order', logo: '/icons/first-order.svg', slug: 'first-order', shipImage: '/images/star-destroyer.webp' },
-  { name: 'Resistance', logo: '/icons/resistance.svg', slug: 'resistance', shipImage: '/images/cr90.webp' },
+  { name: 'First Order', logo: '/icons/first-order.svg', slug: 'first-order', shipImage: '/images/resurgent.webp' },
+  { name: 'Resistance', logo: '/icons/resistance.svg', slug: 'resistance', shipImage: '/images/mc85.webp' },
 ];
 
 const customFactions = [
