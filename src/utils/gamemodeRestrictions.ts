@@ -1,4 +1,4 @@
-export type Gamemode = "Task Force" | "Standard" | "Sector Fleet" | "Battle for Naboo - Week 1" | "Battle for Naboo - Week 2" | "Battle for Naboo - Week 3" | "Campaign" | "Unrestricted" | "Fighter Group";
+export type Gamemode = "Task Force" | "Standard" | "Sector Fleet" | "Battle for Naboo - Week 1" | "Battle for Naboo - Week 2" | "Battle for Naboo - Week 3" | "Battle for Naboo - Week 4" | "Campaign" | "Unrestricted" | "Fighter Group";
 // "Minivan" | "Campaign" | "Fighter Group"
 
 export interface GamemodeRestrictions {
@@ -268,6 +268,40 @@ export const GAMEMODE_RESTRICTIONS: Record<Gamemode, GamemodeRestrictions> = {
     },
     allowedFactions: ["republic", "separatist"],
   },
+  "Battle for Naboo - Week 4": {
+      pointsLimit: 400,
+      squadronPointsLimit: 134,
+      flotillaLimit: 2,
+      aceLimit: 4,
+      requireObjectives: true,
+      requireCommander: true,
+      allowedShipSizes: ["small", "medium", "large"],
+      disallowedShipSizes: [],
+      allowedCommanders: ["Ki-Adi-Mundi", "Admiral Tarkin", "Obi-Wan Kenobi", "Daultay Dofine", "General Grievous", "TF-1726"],
+      disallowedSquadronUniqueClasses: ["Anakin Skywalker", "Kit Fisto", "Luminara Unduli", "Plo Koon", "Wat Tambor", "Count Dooku", "Jango Fett"],
+      disallowedUpgradeUniqueClasses: ["Resolute", "Tranquility", "Patriot Fist", "Nova Defiant", "Invincible", "Lucid Voice", "Mercy Mission"],
+      objectiveRestrictions: {
+        disableSelection: true,
+        hideDetails: true,
+        enableCampaignObjectives: true,
+        allowedObjectives: {
+          navigation: ["Navigational Hazards"],
+        },
+        forcedObjectives: {
+          navigation: "Navigational Hazards",
+        },
+      },
+      forceToggles: { 
+        tournamentMode: true, 
+        enableLegacy: true,
+        enableLegends: false,
+        enableLegacyBeta: false,
+        enableArc: false,
+        enableNexus: false,
+        enableProxy: false,
+      },
+      allowedFactions: ["republic", "separatist"],
+    },
   "Unrestricted": {},
 };
 
