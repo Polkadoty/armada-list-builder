@@ -1902,36 +1902,40 @@ export default function FleetBuilder({
         // Standard squadron grouping for other game modes
         const groupedSquadrons = selectedSquadrons.reduce((acc, squadron) => {
           const sourceSpace = squadron.release === "AMG Final Errata" ? "" : " ";
-          const key =
+          // Create a base key without points for grouping
+          const baseKey =
             squadron.unique || squadron["ace-name"]
               ? (squadron["ace-name"] || squadron.name) + 
                 " - " + squadron.name + 
                 (squadron.source && squadron.source !== "regular" && squadron.source !== "amg" 
                   ? sourceSpace + formatSource(squadron.source) 
-                  : "") + 
-                " (" + squadron.points + ")"
+                  : "")
               : squadron.name + 
                 (squadron.source && squadron.source !== "regular" && squadron.source !== "amg"
                   ? sourceSpace + formatSource(squadron.source) 
-                  : "") + 
-                " (" + (squadron.points * (squadron.count || 1)) + ")";
-          if (!acc[key]) {
-            acc[key] = {
+                  : "");
+          
+          if (!acc[baseKey]) {
+            acc[baseKey] = {
               count: 0,
               isUnique: squadron.unique || !!squadron["ace-name"],
               points: squadron.points,
             };
           }
-          acc[key].count += squadron.count || 1;
+          acc[baseKey].count += squadron.count || 1;
           return acc;
         }, {} as Record<string, { count: number; isUnique: boolean; points: number }>);
 
         Object.entries(groupedSquadrons).forEach(
-          ([squadronKey, { count, isUnique }]) => {
-            if (isUnique) {
-              text += "• " + squadronKey + squadronSuffix + "\n";
+          ([baseKey, { count, isUnique, points }]) => {
+            // Calculate total points and create the display key
+            const totalPoints = points * count;
+            const displayKey = baseKey + " (" + totalPoints + ")";
+            
+            if (count > 1) {
+              text += "• " + count + " x " + displayKey + squadronSuffix + "\n";
             } else {
-              text += "• " + count + " x " + squadronKey + squadronSuffix + "\n";
+              text += "• " + displayKey + squadronSuffix + "\n";
             }
           }
         );
