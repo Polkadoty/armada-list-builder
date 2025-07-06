@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { useSpring, animated } from 'react-spring';
 import { Squadron } from './FleetBuilder';
@@ -33,6 +33,8 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
   const startY = useRef(0);
   const isHorizontalSwipe = useRef(false);
   const [showImageModal, setShowImageModal] = useState(false);
+  const [showEyeIcon, setShowEyeIcon] = useState(false);
+  const eyeIconTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const SWIPE_THRESHOLD = 100;
   const ANGLE_THRESHOLD = 30; // Degrees
@@ -123,13 +125,47 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
     return getCurrentSquadronTypeCount() < squadron.unique_limit;
   };
 
-  const handleImageTouch = (e: React.TouchEvent) => {
-    e.preventDefault();
-    // Only open modal if not swiping
+  const handleImageClick = () => {
+    // Only handle click if not swiping
     if (!isDragging.current) {
-      setShowImageModal(true);
+      if (showEyeIcon) {
+        // Second click - open modal
+        if (eyeIconTimeoutRef.current) {
+          clearTimeout(eyeIconTimeoutRef.current);
+          eyeIconTimeoutRef.current = null;
+        }
+        setShowImageModal(true);
+        setShowEyeIcon(false);
+      } else {
+        // First click - show eye icon
+        setShowEyeIcon(true);
+        
+        // Hide eye icon after 3 seconds if no second click
+        if (eyeIconTimeoutRef.current) {
+          clearTimeout(eyeIconTimeoutRef.current);
+        }
+        eyeIconTimeoutRef.current = setTimeout(() => {
+          setShowEyeIcon(false);
+          eyeIconTimeoutRef.current = null;
+        }, 3000);
+      }
     }
   };
+
+  const handleImageTouch = (e: React.TouchEvent) => {
+    e.preventDefault();
+    handleImageClick();
+  };
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (eyeIconTimeoutRef.current) {
+        clearTimeout(eyeIconTimeoutRef.current);
+      }
+    };
+  }, []);
+
   return (
     <div className="relative overflow-hidden mb-4">
       <animated.div
@@ -148,16 +184,15 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
                   width={250}
                   height={350}
                   className="object-cover object-top scale-[103%] rounded-l-lg absolute top-0 left-0" // Added absolute positioning
-                  onClick={() => setShowImageModal(true)}
+                  onClick={handleImageClick}
                 />
                 <button
-                  className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                  className={`absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-200 ${
+                    showEyeIcon ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                  }`}
                   onClick={(e) => {
                     e.stopPropagation();
-                    // Only open modal if not swiping
-                    if (!isDragging.current) {
-                      setShowImageModal(true);
-                    }
+                    handleImageClick();
                   }}
                   onTouchEnd={handleImageTouch}
                 >

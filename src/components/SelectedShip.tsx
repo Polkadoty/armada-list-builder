@@ -239,7 +239,7 @@ function SelectedShipComponent({ ship, onRemove, onUpgradeClick, onCopy, handleR
               <div className="p-2 space-y-2">
                 {ship.assignedUpgrades.map((upgrade, index) => (
                   <SwipeableUpgrade
-                    key={`${upgrade.type}-${index}`}
+                    key={`${upgrade.type}-${upgrade.slotIndex ?? index}-${upgrade.name}-${upgrade.id}`}
                     upgrade={upgrade}
                     onSwipe={(direction) => {
                       if (direction === 'left') {
@@ -293,17 +293,35 @@ function arePropsEqual(prevProps: SelectedShipProps, nextProps: SelectedShipProp
   
   // Re-render if the ship's data has changed (points, upgrades, etc.)
   if (prevProps.ship.points !== nextProps.ship.points) return false;
+  if (prevProps.ship.name !== nextProps.ship.name) return false;
+  if (prevProps.ship.cardimage !== nextProps.ship.cardimage) return false;
   
   // Check if assigned upgrades changed
   const prevUpgrades = prevProps.ship.assignedUpgrades;
   const nextUpgrades = nextProps.ship.assignedUpgrades;
   if (prevUpgrades.length !== nextUpgrades.length) return false;
   
+  // Deep comparison of each upgrade
+  for (let i = 0; i < prevUpgrades.length; i++) {
+    const prevUpgrade = prevUpgrades[i];
+    const nextUpgrade = nextUpgrades[i];
+    
+    // Compare key properties that would affect the UI
+    if (prevUpgrade.id !== nextUpgrade.id) return false;
+    if (prevUpgrade.name !== nextUpgrade.name) return false;
+    if (prevUpgrade.points !== nextUpgrade.points) return false;
+    if (prevUpgrade.cardimage !== nextUpgrade.cardimage) return false;
+    if (prevUpgrade.type !== nextUpgrade.type) return false;
+    if (prevUpgrade.slotIndex !== nextUpgrade.slotIndex) return false;
+  }
+  
   // Compare disabled upgrades arrays
   if (prevProps.disabledUpgrades?.length !== nextProps.disabledUpgrades?.length) return false;
+  if (prevProps.disabledUpgrades?.some((upgrade, index) => upgrade !== nextProps.disabledUpgrades?.[index])) return false;
   
   // Compare grey upgrades arrays
   if (prevProps.greyUpgrades?.length !== nextProps.greyUpgrades?.length) return false;
+  if (prevProps.greyUpgrades?.some((upgrade, index) => upgrade !== nextProps.greyUpgrades?.[index])) return false;
   
   // Check position-related props
   if (prevProps.isFirst !== nextProps.isFirst || prevProps.isLast !== nextProps.isLast) return false;
