@@ -458,6 +458,9 @@ export function FleetList() {
   // Track if component is mounted to prevent state updates after unmount
   const isMounted = useRef(true);
   
+  // Use ref to store fetchFleets to avoid circular dependencies
+  const fetchFleetsRef = useRef<() => Promise<void>>();
+  
   // Pagination for dropdown menus
   const [factionPage, setFactionPage] = useState(0);
   const [commanderPage, setCommanderPage] = useState(0);
@@ -491,7 +494,7 @@ export function FleetList() {
 
     // Add timeout protection to ensure loading state doesn't persist indefinitely
     const timeoutId = setTimeout(() => {
-      if (isMounted.current && isLoading) {
+      if (isMounted.current) {
         console.log("Fetch timeout reached - resetting loading state");
         setIsLoading(false);
         setLoadingMessage("");
@@ -575,16 +578,19 @@ export function FleetList() {
         setLoadingProgress(0);
       }
     }
-  }, [user?.sub, isLoading]);
+  }, [user?.sub]); // Remove isLoading from dependency array to break circular dependency
+  
+  // Store fetchFleets in ref to avoid circular dependencies
+  fetchFleetsRef.current = fetchFleets;
   
   // Only fetch fleets when dialog is opened
   const handleDialogOpenChange = useCallback((open: boolean) => {
     console.log(`Dialog open state changed to: ${open}`);
     setIsDialogOpen(open);
-    if (open && user) {
-      fetchFleets();
+    if (open && user && fetchFleetsRef.current) {
+      fetchFleetsRef.current();
     }
-  }, [user, fetchFleets]);
+  }, [user]);
 
   const handleFleetSelect = useCallback((fleet: Fleet) => {
     // Clear any existing fleet data for all factions
@@ -722,7 +728,9 @@ export function FleetList() {
         console.error('Error deleting fleet:', error);
       } else {
         setLoadingProgress(100);
-        await fetchFleets();
+        if (fetchFleetsRef.current) {
+          await fetchFleetsRef.current();
+        }
       }
     } finally {
       setIsLoading(false);
@@ -731,7 +739,7 @@ export function FleetList() {
       setShowDeleteConfirmation(false);
       setFleetToDelete(null);
     }
-  }, [fleetToDelete, user, fetchFleets]);
+  }, [fleetToDelete, user]);
 
   const handleFleetRename = useCallback(async () => {
     if (!fleetToRename || !user || !newFleetName.trim()) return;
@@ -764,7 +772,9 @@ export function FleetList() {
         console.error('Error renaming fleet:', error);
       } else {
         setLoadingProgress(100);
-        await fetchFleets();
+        if (fetchFleetsRef.current) {
+          await fetchFleetsRef.current();
+        }
       }
     } finally {
       setIsLoading(false);
@@ -774,7 +784,7 @@ export function FleetList() {
       setFleetToRename(null);
       setNewFleetName('');
     }
-  }, [fleetToRename, user, newFleetName, fetchFleets]);
+  }, [fleetToRename, user, newFleetName]);
 
   const handleFleetCopy = useCallback(async (fleet: Fleet) => {
     if (!user) return;
@@ -805,14 +815,16 @@ export function FleetList() {
         console.error('Error copying fleet:', error);
       } else {
         setLoadingProgress(100);
-        await fetchFleets();
+        if (fetchFleetsRef.current) {
+          await fetchFleetsRef.current();
+        }
       }
     } finally {
       setIsLoading(false);
       setLoadingMessage("");
       setLoadingProgress(0);
     }
-  }, [user, fetchFleets]);
+  }, [user]);
 
   const handleToggleShare = useCallback(async (fleet: Fleet) => {
     if (!user) return;
@@ -832,11 +844,13 @@ export function FleetList() {
         setShowNotification(true);
       }
       
-      await fetchFleets();
+      if (fetchFleetsRef.current) {
+        await fetchFleetsRef.current();
+      }
     } catch (error) {
       console.error('Error toggling share status:', error);
     }
-  }, [user, fetchFleets]);
+  }, [user]);
 
   const handleCopyLink = useCallback(async (fleet: Fleet) => {
     if (!fleet.shared) {
