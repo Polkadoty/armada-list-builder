@@ -435,6 +435,45 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose, gamemodeR
     return !ship.unique || !uniqueClassNames.includes(ship.name);
   };
 
+  // New comprehensive function to get all restriction messages
+  const getShipRestrictionMessages = (ship: ShipModel): string[] => {
+    const messages: string[] = [];
+
+    // Check gamemode restrictions first
+    if (gamemodeRestrictions) {
+      // Check ship size restrictions
+      if (gamemodeRestrictions.allowedShipSizes && !gamemodeRestrictions.allowedShipSizes.includes(ship.size)) {
+        messages.push("Ship size not allowed in this gamemode");
+      }
+      if (gamemodeRestrictions.disallowedShipSizes && gamemodeRestrictions.disallowedShipSizes.includes(ship.size)) {
+        messages.push("Ship size not allowed in this gamemode");
+      }
+
+      // Check ship size limits
+      if (gamemodeRestrictions.shipSizeLimits && gamemodeRestrictions.shipSizeLimits[ship.size] !== undefined) {
+        const currentSizeCount = selectedShips.filter(selectedShip => selectedShip.size === ship.size).length;
+        if (currentSizeCount >= gamemodeRestrictions.shipSizeLimits[ship.size]!) {
+          messages.push(`${ship.size.charAt(0).toUpperCase() + ship.size.slice(1)} ship limit reached (${gamemodeRestrictions.shipSizeLimits[ship.size]})`);
+        }
+      }
+
+      // Check ship class restrictions
+      if (gamemodeRestrictions.allowedShipClasses && ship.shipClass && !gamemodeRestrictions.allowedShipClasses.includes(ship.shipClass)) {
+        messages.push(`Ship class "${ship.shipClass}" not allowed in this gamemode`);
+      }
+      if (gamemodeRestrictions.disallowedShipClasses && ship.shipClass && gamemodeRestrictions.disallowedShipClasses.includes(ship.shipClass)) {
+        messages.push(`Ship class "${ship.shipClass}" not allowed in this gamemode`);
+      }
+    }
+
+    // Check non-gamemode restrictions
+    if (ship.unique && uniqueClassNames.includes(ship.name)) {
+      messages.push("Unique ship already in fleet");
+    }
+
+    return messages;
+  };
+
   const handleShipClick = (ship: ShipModel) => {
     if (isShipAvailable(ship) && isShipAllowed(ship)) {
       onSelectShip(ship);
@@ -528,19 +567,17 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose, gamemodeR
                       className="object-cover object-center scale-[101%]"
                       onError={() => {}}
                     />
-                    {!isShipAllowed(ship) && (
+                    {(!isShipAvailable(ship) || !isShipAllowed(ship)) && (
                       <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 p-2">
                         <div className="text-white text-xs text-center leading-tight w-full px-1">
                           <span className="break-words block" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', whiteSpace: 'normal' }}>
-                          {gamemodeRestrictions?.allowedShipSizes && !gamemodeRestrictions.allowedShipSizes.includes(ship.size) 
-                            ? 'Ship size not allowed in this gamemode'
-                            : gamemodeRestrictions?.disallowedShipSizes && gamemodeRestrictions.disallowedShipSizes.includes(ship.size)
-                            ? 'Ship size not allowed in this gamemode'
-                            : gamemodeRestrictions?.shipSizeLimits && 
-                              gamemodeRestrictions.shipSizeLimits[ship.size] !== undefined &&
-                              selectedShips.filter(selectedShip => selectedShip.size === ship.size).length >= gamemodeRestrictions.shipSizeLimits[ship.size]!
-                            ? `${ship.size.charAt(0).toUpperCase() + ship.size.slice(1)} ship limit reached (${gamemodeRestrictions.shipSizeLimits[ship.size]})`
-                            : 'Ship not allowed in this gamemode'}
+                          {(() => {
+                            const messages = getShipRestrictionMessages(ship);
+                            if (messages.length === 0) {
+                              return "Ship not available";
+                            }
+                            return messages.join(' • ');
+                          })()}
                           </span>
                         </div>
                       </div>

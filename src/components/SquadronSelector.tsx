@@ -408,6 +408,89 @@ export function SquadronSelector({
     return isExactMatch || hasConflictingUnique || hasConflictingUniqueClass;
   };
 
+  // New comprehensive function to get all restriction messages
+  const getSquadronRestrictionMessages = (squadron: Squadron): string[] => {
+    const messages: string[] = [];
+
+    // Check gamemode restrictions first
+    if (gamemodeRestrictions) {
+      // Check allowed squadron keywords
+      if (gamemodeRestrictions.allowedSquadronKeywords && squadron.keywords) {
+        const hasAllowedKeyword = squadron.keywords.some(keyword => 
+          gamemodeRestrictions.allowedSquadronKeywords!.includes(keyword)
+        );
+        if (!hasAllowedKeyword) {
+          messages.push("Squadron type not allowed in this gamemode");
+        }
+      }
+
+      // Check disallowed squadron keywords
+      if (gamemodeRestrictions.disallowedSquadronKeywords && squadron.keywords) {
+        const hasDisallowedKeyword = squadron.keywords.some(keyword => 
+          gamemodeRestrictions.disallowedSquadronKeywords!.includes(keyword)
+        );
+        if (hasDisallowedKeyword) {
+          messages.push("Squadron type not allowed in this gamemode");
+        }
+      }
+
+      // Check allowed squadron unique classes
+      if (gamemodeRestrictions.allowedSquadronUniqueClasses && squadron['unique-class']) {
+        const hasAllowedUniqueClass = squadron['unique-class'].some(uc => 
+          gamemodeRestrictions.allowedSquadronUniqueClasses!.includes(uc)
+        );
+        if (!hasAllowedUniqueClass) {
+          messages.push("Squadron not allowed in this gamemode");
+        }
+      }
+
+      // Check disallowed squadron unique classes
+      if (gamemodeRestrictions.disallowedSquadronUniqueClasses && squadron['unique-class']) {
+        const hasDisallowedUniqueClass = squadron['unique-class'].some(uc => 
+          gamemodeRestrictions.disallowedSquadronUniqueClasses!.includes(uc)
+        );
+        if (hasDisallowedUniqueClass) {
+          messages.push("Squadron not allowed in this gamemode");
+        }
+      }
+    }
+
+    // Check non-gamemode restrictions
+    // Check if this exact squadron is already selected
+    if (selectedSquadrons.some(s => 
+      s.id === squadron.id || 
+      (s.name === squadron.name && s['ace-name'] === squadron['ace-name'])
+    )) {
+      messages.push("Squadron already selected");
+    }
+
+    // Check if a conflicting unique squadron is already selected
+    if (squadron.unique && selectedSquadrons.some(s => 
+      s.unique && s['ace-name'] === squadron['ace-name'] && s['ace-name'] !== ''
+    )) {
+      messages.push("Conflicting unique squadron already selected");
+    }
+
+    // Check if any of the unique classes are already in use
+    if (squadron['unique-class']?.some(uc => 
+      uc !== "" && uniqueClassNames.includes(uc)
+    )) {
+      const conflictingUniqueClasses = squadron['unique-class']?.filter(uc => 
+        uc !== "" && uniqueClassNames.includes(uc)
+      );
+      if (conflictingUniqueClasses && conflictingUniqueClasses.length > 0) {
+        messages.push(`Unique class already in use: ${conflictingUniqueClasses.join(', ')}`);
+      }
+    }
+
+    // Check ace limit
+    if (aceLimit > 0 && aceCount >= aceLimit && squadron.ace) {
+      messages.push(`Ace limit reached (${aceLimit})`);
+    }
+
+    return messages;
+  };
+
   const handleSquadronClick = (squadron: Squadron) => {
     if (isSquadronSelected(squadron) || !isSquadronAllowed(squadron, gamemodeRestrictions)) {
       setPopupMessage(
@@ -488,9 +571,9 @@ export function SquadronSelector({
                 <Button
                   onClick={() => handleSquadronClick(squadron)}
                   className={`p-0 overflow-visible relative w-full h-full rounded-lg bg-transparent ${
-                    isSquadronSelected(squadron) || !isSquadronAllowed(squadron, gamemodeRestrictions) ? 'opacity-50 cursor-not-allowed' : ''
+                    isSquadronSelected(squadron) || !isSquadronAllowed(squadron, gamemodeRestrictions) || (aceLimit > 0 && aceCount >= aceLimit && squadron.ace) ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
-                  disabled={isSquadronSelected(squadron) || !isSquadronAllowed(squadron, gamemodeRestrictions)}
+                  disabled={isSquadronSelected(squadron) || !isSquadronAllowed(squadron, gamemodeRestrictions) || (aceLimit > 0 && aceCount >= aceLimit && squadron.ace)}
                 >
                   <div className="absolute inset-0 flex items-center justify-center">
                     <OptimizedImage
@@ -501,23 +584,17 @@ export function SquadronSelector({
                       className="object-cover object-center w-full h-full"
                       onError={() => {}}
                     />
-                    {!isSquadronAllowed(squadron, gamemodeRestrictions) && (
+                    {(isSquadronSelected(squadron) || !isSquadronAllowed(squadron, gamemodeRestrictions) || (aceLimit > 0 && aceCount >= aceLimit && squadron.ace)) && (
                       <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 p-2">
                         <div className="text-white text-xs text-center leading-tight w-full px-1">
                           <span className="break-words block" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', whiteSpace: 'normal' }}>
-                          {gamemodeRestrictions?.allowedSquadronKeywords && squadron.keywords && 
-                           !squadron.keywords.some(keyword => gamemodeRestrictions.allowedSquadronKeywords!.includes(keyword))
-                            ? 'Squadron type not allowed in this gamemode'
-                            : gamemodeRestrictions?.disallowedSquadronKeywords && squadron.keywords &&
-                              squadron.keywords.some(keyword => gamemodeRestrictions.disallowedSquadronKeywords!.includes(keyword))
-                            ? 'Squadron type not allowed in this gamemode'
-                            : gamemodeRestrictions?.allowedSquadronUniqueClasses && squadron['unique-class'] &&
-                              !squadron['unique-class'].some(uc => gamemodeRestrictions.allowedSquadronUniqueClasses!.includes(uc))
-                            ? 'Squadron not allowed in this gamemode'
-                            : gamemodeRestrictions?.disallowedSquadronUniqueClasses && squadron['unique-class'] &&
-                              squadron['unique-class'].some(uc => gamemodeRestrictions.disallowedSquadronUniqueClasses!.includes(uc))
-                            ? 'Squadron not allowed in this gamemode'
-                            : 'Squadron not allowed in this gamemode'}
+                          {(() => {
+                            const messages = getSquadronRestrictionMessages(squadron);
+                            if (messages.length === 0) {
+                              return "Squadron not available";
+                            }
+                            return messages.join(' • ');
+                          })()}
                           </span>
                         </div>
                       </div>

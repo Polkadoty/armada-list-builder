@@ -522,6 +522,175 @@ export default function UpgradeSelector({
     return false; // Non-unique upgrades or upgrades without a unique class are not greyed out
   };
 
+  // New comprehensive function to get all restriction messages
+  const getUpgradeRestrictionMessages = (upgrade: Upgrade): string[] => {
+    const messages: string[] = [];
+
+    // Check gamemode restrictions first
+    if (upgradeType === 'commander' && gamemodeRestrictions) {
+      if (gamemodeRestrictions.allowedCommanders && !gamemodeRestrictions.allowedCommanders.includes(upgrade.name)) {
+        messages.push("Commander not allowed in current gamemode");
+      }
+      if (gamemodeRestrictions.disallowedCommanders && gamemodeRestrictions.disallowedCommanders.includes(upgrade.name)) {
+        messages.push("Commander not allowed in current gamemode");
+      }
+    }
+
+    // Check gamemode unique-class restrictions
+    if (gamemodeRestrictions) {
+      if (gamemodeRestrictions.disallowedUpgradeUniqueClasses && upgrade['unique-class']) {
+        for (const uniqueClass of gamemodeRestrictions.disallowedUpgradeUniqueClasses) {
+          if (upgrade['unique-class'].includes(uniqueClass)) {
+            messages.push("Upgrade unique class not allowed in this gamemode");
+            break;
+          }
+        }
+      }
+
+      if (gamemodeRestrictions.allowedUpgradeUniqueClasses && upgrade['unique-class']) {
+        const hasAllowedUniqueClass = upgrade['unique-class'].some(uniqueClass => 
+          gamemodeRestrictions.allowedUpgradeUniqueClasses?.includes(uniqueClass)
+        );
+        if (!hasAllowedUniqueClass) {
+          messages.push("Upgrade unique class not allowed in this gamemode");
+        }
+      }
+    }
+
+    // Check bound_shiptype restrictions
+    if (upgrade.bound_shiptype && upgrade.bound_shiptype !== shipType && upgradeType !== 'title' && upgradeType !== 'super-weapon') {
+      messages.push(`Only works on ${upgrade.bound_shiptype} ships`);
+    }
+
+    // Check unique upgrade already selected
+    if (upgrade.unique && selectedUpgrades.some(su => su.name === upgrade.name)) {
+      messages.push("Unique upgrade already equipped");
+    }
+
+    // Check upgrade already equipped on this ship
+    if (currentShipUpgrades.some(su => su.name === upgrade.name)) {
+      messages.push("Upgrade already equipped on this ship");
+    }
+
+    // Check modification restrictions
+    if (upgrade.modification && currentShipUpgrades.some(su => su.modification)) {
+      messages.push("Only one modification allowed per ship");
+    }
+
+    // Check disqualified upgrades
+    if (disqualifiedUpgrades && disqualifiedUpgrades.includes(upgrade.type)) {
+      messages.push("Upgrade type disqualified by another upgrade");
+    }
+
+    // Check disabled upgrades
+    if (disabledUpgrades && disabledUpgrades.includes(upgrade.type)) {
+      messages.push("Upgrade type disabled by another upgrade");
+    }
+
+    // Check disabled by other upgrades
+    if (upgrade.restrictions) {
+      const disqualOrDisable = [...(upgrade.restrictions.disqual_upgrades || []), ...(upgrade.restrictions.disable_upgrades || [])];
+      if (currentShipUpgrades.some(su => disqualOrDisable.includes(su.type))) {
+        messages.push("Conflicts with currently equipped upgrade");
+      }
+    }
+
+    // Check size restrictions
+    if (upgrade.restrictions?.size && upgrade.restrictions.size.length > 0 && shipSize) {
+      const validSizes = upgrade.restrictions.size.filter(size => size.trim() !== '');
+      if (validSizes.length > 0 && !validSizes.includes(shipSize)) {
+        messages.push(`Only works on ${validSizes.join(', ')} ships`);
+      }
+    }
+
+    // Check traits restrictions
+    if (upgrade.restrictions?.traits && upgrade.restrictions.traits.length > 0 && shipTraits) {
+      const validTraits = upgrade.restrictions.traits.filter(trait => trait.trim() !== '');
+      if (validTraits.length > 0) {
+        const hasRequiredTrait = validTraits.some(trait => shipTraits.includes(trait));
+        if (!hasRequiredTrait) {
+          messages.push(`Requires ship trait: ${validTraits.join(' or ')}`);
+        }
+      }
+    }
+
+    // Check keyword restrictions for squadron upgrades
+    if (isSquadronUpgrade && upgrade.restrictions?.keywords && upgrade.restrictions.keywords.length > 0) {
+      const validKeywords = upgrade.restrictions.keywords.filter(keyword => keyword.trim() !== '');
+      if (validKeywords.length > 0) {
+        const hasRequiredKeyword = validKeywords.some(keyword => squadronKeywords.includes(keyword));
+        if (!hasRequiredKeyword) {
+          messages.push(`Requires squadron keyword: ${validKeywords.join(' or ')}`);
+        }
+      }
+    }
+
+    // Check disallowed keyword restrictions for squadron upgrades
+    if (isSquadronUpgrade && upgrade.restrictions?.["disallowed-keywords"] && upgrade.restrictions["disallowed-keywords"].length > 0) {
+      const disallowedKeywords = upgrade.restrictions["disallowed-keywords"].filter(keyword => keyword.trim() !== '');
+      if (disallowedKeywords.length > 0) {
+        const hasDisallowedKeyword = disallowedKeywords.some(keyword => squadronKeywords.includes(keyword));
+        if (hasDisallowedKeyword) {
+          messages.push(`Cannot be used with: ${disallowedKeywords.join(', ')}`);
+        }
+      }
+    }
+
+    // Check flagship restrictions
+    if (upgrade.restrictions?.flagship === true) {
+      const hasCommander = currentShipUpgrades.some(u => u.type === 'commander');
+      if (!hasCommander) {
+        messages.push("Requires a commander on this ship");
+      }
+    }
+
+    // Check disqualify_if restrictions
+    if (upgrade.restrictions?.disqualify_if) {
+      const disqualify = upgrade.restrictions.disqualify_if;
+      if (shipSize && disqualify.size && disqualify.size.includes(shipSize)) {
+        if (disqualify.has_upgrade_type) {
+          const hasDisqualifyingUpgrade = disqualify.has_upgrade_type.some(type => 
+            currentShipUpgrades.some(u => u.type === type) || 
+            ship.availableUpgrades.includes(type)
+          );
+          if (hasDisqualifyingUpgrade) {
+            messages.push(`Cannot be used on ${shipSize} ships with ${disqualify.has_upgrade_type.join(', ')} upgrades`);
+          }
+        }
+      }
+    }
+
+    // Check grey_upgrades restrictions
+    if (upgrade.restrictions?.grey_upgrades) {
+      for (const greyType of upgrade.restrictions.grey_upgrades) {
+        const totalSlots = ship.availableUpgrades.filter(u => u === greyType).length;
+        const filledSlots = currentShipUpgrades.filter(u => u.type === greyType).length;
+        if (totalSlots <= filledSlots) {
+          messages.push(`Requires available ${greyType} slot`);
+          break;
+        }
+      }
+    }
+
+    // Check huge ship enable_upgrades restrictions
+    if ((shipSize === 'huge' || shipSize === '280-huge') && upgrade.restrictions?.enable_upgrades && upgrade.restrictions.enable_upgrades.length > 0 && upgrade.restrictions.enable_upgrades.some(upgrade => upgrade.trim() !== '')) {
+      messages.push("Huge ships cannot have upgrades that enable other upgrades");
+    }
+
+    // Check unique-class restrictions
+    if (upgrade["unique-class"] && upgrade["unique-class"].length > 0) {
+      const conflictingUniqueClasses = upgrade["unique-class"].filter(uc => 
+        uc !== "" && uniqueClassNames.includes(uc) && 
+        !selectedUpgrades.some(su => su["unique-class"]?.includes(uc))
+      );
+      if (conflictingUniqueClasses.length > 0) {
+        messages.push(`Unique class already in use: ${conflictingUniqueClasses.join(', ')}`);
+      }
+    }
+
+    return messages;
+  };
+
   const handleUpgradeClick = (upgrade: Upgrade) => {
     if (isUpgradeAvailable(upgrade) && !isUpgradeGreyedOut(upgrade)) {
       onSelectUpgrade(upgrade);
@@ -669,22 +838,13 @@ export default function UpgradeSelector({
                         <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 p-2">
                           <div className="text-white text-xs text-center leading-tight w-full px-1">
                             <span className="break-words block" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', whiteSpace: 'normal' }}>
-                            {upgradeType === 'commander' && gamemodeRestrictions && (
-                              <>
-                                {gamemodeRestrictions.allowedCommanders && !gamemodeRestrictions.allowedCommanders.includes(upgrade.name) && 
-                                  "Not allowed in current gamemode"}
-                                {gamemodeRestrictions.disallowedCommanders && gamemodeRestrictions.disallowedCommanders.includes(upgrade.name) && 
-                                  "Not allowed in current gamemode"}
-                              </>
-                            )}
-                            {gamemodeRestrictions?.allowedUpgradeUniqueClasses && upgrade['unique-class'] &&
-                             !upgrade['unique-class'].some(uc => gamemodeRestrictions.allowedUpgradeUniqueClasses!.includes(uc)) && 
-                              "Upgrade unique class not allowed in this gamemode"}
-                            {gamemodeRestrictions?.disallowedUpgradeUniqueClasses && upgrade['unique-class'] &&
-                             upgrade['unique-class'].some(uc => gamemodeRestrictions.disallowedUpgradeUniqueClasses!.includes(uc)) && 
-                              "Upgrade unique class not allowed in this gamemode"}
-                            {upgrade["unique-class"]?.some(uc => uc !== "" && uniqueClassNames.includes(uc)) && 
-                              "Unique class already in use"}
+                            {(() => {
+                              const messages = getUpgradeRestrictionMessages(upgrade);
+                              if (messages.length === 0) {
+                                return "Upgrade not available";
+                              }
+                              return messages.join(' • ');
+                            })()}
                             </span>
                           </div>
                         </div>
