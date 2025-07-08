@@ -1927,7 +1927,7 @@ export default function FleetBuilder({
         }, {} as Record<string, { count: number; isUnique: boolean; points: number }>);
 
         Object.entries(groupedSquadrons).forEach(
-          ([baseKey, { count, isUnique, points }]) => {
+          ([baseKey, { count, points }]) => {
             // Calculate total points and create the display key
             const totalPoints = points * count;
             const displayKey = baseKey + " (" + totalPoints + ")";
