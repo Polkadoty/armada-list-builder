@@ -461,6 +461,9 @@ export function FleetList() {
   // Use ref to store fetchFleets to avoid circular dependencies
   const fetchFleetsRef = useRef<() => Promise<void>>();
   
+  // Track if a fetch is already in progress
+  const fetchInProgress = useRef(false);
+  
   // Pagination for dropdown menus
   const [factionPage, setFactionPage] = useState(0);
   const [commanderPage, setCommanderPage] = useState(0);
@@ -487,6 +490,13 @@ export function FleetList() {
   const fetchFleets = useCallback(async () => {
     if (!user?.sub || !isMounted.current) return;
     
+    // Prevent concurrent fetches
+    if (fetchInProgress.current) {
+      console.log("Fetch already in progress, skipping...");
+      return;
+    }
+    
+    fetchInProgress.current = true;
     console.log("Starting to fetch fleets...");
     setIsLoading(true);
     setLoadingMessage("Fetching your fleets...");
@@ -546,13 +556,16 @@ export function FleetList() {
       }
       
       // Simplify Supabase update - only update if needed
-      const fleetsNeedingUpdate = processedFleets.filter(fleet => 
-        fleet.legends !== getContentTypes(fleet.fleet_data).legends ||
-        fleet.legacy !== getContentTypes(fleet.fleet_data).legacy ||
-        fleet.legacy_beta !== getContentTypes(fleet.fleet_data).legacy_beta ||
-        fleet.arc !== getContentTypes(fleet.fleet_data).arc ||
-        fleet.nexus !== getContentTypes(fleet.fleet_data).nexus
-      );
+      const fleetsNeedingUpdate = processedFleets.filter(fleet => {
+        const currentContentTypes = getContentTypes(fleet.fleet_data);
+        return (
+          fleet.legends !== currentContentTypes.legends ||
+          fleet.legacy !== currentContentTypes.legacy ||
+          fleet.legacy_beta !== currentContentTypes.legacy_beta ||
+          fleet.arc !== currentContentTypes.arc ||
+          fleet.nexus !== currentContentTypes.nexus
+        );
+      });
       
       // Update content flags in database if needed, but continue regardless
       if (fleetsNeedingUpdate.length > 0) {
@@ -572,13 +585,14 @@ export function FleetList() {
       console.error('Error in fetchFleets:', error);
     } finally {
       clearTimeout(timeoutId);
+      fetchInProgress.current = false;
       if (isMounted.current) {
         setIsLoading(false);
         setLoadingMessage("");
         setLoadingProgress(0);
       }
     }
-  }, [user?.sub]); // Remove isLoading from dependency array to break circular dependency
+  }, [user?.sub]); // Only depend on user.sub to avoid circular dependencies
   
   // Store fetchFleets in ref to avoid circular dependencies
   fetchFleetsRef.current = fetchFleets;
@@ -587,7 +601,7 @@ export function FleetList() {
   const handleDialogOpenChange = useCallback((open: boolean) => {
     console.log(`Dialog open state changed to: ${open}`);
     setIsDialogOpen(open);
-    if (open && user && fetchFleetsRef.current) {
+    if (open && user && fetchFleetsRef.current && !fetchInProgress.current) {
       fetchFleetsRef.current();
     }
   }, [user]);
@@ -1089,25 +1103,16 @@ export function FleetList() {
     isLoading,
     fleets.length,
     searchQuery,
-    handleSearchQueryChange,
     factionFilter,
     commanderFilter,
     uniqueFactions,
     uniqueCommanders,
     paginatedFleets,
     theme,
-    handleFleetSelect,
-    handleFleetDelete,
-    handleFleetCopy,
-    handleToggleShare,
-    handleCopyLink,
-    handleCopyText,
-    handleOpenRenameDialog,
     currentPage,
     totalPages,
     showDeleteConfirmation,
-    fleetToDelete,
-    confirmDelete
+    fleetToDelete
   ]);
 
   // Memoize dialog render content to avoid re-rendering when closed
@@ -1319,46 +1324,24 @@ export function FleetList() {
     fleets.length,
     theme, 
     searchQuery, 
-    handleSearchQueryChange,
     factionDropdownOpen, 
-    setFactionDropdownOpen,
     paginatedFactions,
-    handleFactionFilterChange,
-    capitalizeFirstLetter,
     totalFactionPages,
-    handleFactionPageChange,
     factionPage,
     commanderDropdownOpen,
-    setCommanderDropdownOpen,
     commanderSearchQuery,
     paginatedCommanders,
-    handleCommanderFilterChange,
     totalCommanderPages,
-    handleCommanderPageChange,
     commanderPage,
-    setFactionFilter,
-    setCommanderFilter,
-    setSearchQuery,
     isMobile,
     sortColumn,
     sortDirection,
-    handleSort,
     paginatedFleets,
-    handleFleetSelect,
-    handleFleetDelete,
-    handleFleetCopy,
-    handleToggleShare,
-    handleCopyLink,
-    handleCopyText,
-    handleOpenRenameDialog,
     currentPage,
     totalPages,
-    setCurrentPage,
     rowsPerPage,
-    setRowsPerPage,
     showDeleteConfirmation,
-    fleetToDelete,
-    confirmDelete
+    fleetToDelete
   ]);
 
   // Return either the Dialog or Sheet based on screen size
