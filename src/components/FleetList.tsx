@@ -132,8 +132,23 @@ const TableHeaderMemo = memo(({
 
 TableHeaderMemo.displayName = 'TableHeaderMemo';
 
-// Memoized fleet row component
-const FleetRowMemo = memo(({ 
+// Props interface for FleetRowMemo
+interface FleetRowProps {
+  fleet: Fleet;
+  handleFleetSelect: (fleet: Fleet) => void;
+  handleFleetDelete: (fleet: Fleet) => void;
+  handleFleetCopy: (fleet: Fleet) => void;
+  handleToggleShare: (fleet: Fleet) => void;
+  handleCopyLink: (fleet: Fleet) => void;
+  handleCopyText: (fleet: Fleet) => void;
+  theme: string | undefined;
+  columns: SortableColumn[];
+  capitalizeFirstLetter: (s: string) => string;
+  handleOpenRenameDialog: (fleet: Fleet) => void;
+}
+
+// Fleet row component
+const FleetRow = ({ 
   fleet, 
   handleFleetSelect, 
   handleFleetDelete, 
@@ -145,19 +160,7 @@ const FleetRowMemo = memo(({
   columns,
   capitalizeFirstLetter,
   handleOpenRenameDialog,
-}: { 
-  fleet: Fleet, 
-  handleFleetSelect: (fleet: Fleet) => void,
-  handleFleetDelete: (fleet: Fleet) => void,
-  handleFleetCopy: (fleet: Fleet) => void,
-  handleToggleShare: (fleet: Fleet) => void,
-  handleCopyLink: (fleet: Fleet) => void,
-  handleCopyText: (fleet: Fleet) => void,
-  theme: string | undefined,
-  columns: SortableColumn[],
-  capitalizeFirstLetter: (s: string) => string,
-  handleOpenRenameDialog: (fleet: Fleet) => void,
-}) => (
+}: FleetRowProps) => (
   <TableRow key={fleet.id} className={`hover:bg-muted/50 border-b ${
     theme === 'light' ? 'text-zinc-900' : 'text-foreground'
   }`}>
@@ -220,7 +223,10 @@ const FleetRowMemo = memo(({
       </DropdownMenu>
     </TableCell>
   </TableRow>
-));
+);
+
+// Simplified memoized fleet row component
+const FleetRowMemo = memo(FleetRow);
 
 FleetRowMemo.displayName = 'FleetRowMemo';
 
@@ -322,8 +328,21 @@ function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue;
 }
 
-// Add a simplified fleet card component for mobile
-const FleetCard = memo(({
+// Props interface for FleetCard
+interface FleetCardProps {
+  fleet: Fleet;
+  handleFleetSelect: (fleet: Fleet) => void;
+  handleFleetDelete: (fleet: Fleet) => void;
+  handleFleetCopy: (fleet: Fleet) => void;
+  handleToggleShare: (fleet: Fleet) => void;
+  handleCopyLink: (fleet: Fleet) => void;
+  handleCopyText: (fleet: Fleet) => void;
+  theme: string | undefined;
+  handleOpenRenameDialog: (fleet: Fleet) => void;
+}
+
+// Fleet card component for mobile
+const FleetCardComponent = ({
   fleet,
   handleFleetSelect,
   handleFleetDelete,
@@ -333,17 +352,7 @@ const FleetCard = memo(({
   handleCopyText,
   theme,
   handleOpenRenameDialog,
-}: {
-  fleet: Fleet,
-  handleFleetSelect: (fleet: Fleet) => void,
-  handleFleetDelete: (fleet: Fleet) => void,
-  handleFleetCopy: (fleet: Fleet) => void,
-  handleToggleShare: (fleet: Fleet) => void,
-  handleCopyLink: (fleet: Fleet) => void,
-  handleCopyText: (fleet: Fleet) => void,
-  theme: string | undefined,
-  handleOpenRenameDialog: (fleet: Fleet) => void,
-}) => (
+}: FleetCardProps) => (
   <Card className={`mb-3 ${theme === 'light' ? 'bg-white' : 'bg-zinc-800'} border-zinc-200 dark:border-zinc-700`}>
     <CardContent className="p-4">
       <div className="flex justify-between items-start mb-2">
@@ -425,7 +434,10 @@ const FleetCard = memo(({
       </div>
     </CardContent>
   </Card>
-));
+);
+
+// Simplified memoized fleet card component
+const FleetCard = memo(FleetCardComponent);
 
 FleetCard.displayName = 'FleetCard';
 
@@ -597,6 +609,13 @@ export function FleetList() {
   // Store fetchFleets in ref to avoid circular dependencies
   fetchFleetsRef.current = fetchFleets;
   
+  // Create a debounced refresh function to prevent cascading calls
+  const debouncedRefresh = useCallback(() => {
+    if (fetchFleetsRef.current && !fetchInProgress.current) {
+      fetchFleetsRef.current();
+    }
+  }, []);
+  
   // Only fetch fleets when dialog is opened
   const handleDialogOpenChange = useCallback((open: boolean) => {
     console.log(`Dialog open state changed to: ${open}`);
@@ -606,6 +625,7 @@ export function FleetList() {
     }
   }, [user]);
 
+  // Create stable handlers that won't cause recursion
   const handleFleetSelect = useCallback((fleet: Fleet) => {
     // Clear any existing fleet data for all factions
     const factions = ['rebel', 'empire', 'republic', 'separatist', 'unsc', 'covenant', 'colonial', 'cylon', 'sandbox', 'scum', 'new-republic', 'first-order', 'resistance'];
@@ -743,11 +763,7 @@ export function FleetList() {
       } else {
         setLoadingProgress(100);
         // Use setTimeout to prevent immediate re-render cascade
-        setTimeout(() => {
-          if (fetchFleetsRef.current && !fetchInProgress.current) {
-            fetchFleetsRef.current();
-          }
-        }, 100);
+        setTimeout(debouncedRefresh, 100);
       }
     } finally {
       setIsLoading(false);
@@ -756,7 +772,7 @@ export function FleetList() {
       setShowDeleteConfirmation(false);
       setFleetToDelete(null);
     }
-  }, [fleetToDelete, user]);
+  }, [fleetToDelete, user, debouncedRefresh]);
 
   const handleFleetRename = useCallback(async () => {
     if (!fleetToRename || !user || !newFleetName.trim()) return;
@@ -790,11 +806,7 @@ export function FleetList() {
       } else {
         setLoadingProgress(100);
         // Use setTimeout to prevent immediate re-render cascade
-        setTimeout(() => {
-          if (fetchFleetsRef.current && !fetchInProgress.current) {
-            fetchFleetsRef.current();
-          }
-        }, 100);
+        setTimeout(debouncedRefresh, 100);
       }
     } finally {
       setIsLoading(false);
@@ -804,7 +816,7 @@ export function FleetList() {
       setFleetToRename(null);
       setNewFleetName('');
     }
-  }, [fleetToRename, user, newFleetName]);
+  }, [fleetToRename, user, newFleetName, debouncedRefresh]);
 
   const handleFleetCopy = useCallback(async (fleet: Fleet) => {
     if (!user) return;
@@ -836,18 +848,14 @@ export function FleetList() {
       } else {
         setLoadingProgress(100);
         // Use setTimeout to prevent immediate re-render cascade
-        setTimeout(() => {
-          if (fetchFleetsRef.current && !fetchInProgress.current) {
-            fetchFleetsRef.current();
-          }
-        }, 100);
+        setTimeout(debouncedRefresh, 100);
       }
     } finally {
       setIsLoading(false);
       setLoadingMessage("");
       setLoadingProgress(0);
     }
-  }, [user]);
+  }, [user, debouncedRefresh]);
 
   const handleToggleShare = useCallback(async (fleet: Fleet) => {
     if (!user) return;
@@ -868,15 +876,11 @@ export function FleetList() {
       }
       
       // Use setTimeout to prevent immediate re-render cascade
-      setTimeout(() => {
-        if (fetchFleetsRef.current && !fetchInProgress.current) {
-          fetchFleetsRef.current();
-        }
-      }, 100);
+      setTimeout(debouncedRefresh, 100);
     } catch (error) {
       console.error('Error toggling share status:', error);
     }
-  }, [user]);
+  }, [user, debouncedRefresh]);
 
   const handleCopyLink = useCallback(async (fleet: Fleet) => {
     if (!fleet.shared) {
