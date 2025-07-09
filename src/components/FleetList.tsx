@@ -719,7 +719,7 @@ export function FleetList() {
     [uniqueFactions.length]
   );
 
-  const handleFleetDelete = useCallback(async (fleet: Fleet) => {
+  const handleFleetDelete = useCallback((fleet: Fleet) => {
     setFleetToDelete(fleet);
     setShowDeleteConfirmation(true);
   }, []);
@@ -742,9 +742,12 @@ export function FleetList() {
         console.error('Error deleting fleet:', error);
       } else {
         setLoadingProgress(100);
-        if (fetchFleetsRef.current) {
-          await fetchFleetsRef.current();
-        }
+        // Use setTimeout to prevent immediate re-render cascade
+        setTimeout(() => {
+          if (fetchFleetsRef.current && !fetchInProgress.current) {
+            fetchFleetsRef.current();
+          }
+        }, 100);
       }
     } finally {
       setIsLoading(false);
@@ -786,9 +789,12 @@ export function FleetList() {
         console.error('Error renaming fleet:', error);
       } else {
         setLoadingProgress(100);
-        if (fetchFleetsRef.current) {
-          await fetchFleetsRef.current();
-        }
+        // Use setTimeout to prevent immediate re-render cascade
+        setTimeout(() => {
+          if (fetchFleetsRef.current && !fetchInProgress.current) {
+            fetchFleetsRef.current();
+          }
+        }, 100);
       }
     } finally {
       setIsLoading(false);
@@ -829,9 +835,12 @@ export function FleetList() {
         console.error('Error copying fleet:', error);
       } else {
         setLoadingProgress(100);
-        if (fetchFleetsRef.current) {
-          await fetchFleetsRef.current();
-        }
+        // Use setTimeout to prevent immediate re-render cascade
+        setTimeout(() => {
+          if (fetchFleetsRef.current && !fetchInProgress.current) {
+            fetchFleetsRef.current();
+          }
+        }, 100);
       }
     } finally {
       setIsLoading(false);
@@ -858,9 +867,12 @@ export function FleetList() {
         setShowNotification(true);
       }
       
-      if (fetchFleetsRef.current) {
-        await fetchFleetsRef.current();
-      }
+      // Use setTimeout to prevent immediate re-render cascade
+      setTimeout(() => {
+        if (fetchFleetsRef.current && !fetchInProgress.current) {
+          fetchFleetsRef.current();
+        }
+      }, 100);
     } catch (error) {
       console.error('Error toggling share status:', error);
     }
