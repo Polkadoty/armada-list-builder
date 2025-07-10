@@ -32,9 +32,8 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
   const startX = useRef(0);
   const startY = useRef(0);
   const isHorizontalSwipe = useRef(false);
+  const currentDeltaX = useRef(0);
   const [showImageModal, setShowImageModal] = useState(false);
-  const [showEyeIcon, setShowEyeIcon] = useState(false);
-  const eyeIconTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const SWIPE_THRESHOLD = 100;
   const ANGLE_THRESHOLD = 30; // Degrees
@@ -44,6 +43,7 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
     startX.current = e.touches[0].clientX;
     startY.current = e.touches[0].clientY;
     isHorizontalSwipe.current = false;
+    currentDeltaX.current = 0;
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -61,110 +61,69 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
 
     if (isHorizontalSwipe.current) {
       e.preventDefault();
+      currentDeltaX.current = deltaX;
       api.start({ x: deltaX, immediate: true });
     }
   };
 
   const handleTouchEnd = () => {
-    isDragging.current = false;
+    if (!isDragging.current) return;
+    
     if (isHorizontalSwipe.current) {
-      const currentX = x.get();
-      if (currentX < -SWIPE_THRESHOLD) {
+      if (currentDeltaX.current < -SWIPE_THRESHOLD) {
+        // Swipe left - remove/decrement
         if (squadron.count === 1) {
           onRemove(squadron.id);
         } else {
           onDecrement(squadron.id);
         }
-      } else if (currentX > SWIPE_THRESHOLD) {
+      } else if (currentDeltaX.current > SWIPE_THRESHOLD) {
+        // Swipe right - increment or swap
         if (squadron.unique && (!squadron.unique_limit || squadron.unique_limit <= 1)) {
           onSwapSquadron(squadron.id);
-        } else if (shouldShowIncrementButtons() && canIncrement()) {
+        } else {
           onIncrement(squadron.id);
         }
       }
     }
-    api.start({ x: 0, immediate: false });
+    
+    api.start({ x: 0 });
+    isDragging.current = false;
     isHorizontalSwipe.current = false;
-  };
-
-  const count = squadron.count || 1;
-  const squadronBasePoints = squadron.points * count;
-  const upgradePoints = (squadron.assignedUpgrades || []).reduce((total, upgrade) => total + upgrade.points, 0);
-  const totalPoints = squadronBasePoints + upgradePoints;
-
-  // Determine if increment/decrement buttons should be shown
-  const shouldShowIncrementButtons = () => {
-    if (!squadron.unique) {
-      return true; // Always show for non-unique squadrons
-    }
-    
-    if (squadron.unique_limit && squadron.unique_limit > 1) {
-      // For unique squadrons with unique_limit > 1, show buttons
-      return true;
-    }
-    
-    return false; // Don't show for unique squadrons without unique_limit > 1
-  };
-
-  // Calculate current count of this squadron type (for unique_limit checking)
-  const getCurrentSquadronTypeCount = () => {
-    return selectedSquadrons.reduce((count, s) => {
-      if (s.name === squadron.name) {
-        return count + (s.count || 1);
-      }
-      return count;
-    }, 0);
-  };
-
-  // Check if we can increment (for unique_limit checking)
-  const canIncrement = () => {
-    if (!squadron.unique || !squadron.unique_limit || squadron.unique_limit <= 1) {
-      return true; // No limit to check
-    }
-    
-    return getCurrentSquadronTypeCount() < squadron.unique_limit;
-  };
-
-  const handleImageClick = () => {
-    // Only handle click if not swiping
-    if (!isDragging.current) {
-      if (showEyeIcon) {
-        // Second click - open modal
-        if (eyeIconTimeoutRef.current) {
-          clearTimeout(eyeIconTimeoutRef.current);
-          eyeIconTimeoutRef.current = null;
-        }
-        setShowImageModal(true);
-        setShowEyeIcon(false);
-      } else {
-        // First click - show eye icon
-        setShowEyeIcon(true);
-        
-        // Hide eye icon after 3 seconds if no second click
-        if (eyeIconTimeoutRef.current) {
-          clearTimeout(eyeIconTimeoutRef.current);
-        }
-        eyeIconTimeoutRef.current = setTimeout(() => {
-          setShowEyeIcon(false);
-          eyeIconTimeoutRef.current = null;
-        }, 3000);
-      }
-    }
   };
 
   const handleImageTouch = (e: React.TouchEvent) => {
     e.preventDefault();
-    handleImageClick();
+    // Only open modal if not swiping
+    if (!isDragging.current) {
+      setShowImageModal(true);
+    }
   };
 
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (eyeIconTimeoutRef.current) {
-        clearTimeout(eyeIconTimeoutRef.current);
-      }
-    };
-  }, []);
+  const shouldShowIncrementButtons = () => {
+    // Hide for unique squadrons (except in Fighter Group mode)
+    if (squadron.unique && gamemode !== "Fighter Group") {
+      return false;
+    }
+    
+    // Hide for generic squadrons if only one is selected
+    if (!squadron.unique && squadron.count === 1) {
+      return false;
+    }
+    
+    return true;
+  };
+
+  const getCurrentSquadronTypeCount = () => {
+    return selectedSquadrons.filter(s => s.name === squadron.name).reduce((acc, s) => acc + s.count, 0);
+  };
+
+  const canIncrement = () => {
+    return getCurrentSquadronTypeCount() < (squadron.unique_limit || 1);
+  };
+
+  const count = squadron.count;
+  const totalPoints = squadron.points * count;
 
   return (
     <div className="relative overflow-hidden mb-4">
@@ -184,19 +143,20 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
                   width={250}
                   height={350}
                   className="object-cover object-top scale-[103%] rounded-l-lg absolute top-0 left-0" // Added absolute positioning
-                  onClick={handleImageClick}
+                  onClick={() => setShowImageModal(true)}
                 />
                 <button
-                  className={`absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-200 ${
-                    showEyeIcon ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-                  }`}
+                  className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleImageClick();
+                    // Only open modal if not swiping
+                    if (!isDragging.current) {
+                      setShowImageModal(true);
+                    }
                   }}
                   onTouchEnd={handleImageTouch}
                 >
-                  <Eye size={16} className="text-current" />
+                  <Eye size={16} className="text-white" />
                 </button>
               </div>
               <div className="flex-grow p-2"> {/* Added padding here */}
