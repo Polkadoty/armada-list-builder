@@ -101,17 +101,23 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
   };
 
   const shouldShowIncrementButtons = () => {
-    // Hide for unique squadrons (except in Fighter Group mode)
-    if (squadron.unique && gamemode !== "Fighter Group") {
-      return false;
+    // Show for non-unique squadrons (generic squadrons can always be incremented)
+    if (!squadron.unique) {
+      return true;
     }
     
-    // Hide for generic squadrons if only one is selected
-    if (!squadron.unique && squadron.count === 1) {
-      return false;
+    // Show for unique squadrons in Fighter Group mode
+    if (gamemode === "Fighter Group") {
+      return true;
     }
     
-    return true;
+    // Show for unique squadrons with unique_limit > 1 (they can create new copies)
+    if (squadron.unique && squadron.unique_limit && squadron.unique_limit > 1) {
+      return true;
+    }
+    
+    // Hide for regular unique squadrons (traditional unique behavior)
+    return false;
   };
 
   const getCurrentSquadronTypeCount = () => {
@@ -119,6 +125,12 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
   };
 
   const canIncrement = () => {
+    // Non-unique squadrons have no practical limit
+    if (!squadron.unique) {
+      return true;
+    }
+    
+    // Unique squadrons respect their unique_limit (default to 1 if not specified)
     return getCurrentSquadronTypeCount() < (squadron.unique_limit || 1);
   };
 
