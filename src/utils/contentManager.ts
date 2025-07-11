@@ -102,7 +102,7 @@ export async function smartCheckAndFetchData(
       console.log('Current state:', currentState);
     }
     
-    await checkAndFetchData(setIsLoading, setLoadingProgress, setLoadingMessage);
+    await checkAndFetchData(setIsLoading, setLoadingProgress, setLoadingMessage, forceReload);
     setLoadedContentState(currentState);
   } else {
     console.log('Content state unchanged, skipping data fetch entirely');
@@ -117,7 +117,10 @@ async function checkForApiUpdatesOnly(): Promise<void> {
   try {
     // Use primary API URL for quick lastModified check
     const primaryApiUrl = process.env.NEXT_PUBLIC_PRIMARY_API_URL || 'https://api.swarmada.wiki';
-    const response = await fetch(primaryApiUrl);
+    const response = await fetch(primaryApiUrl, {
+      cache: 'no-cache',
+      headers: { 'Cache-Control': 'no-cache' }
+    });
     const data = await response.json();
     const lastModified = data.lastModified;
     const savedLastModified = Cookies.get('lastModified');

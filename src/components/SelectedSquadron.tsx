@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState} from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { useSpring, animated } from 'react-spring';
 import { Squadron } from './FleetBuilder';

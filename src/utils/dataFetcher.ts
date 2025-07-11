@@ -3,9 +3,14 @@ import Cookies from 'js-cookie';
 const getPrimaryApiUrl = () => process.env.NEXT_PUBLIC_PRIMARY_API_URL || 'https://api.swarmada.wiki';
 const getBackupApiUrl = () => process.env.NEXT_PUBLIC_BACKUP_API_URL || 'https://api-backup.swarmada.wiki';
 
-const checkApiHealth = async (url: string): Promise<boolean> => {
+const checkApiHealth = async (url: string, bustCache: boolean = false): Promise<boolean> => {
   try {
-    const response = await fetch(url, { signal: AbortSignal.timeout(5000) });
+    const fetchUrl = bustCache ? `${url}?_t=${Date.now()}` : url;
+    const response = await fetch(fetchUrl, { 
+      signal: AbortSignal.timeout(5000),
+      cache: bustCache ? 'no-cache' : 'default',
+      headers: bustCache ? { 'Cache-Control': 'no-cache' } : {}
+    });
     const data = await response.json();
     return !!data.lastModified;
   } catch {
@@ -13,7 +18,7 @@ const checkApiHealth = async (url: string): Promise<boolean> => {
   }
 };
 
-const getApiUrl = async (): Promise<string> => {
+const getApiUrl = async (bustCache: boolean = false): Promise<string> => {
   const useBackup = process.env.NEXT_PUBLIC_USE_BACKUP_API === 'true';
   const primaryUrl = getPrimaryApiUrl();
   const backupUrl = getBackupApiUrl();
@@ -23,21 +28,30 @@ const getApiUrl = async (): Promise<string> => {
   }
 
   // Check if primary API is healthy
-  const isPrimaryHealthy = await checkApiHealth(primaryUrl);
+  const isPrimaryHealthy = await checkApiHealth(primaryUrl, bustCache);
   return isPrimaryHealthy ? primaryUrl : backupUrl;
 };
 
 export const checkAndFetchData = async (
   setIsLoading: (isLoading: boolean) => void,
   setLoadingProgress: (progress: number) => void,
-  setLoadingMessage: (message: string) => void
+  setLoadingMessage: (message: string) => void,
+  forceReload: boolean = false
 ) => {
   try {
-    const apiUrl = await getApiUrl();
-    const response = await fetch(apiUrl);
+    const apiUrl = await getApiUrl(forceReload);
+    const fetchUrl = forceReload ? `${apiUrl}?_t=${Date.now()}` : apiUrl;
+    const response = await fetch(fetchUrl, {
+      cache: forceReload ? 'no-cache' : 'default',
+      headers: forceReload ? { 'Cache-Control': 'no-cache' } : {}
+    });
     const data = await response.json();
     const lastModified = data.lastModified;
     const savedLastModified = Cookies.get('lastModified');
+    
+    console.log('API lastModified:', lastModified);
+    console.log('Saved lastModified:', savedLastModified);
+    
     const isDataMissing =
       !localStorage.getItem("ships") ||
       !localStorage.getItem("squadrons") ||
@@ -47,11 +61,14 @@ export const checkAndFetchData = async (
       !localStorage.getItem("aliases")
       // !localStorage.getItem("updates")
 
-    if (savedLastModified !== lastModified || isDataMissing) {
+    if (forceReload || savedLastModified !== lastModified || isDataMissing) {
+      console.log('Triggering data fetch:', { forceReload, lastModifiedChanged: savedLastModified !== lastModified, isDataMissing });
       setIsLoading(true);
-      await fetchAndSaveData(setLoadingProgress, setLoadingMessage);
+      await fetchAndSaveData(setLoadingProgress, setLoadingMessage, forceReload);
       Cookies.set('lastModified', lastModified, { expires: 7, sameSite: 'Strict' });
       setIsLoading(false);
+    } else {
+      console.log('Data is up to date, skipping fetch');
     }
   } catch (error) {
     console.error('Error checking API status:', error);
@@ -60,9 +77,10 @@ export const checkAndFetchData = async (
 
 const fetchAndSaveData = async (
   setLoadingProgress: (progress: number) => void,
-  setLoadingMessage: (message: string) => void
+  setLoadingMessage: (message: string) => void,
+  forceReload: boolean = false
 ) => {
-  const apiUrl = await getApiUrl();
+  const apiUrl = await getApiUrl(forceReload);
   const enableLegacy = Cookies.get('enableLegacy') === 'true';
   const enableLegends = Cookies.get('enableLegends') === 'true';
   const enableNexus = Cookies.get('enableNexus') === 'true';
@@ -124,13 +142,21 @@ const fetchAndSaveData = async (
     );
   }
 
+  const cacheBustParam = forceReload ? `?_t=${Date.now()}` : '';
+  const fetchOptions = forceReload ? {
+    cache: 'no-cache' as RequestCache,
+    headers: { 'Cache-Control': 'no-cache' }
+  } : {};
+
   for (let i = 0; i < endpoints.length; i++) {
     const { name, url } = endpoints[i];
     setLoadingMessage(`Fetching ${name} data...`);
     setLoadingProgress((i / endpoints.length) * 100);
 
     try {
-      const response = await fetch(`${apiUrl}${url}`);
+      const fetchUrl = `${apiUrl}${url}${cacheBustParam}`;
+      console.log(`Fetching ${name} from: ${fetchUrl}`);
+      const response = await fetch(fetchUrl, fetchOptions);
       const data = await response.json();
       localStorage.setItem(name, JSON.stringify(data));
     } catch (error) {
@@ -142,13 +168,21 @@ const fetchAndSaveData = async (
   setLoadingMessage('Data loading complete!');
 };
 
-export const flushCacheAndReload = async (setIsLoading: (isLoading: boolean) => void, setLoadingProgress: (progress: number) => void, setLoadingMessage: (message: string) => void) => {
+export const flushCacheAndReload = async (
+  setIsLoading: (isLoading: boolean) => void, 
+  setLoadingProgress: (progress: number) => void, 
+  setLoadingMessage: (message: string) => void
+) => {
+  console.log('Flush cache and reload triggered');
+  
   // Clear existing caches
   if ('caches' in window) {
     try {
-      await caches.delete('optimized-images');
+      const cacheNames = await caches.keys();
+      await Promise.all(cacheNames.map(cacheName => caches.delete(cacheName)));
+      console.log('Cleared all browser caches');
     } catch (error) {
-      console.error('Error clearing image cache:', error);
+      console.error('Error clearing browser caches:', error);
     }
   }
   
@@ -157,52 +191,34 @@ export const flushCacheAndReload = async (setIsLoading: (isLoading: boolean) => 
   
   // Remove lastModified to force refresh
   Cookies.remove('lastModified');
+  console.log('Removed lastModified cookie');
 
   // Remove all localStorage items
-  localStorage.removeItem('ships');
-  localStorage.removeItem('squadrons');
-  localStorage.removeItem('objectives');
-  localStorage.removeItem('upgrades');
-  localStorage.removeItem('imageLinks');
-  localStorage.removeItem('aliases');
-  localStorage.removeItem('errataKeys');
-  localStorage.removeItem('expansions');
-  localStorage.removeItem('releases');
-  // localStorage.removeItem('updates');
+  const itemsToRemove = [
+    'ships', 'squadrons', 'objectives', 'upgrades', 'imageLinks', 'aliases', 
+    'errataKeys', 'expansions', 'releases', 'updates',
+    'amgShips', 'amgSquadrons', 'amgUpgrades', 'amgObjectives',
+    'legacyShips', 'legacySquadrons', 'legacyUpgrades',
+    'oldLegacyShips', 'oldLegacySquadrons', 'oldLegacyUpgrades',
+    'legendsShips', 'legendsSquadrons', 'legendsUpgrades',
+    'nexusShips', 'nexusSquadrons', 'nexusUpgrades',
+    'legacyBetaShips', 'legacyBetaSquadrons', 'legacyBetaUpgrades',
+    'arcShips', 'arcSquadrons', 'arcUpgrades', 'arcObjectives'
+  ];
 
-  // Remove AMG-specific items
-  localStorage.removeItem('amgShips');
-  localStorage.removeItem('amgSquadrons');
-  localStorage.removeItem('amgUpgrades');
-  localStorage.removeItem('amgObjectives');
-
-  // Remove other variant items
-  localStorage.removeItem('legacyShips');
-  localStorage.removeItem('legacySquadrons');
-  localStorage.removeItem('legacyUpgrades');
-  localStorage.removeItem('oldLegacyShips');
-  localStorage.removeItem('oldLegacySquadrons');
-  localStorage.removeItem('oldLegacyUpgrades');
-  localStorage.removeItem('legendsShips');
-  localStorage.removeItem('legendsSquadrons');
-  localStorage.removeItem('legendsUpgrades');
-  localStorage.removeItem('nexusShips');
-  localStorage.removeItem('nexusSquadrons');
-  localStorage.removeItem('nexusUpgrades');
-  localStorage.removeItem('legacyBetaShips');
-  localStorage.removeItem('legacyBetaSquadrons');
-  localStorage.removeItem('legacyBetaUpgrades');
-  localStorage.removeItem('arcShips');
-  localStorage.removeItem('arcSquadrons');
-  localStorage.removeItem('arcUpgrades');
-  localStorage.removeItem('arcObjectives');
+  itemsToRemove.forEach(item => {
+    localStorage.removeItem(item);
+  });
 
   // Reset sorting state cookies
   Cookies.remove('sortState_ships');
   Cookies.remove('sortState_squadrons');
   Cookies.remove('sortState_upgrades');
 
-  await checkAndFetchData(setIsLoading, setLoadingProgress, setLoadingMessage);
+  console.log('Cleared all localStorage items and sorting cookies');
+
+  // Force reload with cache busting
+  await checkAndFetchData(setIsLoading, setLoadingProgress, setLoadingMessage, true);
 };
 
 export const sanitizeImageUrl = (url: string): string => {
