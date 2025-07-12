@@ -324,7 +324,7 @@ export const OptimizedImage = memo(({
       {/* Optimized loading state */}
       {isLoading && !placeholderUrl && (
         <div 
-          className="absolute inset-0 flex items-center justify-center border-2 border-primary/20 rounded-lg backdrop-blur-sm bg-gradient-to-br from-gray-100/50 to-gray-200/50 dark:from-gray-800/50 dark:to-gray-900/50"
+          className="absolute inset-0 flex items-center justify-center border-2 border-primary/20 rounded-lg backdrop-blur-sm bg-transparent"
           style={{
             opacity: showFullImage ? 0 : 1,
             ...transitionStyles
@@ -341,7 +341,7 @@ export const OptimizedImage = memo(({
           alt={alt}
           width={width}
           height={height}
-          className={`${className} relative w-full h-full rounded-lg`}
+          className={`${className} relative w-full h-full rounded-lg bg-transparent`}
           style={imageStyles}
           loading={priority ? "eager" : "lazy"}
           decoding="async"
@@ -354,7 +354,7 @@ export const OptimizedImage = memo(({
       {/* Enhanced error state */}
       {hasError && (
         <div 
-          className="absolute inset-0 flex flex-col items-center justify-center border-2 border-red-500/20 rounded-lg bg-gradient-to-br from-red-50/50 to-red-100/50 dark:from-red-900/20 dark:to-red-800/20"
+          className="absolute inset-0 flex flex-col items-center justify-center border-2 border-red-500/20 rounded-lg bg-transparent"
           style={{
             opacity: 1,
             ...transitionStyles

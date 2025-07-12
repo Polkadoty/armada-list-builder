@@ -148,7 +148,7 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
         <Card>
           <CardContent className="p-0"> {/* Removed padding */}
             <div className="flex items-center">
-              <div className="w-2/5 aspect-[3.75/2] relative overflow-hidden group rounded-l-lg"> {/* Adjusted margin */}
+              <div className="w-2/5 aspect-[3.75/2] relative overflow-hidden group rounded-l-lg bg-transparent"> {/* Adjusted margin */}
                 <OptimizedImage 
                   src={squadron.cardimage} 
                   alt={squadron.unique && squadron['ace-name'] ? squadron['ace-name'] : squadron.name}

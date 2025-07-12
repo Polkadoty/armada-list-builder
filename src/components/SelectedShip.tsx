@@ -115,13 +115,13 @@ function SelectedShipComponent({ ship, onRemove, onUpgradeClick, onCopy, handleR
             <CardContent className="p-0">
               {!isDummy && (
                 <>
-                  <div className="relative w-full aspect-[8/3] overflow-hidden group rounded-t-lg">
+                  <div className="relative w-full aspect-[8/3] overflow-hidden group rounded-t-lg bg-transparent">
                     <OptimizedImage 
                       src={ship.cardimage} 
                       alt={ship.name}
                       width={800}
                       height={300}
-                      className="object-cover object-top scale-[103%]"
+                      className="object-cover object-top scale-[104%] absolute top-0 left-0 w-full h-full bg-transparent"
                       onClick={() => setShowImageModal(true)}
                     />
                     <button
