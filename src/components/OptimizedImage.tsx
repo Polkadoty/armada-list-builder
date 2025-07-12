@@ -15,6 +15,7 @@ interface OptimizedImageProps {
   onClick?: () => void;
   onError?: () => void;
   onLoad?: () => void;
+  loading?: 'eager' | 'lazy';
   debug?: boolean;
   // New props for animation control
   fadeInDuration?: number;
@@ -143,6 +144,7 @@ export const OptimizedImage = memo(({
   onClick,
   onError,
   onLoad,
+  loading = 'lazy',
   debug = false,
   fadeInDuration = 200,
   blurAmount = 8
@@ -343,7 +345,7 @@ export const OptimizedImage = memo(({
           height={height}
           className={`${className} relative w-full h-full rounded-lg bg-transparent`}
           style={imageStyles}
-          loading={priority ? "eager" : "lazy"}
+          loading={priority ? "eager" : loading}
           decoding="async"
           onLoad={handleLoad}
           onError={handleError}

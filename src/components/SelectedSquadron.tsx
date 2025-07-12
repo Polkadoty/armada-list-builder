@@ -32,7 +32,6 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
   const startX = useRef(0);
   const startY = useRef(0);
   const isHorizontalSwipe = useRef(false);
-  const currentDeltaX = useRef(0);
   const [showImageModal, setShowImageModal] = useState(false);
 
   const SWIPE_THRESHOLD = 100;
@@ -43,7 +42,6 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
     startX.current = e.touches[0].clientX;
     startY.current = e.touches[0].clientY;
     isHorizontalSwipe.current = false;
-    currentDeltaX.current = 0;
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -61,23 +59,27 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
 
     if (isHorizontalSwipe.current) {
       e.preventDefault();
-      currentDeltaX.current = deltaX;
+      e.stopPropagation();
       api.start({ x: deltaX, immediate: true });
+    } else if (Math.abs(deltaY) > 10) {
+      isDragging.current = false;
+      api.start({ x: 0, immediate: false });
     }
   };
 
   const handleTouchEnd = () => {
     if (!isDragging.current) return;
-    
+    isDragging.current = false;
     if (isHorizontalSwipe.current) {
-      if (currentDeltaX.current < -SWIPE_THRESHOLD) {
+      const currentX = x.get();
+      if (currentX < -SWIPE_THRESHOLD) {
         // Swipe left - remove/decrement
         if (squadron.count === 1) {
           onRemove(squadron.id);
         } else {
           onDecrement(squadron.id);
         }
-      } else if (currentDeltaX.current > SWIPE_THRESHOLD) {
+      } else if (currentX > SWIPE_THRESHOLD) {
         // Swipe right - increment or swap
         if (squadron.unique && (!squadron.unique_limit || squadron.unique_limit <= 1)) {
           onSwapSquadron(squadron.id);
@@ -86,16 +88,14 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
         }
       }
     }
-    
-    api.start({ x: 0 });
-    isDragging.current = false;
+    api.start({ x: 0, immediate: false });
     isHorizontalSwipe.current = false;
   };
 
   const handleImageTouch = (e: React.TouchEvent) => {
     e.preventDefault();
     // Only open modal if not swiping
-    if (!isDragging.current) {
+    if (isDragging.current) {
       setShowImageModal(true);
     }
   };
@@ -313,19 +313,19 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
           </div>
         )}
         
-        <div className="absolute left-0 top-0 bottom-0 flex items-center justify-center w-12 bg-zinc-800 bg-opacity-75" style={{ transform: 'translateX(-100%)' }}>
+        <div className="absolute left-0 top-0 bottom-0 flex items-center justify-center w-16 text-blue-500 bg-gray-800 bg-opacity-75" style={{ transform: 'translateX(-100%)' }}>
           {squadron.unique && (!squadron.unique_limit || squadron.unique_limit <= 1) ? 
             <ArrowLeftRight size={20} className="text-blue-500" /> : 
             <Plus size={20} className="text-blue-500" />
           }
         </div>
-        <div className="absolute right-0 top-0 bottom-0 flex items-center justify-center w-12 bg-zinc-800 bg-opacity-75" style={{ transform: 'translateX(100%)' }}>
+        <div className="absolute right-0 top-0 bottom-0 flex items-center justify-center w-16 text-red-500 bg-gray-800 bg-opacity-75" style={{ transform: 'translateX(100%)' }}>
           {squadron.count === 1 ? <Trash2 size={20} className="text-red-500" /> : <Minus size={20} className="text-red-500" />}
         </div>
       </animated.div>
       {showImageModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 rounded-lg" onClick={() => setShowImageModal(false)}>
-          <div className="relative rounded-lg">
+        <div className="fixed inset-0 flex items-center justify-center z-50" onClick={() => setShowImageModal(false)}>
+          <div className="relative">
             <OptimizedImage
               src={squadron.cardimage}
               alt={squadron.unique && squadron['ace-name'] ? squadron['ace-name'] : squadron.name}
