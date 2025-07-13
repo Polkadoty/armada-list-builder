@@ -1,4 +1,4 @@
-export type Gamemode = "Task Force" | "Standard" | "Sector Fleet" | "Battle for Naboo - Week 1" | "Battle for Naboo - Week 2" | "Battle for Naboo - Week 3" | "Battle for Naboo - Week 4" | "Campaign" | "Unrestricted" | "Fighter Group";
+export type Gamemode = "Task Force" | "Standard" | "Sector Fleet" | "Battle for Naboo - Week 1" | "Battle for Naboo - Week 2" | "Battle for Naboo - Week 3" | "Battle for Naboo - Week 4" | "Battle for Naboo - Week 5" | "Campaign" | "Unrestricted" | "Fighter Group";
 // "Minivan" | "Campaign" | "Fighter Group"
 
 export interface GamemodeRestrictions {
@@ -289,6 +289,55 @@ export const GAMEMODE_RESTRICTIONS: Record<Gamemode, GamemodeRestrictions> = {
         },
         forcedObjectives: {
           navigation: "Navigational Hazards",
+        },
+      },
+      forceToggles: { 
+        tournamentMode: true, 
+        enableLegacy: true,
+        enableLegends: false,
+        enableLegacyBeta: false,
+        enableArc: false,
+        enableNexus: false,
+        enableProxy: false,
+      },
+      allowedFactions: ["republic", "separatist"],
+    },
+    "Battle for Naboo - Week 5": {
+      pointsLimit: 320,
+      squadronPointsLimit: 90,
+      flotillaLimit: 2,
+      aceLimit: 0,
+      requireObjectives: true,
+      requireCommander: true,
+      allowedShipSizes: ["small", "medium"],
+      disallowedShipSizes: ["large"],
+      shipSizeLimits: { medium: 1 },
+      allowedCommanders: ["Ki-Adi-Mundi", "Admiral Tarkin", "Obi-Wan Kenobi", "Daultay Dofine", "General Grievous", "TF-1726"],
+      disallowedSquadronUniqueClasses: ["Anakin Skywalker", "Kit Fisto", "Luminara Unduli", "Plo Koon", "Wat Tambor", "Count Dooku", "Jango Fett", "General Grievous", "Phlac-Arphocc Prototypes", "DIS-T81", "DGS-047", "Baktoid Prototypes", "DBS-404", "Darth Maul", "Haor Chall Prototypes", "DFS-311"],
+      disallowedUpgradeUniqueClasses: ["Resolute", "Tranquility", "Patriot Fist", "Nova Defiant", "Invincible", "Lucid Voice", "Mercy Mission"],
+      objectiveRestrictions: {
+        disableSelection: true,
+        hideDetails: true,
+        enableCampaignObjectives: true,
+        allowedObjectives: {
+          assault: ["Blockade Run"],
+        },
+        forcedObjectives: {
+          assault: "Blockade Run",
+        },
+      },
+      exportTextModifications: {
+        factionSpecific: {
+          republic: {
+            additionalLines: {
+              afterSquadrons: ["• Anakin Skywalker - Twilight [Legacy] (24)", ""],
+            },
+          },
+          separatist: {
+            additionalLines: {
+              afterSquadrons: ["• Count Dooku - Sith Infiltrator [Legacy] (21)", ""],
+            },
+          },
         },
       },
       forceToggles: { 
