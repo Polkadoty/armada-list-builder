@@ -181,7 +181,7 @@ const FleetRow = ({
       <TableCell>{new Date(fleet.date_added).toLocaleDateString()}</TableCell>
     )}
     <TableCell>
-      <DropdownMenu>
+      <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-muted">
             <MoreVertical className="h-4 w-4" />
@@ -359,7 +359,7 @@ const FleetCardComponent = ({
         >
           {fleet.fleet_name}
         </button>
-        <DropdownMenu>
+        <DropdownMenu modal={false}>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-zinc-700 dark:text-zinc-300">
               <MoreVertical className="h-4 w-4" />
@@ -1144,7 +1144,7 @@ export function FleetList() {
               onChange={handleSearchQueryChange}
               className="max-w-sm bg-white/50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white backdrop-blur-md border-zinc-200 dark:border-zinc-700"
             />
-            <DropdownMenu open={factionDropdownOpen} onOpenChange={setFactionDropdownOpen}>
+            <DropdownMenu modal={false} open={factionDropdownOpen} onOpenChange={setFactionDropdownOpen}>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="bg-white/50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md border-zinc-200 dark:border-zinc-700">
                   Faction <ChevronDown className="ml-2 h-4 w-4" />
@@ -1191,7 +1191,7 @@ export function FleetList() {
               </DropdownMenuContent>
             </DropdownMenu>
             
-            <DropdownMenu open={commanderDropdownOpen} onOpenChange={setCommanderDropdownOpen}>
+            <DropdownMenu modal={false} open={commanderDropdownOpen} onOpenChange={setCommanderDropdownOpen}>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="bg-white/50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md border-zinc-200 dark:border-zinc-700">
                   Commander <ChevronDown className="ml-2 h-4 w-4" />
