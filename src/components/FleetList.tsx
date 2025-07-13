@@ -187,7 +187,7 @@ const FleetRow = ({
             <MoreVertical className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
+        <DropdownMenuContent align="end" inPlace>
           <DropdownMenuItem onClick={() => handleFleetSelect(fleet)}>
             Load Fleet
           </DropdownMenuItem>
@@ -365,7 +365,7 @@ const FleetCardComponent = ({
               <MoreVertical className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700">
+          <DropdownMenuContent align="end" inPlace className="bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700">
             <DropdownMenuItem onClick={() => handleFleetSelect(fleet)} className="text-zinc-900 dark:text-white">
               Load Fleet
             </DropdownMenuItem>
@@ -1150,7 +1150,7 @@ export function FleetList() {
                   Faction <ChevronDown className="ml-2 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="max-h-[300px] overflow-auto bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white border-zinc-200 dark:border-zinc-700">
+              <DropdownMenuContent inPlace className="max-h-[300px] overflow-auto bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white border-zinc-200 dark:border-zinc-700">
                 {paginatedFactions.map(faction => (
                   <DropdownMenuItem
                     key={faction}
@@ -1197,7 +1197,7 @@ export function FleetList() {
                   Commander <ChevronDown className="ml-2 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="max-h-[300px] overflow-auto bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white border-zinc-200 dark:border-zinc-700">
+              <DropdownMenuContent inPlace className="max-h-[300px] overflow-auto bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white border-zinc-200 dark:border-zinc-700">
                 <div className="p-2 border-b border-zinc-200 dark:border-zinc-700">
                   <Input
                     placeholder="Filter commanders..."

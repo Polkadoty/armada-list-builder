@@ -58,11 +58,20 @@ const DropdownMenuSubContent = React.forwardRef<
 DropdownMenuSubContent.displayName =
   DropdownMenuPrimitive.SubContent.displayName
 
+type DMContentProps = React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Content> & {
+  /**
+   * When true the content is rendered inline instead of through a Portal. Useful
+   * when the menu lives inside another modal dialog to avoid focus/flicker
+   * issues.
+   */
+  inPlace?: boolean
+}
+
 const DropdownMenuContent = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Content>
->(({ className, sideOffset = 4, ...props }, ref) => (
-  <DropdownMenuPrimitive.Portal>
+  DMContentProps
+>(({ className, sideOffset = 4, inPlace = false, ...props }, ref) => {
+  const content = (
     <DropdownMenuPrimitive.Content
       ref={ref}
       sideOffset={sideOffset}
@@ -73,8 +82,10 @@ const DropdownMenuContent = React.forwardRef<
       )}
       {...props}
     />
-  </DropdownMenuPrimitive.Portal>
-))
+  );
+
+  return inPlace ? content : <DropdownMenuPrimitive.Portal>{content}</DropdownMenuPrimitive.Portal>;
+})
 DropdownMenuContent.displayName = DropdownMenuPrimitive.Content.displayName
 
 const DropdownMenuItem = React.forwardRef<
