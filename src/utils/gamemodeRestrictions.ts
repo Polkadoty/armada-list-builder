@@ -313,7 +313,7 @@ export const GAMEMODE_RESTRICTIONS: Record<Gamemode, GamemodeRestrictions> = {
       disallowedShipSizes: ["large"],
       shipSizeLimits: { medium: 1 },
       allowedCommanders: ["Ki-Adi-Mundi", "Admiral Tarkin", "Obi-Wan Kenobi", "Daultay Dofine", "General Grievous", "TF-1726"],
-      disallowedSquadronUniqueClasses: ["Anakin Skywalker", "Kit Fisto", "Luminara Unduli", "Plo Koon", "Wat Tambor", "Count Dooku", "Jango Fett", "General Grievous", "Phlac-Arphocc Prototypes", "DIS-T81", "DGS-047", "Baktoid Prototypes", "DBS-404", "Darth Maul", "Haor Chall Prototypes", "DFS-311"],
+      disallowedSquadronUniqueClasses: ["Anakin Skywalker", "Kit Fisto", "Luminara Unduli", "Plo Koon", "Wat Tambor", "Count Dooku", "Jango Fett", "General Grievous", "Phlac-Arphocc Prototypes", "DIS-T81", "DGS-047", "Baktoid Prototypes", "DBS-404", "Darth Maul", "Haor Chall Prototypes", "DFS-311", "Oddball", "Matchstick", "R2-D2", "Five-Seven", "Axe", "Kickback"],
       disallowedUpgradeUniqueClasses: ["Resolute", "Tranquility", "Patriot Fist", "Nova Defiant", "Invincible", "Lucid Voice", "Mercy Mission"],
       objectiveRestrictions: {
         disableSelection: true,
