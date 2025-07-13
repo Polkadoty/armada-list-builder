@@ -35,6 +35,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu";
 import {
   Select,
@@ -46,7 +47,6 @@ import {
 import { NotificationWindow } from "@/components/NotificationWindow";
 import { useTheme } from 'next-themes';
 import { LoadingScreen } from "@/components/LoadingScreen";
-import { Checkbox } from "@/components/ui/checkbox";
 import { useMediaQuery } from '../hooks/use-media-query';
 
 interface Fleet {
@@ -191,16 +191,13 @@ const FleetRow = ({
           <DropdownMenuItem onClick={() => handleFleetSelect(fleet)}>
             Load Fleet
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleToggleShare(fleet)}>
-            <div className="flex items-center">
-              <Checkbox
-                checked={fleet.shared}
-                className="mr-2 cursor-not-allowed"
-                disabled={true}
-              />
-              Share Fleet
-            </div>
-          </DropdownMenuItem>
+          <DropdownMenuCheckboxItem
+            checked={fleet.shared}
+            onCheckedChange={() => handleToggleShare(fleet)}
+            disabled={false}
+          >
+            Share Fleet
+          </DropdownMenuCheckboxItem>
           <DropdownMenuItem onClick={() => handleOpenRenameDialog(fleet)}>
             Rename Fleet
           </DropdownMenuItem>
@@ -372,16 +369,13 @@ const FleetCardComponent = ({
             <DropdownMenuItem onClick={() => handleFleetSelect(fleet)} className="text-zinc-900 dark:text-white">
               Load Fleet
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleToggleShare(fleet)} className="text-zinc-900 dark:text-white">
-              <div className="flex items-center">
-                <Checkbox
-                  checked={fleet.shared}
-                  className="mr-2 cursor-not-allowed"
-                  disabled={true}
-                />
-                Share Fleet
-              </div>
-            </DropdownMenuItem>
+            <DropdownMenuCheckboxItem
+              checked={fleet.shared}
+              onCheckedChange={() => handleToggleShare(fleet)}
+              className="text-zinc-900 dark:text-white"
+            >
+              Share Fleet
+            </DropdownMenuCheckboxItem>
             <DropdownMenuItem onClick={() => handleOpenRenameDialog(fleet)} className="text-zinc-900 dark:text-white">
               Rename Fleet
             </DropdownMenuItem>
