@@ -86,6 +86,7 @@ const fetchAndSaveData = async (
   const enableNexus = Cookies.get('enableNexus') === 'true';
   const enableLegacyBeta = Cookies.get('enableLegacyBeta') === 'true';
   const enableArc = Cookies.get('enableArc') === 'true';
+  const enableNaboo = Cookies.get('enableNaboo') === 'true';
   // const enableAMG = Cookies.get('enableAMG') === 'true';
 
   const endpoints = [
@@ -139,6 +140,14 @@ const fetchAndSaveData = async (
       { name: 'arcSquadrons', url: '/arc/squadrons/' },
       { name: 'arcUpgrades', url: '/arc/upgrades/' },
       { name: 'arcObjectives', url: '/arc/objectives/' }
+    );
+  }
+
+  if (enableNaboo) {
+    endpoints.push(
+      { name: 'nabooShips', url: '/naboo/ships/' },
+      { name: 'nabooSquadrons', url: '/naboo/squadrons/' },
+      { name: 'nabooUpgrades', url: '/naboo/upgrades/' }
     );
   }
 
@@ -203,7 +212,8 @@ export const flushCacheAndReload = async (
     'legendsShips', 'legendsSquadrons', 'legendsUpgrades',
     'nexusShips', 'nexusSquadrons', 'nexusUpgrades',
     'legacyBetaShips', 'legacyBetaSquadrons', 'legacyBetaUpgrades',
-    'arcShips', 'arcSquadrons', 'arcUpgrades', 'arcObjectives'
+    'arcShips', 'arcSquadrons', 'arcUpgrades', 'arcObjectives',
+    'nabooShips', 'nabooSquadrons', 'nabooUpgrades'
   ];
 
   itemsToRemove.forEach(item => {

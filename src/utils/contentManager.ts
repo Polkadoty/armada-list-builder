@@ -7,6 +7,7 @@ interface ContentState {
   enableLegacyBeta: boolean;
   enableArc: boolean;
   enableNexus: boolean;
+  enableNaboo: boolean;
   enableProxy: boolean;
 }
 
@@ -21,6 +22,7 @@ function getCurrentContentState(): ContentState {
     enableLegacyBeta: Cookies.get('enableLegacyBeta') === 'true',
     enableArc: Cookies.get('enableArc') === 'true',
     enableNexus: Cookies.get('enableNexus') === 'true',
+    enableNaboo: Cookies.get('enableNaboo') === 'true',
     enableProxy: Cookies.get('enableProxy') === 'true',
   };
 }
@@ -35,6 +37,7 @@ function hasContentStateChanged(current: ContentState, previous: ContentState | 
     current.enableLegacyBeta !== previous.enableLegacyBeta ||
     current.enableArc !== previous.enableArc ||
     current.enableNexus !== previous.enableNexus ||
+    current.enableNaboo !== previous.enableNaboo ||
     current.enableProxy !== previous.enableProxy
   );
 }

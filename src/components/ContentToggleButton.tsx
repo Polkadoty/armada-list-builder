@@ -20,6 +20,7 @@ const CONFIG = {
   showNexusToggle: true,
   showLegacyBetaToggle: true,
   showArcToggle: false,
+  showNabooToggle: true,
   showLocalContentToggle: false,
   showProxyToggle: false,
   showCustomFactionsToggle: false,
@@ -39,6 +40,7 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
   const [enableLegends, setEnableLegends] = useState(false);
   const [enableProxy, setEnableProxy] = useState(false);
   const [enableNexus, setEnableNexus] = useState(false);
+  const [enableNaboo, setEnableNaboo] = useState(false);
   const [isLegacyBetaWhitelisted, setIsLegacyBetaWhitelisted] = useState(false);
   // const [enableAMG, setEnableAMG] = useState(false);
   const { theme, resolvedTheme } = useTheme();
@@ -56,6 +58,7 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
     const legendsCookie = Cookies.get('enableLegends');
     const proxyCookie = Cookies.get('enableProxy');
     const nexusCookie = Cookies.get('enableNexus');
+    const nabooCookie = Cookies.get('enableNaboo');
     // const amgCookie = Cookies.get('enableAMG');
     setEnableLegacy(CONFIG.showLegacyToggle && legacyCookie === 'true');
     setEnableLegacyBeta(CONFIG.showLegacyBetaToggle && legacyBetaCookie === 'true');
@@ -63,6 +66,7 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
     setEnableLegends(CONFIG.showLegendsToggle && legendsCookie === 'true');
     setEnableProxy(CONFIG.showProxyToggle && proxyCookie === 'true');
     setEnableNexus(nexusCookie === 'true');
+    setEnableNaboo(CONFIG.showNabooToggle && nabooCookie === 'true');
     // setEnableAMG(CONFIG.showAMGToggle && amgCookie !== 'false');
   }, []);
 
@@ -149,6 +153,11 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
         Cookies.set('enableProxy', forceToggles.enableProxy.toString(), { expires: 365 });
       }
       
+      if (forceToggles.enableNaboo !== undefined) {
+        setEnableNaboo(forceToggles.enableNaboo);
+        Cookies.set('enableNaboo', forceToggles.enableNaboo.toString(), { expires: 365 });
+      }
+      
       // Reload content after forcing toggles if needed
       forceReloadContent(setIsLoading, setLoadingProgress, setLoadingMessage);
     }
@@ -229,6 +238,14 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
     setEnableNexus(checked);
     Cookies.set('enableNexus', checked.toString(), { expires: 365 });
     forceReloadContent(setIsLoading, setLoadingProgress, setLoadingMessage);
+  };
+
+  const handleNabooToggle = (checked: boolean) => {
+    if (CONFIG.showNabooToggle) {
+      setEnableNaboo(checked);
+      Cookies.set('enableNaboo', checked.toString(), { expires: 365 });
+      forceReloadContent(setIsLoading, setLoadingProgress, setLoadingMessage);
+    }
   };
 
   const handleFlushCache = async () => {
@@ -405,6 +422,26 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
                         checked={enableProxy}
                         onCheckedChange={handleProxyToggle}
                         disabled={isToggleDisabled('enableProxy')}
+                        className="custom-switch"
+                      />
+                    </div>
+                  )}
+                  {CONFIG.showNabooToggle && (
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <label htmlFor="naboo-toggle" className={`text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${isToggleDisabled('enableNaboo') ? 'opacity-50' : ''}`}>
+                          Enable Battle for Naboo Content
+                          {isToggleDisabled('enableNaboo') && <span className="text-xs text-muted-foreground ml-2">(Controlled by gamemode)</span>}
+                        </label>
+                        <button type="button" onClick={() => { setInfoOpen('naboo'); }} className="ml-1 p-1 hover:bg-zinc-700/20 rounded-full" aria-label="Info">
+                          <Info className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <Switch
+                        id="naboo-toggle"
+                        checked={enableNaboo}
+                        onCheckedChange={handleNabooToggle}
+                        disabled={isToggleDisabled('enableNaboo')}
                         className="custom-switch"
                       />
                     </div>

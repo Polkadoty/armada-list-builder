@@ -50,7 +50,8 @@ export function ExpansionSelector({
     legacy: Cookies.get('enableLegacy') === 'true',
     legends: Cookies.get('enableLegends') === 'true',
     legacyBeta: Cookies.get('enableLegacyBeta') === 'true',
-    nexus: Cookies.get('enableNexus') === 'true'
+    nexus: Cookies.get('enableNexus') === 'true',
+    naboo: Cookies.get('enableNaboo') === 'true'
   });
 
   // Load and filter expansions
@@ -135,7 +136,8 @@ export function ExpansionSelector({
         legacy: Cookies.get('enableLegacy') === 'true',
         legends: Cookies.get('enableLegends') === 'true',
         legacyBeta: Cookies.get('enableLegacyBeta') === 'true',
-        nexus: Cookies.get('enableNexus') === 'true'
+        nexus: Cookies.get('enableNexus') === 'true',
+        naboo: Cookies.get('enableNaboo') === 'true'
       };
 
       if (JSON.stringify(newContentSources) !== JSON.stringify(contentSources)) {

@@ -1,4 +1,4 @@
-export type Gamemode = "Task Force" | "Standard" | "Sector Fleet" | "Battle for Naboo - Week 1" | "Battle for Naboo - Week 2" | "Battle for Naboo - Week 3" | "Battle for Naboo - Week 4" | "Battle for Naboo - Week 5" | "Campaign" | "Unrestricted" | "Fighter Group";
+export type Gamemode = "Task Force" | "Standard" | "Sector Fleet" | "Battle for Naboo - Week 1" | "Battle for Naboo - Week 2" | "Battle for Naboo - Week 3" | "Battle for Naboo - Week 4" | "Battle for Naboo - Week 5" | "Battle for Naboo - Week 6" | "Campaign" | "Unrestricted" | "Fighter Group";
 // "Minivan" | "Campaign" | "Fighter Group"
 
 export interface GamemodeRestrictions {
@@ -83,6 +83,7 @@ export interface GamemodeRestrictions {
     enableLegacyBeta: boolean;
     enableArc: boolean;
     enableNexus: boolean;
+    enableNaboo: boolean;
     enableCustomFactions: boolean;
     enableLocalContent: boolean;
     enableProxy: boolean;
@@ -182,6 +183,7 @@ export const GAMEMODE_RESTRICTIONS: Record<Gamemode, GamemodeRestrictions> = {
       enableLegacyBeta: false,
       enableArc: false,
       enableNexus: false,
+      enableNaboo: true,
       enableProxy: false,
     },
     allowedFactions: ["republic", "separatist"],
@@ -229,6 +231,7 @@ export const GAMEMODE_RESTRICTIONS: Record<Gamemode, GamemodeRestrictions> = {
       enableLegacyBeta: false,
       enableArc: false,
       enableNexus: false,
+      enableNaboo: true,
       enableProxy: false,
     },
     allowedFactions: ["republic", "separatist"],
@@ -264,6 +267,7 @@ export const GAMEMODE_RESTRICTIONS: Record<Gamemode, GamemodeRestrictions> = {
       enableLegacyBeta: false,
       enableArc: false,
       enableNexus: false,
+      enableNaboo: true,
       enableProxy: false,
     },
     allowedFactions: ["republic", "separatist"],
@@ -298,6 +302,7 @@ export const GAMEMODE_RESTRICTIONS: Record<Gamemode, GamemodeRestrictions> = {
         enableLegacyBeta: false,
         enableArc: false,
         enableNexus: false,
+        enableNaboo: true,
         enableProxy: false,
       },
       allowedFactions: ["republic", "separatist"],
@@ -347,6 +352,41 @@ export const GAMEMODE_RESTRICTIONS: Record<Gamemode, GamemodeRestrictions> = {
         enableLegacyBeta: false,
         enableArc: false,
         enableNexus: false,
+        enableNaboo: true,
+        enableProxy: false,
+      },
+      allowedFactions: ["republic", "separatist"],
+    },
+    "Battle for Naboo - Week 6": {
+      pointsLimit: 600,
+      squadronPointsLimit: 180,
+      flotillaLimit: 3,
+      aceLimit: 6,
+      requireObjectives: true,
+      requireCommander: true,
+      allowedShipSizes: ["small", "medium", "large", "280-huge"],
+      allowedCommanders: ["Ki-Adi-Mundi", "Admiral Tarkin", "Obi-Wan Kenobi", "Daultay Dofine", "General Grievous", "TF-1726"],
+      disallowedSquadronUniqueClasses: ["Anakin Skywalker", "Kit Fisto", "Luminara Unduli", "Plo Koon", "Wat Tambor", "Count Dooku", "Jango Fett", "General Grievous", "Phlac-Arphocc Prototypes", "DIS-T81", "DGS-047", "Baktoid Prototypes", "DBS-404", "Darth Maul", "Haor Chall Prototypes", "DFS-311", "Odd Ball", "Matchstick", "R2-D2", "Five-Seven", "Axe", "Kickback", "Ahsoka Tano"],
+      disallowedUpgradeUniqueClasses: ["Tranquility", "Patriot Fist", "Invincible"],
+      objectiveRestrictions: {
+        disableSelection: true,
+        hideDetails: true,
+        enableCampaignObjectives: true,
+        allowedObjectives: {
+          assault: ["Precision Strike"],
+        },
+        forcedObjectives: {
+          assault: "Precision Strike",
+        },
+      },
+      forceToggles: { 
+        tournamentMode: true, 
+        enableLegacy: true,
+        enableLegends: false,
+        enableLegacyBeta: false,
+        enableArc: false,
+        enableNexus: false,
+        enableNaboo: true,
         enableProxy: false,
       },
       allowedFactions: ["republic", "separatist"],

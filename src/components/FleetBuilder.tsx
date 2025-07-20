@@ -181,7 +181,7 @@ export interface Ship extends ShipModel {
   searchableText: string;
 }
 
-export type ContentSource = "regular" | "legacy" | "legends" | "legacyBeta" | "arc" | "community" | "amg" | "nexus";
+export type ContentSource = "regular" | "legacy" | "legends" | "legacyBeta" | "arc" | "community" | "amg" | "nexus" | "naboo";
 
 const SectionHeader = ({
   title,
@@ -1740,6 +1740,8 @@ export default function FleetBuilder({
         return '[ARC]';
       case 'nexus':
         return '[Nexus]';
+      case 'naboo':
+        return '[Naboo]';
       default:
         return '';
     }
@@ -2539,6 +2541,8 @@ export default function FleetBuilder({
             source = "arc";
           } else if (shipName.includes("[Nexus]")) {
             source = "nexus";
+          } else if (shipName.includes("[Naboo]")) {
+            source = "naboo";
           }
 
           const newShip: Ship = {
@@ -2567,6 +2571,8 @@ export default function FleetBuilder({
               source = "arc";
             } else if (shipName.includes("[Nexus]")) {
               source = "nexus";
+            } else if (shipName.includes("[Naboo]")) {
+              source = "naboo";
             }
             const selectedSquadron = {
               ...squadron,
@@ -2626,6 +2632,9 @@ export default function FleetBuilder({
             }
             if (restrictions.forceToggles.enableProxy !== undefined) {
               Cookies.set('enableProxy', restrictions.forceToggles.enableProxy.toString(), { expires: 365 });
+            }
+            if (restrictions.forceToggles.enableNaboo !== undefined) {
+              Cookies.set('enableNaboo', restrictions.forceToggles.enableNaboo.toString(), { expires: 365 });
             }
             
             // Force reload content and wait for it to complete
@@ -2802,6 +2811,9 @@ export default function FleetBuilder({
                   case 'nexus':
                     source = 'nexus';
                     break;
+                  case 'naboo':
+                    source = 'naboo';
+                    break;
                 }
               }
               console.log(`Source for ${upgradeName}:`, source);
@@ -2861,6 +2873,9 @@ export default function FleetBuilder({
                   case 'nexus':
                     source = 'nexus';
                     break;
+                  case 'naboo':
+                    source = 'naboo';
+                    break;
                 }
               }
 
@@ -2909,9 +2924,11 @@ export default function FleetBuilder({
                   source = "legends";
                 } else if (squadronName.includes("[ARC]")) {
                   source = "arc";
-                } else if (squadronName.includes("[Nexus]")) {
-                  source = "nexus";
-                }
+                          } else if (squadronName.includes("[Nexus]")) {
+            source = "nexus";
+          } else if (squadronName.includes("[Naboo]")) {
+            source = "naboo";
+          }
                 
                 // For Fighter Group mode, handle squadrons individually to support leaders
                 const selectedSquadron = {
