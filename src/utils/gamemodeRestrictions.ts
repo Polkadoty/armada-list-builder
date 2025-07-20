@@ -366,7 +366,7 @@ export const GAMEMODE_RESTRICTIONS: Record<Gamemode, GamemodeRestrictions> = {
       requireCommander: true,
       allowedShipSizes: ["small", "medium", "large", "280-huge"],
       allowedCommanders: ["Ki-Adi-Mundi", "Admiral Tarkin", "Obi-Wan Kenobi", "Daultay Dofine", "General Grievous", "TF-1726"],
-      disallowedSquadronUniqueClasses: ["Anakin Skywalker", "Kit Fisto", "Luminara Unduli", "Plo Koon", "Wat Tambor", "Count Dooku", "Jango Fett", "General Grievous", "Phlac-Arphocc Prototypes", "DIS-T81", "DGS-047", "Baktoid Prototypes", "DBS-404", "Darth Maul", "Haor Chall Prototypes", "DFS-311", "Odd Ball", "Matchstick", "R2-D2", "Five-Seven", "Axe", "Kickback", "Ahsoka Tano"],
+      disallowedSquadronUniqueClasses: ["Kit Fisto", "Luminara Unduli", "Plo Koon", "Wat Tambor", "Jango Fett"],
       disallowedUpgradeUniqueClasses: ["Tranquility", "Patriot Fist", "Invincible"],
       objectiveRestrictions: {
         disableSelection: true,
