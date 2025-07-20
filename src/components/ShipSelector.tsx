@@ -72,7 +72,8 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose, gamemodeR
       legends: Cookies.get('enableLegends') === 'true',
       legacyBeta: Cookies.get('enableLegacyBeta') === 'true',
       amg: Cookies.get('enableAMG') === 'true',
-      nexus: Cookies.get('enableNexus') === 'true'
+      nexus: Cookies.get('enableNexus') === 'true',
+      naboo: Cookies.get('enableNaboo') === 'true'
     };
   }, []);
 
@@ -83,7 +84,8 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose, gamemodeR
       legends: Cookies.get('enableLegends') === 'true',
       legacyBeta: Cookies.get('enableLegacyBeta') === 'true',
       amg: Cookies.get('enableAMG') === 'true',
-      nexus: Cookies.get('enableNexus') === 'true'
+      nexus: Cookies.get('enableNexus') === 'true',
+      naboo: Cookies.get('enableNaboo') === 'true'
     };
   });
 
@@ -98,7 +100,8 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose, gamemodeR
         legends: Cookies.get('enableLegends') === 'true',
         legacyBeta: Cookies.get('enableLegacyBeta') === 'true',
         amg: Cookies.get('enableAMG') === 'true',
-        nexus: Cookies.get('enableNexus') === 'true'
+        nexus: Cookies.get('enableNexus') === 'true',
+        naboo: Cookies.get('enableNaboo') === 'true'
       };
 
       // Only update if there are actual changes
@@ -163,6 +166,7 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose, gamemodeR
       const cachedNexusShips = localStorage.getItem('nexusShips');
       const cachedLegacyBetaShips = localStorage.getItem('legacyBetaShips');
       const cachedArcShips = localStorage.getItem('arcShips');
+      const cachedNabooShips = localStorage.getItem('nabooShips');
 
       // Process regular ships
       if (cachedShips) {
@@ -198,6 +202,12 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose, gamemodeR
       if (cachedArcShips) {
         const arcShipData = JSON.parse(cachedArcShips);
         allShips = [...allShips, ...processShips(arcShipData, 'arc')];
+      }
+
+      // Process naboo ships
+      if (cachedNabooShips) {
+        const nabooShipData = JSON.parse(cachedNabooShips);
+        allShips = [...allShips, ...processShips(nabooShipData, 'naboo')];
       }
 
       // Get errata keys from localStorage

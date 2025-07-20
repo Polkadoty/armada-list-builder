@@ -76,7 +76,8 @@ export default function UpgradeSelector({
     legends: Cookies.get('enableLegends') === 'true',
     legacyBeta: Cookies.get('enableLegacyBeta') === 'true',
     amg: Cookies.get('enableAMG') === 'true',
-    nexus: Cookies.get('enableNexus') === 'true'
+    nexus: Cookies.get('enableNexus') === 'true',
+    naboo: Cookies.get('enableNaboo') === 'true'
   });
 
   useEffect(() => {
@@ -89,6 +90,7 @@ export default function UpgradeSelector({
       const cachedArcUpgrades = localStorage.getItem('arcUpgrades');
       const cachedAMGUpgrades = localStorage.getItem('amgUpgrades');
       const cachedNexusUpgrades = localStorage.getItem('nexusUpgrades');
+      const cachedNabooUpgrades = localStorage.getItem('nabooUpgrades');
 
       let allUpgrades: Upgrade[] = [];
 
@@ -163,6 +165,11 @@ export default function UpgradeSelector({
       if (cachedNexusUpgrades) {
         const nexusUpgradeData = JSON.parse(cachedNexusUpgrades);
         allUpgrades = [...allUpgrades, ...processUpgrades(nexusUpgradeData, 'nexus')];
+      }
+
+      if (cachedNabooUpgrades) {
+        const nabooUpgradeData = JSON.parse(cachedNabooUpgrades);
+        allUpgrades = [...allUpgrades, ...processUpgrades(nabooUpgradeData, 'naboo')];
       }
 
       // Get errata keys from localStorage
@@ -746,7 +753,8 @@ export default function UpgradeSelector({
         legends: Cookies.get('enableLegends') === 'true',
         legacyBeta: Cookies.get('enableLegacyBeta') === 'true',
         amg: Cookies.get('enableAMG') === 'true',
-        nexus: Cookies.get('enableNexus') === 'true'
+        nexus: Cookies.get('enableNexus') === 'true',
+        naboo: Cookies.get('enableNaboo') === 'true'
       };
 
       if (JSON.stringify(newContentSources) !== JSON.stringify(contentSources)) {

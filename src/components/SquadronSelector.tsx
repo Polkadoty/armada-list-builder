@@ -61,7 +61,8 @@ export function SquadronSelector({
       legends: Cookies.get('enableLegends') === 'true',
       legacyBeta: Cookies.get('enableLegacyBeta') === 'true',
       amg: Cookies.get('enableAMG') === 'true',
-      nexus: Cookies.get('enableNexus') === 'true'
+      nexus: Cookies.get('enableNexus') === 'true',
+      naboo: Cookies.get('enableNaboo') === 'true'
     };
   }, []);
 
@@ -72,7 +73,8 @@ export function SquadronSelector({
       legends: Cookies.get('enableLegends') === 'true',
       legacyBeta: Cookies.get('enableLegacyBeta') === 'true',
       amg: Cookies.get('enableAMG') === 'true',
-      nexus: Cookies.get('enableNexus') === 'true'
+      nexus: Cookies.get('enableNexus') === 'true',
+      naboo: Cookies.get('enableNaboo') === 'true'
     };
   });
 
@@ -84,7 +86,8 @@ export function SquadronSelector({
         legends: Cookies.get('enableLegends') === 'true',
         legacyBeta: Cookies.get('enableLegacyBeta') === 'true',
         amg: Cookies.get('enableAMG') === 'true',
-        nexus: Cookies.get('enableNexus') === 'true'
+        nexus: Cookies.get('enableNexus') === 'true',
+        naboo: Cookies.get('enableNaboo') === 'true'
       };
 
       if (JSON.stringify(newContentSources) !== JSON.stringify(contentSourcesEnabled)) {
@@ -106,6 +109,7 @@ export function SquadronSelector({
       const cachedArcSquadrons = localStorage.getItem('arcSquadrons');
       const cachedAMGSquadrons = localStorage.getItem('amgSquadrons');
       const cachedNexusSquadrons = localStorage.getItem('nexusSquadrons');
+      const cachedNabooSquadrons = localStorage.getItem('nabooSquadrons');
 
       const squadronMap = new Map<string, Squadron>();
 
@@ -191,6 +195,11 @@ export function SquadronSelector({
       if (cachedArcSquadrons) {
         const arcSquadronData = JSON.parse(cachedArcSquadrons);
         processSquadrons(arcSquadronData, 'arc');
+      }
+
+      if (cachedNabooSquadrons) {
+        const nabooSquadronData = JSON.parse(cachedNabooSquadrons);
+        processSquadrons(nabooSquadronData, 'naboo');
       }
 
       // Get errata keys from localStorage

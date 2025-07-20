@@ -55,7 +55,8 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose, gamemodeRe
       legends: Cookies.get('enableLegends') === 'true',
       legacyBeta: Cookies.get('enableLegacyBeta') === 'true',
       amg: Cookies.get('enableAMG') === 'true',
-      nexus: Cookies.get('enableNexus') === 'true'
+      nexus: Cookies.get('enableNexus') === 'true',
+      naboo: Cookies.get('enableNaboo') === 'true'
     };
   }, []);
 
@@ -66,7 +67,8 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose, gamemodeRe
       legends: Cookies.get('enableLegends') === 'true',
       legacyBeta: Cookies.get('enableLegacyBeta') === 'true',
       amg: Cookies.get('enableAMG') === 'true',
-      nexus: Cookies.get('enableNexus') === 'true'
+      nexus: Cookies.get('enableNexus') === 'true',
+      naboo: Cookies.get('enableNaboo') === 'true'
     };
   });
 
@@ -79,7 +81,8 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose, gamemodeRe
         legends: Cookies.get('enableLegends') === 'true',
         legacyBeta: Cookies.get('enableLegacyBeta') === 'true',
         amg: Cookies.get('enableAMG') === 'true',
-        nexus: Cookies.get('enableNexus') === 'true'
+        nexus: Cookies.get('enableNexus') === 'true',
+        naboo: Cookies.get('enableNaboo') === 'true'
       };
 
       // Check if any values have changed
