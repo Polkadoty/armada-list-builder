@@ -231,7 +231,7 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose, gamemodeR
       allShips.forEach(ship => {
         // Use chassis name for grouping since errata is chassis-based
         const baseName = ship.chassis
-          .replace(/^(legacy|legends|legacyBeta|arc|amg|nexus)-/, '') // Remove source prefix
+          .replace(/^(legacy|legends|legacyBeta|arc|arcBeta|amg|nexus)-/, '') // Remove source prefix
           .replace(/-errata(-[^-]+)?$/, ''); // Remove both types of errata suffixes
         
         // console.log(`Processing ship: ${ship.id}, baseName: ${baseName}`);
@@ -272,8 +272,8 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose, gamemodeR
             // Then check for source-prefixed version
             const sourceVersion = group.find(candidate => 
               candidate.id !== ship.id && 
-              candidate.id.match(/^(legacy|legends|legacyBeta|arc|amg|nexus)-/) &&
-              ship.id === candidate.id.replace(/^(legacy|legends|legacyBeta|arc|amg|nexus)-/, '')
+              candidate.id.match(/^(legacy|legends|legacyBeta|arc|arcBeta|amg|nexus)-/) &&
+              ship.id === candidate.id.replace(/^(legacy|legends|legacyBeta|arc|arcBeta|amg|nexus)-/, '')
             );
 
             if (sourceVersion) {
@@ -293,10 +293,10 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose, gamemodeR
           // Remove duplicates and check content sources
           const uniqueShips = new Map();
           processedShips.forEach(ship => {
-            const normalizedId = ship.id.replace(/^(legacy|legends|legacyBeta|arc|nexus|amg)-/, '');
+            const normalizedId = ship.id.replace(/^(legacy|legends|legacyBeta|arc|arcBeta|nexus|amg)-/, '');
             const isSourceEnabled = ship.source === 'regular' || contentSourcesEnabled[ship.source as keyof typeof contentSourcesEnabled];
             
-            if (isSourceEnabled && (!uniqueShips.has(normalizedId) || ship.id.match(/^(legacy|legends|legacyBeta|arc|nexus|amg)-/))) {
+            if (isSourceEnabled && (!uniqueShips.has(normalizedId) || ship.id.match(/^(legacy|legends|legacyBeta|arc|arcBeta|nexus|amg)-/))) {
               uniqueShips.set(normalizedId, ship);
             }
           });

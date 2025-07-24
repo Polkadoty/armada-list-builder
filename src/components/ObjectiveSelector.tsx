@@ -178,7 +178,7 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose, gamemodeRe
                 : objective.type === type;
                 
               if (shouldInclude && objectiveId.includes('-errata-')) {
-                const baseId = objectiveId.replace(/-errata-(legacy|legends|legacyBeta|arc)$/, '');
+                const baseId = objectiveId.replace(/-errata-(legacy|legends|legacyBeta|arc|arcBeta)$/, '');
                 
                 if (errataKeys.includes(objectiveId)) {
                   objectiveMap.set(baseId, {

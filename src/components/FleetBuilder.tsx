@@ -1221,6 +1221,7 @@ export default function FleetBuilder({
     const shipNameWithSource = shipToCopy.source && shipToCopy.source !== "regular" && shipToCopy.source !== "amg"
       ? `${shipToCopy.name} [${
           shipToCopy.source === 'legacyBeta' ? 'LegacyBeta' : 
+          shipToCopy.source === 'arcBeta' ? 'ARCBeta' : 
           shipToCopy.source === 'legacy' ? 'Legacy' : 
           shipToCopy.source === 'legends' ? 'Legends' : 
           shipToCopy.source === 'arc' ? 'ARC' : 
@@ -2104,6 +2105,7 @@ export default function FleetBuilder({
       `legends${type.charAt(0).toUpperCase() + type.slice(1)}`,
       `legacyBeta${type.charAt(0).toUpperCase() + type.slice(1)}`,
       `arc${type.charAt(0).toUpperCase() + type.slice(1)}`,
+      `arcBeta${type.charAt(0).toUpperCase() + type.slice(1)}`,
       `nexus${type.charAt(0).toUpperCase() + type.slice(1)}`,
       `amg${type.charAt(0).toUpperCase() + type.slice(1)}`
     ];
@@ -2132,7 +2134,8 @@ export default function FleetBuilder({
                 silhouette: chassis.silhouette,
                 blueprint: chassis.blueprint,
                 // Add source information
-                source: storageKey.includes('arc') ? 'arc' :
+                source: storageKey.includes('arcBeta') ? 'arcBeta' :
+                        storageKey.includes('arc') ? 'arc' :
                         storageKey.includes('legacyBeta') ? 'legacyBeta' :
                         storageKey.includes('legacy') ? 'legacy' :
                         storageKey.includes('legends') ? 'legends' :
@@ -2149,7 +2152,8 @@ export default function FleetBuilder({
           if (itemsData[key]) {
             const item = {
               ...itemsData[key],
-              source: storageKey.includes('arc') ? 'arc' :
+              source: storageKey.includes('arcBeta') ? 'arcBeta' :
+                      storageKey.includes('arc') ? 'arc' :
                       storageKey.includes('legacyBeta') ? 'legacyBeta' :
                       storageKey.includes('legacy') ? 'legacy' :
                       storageKey.includes('legends') ? 'legends' :
@@ -2535,6 +2539,8 @@ export default function FleetBuilder({
           let source: ContentSource = "regular";
           if (shipName.includes("[LegacyBeta]")) {
             source = "legacyBeta";
+          } else if (shipName.includes("[ARCBeta]")) {
+            source = "arcBeta";
           } else if (shipName.includes("[Legacy]")) {
             source = "legacy";
           } else if (shipName.includes("[Legends]")) {
@@ -2565,6 +2571,8 @@ export default function FleetBuilder({
             let source: ContentSource = "regular";
             if (shipName.includes("[LegacyBeta]")) {
               source = "legacyBeta";
+            } else if (shipName.includes("[ARCBeta]")) {
+              source = "arcBeta";
             } else if (shipName.includes("[Legacy]")) {
               source = "legacy";
             } else if (shipName.includes("[Legends]")) {
@@ -2804,6 +2812,9 @@ export default function FleetBuilder({
                   case 'legacybeta':
                     source = 'legacyBeta';
                     break;
+                  case 'arcbeta':
+                    source = 'arcBeta';
+                    break;
                   case 'legacy':
                     source = 'legacy';
                     break;
@@ -2865,6 +2876,9 @@ export default function FleetBuilder({
                 switch (sourceTag) {
                   case 'legacybeta':
                     source = 'legacyBeta';
+                    break;
+                  case 'arcbeta':
+                    source = 'arcBeta';
                     break;
                   case 'legacy':
                     source = 'legacy';

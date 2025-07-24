@@ -190,7 +190,7 @@ export default function UpgradeSelector({
       allUpgrades.forEach(upgrade => {
         // Extract base name by removing any source prefixes and errata suffixes
         const baseName = upgrade.id
-          .replace(/^(legacy|legends|legacyBeta|arc|amg|nexus)-/, '') // Remove source prefix
+          .replace(/^(legacy|legends|legacyBeta|arc|arcBeta|amg|nexus)-/, '') // Remove source prefix
           .replace(/-errata(-[^-]+)?$/, ''); // Remove both types of errata suffixes
         
         // console.log(`Processing upgrade: ${upgrade.id}, baseName: ${baseName}`);
