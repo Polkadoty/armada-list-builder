@@ -82,6 +82,7 @@ export interface GamemodeRestrictions {
     enableLegends: boolean;
     enableLegacyBeta: boolean;
     enableArc: boolean;
+    enableArcBeta: boolean;
     enableNexus: boolean;
     enableNaboo: boolean;
     enableCustomFactions: boolean;

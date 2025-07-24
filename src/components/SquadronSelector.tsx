@@ -60,6 +60,7 @@ export function SquadronSelector({
       legacy: Cookies.get('enableLegacy') === 'true',
       legends: Cookies.get('enableLegends') === 'true',
       legacyBeta: Cookies.get('enableLegacyBeta') === 'true',
+      arcBeta: Cookies.get('enableArcBeta') === 'true',
       amg: Cookies.get('enableAMG') === 'true',
       nexus: Cookies.get('enableNexus') === 'true',
       naboo: Cookies.get('enableNaboo') === 'true'
@@ -72,6 +73,7 @@ export function SquadronSelector({
       legacy: Cookies.get('enableLegacy') === 'true',
       legends: Cookies.get('enableLegends') === 'true',
       legacyBeta: Cookies.get('enableLegacyBeta') === 'true',
+      arcBeta: Cookies.get('enableArcBeta') === 'true',
       amg: Cookies.get('enableAMG') === 'true',
       nexus: Cookies.get('enableNexus') === 'true',
       naboo: Cookies.get('enableNaboo') === 'true'
@@ -85,6 +87,7 @@ export function SquadronSelector({
         legacy: Cookies.get('enableLegacy') === 'true',
         legends: Cookies.get('enableLegends') === 'true',
         legacyBeta: Cookies.get('enableLegacyBeta') === 'true',
+        arcBeta: Cookies.get('enableArcBeta') === 'true',
         amg: Cookies.get('enableAMG') === 'true',
         nexus: Cookies.get('enableNexus') === 'true',
         naboo: Cookies.get('enableNaboo') === 'true'
@@ -107,6 +110,7 @@ export function SquadronSelector({
       const cachedLegendsSquadrons = localStorage.getItem('legendsSquadrons');
       const cachedLegacyBetaSquadrons = localStorage.getItem('legacyBetaSquadrons');
       const cachedArcSquadrons = localStorage.getItem('arcSquadrons');
+      const cachedArcBetaSquadrons = localStorage.getItem('arcBetaSquadrons');
       const cachedAMGSquadrons = localStorage.getItem('amgSquadrons');
       const cachedNexusSquadrons = localStorage.getItem('nexusSquadrons');
       const cachedNabooSquadrons = localStorage.getItem('nabooSquadrons');
@@ -195,6 +199,11 @@ export function SquadronSelector({
       if (cachedArcSquadrons) {
         const arcSquadronData = JSON.parse(cachedArcSquadrons);
         processSquadrons(arcSquadronData, 'arc');
+      }
+
+      if (cachedArcBetaSquadrons) {
+        const arcBetaSquadronData = JSON.parse(cachedArcBetaSquadrons);
+        processSquadrons(arcBetaSquadronData, 'arcBeta');
       }
 
       if (cachedNabooSquadrons) {

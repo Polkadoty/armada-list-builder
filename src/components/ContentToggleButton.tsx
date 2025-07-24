@@ -10,7 +10,7 @@ import { forceReloadContent } from '../utils/contentManager';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue, SelectLabel, SelectGroup } from "@/components/ui/select";
 import ContentAdditionWindow from './ContentAdditionWindow';
 import { useUser } from '@auth0/nextjs-auth0/client';
-import { isUserWhitelistedForLegacyBeta } from '../utils/whitelist';
+import { isUserWhitelistedForLegacyBeta, isUserWhitelistedForArcBeta } from '../utils/whitelist';
 import { getRestrictionsForGamemode, type Gamemode } from '../utils/gamemodeRestrictions';
 
 // Configuration flags
@@ -20,6 +20,7 @@ const CONFIG = {
   showNexusToggle: true,
   showLegacyBetaToggle: true,
   showArcToggle: false,
+  showArcBetaToggle: true,
   showNabooToggle: true,
   showLocalContentToggle: false,
   showProxyToggle: false,
@@ -37,11 +38,13 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
   const [enableLegacy, setEnableLegacy] = useState(false);
   const [enableLegacyBeta, setEnableLegacyBeta] = useState(false);
   const [enableArc, setEnableArc] = useState(false);
+  const [enableArcBeta, setEnableArcBeta] = useState(false);
   const [enableLegends, setEnableLegends] = useState(false);
   const [enableProxy, setEnableProxy] = useState(false);
   const [enableNexus, setEnableNexus] = useState(false);
   const [enableNaboo, setEnableNaboo] = useState(false);
   const [isLegacyBetaWhitelisted, setIsLegacyBetaWhitelisted] = useState(false);
+  const [isArcBetaWhitelisted, setIsArcBetaWhitelisted] = useState(false);
   // const [enableAMG, setEnableAMG] = useState(false);
   const { theme, resolvedTheme } = useTheme();
   const { user } = useUser();
@@ -55,6 +58,7 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
     const legacyCookie = Cookies.get('enableLegacy');
     const legacyBetaCookie = Cookies.get('enableLegacyBeta');
     const arcCookie = Cookies.get('enableArc');
+    const arcBetaCookie = Cookies.get('enableArcBeta');
     const legendsCookie = Cookies.get('enableLegends');
     const proxyCookie = Cookies.get('enableProxy');
     const nexusCookie = Cookies.get('enableNexus');
@@ -63,6 +67,7 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
     setEnableLegacy(CONFIG.showLegacyToggle && legacyCookie === 'true');
     setEnableLegacyBeta(CONFIG.showLegacyBetaToggle && legacyBetaCookie === 'true');
     setEnableArc(CONFIG.showArcToggle && arcCookie === 'true');
+    setEnableArcBeta(CONFIG.showArcBetaToggle && arcBetaCookie === 'true');
     setEnableLegends(CONFIG.showLegendsToggle && legendsCookie === 'true');
     setEnableProxy(CONFIG.showProxyToggle && proxyCookie === 'true');
     setEnableNexus(nexusCookie === 'true');
@@ -78,6 +83,22 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
         setIsLegacyBetaWhitelisted(whitelisted);
       } else {
         setIsLegacyBetaWhitelisted(false);
+      }
+    };
+
+    if (mounted) {
+      checkWhitelist();
+    }
+  }, [user?.sub, mounted]);
+
+  // Check if user is whitelisted for ArcBeta
+  useEffect(() => {
+    const checkWhitelist = async () => {
+      if (user?.sub) {
+        const whitelisted = await isUserWhitelistedForArcBeta(user.sub);
+        setIsArcBetaWhitelisted(whitelisted);
+      } else {
+        setIsArcBetaWhitelisted(false);
       }
     };
 
@@ -143,6 +164,11 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
         Cookies.set('enableArc', forceToggles.enableArc.toString(), { expires: 365 });
       }
       
+      if (forceToggles.enableArcBeta !== undefined) {
+        setEnableArcBeta(forceToggles.enableArcBeta);
+        Cookies.set('enableArcBeta', forceToggles.enableArcBeta.toString(), { expires: 365 });
+      }
+      
       if (forceToggles.enableNexus !== undefined) {
         setEnableNexus(forceToggles.enableNexus);
         Cookies.set('enableNexus', forceToggles.enableNexus.toString(), { expires: 365 });
@@ -161,7 +187,7 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
       // Reload content after forcing toggles if needed
       forceReloadContent(setIsLoading, setLoadingProgress, setLoadingMessage);
     }
-  }, [selectedGamemode]);
+  }, [selectedGamemode, setIsLoading, setLoadingProgress, setLoadingMessage]);
 
   useEffect(() => {
     if (infoOpen) setPopoverOpen(false);
@@ -222,6 +248,14 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
     if (CONFIG.showArcToggle) {
       setEnableArc(checked);
       Cookies.set('enableArc', checked.toString(), { expires: 365 });
+      forceReloadContent(setIsLoading, setLoadingProgress, setLoadingMessage);
+    }
+  };
+
+  const handleArcBetaToggle = (checked: boolean) => {
+    if (CONFIG.showArcBetaToggle) {
+      setEnableArcBeta(checked);
+      Cookies.set('enableArcBeta', checked.toString(), { expires: 365 });
       forceReloadContent(setIsLoading, setLoadingProgress, setLoadingMessage);
     }
   };
@@ -403,6 +437,26 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
                         checked={enableLegacyBeta}
                         onCheckedChange={handleLegacyBetaToggle}
                         disabled={isToggleDisabled('enableLegacyBeta')}
+                        className="custom-switch"
+                      />
+                    </div>
+                  )}
+                  {CONFIG.showArcBetaToggle && isArcBetaWhitelisted && (
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <label htmlFor="arc-beta-toggle" className={`text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${isToggleDisabled('enableArcBeta') ? 'opacity-50' : ''}`}>
+                          Enable ARC Beta Content
+                          {isToggleDisabled('enableArcBeta') && <span className="text-xs text-muted-foreground ml-2">(Controlled by gamemode)</span>}
+                        </label>
+                        <button type="button" onClick={() => { setInfoOpen('arc-beta'); }} className="ml-1 p-1 hover:bg-zinc-700/20 rounded-full" aria-label="Info">
+                          <Info className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <Switch
+                        id="arc-beta-toggle"
+                        checked={enableArcBeta}
+                        onCheckedChange={handleArcBetaToggle}
+                        disabled={isToggleDisabled('enableArcBeta')}
                         className="custom-switch"
                       />
                     </div>

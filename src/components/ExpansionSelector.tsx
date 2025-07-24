@@ -50,6 +50,7 @@ export function ExpansionSelector({
     legacy: Cookies.get('enableLegacy') === 'true',
     legends: Cookies.get('enableLegends') === 'true',
     legacyBeta: Cookies.get('enableLegacyBeta') === 'true',
+    arcBeta: Cookies.get('enableArcBeta') === 'true',
     nexus: Cookies.get('enableNexus') === 'true',
     naboo: Cookies.get('enableNaboo') === 'true'
   });
@@ -136,6 +137,7 @@ export function ExpansionSelector({
         legacy: Cookies.get('enableLegacy') === 'true',
         legends: Cookies.get('enableLegends') === 'true',
         legacyBeta: Cookies.get('enableLegacyBeta') === 'true',
+        arcBeta: Cookies.get('enableArcBeta') === 'true',
         nexus: Cookies.get('enableNexus') === 'true',
         naboo: Cookies.get('enableNaboo') === 'true'
       };

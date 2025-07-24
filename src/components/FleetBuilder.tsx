@@ -181,7 +181,7 @@ export interface Ship extends ShipModel {
   searchableText: string;
 }
 
-export type ContentSource = "regular" | "legacy" | "legends" | "legacyBeta" | "arc" | "community" | "amg" | "nexus" | "naboo";
+export type ContentSource = "regular" | "legacy" | "legends" | "legacyBeta" | "arc" | "arcBeta" | "community" | "amg" | "nexus" | "naboo";
 
 const SectionHeader = ({
   title,
@@ -2627,6 +2627,9 @@ export default function FleetBuilder({
             if (restrictions.forceToggles.enableArc !== undefined) {
               Cookies.set('enableArc', restrictions.forceToggles.enableArc.toString(), { expires: 365 });
             }
+            if (restrictions.forceToggles.enableArcBeta !== undefined) {
+              Cookies.set('enableArcBeta', restrictions.forceToggles.enableArcBeta.toString(), { expires: 365 });
+            }
             if (restrictions.forceToggles.enableNexus !== undefined) {
               Cookies.set('enableNexus', restrictions.forceToggles.enableNexus.toString(), { expires: 365 });
             }
@@ -2918,6 +2921,8 @@ export default function FleetBuilder({
                 let source: ContentSource = "regular";
                 if (squadronName.includes("[LegacyBeta]")) {
                   source = "legacyBeta";
+                } else if (squadronName.includes("[ARCBeta]")) {
+                  source = "arcBeta";
                 } else if (squadronName.includes("[Legacy]")) {
                   source = "legacy";
                 } else if (squadronName.includes("[Legends]")) {
@@ -4244,6 +4249,7 @@ export default function FleetBuilder({
       legacy: Cookies.get('enableLegacy') === 'true',
       legends: Cookies.get('enableLegends') === 'true',
       legacyBeta: Cookies.get('enableLegacyBeta') === 'true',
+      arcBeta: Cookies.get('enableArcBeta') === 'true',
       amg: Cookies.get('enableAMG') === 'true',
       nexus: Cookies.get('enableNexus') === 'true'
     };
@@ -4260,6 +4266,7 @@ export default function FleetBuilder({
         legacy: Cookies.get('enableLegacy') === 'true',
         legends: Cookies.get('enableLegends') === 'true',
         legacyBeta: Cookies.get('enableLegacyBeta') === 'true',
+        arcBeta: Cookies.get('enableArcBeta') === 'true',
         amg: Cookies.get('enableAMG') === 'true',
         nexus: Cookies.get('enableNexus') === 'true'
       };

@@ -6,6 +6,7 @@ interface ContentState {
   enableLegends: boolean;
   enableLegacyBeta: boolean;
   enableArc: boolean;
+  enableArcBeta: boolean;
   enableNexus: boolean;
   enableNaboo: boolean;
   enableProxy: boolean;
@@ -21,6 +22,7 @@ function getCurrentContentState(): ContentState {
     enableLegends: Cookies.get('enableLegends') === 'true',
     enableLegacyBeta: Cookies.get('enableLegacyBeta') === 'true',
     enableArc: Cookies.get('enableArc') === 'true',
+    enableArcBeta: Cookies.get('enableArcBeta') === 'true',
     enableNexus: Cookies.get('enableNexus') === 'true',
     enableNaboo: Cookies.get('enableNaboo') === 'true',
     enableProxy: Cookies.get('enableProxy') === 'true',

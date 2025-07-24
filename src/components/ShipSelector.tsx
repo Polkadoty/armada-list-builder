@@ -71,6 +71,7 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose, gamemodeR
       legacy: Cookies.get('enableLegacy') === 'true',
       legends: Cookies.get('enableLegends') === 'true',
       legacyBeta: Cookies.get('enableLegacyBeta') === 'true',
+      arcBeta: Cookies.get('enableArcBeta') === 'true',
       amg: Cookies.get('enableAMG') === 'true',
       nexus: Cookies.get('enableNexus') === 'true',
       naboo: Cookies.get('enableNaboo') === 'true'
@@ -83,6 +84,7 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose, gamemodeR
       legacy: Cookies.get('enableLegacy') === 'true',
       legends: Cookies.get('enableLegends') === 'true',
       legacyBeta: Cookies.get('enableLegacyBeta') === 'true',
+      arcBeta: Cookies.get('enableArcBeta') === 'true',
       amg: Cookies.get('enableAMG') === 'true',
       nexus: Cookies.get('enableNexus') === 'true',
       naboo: Cookies.get('enableNaboo') === 'true'
@@ -99,6 +101,7 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose, gamemodeR
         legacy: Cookies.get('enableLegacy') === 'true',
         legends: Cookies.get('enableLegends') === 'true',
         legacyBeta: Cookies.get('enableLegacyBeta') === 'true',
+        arcBeta: Cookies.get('enableArcBeta') === 'true',
         amg: Cookies.get('enableAMG') === 'true',
         nexus: Cookies.get('enableNexus') === 'true',
         naboo: Cookies.get('enableNaboo') === 'true'
@@ -166,6 +169,7 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose, gamemodeR
       const cachedNexusShips = localStorage.getItem('nexusShips');
       const cachedLegacyBetaShips = localStorage.getItem('legacyBetaShips');
       const cachedArcShips = localStorage.getItem('arcShips');
+      const cachedArcBetaShips = localStorage.getItem('arcBetaShips');
       const cachedNabooShips = localStorage.getItem('nabooShips');
 
       // Process regular ships
@@ -202,6 +206,12 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose, gamemodeR
       if (cachedArcShips) {
         const arcShipData = JSON.parse(cachedArcShips);
         allShips = [...allShips, ...processShips(arcShipData, 'arc')];
+      }
+
+      // Process arc beta ships
+      if (cachedArcBetaShips) {
+        const arcBetaShipData = JSON.parse(cachedArcBetaShips);
+        allShips = [...allShips, ...processShips(arcBetaShipData, 'arcBeta')];
       }
 
       // Process naboo ships

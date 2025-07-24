@@ -86,6 +86,7 @@ const fetchAndSaveData = async (
   const enableNexus = Cookies.get('enableNexus') === 'true';
   const enableLegacyBeta = Cookies.get('enableLegacyBeta') === 'true';
   const enableArc = Cookies.get('enableArc') === 'true';
+  const enableArcBeta = Cookies.get('enableArcBeta') === 'true';
   const enableNaboo = Cookies.get('enableNaboo') === 'true';
   // const enableAMG = Cookies.get('enableAMG') === 'true';
 
@@ -140,6 +141,15 @@ const fetchAndSaveData = async (
       { name: 'arcSquadrons', url: '/arc/squadrons/' },
       { name: 'arcUpgrades', url: '/arc/upgrades/' },
       { name: 'arcObjectives', url: '/arc/objectives/' }
+    );
+  }
+
+  if (enableArcBeta) {
+    endpoints.push(
+      { name: 'arcBetaShips', url: '/arc-beta/ships/' },
+      { name: 'arcBetaSquadrons', url: '/arc-beta/squadrons/' },
+      { name: 'arcBetaUpgrades', url: '/arc-beta/upgrades/' },
+      { name: 'arcBetaObjectives', url: '/arc-beta/objectives/' }
     );
   }
 

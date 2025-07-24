@@ -75,6 +75,7 @@ export default function UpgradeSelector({
     legacy: Cookies.get('enableLegacy') === 'true',
     legends: Cookies.get('enableLegends') === 'true',
     legacyBeta: Cookies.get('enableLegacyBeta') === 'true',
+    arcBeta: Cookies.get('enableArcBeta') === 'true',
     amg: Cookies.get('enableAMG') === 'true',
     nexus: Cookies.get('enableNexus') === 'true',
     naboo: Cookies.get('enableNaboo') === 'true'
@@ -88,6 +89,7 @@ export default function UpgradeSelector({
       const cachedLegendsUpgrades = localStorage.getItem('legendsUpgrades');
       const cachedLegacyBetaUpgrades = localStorage.getItem('legacyBetaUpgrades');
       const cachedArcUpgrades = localStorage.getItem('arcUpgrades');
+      const cachedArcBetaUpgrades = localStorage.getItem('arcBetaUpgrades');
       const cachedAMGUpgrades = localStorage.getItem('amgUpgrades');
       const cachedNexusUpgrades = localStorage.getItem('nexusUpgrades');
       const cachedNabooUpgrades = localStorage.getItem('nabooUpgrades');
@@ -155,6 +157,11 @@ export default function UpgradeSelector({
       if (cachedLegacyBetaUpgrades) {
         const legacyBetaUpgradeData = JSON.parse(cachedLegacyBetaUpgrades);
         allUpgrades = [...allUpgrades, ...processUpgrades(legacyBetaUpgradeData, 'legacyBeta')];
+      }
+
+      if (cachedArcBetaUpgrades) {
+        const arcBetaUpgradeData = JSON.parse(cachedArcBetaUpgrades);
+        allUpgrades = [...allUpgrades, ...processUpgrades(arcBetaUpgradeData, 'arcBeta')];
       }
 
       if (cachedArcUpgrades) {
@@ -752,6 +759,7 @@ export default function UpgradeSelector({
         legacy: Cookies.get('enableLegacy') === 'true',
         legends: Cookies.get('enableLegends') === 'true',
         legacyBeta: Cookies.get('enableLegacyBeta') === 'true',
+        arcBeta: Cookies.get('enableArcBeta') === 'true',
         amg: Cookies.get('enableAMG') === 'true',
         nexus: Cookies.get('enableNexus') === 'true',
         naboo: Cookies.get('enableNaboo') === 'true'
