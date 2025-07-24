@@ -22,6 +22,7 @@ ALTER TABLE fleets ADD COLUMN IF NOT EXISTS legends boolean DEFAULT false;
 ALTER TABLE fleets ADD COLUMN IF NOT EXISTS legacy boolean DEFAULT false;
 ALTER TABLE fleets ADD COLUMN IF NOT EXISTS legacy_beta boolean DEFAULT false;
 ALTER TABLE fleets ADD COLUMN IF NOT EXISTS arc boolean DEFAULT false;
+ALTER TABLE fleets ADD COLUMN IF NOT EXISTS arc_beta boolean DEFAULT false;
 ALTER TABLE fleets ADD COLUMN IF NOT EXISTS nexus boolean DEFAULT false;
 
 -- Add timestamp columns if they don't exist

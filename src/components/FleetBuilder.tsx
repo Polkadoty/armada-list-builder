@@ -1738,6 +1738,8 @@ export default function FleetBuilder({
         return '[LegacyBeta]';
       case 'arc':
         return '[ARC]';
+      case 'arcBeta':
+        return '[ARCBeta]';
       case 'nexus':
         return '[Nexus]';
       case 'naboo':
@@ -3131,6 +3133,7 @@ export default function FleetBuilder({
               legacy: contentTypes.legacy,
               legacy_beta: contentTypes.legacy_beta,
               arc: contentTypes.arc,
+              arc_beta: contentTypes.arc_beta,
               nexus: contentTypes.nexus
             })
             .eq('id', existingFleet.id);
@@ -3154,6 +3157,7 @@ export default function FleetBuilder({
               legacy: contentTypes.legacy,
               legacy_beta: contentTypes.legacy_beta,
               arc: contentTypes.arc,
+              arc_beta: contentTypes.arc_beta,
               nexus: contentTypes.nexus
             })
             .select('id, numerical_id')
@@ -3179,6 +3183,7 @@ export default function FleetBuilder({
             legacy: contentTypes.legacy,
             legacy_beta: contentTypes.legacy_beta,
             arc: contentTypes.arc,
+            arc_beta: contentTypes.arc_beta,
             nexus: contentTypes.nexus
           })
           .select('id, numerical_id')

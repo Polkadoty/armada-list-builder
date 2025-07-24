@@ -61,6 +61,7 @@ interface Fleet {
   legacy?: boolean;
   legacy_beta?: boolean;
   arc?: boolean;
+  arc_beta?: boolean;
   nexus?: boolean;
   numerical_id?: string;
   shared?: boolean;
@@ -79,6 +80,7 @@ export const getContentTypes = (fleetData: string) => {
     legacy: fleetData.includes("[Legacy]"),
     legacy_beta: fleetData.includes("[LegacyBeta]"),
     arc: fleetData.includes("[ARC]"),
+    arc_beta: fleetData.includes("[ARCBeta]"),
     nexus: fleetData.includes("[Nexus]")
   };
 };
@@ -552,6 +554,7 @@ export function FleetList() {
           legacy: contentTypes.legacy,
           legacy_beta: contentTypes.legacy_beta,
           arc: contentTypes.arc,
+          arc_beta: contentTypes.arc_beta,
           nexus: contentTypes.nexus
         };
       });
@@ -569,6 +572,7 @@ export function FleetList() {
           fleet.legacy !== currentContentTypes.legacy ||
           fleet.legacy_beta !== currentContentTypes.legacy_beta ||
           fleet.arc !== currentContentTypes.arc ||
+          fleet.arc_beta !== currentContentTypes.arc_beta ||
           fleet.nexus !== currentContentTypes.nexus
         );
       });
@@ -834,7 +838,10 @@ export function FleetList() {
           points: fleet.points,
           legends: contentTypes.legends,
           legacy: contentTypes.legacy,
-          legacy_beta: contentTypes.legacy_beta
+          legacy_beta: contentTypes.legacy_beta,
+          arc: contentTypes.arc,
+          arc_beta: contentTypes.arc_beta,
+          nexus: contentTypes.nexus
         });
 
       if (error) {
