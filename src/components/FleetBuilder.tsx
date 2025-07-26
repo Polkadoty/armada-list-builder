@@ -1225,7 +1225,8 @@ export default function FleetBuilder({
           shipToCopy.source === 'legacy' ? 'Legacy' : 
           shipToCopy.source === 'legends' ? 'Legends' : 
           shipToCopy.source === 'arc' ? 'ARC' : 
-          shipToCopy.source === 'nexus' ? 'Nexus' : ''
+          shipToCopy.source === 'nexus' ? 'Nexus' : 
+          shipToCopy.source === 'naboo' ? 'Naboo' : ''
         }]`
       : shipToCopy.name;
     
