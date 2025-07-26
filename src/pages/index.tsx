@@ -198,6 +198,7 @@ export default function Home() {
                 DONATE
               </Button>
             </div>
+            {/* Workshop and Shipyard buttons hidden
             <div className="flex items-center gap-2">
               <WorkshopButton />
               <Button 
@@ -210,6 +211,7 @@ export default function Home() {
                 Shipyard - Coming Soon
               </Button>
             </div>
+            */}
 
           </div>
         </div>
