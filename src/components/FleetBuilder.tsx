@@ -2108,6 +2108,7 @@ export default function FleetBuilder({
       `arc${type.charAt(0).toUpperCase() + type.slice(1)}`,
       `arcBeta${type.charAt(0).toUpperCase() + type.slice(1)}`,
       `nexus${type.charAt(0).toUpperCase() + type.slice(1)}`,
+      `naboo${type.charAt(0).toUpperCase() + type.slice(1)}`,
       `amg${type.charAt(0).toUpperCase() + type.slice(1)}`
     ];
 
@@ -2141,6 +2142,7 @@ export default function FleetBuilder({
                         storageKey.includes('legacy') ? 'legacy' :
                         storageKey.includes('legends') ? 'legends' :
                         storageKey.includes('nexus') ? 'nexus' :
+                        storageKey.includes('naboo') ? 'naboo' :
                         storageKey.includes('amg') ? 'amg' : 'regular'
               };
               
@@ -2159,6 +2161,7 @@ export default function FleetBuilder({
                       storageKey.includes('legacy') ? 'legacy' :
                       storageKey.includes('legends') ? 'legends' :
                       storageKey.includes('nexus') ? 'nexus' :
+                      storageKey.includes('naboo') ? 'naboo' :
                       storageKey.includes('amg') ? 'amg' : 'regular'
             };
             
