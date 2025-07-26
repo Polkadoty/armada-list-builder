@@ -19,11 +19,14 @@ import { NotificationWindow } from "@/components/NotificationWindow";
 export function UserMenu() {
   const { user, error } = useUser();
   const [useLowRes, setUseLowRes] = useState(false);
+  const [useTextOnly, setUseTextOnly] = useState(false);
   const [showSignOutConfirmation, setShowSignOutConfirmation] = useState(false);
 
   useEffect(() => {
     const lowResCookie = Cookies.get('useLowResImages');
+    const textOnlyCookie = Cookies.get('useTextOnlyMode');
     setUseLowRes(lowResCookie === 'true');
+    setUseTextOnly(textOnlyCookie === 'true');
   }, []);
 
   const handleLowResToggle = (checked: boolean) => {
@@ -31,6 +34,11 @@ export function UserMenu() {
     Cookies.set('useLowResImages', checked.toString(), { expires: 365 });
     // Flush cache to reload images
     forceReloadContent(() => {}, () => {}, () => {});
+  };
+
+  const handleTextOnlyToggle = (checked: boolean) => {
+    setUseTextOnly(checked);
+    Cookies.set('useTextOnlyMode', checked.toString(), { expires: 365 });
   };
 
   const handleSignOutClick = (e: React.MouseEvent) => {
@@ -76,6 +84,20 @@ export function UserMenu() {
                 id="low-res-toggle"
                 checked={useLowRes}
                 onCheckedChange={handleLowResToggle}
+                className="custom-switch"
+              />
+            </div>
+          </div>
+          <Separator />
+          <div className="px-3 py-2">
+            <div className="flex items-center justify-between">
+              <label htmlFor="text-only-toggle" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                Text Only Mode
+              </label>
+              <Switch
+                id="text-only-toggle"
+                checked={useTextOnly}
+                onCheckedChange={handleTextOnlyToggle}
                 className="custom-switch"
               />
             </div>

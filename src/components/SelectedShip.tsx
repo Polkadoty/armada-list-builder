@@ -1,12 +1,13 @@
-import React, { useState, useRef, memo } from 'react';
+import React, { useState, useRef, memo, useEffect } from 'react';
 import Image from 'next/image';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useSpring, animated } from 'react-spring';
 import UpgradeIconsToolbar from './UpgradeIconsToolbar';
 import { Ship, Upgrade } from "./FleetBuilder";
-import { Copy, Trash2, ArrowLeftRight, X, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Copy, Trash2, ArrowLeftRight, X, Eye, ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
 import { OptimizedImage } from './OptimizedImage';
+import Cookies from 'js-cookie';
 
 interface SelectedShipProps {
   ship: Ship;
@@ -26,8 +27,9 @@ interface SelectedShipProps {
 }
 
 function SelectedShipComponent({ ship, onRemove, onUpgradeClick, onCopy, handleRemoveUpgrade, disabledUpgrades, filledSlots, hasCommander, onMoveUp, onMoveDown, isFirst, isLast, greyUpgrades }: SelectedShipProps) {
-  const [isToolbarVisible, setIsToolbarVisible] = useState(true);
   const [{ x }, api] = useSpring(() => ({ x: 0 }));
+  const [useTextOnly, setUseTextOnly] = useState(false);
+  const [showTextDetails, setShowTextDetails] = useState(false);
   
   const isDragging = useRef(false);
   const startX = useRef(0);
@@ -39,6 +41,24 @@ function SelectedShipComponent({ ship, onRemove, onUpgradeClick, onCopy, handleR
   const [showImageModal, setShowImageModal] = useState(false);
 
   const isDummy = ship.name.includes('Dummy');
+
+  useEffect(() => {
+    const textOnlyCookie = Cookies.get('useTextOnlyMode');
+    setUseTextOnly(textOnlyCookie === 'true');
+  }, []); 
+
+  // Poll for text-only mode cookie changes and update state
+  useEffect(() => {
+    let prevTextOnly = Cookies.get('useTextOnlyMode');
+    const interval = setInterval(() => {
+      const currentTextOnly = Cookies.get('useTextOnlyMode');
+      if (currentTextOnly !== prevTextOnly) {
+        setUseTextOnly(currentTextOnly === 'true');
+        prevTextOnly = currentTextOnly;
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleShipTouchStart = (e: React.TouchEvent) => {
     isDragging.current = true;
@@ -85,9 +105,7 @@ function SelectedShipComponent({ ship, onRemove, onUpgradeClick, onCopy, handleR
     isHorizontalSwipe.current = false;
   };
 
-  const toggleToolbar = () => {
-    setIsToolbarVisible(!isToolbarVisible);
-  };
+
 
   const totalShipPoints = ship.points + ship.assignedUpgrades.reduce((total, upgrade) => total + upgrade.points, 0);
 
@@ -115,43 +133,145 @@ function SelectedShipComponent({ ship, onRemove, onUpgradeClick, onCopy, handleR
             <CardContent className="p-0">
               {!isDummy && (
                 <>
-                  <div className="relative w-full aspect-[8/3] overflow-hidden group rounded-t-lg bg-transparent">
-                    <OptimizedImage 
-                      src={ship.cardimage} 
-                      alt={ship.name}
-                      width={800}
-                      height={300}
-                      className="object-cover object-top scale-[104%] absolute top-0 left-0 w-full h-full bg-transparent"
-                      onClick={() => setShowImageModal(true)}
-                    />
-                    <button
-                      className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        // Only open modal if not swiping
-                        if (!isDragging.current) {
-                          setShowImageModal(true);
-                        }
-                      }}
-                      onTouchEnd={handleImageTouch}
-                    >
-                      <Eye size={24} className="text-white cursor-pointer" />
-                    </button>
-                  </div>
+                  {useTextOnly ? (
+                    <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-t-lg">
+                      <div className="flex justify-end mb-2">
+                        <span className="text-gray-600 dark:text-gray-400 capitalize">{ship.size} ship</span>
+                      </div>
+                      
+                      {/* Collapsible detailed information */}
+                      {showTextDetails && (
+                        <div className="space-y-3 text-sm">
+                          {ship.traits && ship.traits.length > 0 && (
+                            <div>
+                              <strong className="text-blue-600 dark:text-blue-400">Traits:</strong> {ship.traits.map(trait => trait.charAt(0).toUpperCase() + trait.slice(1)).join(', ')}
+                            </div>
+                          )}
+                          
+                          <div>
+                            <strong className="text-green-600 dark:text-green-400">Stats:</strong>
+                            <div className="ml-2 grid grid-cols-2 gap-2 mt-1">
+                              <span>Command: {ship.tokens?.command || 0}</span>
+                              <span>Squadron: {ship.tokens?.squadron || 0}</span>
+                              <span>Engineering: {ship.tokens?.engineering || 0}</span>
+                              <span>Hull: {ship.tokens?.hull || 0}</span>
+                            </div>
+                          </div>
+
+                          {ship.tokens?.flak && (
+                            <div>
+                              <strong className="text-red-600 dark:text-red-400">Flak:</strong> {ship.tokens.flak}
+                            </div>
+                          )}
+
+                          {ship.tokens && Object.keys(ship.tokens).some(key => key.startsWith('def_')) && (
+                            <div>
+                              <strong className="text-purple-600 dark:text-purple-400">Defense Tokens:</strong>
+                              <div className="ml-2">
+                                {Object.entries(ship.tokens)
+                                  .filter(([key, value]) => key.startsWith('def_') && value > 0)
+                                  .map(([token, count]) => (
+                                    <span key={token} className="mr-3 capitalize">
+                                      {token.replace('def_', '').replace('_', ' ')}: {count}
+                                    </span>
+                                  ))
+                                }
+                              </div>
+                            </div>
+                          )}
+
+                          {ship.speed && (
+                            <div>
+                              <strong className="text-indigo-600 dark:text-indigo-400">Speed Chart:</strong>
+                              <div className="ml-2">
+                                {Object.entries(ship.speed).map(([click, speeds]) => (
+                                  <div key={click}>Click {click}: {speeds.join('-')}</div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {ship.armament && (
+                            <div>
+                              <strong className="text-orange-600 dark:text-orange-400">Hull Zones:</strong>
+                              <div className="ml-2 space-y-1">
+                                {Object.entries(ship.armament)
+                                  .filter(([zone, dice]) => {
+                                    // Show standard zones always, hide non-standard zones if they have no dice
+                                    const standardZones = ['asa', 'front', 'rear', 'left', 'right'];
+                                    const isStandardZone = standardZones.includes(zone.toLowerCase());
+                                    const hasDice = dice.some(count => count > 0);
+                                    return isStandardZone || hasDice;
+                                  })
+                                  .map(([zone, dice]) => (
+                                    <div key={zone} className="flex justify-between">
+                                      <span className="capitalize">{zone}:</span>
+                                      <span>
+                                        {dice.map((count, i) => {
+                                          const colors = ['Red', 'Blue', 'Black'];
+                                          return count > 0 ? `${count}${colors[i]}` : '';
+                                        }).filter(Boolean).join(' ') || 'None'}
+                                      </span>
+                                    </div>
+                                  ))
+                                }
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="relative w-full aspect-[8/3] overflow-hidden group rounded-t-lg bg-transparent">
+                      <OptimizedImage 
+                        src={ship.cardimage} 
+                        alt={ship.name}
+                        width={800}
+                        height={300}
+                        className="object-cover object-top scale-[104%] absolute top-0 left-0 w-full h-full bg-transparent"
+                        onClick={() => setShowImageModal(true)}
+                      />
+                      <button
+                        className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          // Only open modal if not swiping
+                          if (!isDragging.current) {
+                            setShowImageModal(true);
+                          }
+                        }}
+                        onTouchEnd={handleImageTouch}
+                      >
+                        <Eye size={24} className="text-white cursor-pointer" />
+                      </button>
+                    </div>
+                  )}
                   <div className="p-4 border-t">
                     <div className="flex items-center justify-between mb-2">
                       <span className="title-font text-2xl flex items-center">
                         {ship.unique && <span className="mr-1 text-yellow-500">●</span>}
                         {ship.name}
                       </span>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={toggleToolbar}
-                        className="ml-2"
-                      >
-                        <span>{isToolbarVisible ? '▲' : '▼'}</span>
-                      </Button>
+                      {/* Text details toggle and view card button - only visible in text-only mode */}
+                      {useTextOnly && (
+                        <div className="flex items-center gap-1">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => setShowImageModal(true)}
+                            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                          >
+                            <Eye size={14} />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => setShowTextDetails(!showTextDetails)}
+                          >
+                            {showTextDetails ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                          </Button>
+                        </div>
+                      )}
                     </div>
                     <div className="flex items-center justify-between">
                       <span>{totalShipPoints} points</span>
@@ -196,14 +316,7 @@ function SelectedShipComponent({ ship, onRemove, onUpgradeClick, onCopy, handleR
               {isDummy && (
                 <div className="p-4">
                   <div className="flex items-center justify-between">
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      onClick={toggleToolbar}
-                      className="ml-2"
-                    >
-                      <span>{isToolbarVisible ? '▲' : '▼'}</span>
-                    </Button>
+
                     <div className="flex items-center gap-1">
                       <Button 
                         variant="ghost" 
@@ -224,37 +337,35 @@ function SelectedShipComponent({ ship, onRemove, onUpgradeClick, onCopy, handleR
             </CardContent>
           </div>
           
-          {isToolbarVisible && (
-            <>
-              <UpgradeIconsToolbar
-                upgrades={ship.availableUpgrades}
-                onUpgradeClick={(upgrade, index) => onUpgradeClick(ship.id, upgrade, index)}
-                assignedUpgrades={ship.assignedUpgrades}
-                disabledUpgrades={disabledUpgrades}
-                filledSlots={filledSlots}
-                hasCommander={hasCommander}
-                traits={ship.traits || []}
-                greyUpgrades={greyUpgrades}
-              />
-              <div className="p-2 space-y-2">
-                {ship.assignedUpgrades.map((upgrade, index) => (
-                  <SwipeableUpgrade
-                    key={`${upgrade.type}-${upgrade.slotIndex ?? index}-${upgrade.name}-${upgrade.id}`}
-                    upgrade={upgrade}
-                    onSwipe={(direction) => {
-                      if (direction === 'left') {
-                        handleUpgradeRemove(upgrade.type, upgrade.slotIndex ?? index);
-                      } else if (direction === 'right') {
-                        onUpgradeClick(ship.id, upgrade.type, upgrade.slotIndex ?? index);
-                      }
-                    }}
-                    onSwap={() => onUpgradeClick(ship.id, upgrade.type, upgrade.slotIndex ?? index)}
-                    onRemove={() => handleUpgradeRemove(upgrade.type, upgrade.slotIndex ?? index)}
-                  />
-                ))}
-              </div>
-            </>
-          )}
+          <>
+            <UpgradeIconsToolbar
+              upgrades={ship.availableUpgrades}
+              onUpgradeClick={(upgrade, index) => onUpgradeClick(ship.id, upgrade, index)}
+              assignedUpgrades={ship.assignedUpgrades}
+              disabledUpgrades={disabledUpgrades}
+              filledSlots={filledSlots}
+              hasCommander={hasCommander}
+              traits={ship.traits || []}
+              greyUpgrades={greyUpgrades}
+            />
+            <div className="p-2 space-y-2">
+              {ship.assignedUpgrades.map((upgrade, index) => (
+                <SwipeableUpgrade
+                  key={`${upgrade.type}-${upgrade.slotIndex ?? index}-${upgrade.name}-${upgrade.id}`}
+                  upgrade={upgrade}
+                  onSwipe={(direction) => {
+                    if (direction === 'left') {
+                      handleUpgradeRemove(upgrade.type, upgrade.slotIndex ?? index);
+                    } else if (direction === 'right') {
+                      onUpgradeClick(ship.id, upgrade.type, upgrade.slotIndex ?? index);
+                    }
+                  }}
+                  onSwap={() => onUpgradeClick(ship.id, upgrade.type, upgrade.slotIndex ?? index)}
+                  onRemove={() => handleUpgradeRemove(upgrade.type, upgrade.slotIndex ?? index)}
+                />
+              ))}
+            </div>
+          </>
         </Card>
         <div className="absolute left-0 top-0 bottom-0 flex items-center justify-center w-16 text-blue-500 bg-gray-800 bg-opacity-75" style={{ transform: 'translateX(-100%)' }}>
           <Copy size={20} />

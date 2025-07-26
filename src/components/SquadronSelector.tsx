@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ContentSource, Squadron } from './FleetBuilder';
 import { useUniqueClassContext } from '../contexts/UniqueClassContext';
 import { SortToggleGroup, SortOption } from '@/components/SortToggleGroup';
-import { Search, X } from 'lucide-react';
+import { Search, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import Cookies from 'js-cookie';
 import { OptimizedImage } from '@/components/OptimizedImage';
@@ -37,6 +37,7 @@ export function SquadronSelector({
   gamemodeRestrictions 
 }: SquadronSelectorProps) {
   const [allSquadrons, setAllSquadrons] = useState<Squadron[]>([]);
+  const [useTextOnly, setUseTextOnly] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
   const [popupMessage, setPopupMessage] = useState('');
   const { uniqueClassNames, addUniqueClassName } = useUniqueClassContext();
@@ -54,6 +55,7 @@ export function SquadronSelector({
   });
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [expandedSquadrons, setExpandedSquadrons] = useState<Set<string>>(new Set());
   const contentSourcesEnabled = useMemo(() => {
     return {
       arc: Cookies.get('enableArc') === 'true',
@@ -65,6 +67,24 @@ export function SquadronSelector({
       nexus: Cookies.get('enableNexus') === 'true',
       naboo: Cookies.get('enableNaboo') === 'true'
     };
+  }, []);
+
+  useEffect(() => {
+    const textOnlyCookie = Cookies.get('useTextOnlyMode');
+    setUseTextOnly(textOnlyCookie === 'true');
+  }, []); 
+
+  // Poll for text-only mode cookie changes and update state
+  useEffect(() => {
+    let prevTextOnly = Cookies.get('useTextOnlyMode');
+    const interval = setInterval(() => {
+      const currentTextOnly = Cookies.get('useTextOnlyMode');
+      if (currentTextOnly !== prevTextOnly) {
+        setUseTextOnly(currentTextOnly === 'true');
+        prevTextOnly = currentTextOnly;
+      }
+    }, 1000);
+    return () => clearInterval(interval);
   }, []);
 
   const [, setLoadingState] = useState(() => {
@@ -543,6 +563,20 @@ export function SquadronSelector({
     return keywords;
   };
 
+  const toggleSquadronDetails = (squadronId: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setExpandedSquadrons(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(squadronId)) {
+        newSet.delete(squadronId);
+      } else {
+        newSet.add(squadronId);
+      }
+      return newSet;
+    });
+  };
+
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-md bg-opacity-30 dark:bg-opacity-30">
       <Card className="w-full h-full sm:w-[95%] sm:h-[90%] lg:w-[85%] lg:h-[85%] flex flex-col">
@@ -585,49 +619,208 @@ export function SquadronSelector({
           )}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2">
             {processedSquadrons.map((squadron) => (
-              <div key={squadron.id} className="aspect-[2.5/3.5]">
-                <Button
-                  onClick={() => handleSquadronClick(squadron)}
-                  className={`p-0 overflow-visible relative w-full h-full rounded-lg bg-transparent ${
-                    isSquadronSelected(squadron) || !isSquadronAllowed(squadron, gamemodeRestrictions) || (aceLimit > 0 && aceCount >= aceLimit && squadron.ace) ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
-                  disabled={isSquadronSelected(squadron) || !isSquadronAllowed(squadron, gamemodeRestrictions) || (aceLimit > 0 && aceCount >= aceLimit && squadron.ace)}
-                >
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <OptimizedImage
-                      src={squadron.cardimage}
-                      alt={squadron.name}
-                      width={250}  // Standard poker card width (2.5 inches * 100)
-                      height={350} // Standard poker card height (3.5 inches * 100)
-                      className="object-cover object-center w-full h-full"
-                      onError={() => {}}
-                    />
-                    {(isSquadronSelected(squadron) || !isSquadronAllowed(squadron, gamemodeRestrictions) || (aceLimit > 0 && aceCount >= aceLimit && squadron.ace)) && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 p-2">
-                        <div className="text-white text-xs text-center leading-tight w-full px-1">
-                          <span className="break-words block" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', whiteSpace: 'normal' }}>
-                          {(() => {
-                            const messages = getSquadronRestrictionMessages(squadron);
-                            if (messages.length === 0) {
-                              return "Squadron not available";
-                            }
-                            return messages.join(' • ');
-                          })()}
+              <div key={squadron.id}>
+                {useTextOnly ? (
+                  /* Text-only mode display */
+                  <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border-2 border-gray-200 dark:border-gray-600 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 min-h-[120px]"
+                       onClick={() => handleSquadronClick(squadron)}
+                       style={{ opacity: (isSquadronSelected(squadron) || !isSquadronAllowed(squadron, gamemodeRestrictions) || (aceLimit > 0 && aceCount >= aceLimit && squadron.ace)) ? 0.5 : 1 }}>
+                    <div className="space-y-2 text-xs">
+                      {/* Squadron name and points */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          {squadron.unique && <span className="mr-1 text-yellow-500">●</span>}
+                          <span className="font-bold text-sm leading-tight">
+                            {squadron['ace-name'] || squadron.name}
                           </span>
+                        </div>
+                        <span className="text-gray-600 dark:text-gray-400 text-xs">{squadron.points}pt</span>
+                      </div>
+
+                      {/* Type and basic stats */}
+                      <div>
+                        <strong className="text-blue-600 dark:text-blue-400">Type:</strong> {squadron.squadron_type || 'Fighter'}
+                        {' | '}
+                        <strong className="text-green-600 dark:text-green-400">Stats:</strong> Speed {squadron.speed}, Hull {squadron.hull}
+                      </div>
+
+                      {/* Keywords preview */}
+                      {squadron.keywords && squadron.keywords.length > 0 && (
+                        <div>
+                          <strong className="text-indigo-600 dark:text-indigo-400">Keywords:</strong>
+                          <div className="ml-1 text-xs">
+                            {squadron.keywords.slice(0, 3).map(keyword => keyword.charAt(0).toUpperCase() + keyword.slice(1)).join(', ')}
+                            {squadron.keywords.length > 3 && '...'}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Abilities for aces */}
+                      {squadron.unique && squadron.abilities && Object.keys(squadron.abilities).length > 0 && (
+                        <div>
+                          <strong className="text-yellow-600 dark:text-yellow-400">Abilities:</strong>
+                          <div className="ml-1 text-xs italic">
+                            {Object.entries(squadron.abilities)
+                              .filter(([_, value]) => value !== 0 && value !== false)
+                              .map(([key, value]) => (
+                                <div key={key}>
+                                  {typeof value === 'boolean' ? key.charAt(0).toUpperCase() + key.slice(1) : `${key.charAt(0).toUpperCase() + key.slice(1)}: ${value}`}
+                                </div>
+                              ))
+                            }
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Restriction messages if not available */}
+                      {(isSquadronSelected(squadron) || !isSquadronAllowed(squadron, gamemodeRestrictions) || (aceLimit > 0 && aceCount >= aceLimit && squadron.ace)) && (
+                        <div className="border-t pt-2 mt-2">
+                          <strong className="text-red-600 dark:text-red-400 text-xs">Unavailable:</strong>
+                          <div className="ml-1 text-xs text-red-600 dark:text-red-400">
+                            {(() => {
+                              const messages = getSquadronRestrictionMessages(squadron);
+                              if (messages.length === 0) {
+                                return "Squadron not available";
+                              }
+                              return messages.join(' • ');
+                            })()}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  /* Regular image mode display */
+                  <>
+                    <div className="aspect-[2.5/3.5]">
+                      <Button
+                        onClick={() => handleSquadronClick(squadron)}
+                        className={`p-0 overflow-visible relative w-full h-full rounded-lg bg-transparent ${
+                          isSquadronSelected(squadron) || !isSquadronAllowed(squadron, gamemodeRestrictions) || (aceLimit > 0 && aceCount >= aceLimit && squadron.ace) ? 'opacity-50 cursor-not-allowed' : ''
+                        }`}
+                        disabled={isSquadronSelected(squadron) || !isSquadronAllowed(squadron, gamemodeRestrictions) || (aceLimit > 0 && aceCount >= aceLimit && squadron.ace)}
+                      >
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <OptimizedImage
+                            src={squadron.cardimage}
+                            alt={squadron.name}
+                            width={250}  // Standard poker card width (2.5 inches * 100)
+                            height={350} // Standard poker card height (3.5 inches * 100)
+                            className="object-cover object-center w-full h-full"
+                            onError={() => {}}
+                          />
+                          {(isSquadronSelected(squadron) || !isSquadronAllowed(squadron, gamemodeRestrictions) || (aceLimit > 0 && aceCount >= aceLimit && squadron.ace)) && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 p-2">
+                              <div className="text-white text-xs text-center leading-tight w-full px-1">
+                                <span className="break-words block" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', whiteSpace: 'normal' }}>
+                                {(() => {
+                                  const messages = getSquadronRestrictionMessages(squadron);
+                                  if (messages.length === 0) {
+                                    return "Squadron not available";
+                                  }
+                                  return messages.join(' • ');
+                                })()}
+                                </span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-1 sm:p-2 visually-hidden">
+                          {squadron['ace-name'] && (
+                            <p className="text-xs sm:text-xs font-bold flex items-center justify-center mb-0.5">
+                              {squadron.unique && <span className="mr-1 text-yellow-500 text-[10px] sm:text-xs">●</span>}
+                              <span className="break-words text-center">{squadron.name}</span>
+                            </p>
+                          )}
+                          <p className="text-xs sm:text-sm text-center">{squadron.points} points</p>
+                        </div>
+                      </Button>
+                      {/* Details toggle button */}
+                      <Button
+                        onClick={(e) => toggleSquadronDetails(squadron.id, e)}
+                        className="absolute top-1 right-1 z-10 w-6 h-6 p-0 bg-black/50 hover:bg-black/70"
+                        size="sm"
+                      >
+                        {expandedSquadrons.has(squadron.id) ? 
+                          <ChevronUp className="w-3 h-3 text-white" /> : 
+                          <ChevronDown className="w-3 h-3 text-white" />
+                        }
+                      </Button>
+                    </div>
+                    {/* Expandable details section */}
+                    {expandedSquadrons.has(squadron.id) && (
+                      <div className="mt-2 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg text-xs">
+                        <div className="space-y-2">
+                          <div>
+                            <strong>Type:</strong> {squadron.squadron_type || 'Fighter'}
+                          </div>
+                          {squadron['ace-name'] && (
+                            <div>
+                              <strong>Ace Name:</strong> {squadron['ace-name']}
+                            </div>
+                          )}
+                          <div>
+                            <strong>Stats:</strong>
+                            <div className="ml-2">
+                              Speed: {squadron.speed} | Hull: {squadron.hull}
+                            </div>
+                          </div>
+                          {squadron.tokens && Object.keys(squadron.tokens).length > 0 && (
+                            <div>
+                              <strong>Defense Tokens:</strong>
+                              <div className="ml-2">
+                                {Object.entries(squadron.tokens)
+                                  .filter(([_, count]) => count > 0)
+                                  .map(([token, count]) => (
+                                    <span key={token}>{token.replace('def_', '')}: {count} </span>
+                                  ))
+                                }
+                              </div>
+                            </div>
+                          )}
+                          {squadron.armament && (
+                            <div>
+                              <strong>Armament:</strong>
+                              <div className="ml-2">
+                                {Object.entries(squadron.armament).map(([type, dice]) => (
+                                  <div key={type}>
+                                    {type}: {dice.map((count, i) => {
+                                      const colors = ['Red', 'Blue', 'Black'];
+                                      return count > 0 ? `${count}${colors[i]}` : '';
+                                    }).filter(Boolean).join(' ')}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {squadron.keywords && squadron.keywords.length > 0 && (
+                            <div>
+                              <strong>Keywords:</strong> {squadron.keywords.map(keyword => keyword.charAt(0).toUpperCase() + keyword.slice(1)).join(', ')}
+                            </div>
+                          )}
+                          {squadron.abilities && Object.keys(squadron.abilities).length > 0 && (
+                            <div>
+                              <strong>Abilities:</strong>
+                              <div className="ml-2">
+                                {Object.entries(squadron.abilities)
+                                  .filter(([_, value]) => value !== 0 && value !== false)
+                                  .map(([key, value]) => (
+                                    <div key={key}>
+                                      {typeof value === 'boolean' ? 
+                                        key.charAt(0).toUpperCase() + key.slice(1) : 
+                                        `${key.charAt(0).toUpperCase() + key.slice(1)}: ${value}`
+                                      }
+                                    </div>
+                                  ))
+                                }
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     )}
-                  </div>
-                  <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-1 sm:p-2 visually-hidden">
-                    {squadron['ace-name'] && (
-                      <p className="text-xs sm:text-xs font-bold flex items-center justify-center mb-0.5">
-                        {squadron.unique && <span className="mr-1 text-yellow-500 text-[10px] sm:text-xs">●</span>}
-                        <span className="break-words text-center">{squadron.name}</span>
-                      </p>
-                    )}
-                    <p className="text-xs sm:text-sm text-center">{squadron.points} points</p>
-                  </div>
-                </Button>
+                  </>
+                )}
               </div>
             ))}
           </div>

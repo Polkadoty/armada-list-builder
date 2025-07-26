@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { OptimizedImage } from '@/components/OptimizedImage';
 import { useUniqueClassContext } from '../contexts/UniqueClassContext';
 import { SortToggleGroup, SortOption } from '@/components/SortToggleGroup';
-import { Search, X } from 'lucide-react';
+import { Search, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import Cookies from 'js-cookie';
 import { ContentSource } from './FleetBuilder';
@@ -50,6 +50,7 @@ interface ShipSelectorProps {
 
 export function ShipSelector({ faction, filter, onSelectShip, onClose, gamemodeRestrictions, selectedShips = [] }: ShipSelectorProps) {
   const [allShips, setAllShips] = useState<ShipModel[]>([]);
+  const [useTextOnly, setUseTextOnly] = useState(false);
   const { uniqueClassNames, addUniqueClassName } = useUniqueClassContext();
   const [activeSorts, setActiveSorts] = useState<Record<SortOption, 'asc' | 'desc' | null>>(() => {
     const savedSorts = Cookies.get(`sortState_ships`);
@@ -65,6 +66,7 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose, gamemodeR
   });
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [expandedShips, setExpandedShips] = useState<Set<string>>(new Set());
   const contentSourcesEnabled = useMemo(() => {
     return {
       arc: Cookies.get('enableArc') === 'true',
@@ -76,6 +78,24 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose, gamemodeR
       nexus: Cookies.get('enableNexus') === 'true',
       naboo: Cookies.get('enableNaboo') === 'true'
     };
+  }, []);
+
+  useEffect(() => {
+    const textOnlyCookie = Cookies.get('useTextOnlyMode');
+    setUseTextOnly(textOnlyCookie === 'true');
+  }, []); 
+
+  // Poll for text-only mode cookie changes and update state
+  useEffect(() => {
+    let prevTextOnly = Cookies.get('useTextOnlyMode');
+    const interval = setInterval(() => {
+      const currentTextOnly = Cookies.get('useTextOnlyMode');
+      if (currentTextOnly !== prevTextOnly) {
+        setUseTextOnly(currentTextOnly === 'true');
+        prevTextOnly = currentTextOnly;
+      }
+    }, 1000);
+    return () => clearInterval(interval);
   }, []);
 
   const [, setLoadingState] = useState(() => {
@@ -528,6 +548,20 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose, gamemodeR
     return messages;
   };
 
+  const toggleShipDetails = (shipId: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setExpandedShips(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(shipId)) {
+        newSet.delete(shipId);
+      } else {
+        newSet.add(shipId);
+      }
+      return newSet;
+    });
+  };
+
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-md bg-opacity-30 dark:bg-opacity-30">
       <Card className="w-full h-full sm:w-[95%] sm:h-[90%] lg:w-[85%] lg:h-[85%] flex flex-col">
@@ -570,50 +604,223 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose, gamemodeR
           ))}
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-2">
             {processedShips.map((ship) => (
-              <div key={ship.id} className={`w-full ${isHugeShip(ship) ? 'col-span-2 aspect-[5/4]' : 'aspect-[8.75/15]'}`}>
-                <Button
-                  onClick={() => handleShipClick(ship)}
-                  className={`p-0 overflow-visible relative w-full h-full rounded-lg bg-transparent ${
-                    !isShipAvailable(ship) || !isShipAllowed(ship) ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
-                  disabled={!isShipAvailable(ship) || !isShipAllowed(ship)}
-                >
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <OptimizedImage
-                      src={ship.cardimage}
-                      alt={ship.name}
-                      width={isHugeShip(ship) ? 600 : 300}
-                      height={isHugeShip(ship) ? 480 : 420}
-                      className="object-cover object-center scale-[101%]"
-                      onError={() => {}}
-                    />
-                    {(!isShipAvailable(ship) || !isShipAllowed(ship)) && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 p-2">
-                        <div className="text-white text-xs text-center leading-tight w-full px-1">
-                          <span className="break-words block" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', whiteSpace: 'normal' }}>
-                          {(() => {
-                            const messages = getShipRestrictionMessages(ship);
-                            if (messages.length === 0) {
-                              return "Ship not available";
+              <div key={ship.id} className={`w-full ${isHugeShip(ship) ? 'col-span-2' : ''}`}>
+                {useTextOnly ? (
+                  /* Text-only mode display */
+                  <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border-2 border-gray-200 dark:border-gray-600 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 min-h-[200px]"
+                       onClick={() => handleShipClick(ship)}
+                       style={{ opacity: (!isShipAvailable(ship) || !isShipAllowed(ship)) ? 0.5 : 1 }}>
+                    <div className="space-y-2 text-xs">
+                      {/* Ship name and points */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          {ship.unique && <span className="mr-1 text-yellow-500">●</span>}
+                          <span className="font-bold text-sm leading-tight">{ship.name}</span>
+                        </div>
+                        <span className="text-gray-600 dark:text-gray-400 text-xs">{ship.points}pt</span>
+                      </div>
+
+                      {/* Size and traits */}
+                      <div>
+                        <strong className="text-blue-600 dark:text-blue-400">Size:</strong> {ship.size.charAt(0).toUpperCase() + ship.size.slice(1)}
+                        {ship.traits && ship.traits.length > 0 && (
+                          <>
+                            {' | '}
+                            <strong className="text-blue-600 dark:text-blue-400">Traits:</strong> {ship.traits.map(trait => trait.charAt(0).toUpperCase() + trait.slice(1)).join(', ')}
+                          </>
+                        )}
+                      </div>
+
+                      {/* Stats */}
+                      <div>
+                        <strong className="text-green-600 dark:text-green-400">Stats:</strong>
+                        <div className="ml-1 text-xs">
+                          Command: {ship.tokens?.command || 0} | Squadron: {ship.tokens?.squadron || 0} | Engineering: {ship.tokens?.engineering || 0} | Hull: {ship.tokens?.hull || 0}
+                        </div>
+                      </div>
+
+                      {/* Speed */}
+                      {ship.speed && (
+                        <div>
+                          <strong className="text-cyan-600 dark:text-cyan-400">Speed:</strong>
+                          <div className="ml-1 text-xs">
+                            {Object.entries(ship.speed).map(([click, speeds]) => (
+                              <span key={click}>Click {click}: {speeds.join('-')} </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Hull zones and armament */}
+                      {ship.armament && (
+                        <div>
+                          <strong className="text-orange-600 dark:text-orange-400">Hull Zones:</strong>
+                          <div className="ml-1 text-xs space-y-1">
+                            {Object.entries(ship.armament)
+                              .filter(([zone, dice]) => {
+                                const standardZones = ['asa', 'front', 'rear', 'left', 'right'];
+                                const isStandardZone = standardZones.includes(zone.toLowerCase());
+                                const hasDice = dice.some(count => count > 0);
+                                return isStandardZone || hasDice;
+                              })
+                              .map(([zone, dice]) => (
+                                <div key={zone} className="flex justify-between">
+                                  <span className="capitalize">{zone}:</span>
+                                  <span>
+                                    {dice.map((count, i) => {
+                                      const colors = ['Red', 'Blue', 'Black'];
+                                      return count > 0 ? `${count}${colors[i]}` : '';
+                                    }).filter(Boolean).join(' ') || 'None'}
+                                  </span>
+                                </div>
+                              ))
                             }
-                            return messages.join(' • ');
-                          })()}
-                          </span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Upgrade suite */}
+                      {ship.upgrades && ship.upgrades.length > 0 && (
+                        <div>
+                          <strong className="text-indigo-600 dark:text-indigo-400">Upgrade Suite:</strong>
+                          <div className="ml-1 text-xs">
+                            {ship.upgrades.map(upgrade => upgrade.charAt(0).toUpperCase() + upgrade.slice(1).replace('-', ' ')).join(', ')}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Restriction messages if not available */}
+                      {(!isShipAvailable(ship) || !isShipAllowed(ship)) && (
+                        <div className="border-t pt-2 mt-2">
+                          <strong className="text-red-600 dark:text-red-400 text-xs">Unavailable:</strong>
+                          <div className="ml-1 text-xs text-red-600 dark:text-red-400">
+                            {(() => {
+                              const messages = getShipRestrictionMessages(ship);
+                              if (messages.length === 0) {
+                                return "Ship not available";
+                              }
+                              return messages.join(' • ');
+                            })()}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  /* Regular image mode display */
+                  <>
+                    <div className={`${isHugeShip(ship) ? 'aspect-[5/4]' : 'aspect-[8.75/15]'}`}>
+                      <Button
+                        onClick={() => handleShipClick(ship)}
+                        className={`p-0 overflow-visible relative w-full h-full rounded-lg bg-transparent ${
+                          !isShipAvailable(ship) || !isShipAllowed(ship) ? 'opacity-50 cursor-not-allowed' : ''
+                        }`}
+                        disabled={!isShipAvailable(ship) || !isShipAllowed(ship)}
+                      >
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <OptimizedImage
+                            src={ship.cardimage}
+                            alt={ship.name}
+                            width={isHugeShip(ship) ? 600 : 300}
+                            height={isHugeShip(ship) ? 480 : 420}
+                            className="object-cover object-center scale-[101%]"
+                            onError={() => {}}
+                          />
+                          {(!isShipAvailable(ship) || !isShipAllowed(ship)) && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 p-2">
+                              <div className="text-white text-xs text-center leading-tight w-full px-1">
+                                <span className="break-words block" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', whiteSpace: 'normal' }}>
+                                {(() => {
+                                  const messages = getShipRestrictionMessages(ship);
+                                  if (messages.length === 0) {
+                                    return "Ship not available";
+                                  }
+                                  return messages.join(' • ');
+                                })()}
+                                </span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-1 sm:p-2 visually-hidden">
+                          <p className="text-xs sm:text-xs font-bold flex items-center justify-center mb-0.5">
+                            {ship.unique && <span className="mr-1 text-yellow-500 text-[10px] sm:text-xs">●</span>}
+                            <span className="break-words text-center">{ship.name}</span>
+                          </p>
+                          <p className="text-xs sm:text-sm text-center">{ship.points} points</p>
+                        </div>
+                        <div className="sr-only">
+                          {JSON.stringify(ship)}
+                        </div>
+                      </Button>
+                      {/* Details toggle button */}
+                      <Button
+                        onClick={(e) => toggleShipDetails(ship.id, e)}
+                        className="absolute top-1 right-1 z-10 w-6 h-6 p-0 bg-black/50 hover:bg-black/70"
+                        size="sm"
+                      >
+                        {expandedShips.has(ship.id) ? 
+                          <ChevronUp className="w-3 h-3 text-white" /> : 
+                          <ChevronDown className="w-3 h-3 text-white" />
+                        }
+                      </Button>
+                    </div>
+                    {/* Expandable details section */}
+                    {expandedShips.has(ship.id) && (
+                      <div className="mt-2 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg text-xs">
+                        <div className="space-y-2">
+                          <div>
+                            <strong>Size:</strong> {ship.size}
+                          </div>
+                          {ship.traits && ship.traits.length > 0 && (
+                            <div>
+                              <strong>Traits:</strong> {ship.traits.map(trait => trait.charAt(0).toUpperCase() + trait.slice(1)).join(', ')}
+                            </div>
+                          )}
+                          <div>
+                            <strong>Stats:</strong>
+                            <div className="ml-2">
+                              Command: {ship.tokens?.command || 0} | 
+                              Squadron: {ship.tokens?.squadron || 0} | 
+                              Engineering: {ship.tokens?.engineering || 0} | 
+                              Hull: {ship.tokens?.hull || 0}
+                            </div>
+                          </div>
+                          {ship.speed && (
+                            <div>
+                              <strong>Speed:</strong>
+                              <div className="ml-2">
+                                {Object.entries(ship.speed).map(([click, speeds]) => (
+                                  <div key={click}>Click {click}: {speeds.join('-')}</div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {ship.armament && (
+                            <div>
+                              <strong>Armament:</strong>
+                              <div className="ml-2">
+                                {Object.entries(ship.armament).map(([zone, dice]) => (
+                                  <div key={zone}>
+                                    {zone}: {dice.map((count, i) => {
+                                      const colors = ['Red', 'Blue', 'Black'];
+                                      return count > 0 ? `${count}${colors[i]}` : '';
+                                    }).filter(Boolean).join(' ')}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {ship.upgrades && ship.upgrades.length > 0 && (
+                            <div>
+                              <strong>Upgrade Suite:</strong> {ship.upgrades.map(upgrade => upgrade.charAt(0).toUpperCase() + upgrade.slice(1).replace('-', ' ')).join(', ')}
+                            </div>
+                          )}
                         </div>
                       </div>
                     )}
-                  </div>
-                  <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-1 sm:p-2 visually-hidden">
-                    <p className="text-xs sm:text-xs font-bold flex items-center justify-center mb-0.5">
-                      {ship.unique && <span className="mr-1 text-yellow-500 text-[10px] sm:text-xs">●</span>}
-                      <span className="break-words text-center">{ship.name}</span>
-                    </p>
-                    <p className="text-xs sm:text-sm text-center">{ship.points} points</p>
-                  </div>
-                  <div className="sr-only">
-                    {JSON.stringify(ship)}
-                  </div>
-                </Button>
+                  </>
+                )}
               </div>
             ))}
           </div>

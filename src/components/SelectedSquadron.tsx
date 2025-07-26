@@ -1,11 +1,12 @@
-import React, { useRef, useState} from 'react';
+import React, { useRef, useState, useEffect} from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { useSpring, animated } from 'react-spring';
 import { Squadron } from './FleetBuilder';
-import { Plus, Minus, ArrowLeftRight, Trash2, Eye, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Minus, ArrowLeftRight, Trash2, Eye, X, ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { OptimizedImage } from './OptimizedImage';
 import Image from 'next/image';
+import Cookies from 'js-cookie';
 
 // Add this line at the top of the file
 /** @jsxImportSource react */
@@ -28,6 +29,8 @@ interface SelectedSquadronProps {
 
 export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement, onSwapSquadron, onMoveUp, onMoveDown, isFirst, isLast, selectedSquadrons, gamemode, onUpgradeClick, handleRemoveUpgrade }: SelectedSquadronProps) {
   const [{ x }, api] = useSpring(() => ({ x: 0 }));
+  const [useTextOnly, setUseTextOnly] = useState(false);
+  const [showTextDetails, setShowTextDetails] = useState(false);
   const isDragging = useRef(false);
   const startX = useRef(0);
   const startY = useRef(0);
@@ -36,6 +39,24 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
 
   const SWIPE_THRESHOLD = 100;
   const ANGLE_THRESHOLD = 30; // Degrees
+
+  useEffect(() => {
+    const textOnlyCookie = Cookies.get('useTextOnlyMode');
+    setUseTextOnly(textOnlyCookie === 'true');
+  }, []); 
+
+  // Poll for text-only mode cookie changes and update state
+  useEffect(() => {
+    let prevTextOnly = Cookies.get('useTextOnlyMode');
+    const interval = setInterval(() => {
+      const currentTextOnly = Cookies.get('useTextOnlyMode');
+      if (currentTextOnly !== prevTextOnly) {
+        setUseTextOnly(currentTextOnly === 'true');
+        prevTextOnly = currentTextOnly;
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     isDragging.current = true;
@@ -147,31 +168,194 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
       >
         <Card>
           <CardContent className="p-0"> {/* Removed padding */}
-            <div className="flex items-center">
-              <div className="w-2/5 aspect-[3.75/2] relative overflow-hidden group rounded-l-lg bg-transparent"> {/* Adjusted margin */}
-                <OptimizedImage 
-                  src={squadron.cardimage} 
-                  alt={squadron.unique && squadron['ace-name'] ? squadron['ace-name'] : squadron.name}
-                  width={250}
-                  height={350}
-                  className="object-cover object-top scale-[103%] rounded-l-lg absolute top-0 left-0" // Added absolute positioning
-                  onClick={() => setShowImageModal(true)}
-                />
-                <button
-                  className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    // Only open modal if not swiping
-                    if (!isDragging.current) {
-                      setShowImageModal(true);
-                    }
-                  }}
-                  onTouchEnd={handleImageTouch}
-                >
-                  <Eye size={16} className="text-white" />
-                </button>
+            {useTextOnly ? (
+              <div className="flex flex-col">
+                {/* Squadron info at top in text-only mode */}
+                <div className="p-2">
+                  <div className="title-font text-xl flex items-center">
+                    {squadron.unique && <span className="mr-1 text-yellow-500">●</span>}
+                    {count > 1 ? `(${count}) ` : ''}
+                    {squadron.unique && squadron['ace-name'] ? squadron['ace-name'] : squadron.name}
+                    {squadron.unique && (
+                      <Button variant="ghost" size="sm" onClick={() => onSwapSquadron(squadron.id)} className="text-blue-500 p-1 ml-1">
+                        <ArrowLeftRight size={16} />
+                      </Button>
+                    )}
+                    {/* Text details toggle and view card button - only visible in text-only mode */}
+                    <div className="ml-auto flex items-center gap-1">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => setShowImageModal(true)}
+                        className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                      >
+                        <Eye size={14} />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => setShowTextDetails(!showTextDetails)}
+                      >
+                        {showTextDetails ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-1">
+                      <div className="text-sm sm:text-base">
+                        {totalPoints} {!squadron.unique ? 'pts' : 'points'}
+                      </div>
+                      {shouldShowIncrementButtons() && (
+                        <>
+                          <Button variant="ghost" size="sm" onClick={() => onDecrement(squadron.id)} className="text-red-500 p-1">
+                            <Minus size={16} />
+                          </Button>
+                          <span>{count}</span>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => onIncrement(squadron.id)} 
+                            className="text-blue-500 p-1"
+                            disabled={!canIncrement()}
+                          >
+                            <Plus size={16} />
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <div className="flex flex-row sm:flex-row items-center gap-1 mr-1">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => onMoveUp(squadron.id)} 
+                          className="text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 p-1"
+                          disabled={isFirst}
+                        >
+                          <ChevronLeft className="h-4 w-4 rotate-90 sm:rotate-0" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => onMoveDown(squadron.id)} 
+                          className="text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 p-1"
+                          disabled={isLast}
+                        >
+                          <ChevronRight className="h-4 w-4 rotate-90 sm:rotate-0" />
+                        </Button>
+                      </div>
+                      <Button variant="ghost" size="sm" onClick={() => onRemove(squadron.id)} className="text-red-500 p-1">
+                        <Trash2 size={16} />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Collapsible text details */}
+                {showTextDetails && (
+                  <div className="p-3 bg-gray-50 dark:bg-gray-800 border-t">
+                    <div className="space-y-2 text-xs">
+                      <div>
+                        <strong className="text-blue-600 dark:text-blue-400">Type:</strong> {squadron.squadron_type || 'Fighter'}
+                      </div>
+                      
+                      <div>
+                        <strong className="text-green-600 dark:text-green-400">Stats:</strong>
+                        <div className="ml-1">
+                          Speed: {squadron.speed} | Hull: {squadron.hull}
+                        </div>
+                      </div>
+
+                      {squadron.tokens && Object.keys(squadron.tokens).length > 0 && (
+                        <div>
+                          <strong className="text-purple-600 dark:text-purple-400">Defense:</strong>
+                          <div className="ml-1">
+                            {Object.entries(squadron.tokens)
+                              .filter(([_, count]) => count > 0)
+                              .map(([token, count]) => (
+                                <span key={token} className="mr-2 capitalize">
+                                  {token.replace('def_', '').replace('_', ' ')}: {count}
+                                </span>
+                              ))
+                            }
+                          </div>
+                        </div>
+                      )}
+
+                      {squadron.armament && (
+                        <div>
+                          <strong className="text-red-600 dark:text-red-400">Anti-Squadron:</strong>
+                          <div className="ml-1">
+                            {Object.entries(squadron.armament).map(([type, dice]) => (
+                              <div key={type} className="capitalize">
+                                {type}: {dice.map((count, i) => {
+                                  const colors = ['Red', 'Blue', 'Black'];
+                                  return count > 0 ? `${count}${colors[i]}` : '';
+                                }).filter(Boolean).join(' ') || 'None'}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {squadron.keywords && squadron.keywords.length > 0 && (
+                        <div>
+                          <strong className="text-indigo-600 dark:text-indigo-400">Keywords:</strong>
+                          <div className="ml-1 text-xs">
+                            {squadron.keywords.map(keyword => keyword.charAt(0).toUpperCase() + keyword.slice(1)).join(', ')}
+                          </div>
+                        </div>
+                      )}
+
+                      {squadron.abilities && Object.keys(squadron.abilities).length > 0 && (
+                        <div>
+                          <strong className="text-yellow-600 dark:text-yellow-400">Abilities:</strong>
+                          <div className="ml-1 text-xs">
+                            {Object.entries(squadron.abilities)
+                              .filter(([_, value]) => value !== 0 && value !== false)
+                              .map(([key, value]) => (
+                                <div key={key} className={squadron.unique ? "italic" : ""}>
+                                  {typeof value === 'boolean' ? 
+                                    key.charAt(0).toUpperCase() + key.slice(1) : 
+                                    `${key.charAt(0).toUpperCase() + key.slice(1)}: ${value}`
+                                  }
+                                </div>
+                              ))
+                            }
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
               </div>
-              <div className="flex-grow p-2"> {/* Added padding here */}
+            ) : (
+              <div className="flex items-center">
+                <div className="w-2/5 aspect-[3.75/2] relative overflow-hidden group rounded-l-lg bg-transparent">
+                  <OptimizedImage 
+                    src={squadron.cardimage} 
+                    alt={squadron.unique && squadron['ace-name'] ? squadron['ace-name'] : squadron.name}
+                    width={250}
+                    height={350}
+                    className="object-cover object-top scale-[103%] rounded-l-lg absolute top-0 left-0"
+                    onClick={() => setShowImageModal(true)}
+                  />
+                  <button
+                    className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (!isDragging.current) {
+                        setShowImageModal(true);
+                      }
+                    }}
+                    onTouchEnd={handleImageTouch}
+                  >
+                    <Eye size={16} className="text-white" />
+                  </button>
+                </div>
+                <div className="flex-grow p-2">
+
                 <div className="title-font text-xl flex items-center">
                   {squadron.unique && <span className="mr-1 text-yellow-500">●</span>}
                   {count > 1 ? `(${count}) ` : ''}
@@ -230,9 +414,10 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
                       <Trash2 size={16} />
                     </Button>
                   </div>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </CardContent>
         </Card>
         

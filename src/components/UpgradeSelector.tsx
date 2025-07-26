@@ -54,6 +54,7 @@ export default function UpgradeSelector({
   squadronKeywords = [],
 }: UpgradeSelectorProps) {
   const [loading, setLoading] = useState(true);
+  const [useTextOnly, setUseTextOnly] = useState(false);
   const { uniqueClassNames, addUniqueClassName } = useUniqueClassContext();
   const [allUpgrades, setAllUpgrades] = useState<Upgrade[]>([]);
   const [activeSorts, setActiveSorts] = useState<Record<SortOption, 'asc' | 'desc' | null>>(() => {
@@ -80,6 +81,24 @@ export default function UpgradeSelector({
     nexus: Cookies.get('enableNexus') === 'true',
     naboo: Cookies.get('enableNaboo') === 'true'
   });
+
+  useEffect(() => {
+    const textOnlyCookie = Cookies.get('useTextOnlyMode');
+    setUseTextOnly(textOnlyCookie === 'true');
+  }, []); 
+
+  // Poll for text-only mode cookie changes and update state
+  useEffect(() => {
+    let prevTextOnly = Cookies.get('useTextOnlyMode');
+    const interval = setInterval(() => {
+      const currentTextOnly = Cookies.get('useTextOnlyMode');
+      if (currentTextOnly !== prevTextOnly) {
+        setUseTextOnly(currentTextOnly === 'true');
+        prevTextOnly = currentTextOnly;
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const fetchUpgrades = () => {
@@ -834,39 +853,141 @@ export default function UpgradeSelector({
                     ? "aspect-[3.5/2.5]"  // Landscape aspect ratio for leaders
                     : "aspect-[2.5/3.5]"  // Portrait aspect ratio for other upgrades
                 }>
-                  <Button
-                    onClick={() => handleUpgradeClick(upgrade)}
-                    className={`p-0 overflow-visible relative w-full h-full rounded-lg bg-transparent ${
-                      !isUpgradeAvailable(upgrade) || isUpgradeGreyedOut(upgrade) ? 'opacity-50 cursor-not-allowed' : ''
-                    }`}
-                    disabled={!isUpgradeAvailable(upgrade) || isUpgradeGreyedOut(upgrade)}
-                  >
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <OptimizedImage
-                        src={upgrade.cardimage}
-                        alt={upgrade.name}
-                        width={upgradeType === "leader" && isSquadronUpgrade ? 350 : 250}  // Landscape width for leaders
-                        height={upgradeType === "leader" && isSquadronUpgrade ? 250 : 350} // Landscape height for leaders
-                        className="object-cover object-center w-full h-full"
-                        onError={() => {}}
-                      />
-                      {(!isUpgradeAvailable(upgrade) || isUpgradeGreyedOut(upgrade)) && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 p-2">
-                          <div className="text-white text-xs text-center leading-tight w-full px-1">
-                            <span className="break-words block" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', whiteSpace: 'normal' }}>
-                            {(() => {
-                              const messages = getUpgradeRestrictionMessages(upgrade);
-                              if (messages.length === 0) {
-                                return "Upgrade not available";
-                              }
-                              return messages.join(' • ');
-                            })()}
-                            </span>
+                  {useTextOnly ? (
+                    <div className="w-full h-full p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border-2 border-gray-200 dark:border-gray-600 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
+                         onClick={() => handleUpgradeClick(upgrade)}>
+                      <div className="space-y-2 text-xs h-full overflow-auto">
+                        {/* Upgrade name and unique indicator */}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center">
+                            {upgrade.unique && <span className="mr-1 text-yellow-500">●</span>}
+                            <span className="font-bold text-sm leading-tight">{upgrade.name}</span>
                           </div>
+                          <span className="text-gray-600 dark:text-gray-400 text-xs">{upgrade.points}pt</span>
                         </div>
-                      )}
+
+                        {/* Upgrade type and icon */}
+                        <div className="flex items-center">
+                          <Image
+                            src={getIconPath(upgrade.type)}
+                            alt={upgrade.type}
+                            width={16}
+                            height={16}
+                            className="mr-2 dark:invert"
+                          />
+                          <span className="text-blue-600 dark:text-blue-400 font-medium capitalize">
+                            {upgrade.type.replace('-', ' ')}
+                          </span>
+                        </div>
+
+                        {/* Faction */}
+                        <div>
+                          <strong className="text-green-600 dark:text-green-400">Faction:</strong>
+                          <span className="ml-1">
+                            {Array.isArray(upgrade.faction) 
+                              ? upgrade.faction.filter(f => f).join(', ') || 'Any'
+                              : upgrade.faction || 'Any'
+                            }
+                          </span>
+                        </div>
+
+                        {/* Restrictions */}
+                        {upgrade.restrictions && (
+                          <div>
+                            <strong className="text-red-600 dark:text-red-400">Restrictions:</strong>
+                            <div className="ml-1 text-xs space-y-1">
+                              {upgrade.restrictions.size && upgrade.restrictions.size.length > 0 && (
+                                <div>Size: {upgrade.restrictions.size.filter(s => s).join(', ')}</div>
+                              )}
+                              {upgrade.restrictions.traits && upgrade.restrictions.traits.length > 0 && (
+                                <div>Traits: {upgrade.restrictions.traits.filter(t => t).join(', ')}</div>
+                              )}
+                              {upgrade.bound_shiptype && (
+                                <div>Ship Type: {upgrade.bound_shiptype}</div>
+                              )}
+                              {upgrade.restrictions.flagship && (
+                                <div>Requires: Commander on ship</div>
+                              )}
+                              {upgrade.restrictions.keywords && upgrade.restrictions.keywords.length > 0 && (
+                                <div>Keywords: {upgrade.restrictions.keywords.filter(k => k).join(', ')}</div>
+                              )}
+                              {upgrade.restrictions["disallowed-keywords"] && upgrade.restrictions["disallowed-keywords"].length > 0 && (
+                                <div>Disallowed: {upgrade.restrictions["disallowed-keywords"].filter(k => k).join(', ')}</div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Special properties */}
+                        {(upgrade.modification || upgrade.exhaust || upgrade["unique-class"]) && (
+                          <div>
+                            <strong className="text-purple-600 dark:text-purple-400">Properties:</strong>
+                            <div className="ml-1 text-xs">
+                              {upgrade.modification && <div>• Modification</div>}
+                              {upgrade.exhaust && <div>• Exhaust: {upgrade.exhaust.type}</div>}
+                              {upgrade["unique-class"] && upgrade["unique-class"].length > 0 && (
+                                <div>• Unique Class: {upgrade["unique-class"].filter(uc => uc).join(', ')}</div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Card text/ability */}
+                        {upgrade.ability && (
+                          <div>
+                            <strong className="text-indigo-600 dark:text-indigo-400">Ability:</strong>
+                            <div className="ml-1 text-xs leading-relaxed">
+                              {upgrade.ability}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Restriction messages if not available */}
+                        {(!isUpgradeAvailable(upgrade) || isUpgradeGreyedOut(upgrade)) && (
+                          <div className="border-t pt-2 mt-2">
+                            <strong className="text-red-600 dark:text-red-400">Unavailable:</strong>
+                            <div className="ml-1 text-xs text-red-600 dark:text-red-400">
+                              {getUpgradeRestrictionMessages(upgrade).join(' • ')}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </Button>
+                  ) : (
+                    <Button
+                      onClick={() => handleUpgradeClick(upgrade)}
+                      className={`p-0 overflow-visible relative w-full h-full rounded-lg bg-transparent ${
+                        !isUpgradeAvailable(upgrade) || isUpgradeGreyedOut(upgrade) ? 'opacity-50 cursor-not-allowed' : ''
+                      }`}
+                      disabled={!isUpgradeAvailable(upgrade) || isUpgradeGreyedOut(upgrade)}
+                    >
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <OptimizedImage
+                          src={upgrade.cardimage}
+                          alt={upgrade.name}
+                          width={upgradeType === "leader" && isSquadronUpgrade ? 350 : 250}  // Landscape width for leaders
+                          height={upgradeType === "leader" && isSquadronUpgrade ? 250 : 350} // Landscape height for leaders
+                          className="object-cover object-center w-full h-full"
+                          onError={() => {}}
+                        />
+                        {(!isUpgradeAvailable(upgrade) || isUpgradeGreyedOut(upgrade)) && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 p-2">
+                            <div className="text-white text-xs text-center leading-tight w-full px-1">
+                              <span className="break-words block" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', whiteSpace: 'normal' }}>
+                              {(() => {
+                                const messages = getUpgradeRestrictionMessages(upgrade);
+                                if (messages.length === 0) {
+                                  return "Upgrade not available";
+                                }
+                                return messages.join(' • ');
+                              })()}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </Button>
+                  )}
                 </div>
               ))}
             </div>
