@@ -661,7 +661,7 @@ export function SquadronSelector({
                           <strong className="text-yellow-600 dark:text-yellow-400">Abilities:</strong>
                           <div className="ml-1 text-xs italic">
                             {Object.entries(squadron.abilities)
-                              .filter(([_, value]) => value !== 0 && value !== false)
+                              .filter(([, value]) => value !== 0 && value !== false)
                               .map(([key, value]) => (
                                 <div key={key}>
                                   {typeof value === 'boolean' ? key.charAt(0).toUpperCase() + key.slice(1) : `${key.charAt(0).toUpperCase() + key.slice(1)}: ${value}`}
@@ -770,7 +770,7 @@ export function SquadronSelector({
                               <strong>Defense Tokens:</strong>
                               <div className="ml-2">
                                 {Object.entries(squadron.tokens)
-                                  .filter(([_, count]) => count > 0)
+                                  .filter(([, count]) => count > 0)
                                   .map(([token, count]) => (
                                     <span key={token}>{token.replace('def_', '')}: {count} </span>
                                   ))
@@ -803,7 +803,7 @@ export function SquadronSelector({
                               <strong>Abilities:</strong>
                               <div className="ml-2">
                                 {Object.entries(squadron.abilities)
-                                  .filter(([_, value]) => value !== 0 && value !== false)
+                                  .filter(([, value]) => value !== 0 && value !== false)
                                   .map(([key, value]) => (
                                     <div key={key}>
                                       {typeof value === 'boolean' ? 

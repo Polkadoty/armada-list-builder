@@ -271,7 +271,7 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
                           <strong className="text-purple-600 dark:text-purple-400">Defense:</strong>
                           <div className="ml-1">
                             {Object.entries(squadron.tokens)
-                              .filter(([_, count]) => count > 0)
+                              .filter(([, count]) => count > 0)
                               .map(([token, count]) => (
                                 <span key={token} className="mr-2 capitalize">
                                   {token.replace('def_', '').replace('_', ' ')}: {count}
@@ -312,7 +312,7 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
                           <strong className="text-yellow-600 dark:text-yellow-400">Abilities:</strong>
                           <div className="ml-1 text-xs">
                             {Object.entries(squadron.abilities)
-                              .filter(([_, value]) => value !== 0 && value !== false)
+                              .filter(([, value]) => value !== 0 && value !== false)
                               .map(([key, value]) => (
                                 <div key={key} className={squadron.unique ? "italic" : ""}>
                                   {typeof value === 'boolean' ? 
