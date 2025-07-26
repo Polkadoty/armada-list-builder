@@ -9,11 +9,10 @@ import { LoadingScreen } from '../components/LoadingScreen';
 import { smartCheckAndFetchData } from '../utils/contentManager';
 import { ContentToggleButton } from '../components/ContentToggleButton';
 import { TextImportWindow } from '../components/TextImportWindow';
-import { Import, Ship } from 'lucide-react';
+import { Import } from 'lucide-react';
 import { useRouter } from 'next/router';
 import { UserAvatar } from '../components/UserAvatar';
 import Head from 'next/head';
-import { WorkshopButton } from "@/components/WorkshopButton";
 import { useTheme } from 'next-themes';
 import Cookies from 'js-cookie';
 
