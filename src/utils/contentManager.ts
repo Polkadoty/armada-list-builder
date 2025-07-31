@@ -38,6 +38,7 @@ function hasContentStateChanged(current: ContentState, previous: ContentState | 
     current.enableLegends !== previous.enableLegends ||
     current.enableLegacyBeta !== previous.enableLegacyBeta ||
     current.enableArc !== previous.enableArc ||
+    current.enableArcBeta !== previous.enableArcBeta ||
     current.enableNexus !== previous.enableNexus ||
     current.enableNaboo !== previous.enableNaboo ||
     current.enableProxy !== previous.enableProxy
