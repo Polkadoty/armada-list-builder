@@ -20,7 +20,7 @@ const CONFIG = {
   showNexusToggle: true,
   showLegacyBetaToggle: true,
   showArcToggle: true,
-  showArcBetaToggle: false,
+  showArcBetaToggle: true,
   showNabooToggle: true,
   showLocalContentToggle: false,
   showProxyToggle: false,
