@@ -382,22 +382,22 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
                 {/* Experimental Content Section */}
                 <div className="mt-4">
                   <h5 className="font-semibold text-sm mb-3">Experimental Content</h5>
-                  {CONFIG.showLegendsToggle && (
+                  {CONFIG.showNabooToggle && (
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
-                        <label htmlFor="legends-toggle" className={`text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${isToggleDisabled('enableLegends') ? 'opacity-50' : ''}`}>
-                          Enable Legends Content
-                          {isToggleDisabled('enableLegends') && <span className="text-xs text-muted-foreground ml-2">(Controlled by gamemode)</span>}
+                        <label htmlFor="naboo-toggle" className={`text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${isToggleDisabled('enableNaboo') ? 'opacity-50' : ''}`}>
+                          Enable Battle for Naboo Content
+                          {isToggleDisabled('enableNaboo') && <span className="text-xs text-muted-foreground ml-2">(Controlled by gamemode)</span>}
                         </label>
-                        <button type="button" onClick={() => { setInfoOpen('legends'); }} className="ml-1 p-1 hover:bg-zinc-700/20 rounded-full" aria-label="Info">
+                        <button type="button" onClick={() => { setInfoOpen('naboo'); }} className="ml-1 p-1 hover:bg-zinc-700/20 rounded-full" aria-label="Info">
                           <Info className="w-4 h-4" />
                         </button>
                       </div>
                       <Switch
-                        id="legends-toggle"
-                        checked={enableLegends}
-                        onCheckedChange={handleLegendsToggle}
-                        disabled={isToggleDisabled('enableLegends')}
+                        id="naboo-toggle"
+                        checked={enableNaboo}
+                        onCheckedChange={handleNabooToggle}
+                        disabled={isToggleDisabled('enableNaboo')}
                         className="custom-switch"
                       />
                     </div>
@@ -418,6 +418,26 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
                         checked={enableArc}
                         onCheckedChange={handleArcToggle}
                         disabled={isToggleDisabled('enableArc')}
+                        className="custom-switch"
+                      />
+                    </div>
+                  )}
+                  {CONFIG.showLegendsToggle && (
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <label htmlFor="legends-toggle" className={`text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${isToggleDisabled('enableLegends') ? 'opacity-50' : ''}`}>
+                          Enable Legends Content
+                          {isToggleDisabled('enableLegends') && <span className="text-xs text-muted-foreground ml-2">(Controlled by gamemode)</span>}
+                        </label>
+                        <button type="button" onClick={() => { setInfoOpen('legends'); }} className="ml-1 p-1 hover:bg-zinc-700/20 rounded-full" aria-label="Info">
+                          <Info className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <Switch
+                        id="legends-toggle"
+                        checked={enableLegends}
+                        onCheckedChange={handleLegendsToggle}
+                        disabled={isToggleDisabled('enableLegends')}
                         className="custom-switch"
                       />
                     </div>
@@ -478,26 +498,6 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
                         checked={enableProxy}
                         onCheckedChange={handleProxyToggle}
                         disabled={isToggleDisabled('enableProxy')}
-                        className="custom-switch"
-                      />
-                    </div>
-                  )}
-                  {CONFIG.showNabooToggle && (
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <label htmlFor="naboo-toggle" className={`text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${isToggleDisabled('enableNaboo') ? 'opacity-50' : ''}`}>
-                          Enable Battle for Naboo Content
-                          {isToggleDisabled('enableNaboo') && <span className="text-xs text-muted-foreground ml-2">(Controlled by gamemode)</span>}
-                        </label>
-                        <button type="button" onClick={() => { setInfoOpen('naboo'); }} className="ml-1 p-1 hover:bg-zinc-700/20 rounded-full" aria-label="Info">
-                          <Info className="w-4 h-4" />
-                        </button>
-                      </div>
-                      <Switch
-                        id="naboo-toggle"
-                        checked={enableNaboo}
-                        onCheckedChange={handleNabooToggle}
-                        disabled={isToggleDisabled('enableNaboo')}
                         className="custom-switch"
                       />
                     </div>
