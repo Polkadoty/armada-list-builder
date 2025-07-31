@@ -356,26 +356,7 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
                       />
                     </div>
                   )}
-                  {CONFIG.showArcToggle && (
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <label htmlFor="arc-toggle" className={`text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${isToggleDisabled('enableArc') ? 'opacity-50' : ''}`}>
-                          Enable Arc Tournament Content (Beta)
-                          {isToggleDisabled('enableArc') && <span className="text-xs text-muted-foreground ml-2">(Controlled by gamemode)</span>}
-                        </label>
-                        <button type="button" onClick={() => { setInfoOpen('arc'); }} className="ml-1 p-1 hover:bg-zinc-700/20 rounded-full" aria-label="Info">
-                          <Info className="w-4 h-4" />
-                        </button>
-                      </div>
-                      <Switch
-                        id="arc-toggle"
-                        checked={enableArc}
-                        onCheckedChange={handleArcToggle}
-                        disabled={isToggleDisabled('enableArc')}
-                        className="custom-switch"
-                      />
-                    </div>
-                  )}
+
                   {CONFIG.showNexusToggle && (
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
@@ -417,6 +398,26 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
                         checked={enableLegends}
                         onCheckedChange={handleLegendsToggle}
                         disabled={isToggleDisabled('enableLegends')}
+                        className="custom-switch"
+                      />
+                    </div>
+                  )}
+                  {CONFIG.showArcToggle && (
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <label htmlFor="arc-toggle" className={`text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${isToggleDisabled('enableArc') ? 'opacity-50' : ''}`}>
+                          Enable Arc Content
+                          {isToggleDisabled('enableArc') && <span className="text-xs text-muted-foreground ml-2">(Controlled by gamemode)</span>}
+                        </label>
+                        <button type="button" onClick={() => { setInfoOpen('arc'); }} className="ml-1 p-1 hover:bg-zinc-700/20 rounded-full" aria-label="Info">
+                          <Info className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <Switch
+                        id="arc-toggle"
+                        checked={enableArc}
+                        onCheckedChange={handleArcToggle}
+                        disabled={isToggleDisabled('enableArc')}
                         className="custom-switch"
                       />
                     </div>
