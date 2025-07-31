@@ -289,11 +289,25 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose, gamemodeR
               return amgErrata;
             }
 
-            // Then check for source-prefixed version
+            // Then check for source-prefixed versions, prioritizing ARC over regular errata
+            // First check for ARC version if ARC content is enabled
+            const arcVersion = group.find(candidate => 
+              candidate.id !== ship.id && 
+              candidate.id.match(/^arc-/) &&
+              ship.id === candidate.id.replace(/^arc-/, '') &&
+              contentSourcesEnabled.arc
+            );
+
+            if (arcVersion) {
+              console.log(`Replacing ${ship.id} with ARC version ${arcVersion.id}`);
+              return arcVersion;
+            }
+
+            // Then check for other source-prefixed versions
             const sourceVersion = group.find(candidate => 
               candidate.id !== ship.id && 
-              candidate.id.match(/^(legacy|legends|legacyBeta|arc|arcBeta|amg|nexus)-/) &&
-              ship.id === candidate.id.replace(/^(legacy|legends|legacyBeta|arc|arcBeta|amg|nexus)-/, '')
+              candidate.id.match(/^(legacy|legends|legacyBeta|arcBeta|amg|nexus)-/) && // Exclude arc since we already checked it
+              ship.id === candidate.id.replace(/^(legacy|legends|legacyBeta|arcBeta|amg|nexus)-/, '')
             );
 
             if (sourceVersion) {

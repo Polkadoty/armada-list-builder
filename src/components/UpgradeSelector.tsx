@@ -234,8 +234,22 @@ export default function UpgradeSelector({
           return amgErrata;
         }
 
-        // Then look for source-specific errata that's in the errata keys
+        // Then look for source-specific errata, prioritizing ARC errata over regular errata
+        // First check for ARC errata if ARC content is enabled
+        const arcErrata = group.find(upgrade => 
+          upgrade.source === 'arc' &&
+          upgradeErrataKeys.includes(upgrade.id) && 
+          contentSources.arc
+        );
+        
+        if (arcErrata) {
+          console.log(`Found ARC errata: ${arcErrata.id} replacing ${group[0].id}`);
+          return arcErrata;
+        }
+
+        // Then look for other source-specific errata
         const sourceErrata = group.find(upgrade => 
+          upgrade.source !== 'arc' && // Exclude ARC since we already checked it
           upgradeErrataKeys.includes(upgrade.id) && 
           contentSources[upgrade.source as keyof typeof contentSources]
         );

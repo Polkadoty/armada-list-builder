@@ -156,7 +156,8 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose, gamemodeRe
           }
         });
 
-        // Then, process and add errata objectives
+        // Process errata objectives in two passes to ensure ARC errata overwrites regular errata
+        // First pass: process all non-ARC errata objectives
         objectiveKeys.forEach(storageKey => {
           try {
             const data = JSON.parse(localStorage.getItem(storageKey) || '{}');
@@ -165,6 +166,11 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose, gamemodeRe
 
             // Skip if this content source is disabled (except for regular content)
             if (source !== 'regular' && !contentSourcesEnabled[source as keyof typeof contentSourcesEnabled]) {
+              return;
+            }
+
+            // Skip ARC in first pass
+            if (source === 'arc') {
               return;
             }
 
@@ -195,6 +201,49 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose, gamemodeRe
             console.error(`Error processing ${storageKey}:`, error);
           }
         });
+
+        // Second pass: process ARC errata objectives (these will overwrite any existing errata)
+        if (contentSourcesEnabled.arc) {
+          objectiveKeys.forEach(storageKey => {
+            try {
+              const data = JSON.parse(localStorage.getItem(storageKey) || '{}');
+              const objectivesData = data.objectives || {};
+              const source = storageKey.replace(/objectives|Objectives/g, '').toLowerCase() || 'regular';
+
+              // Only process ARC in second pass
+              if (source !== 'arc') {
+                return;
+              }
+
+              /* eslint-disable @typescript-eslint/no-explicit-any */
+              Object.entries(objectivesData).forEach(([objectiveId, objective]: [string, any]) => {
+                // For campaign type, include all objective types including actual campaign objectives; otherwise filter by specific type
+                const shouldInclude = type === 'campaign' 
+                  ? ['assault', 'defense', 'navigation', 'campaign'].includes(objective.type)
+                  : type === 'skirmish'
+                  ? ['skirmish'].includes(objective.type)
+                  : objective.type === type;
+                  
+                if (shouldInclude && objectiveId.includes('-errata-')) {
+                  const baseId = objectiveId.replace(/-errata-(legacy|legends|legacyBeta|arc|arcBeta)$/, '');
+                  
+                  if (errataKeys.includes(objectiveId)) {
+                    console.log(`ARC errata overwriting: ${baseId} with ${objectiveId}`);
+                    objectiveMap.set(baseId, {
+                      id: objectiveId,
+                      name: objective.name,
+                      type: objective.type,
+                      cardimage: sanitizeImageUrl(objective.cardimage),
+                      source: source as ContentSource
+                    });
+                  }
+                }
+              });
+            } catch (error) {
+              console.error(`Error processing ${storageKey}:`, error);
+            }
+          });
+        }
 
         setObjectives(Array.from(objectiveMap.values()));
         setLoading(false);
