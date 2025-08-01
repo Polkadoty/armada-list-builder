@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/tooltip";
 import { FleetRecoveryPopup } from "./FleetRecoveryPopup";
 import { SaveFleetButton } from './SaveFleetButton';
+import { UnsavedChangesDialog } from './UnsavedChangesDialog';
 import { useRouter } from 'next/router';
 import { PrintMenu } from "./PrintMenu";
 import { ExpansionSelector } from "./ExpansionSelector";
@@ -326,6 +327,12 @@ export default function FleetBuilder({
   const [showDeleteSquadronsConfirmation, setShowDeleteSquadronsConfirmation] = useState(false);
   const [greyUpgrades, setGreyUpgrades] = useState<Record<string, string[]>>({});
   const [isImporting, setIsImporting] = useState(false);
+  
+  // Unsaved changes tracking
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [lastSavedState, setLastSavedState] = useState<string>('');
+  const [showUnsavedChangesDialog, setShowUnsavedChangesDialog] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
 
   const commanderCount = useMemo(() => 
     selectedShips
@@ -1697,7 +1704,7 @@ export default function FleetBuilder({
     setPreviousSquadronPoints(0);
     setSelectedSquadrons([]);
     localStorage.removeItem(`savedFleet_${faction}`);
-  }, [removeUniqueClassName, faction]);
+  }, [removeUniqueClassName, faction, selectedSquadrons]);
 
   const handleMoveShip = (id: string, direction: 'up' | 'down') => {
     setSelectedShips(prevShips => {
@@ -1730,7 +1737,7 @@ export default function FleetBuilder({
   };
 
   // Add this helper function to format the objective source
-  const formatSource = (source: ContentSource) => {
+  const formatSource = useCallback((source: ContentSource) => {
     switch (source) {
       case 'legacy':
         return '[Legacy]';
@@ -1749,7 +1756,7 @@ export default function FleetBuilder({
       default:
         return '';
     }
-  };
+  }, []);
 
   const generateExportText = useCallback(() => {
     // Get gamemode restrictions for export modifications
@@ -3064,6 +3071,7 @@ export default function FleetBuilder({
     fetchShip,
     fetchUpgrade,
     fetchSquadron,
+    fetchObjective,
     clearAllShips,
     clearAllSquadrons,
     preprocessFleetText,
@@ -3094,28 +3102,6 @@ export default function FleetBuilder({
   const handlePrint = () => {
     setShowPrintMenu(true);
   };
-
-  const handleShareButtonClick = useCallback(() => {
-    if (!fleetName.trim()) {
-      setNotificationMessage('Please enter a fleet name before sharing');
-      setShowNotification(true);
-      return;
-    }
-
-    // Check if fleet name is "Untitled Fleet" and prompt for rename
-    if (fleetName === 'Untitled Fleet') {
-      setShowShareNamePrompt(true);
-      return;
-    }
-
-    if (selectedShips.length === 0 && selectedSquadrons.length === 0) {
-      setNotificationMessage('Please add ships or squadrons before sharing');
-      setShowNotification(true);
-      return;
-    }
-
-    performShare(fleetName);
-  }, [fleetName, selectedShips, selectedSquadrons]);
 
   const performShare = useCallback(async (nameToUse: string) => {
     try {
@@ -3230,7 +3216,29 @@ export default function FleetBuilder({
       setNotificationMessage('Failed to share fleet. Please try again.');
       setShowNotification(true);
     }
-  }, [user, generateExportText, faction, points]);
+  }, [user, generateExportText, faction, points, selectedShips]);
+
+  const handleShareButtonClick = useCallback(() => {
+    if (!fleetName.trim()) {
+      setNotificationMessage('Please enter a fleet name before sharing');
+      setShowNotification(true);
+      return;
+    }
+
+    // Check if fleet name is "Untitled Fleet" and prompt for rename
+    if (fleetName === 'Untitled Fleet') {
+      setShowShareNamePrompt(true);
+      return;
+    }
+
+    if (selectedShips.length === 0 && selectedSquadrons.length === 0) {
+      setNotificationMessage('Please add ships or squadrons before sharing');
+      setShowNotification(true);
+      return;
+    }
+
+    performShare(fleetName);
+  }, [fleetName, selectedShips, selectedSquadrons, performShare]);
 
   const handleShareNameConfirm = useCallback((newName: string) => {
     setFleetName(newName);
@@ -3542,7 +3550,7 @@ export default function FleetBuilder({
     return chunks;
   };
 
-  const generatePrintnPlayContent = () => {
+  const generatePrintnPlayContent = useCallback(() => {
     // Calculate number of pages needed for poker cards
     const allCards = [
       ...selectedSquadrons,
@@ -4038,7 +4046,7 @@ export default function FleetBuilder({
       </body>
       </html>
     `;
-  };
+  }, [selectedShips, selectedSquadrons, selectedAssaultObjectives, selectedDefenseObjectives, selectedNavigationObjectives, fleetName, paperSize, showCardBacks]);
 
   const handlePrintnPlay = useCallback(() => {
     const printContent = generatePrintnPlayContent();
@@ -4057,7 +4065,8 @@ export default function FleetBuilder({
 // ${baseTokensHTML}
 
   useEffect(() => {
-    const handleBeforeUnload = () => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      // Always save recovery data for fleet recovery feature
       if (selectedShips.length > 0 || selectedSquadrons.length > 0) {
         localStorage.setItem(
           "fleetRecovery",
@@ -4073,6 +4082,14 @@ export default function FleetBuilder({
             timestamp: new Date().getTime(),
           })
         );
+      }
+      
+      // Check for unsaved changes and user authentication
+      if (hasUnsavedChanges && user) {
+        const message = 'You have unsaved changes to your fleet. Are you sure you want to leave?';
+        event.preventDefault();
+        event.returnValue = message;
+        return message;
       }
     };
 
@@ -4133,7 +4150,9 @@ export default function FleetBuilder({
     isExpansionMode,
     hasLoadedPage,
     handleImportFleet,
-    applyUpdates
+    applyUpdates,
+    hasUnsavedChanges,
+    user
   ]);
 
   useEffect(() => {
@@ -4148,6 +4167,100 @@ export default function FleetBuilder({
     selectedNavigationObjectives,
     saveFleetToLocalStorage,
   ]);
+
+  // Track fleet changes for unsaved changes detection
+  useEffect(() => {
+    // Skip during import operations
+    if (isImporting) return;
+    
+    const currentFleetState = generateExportText();
+    
+    // If this is the first time generating state or state is empty, mark as saved
+    if (!lastSavedState && (selectedShips.length === 0 && selectedSquadrons.length === 0)) {
+      setLastSavedState(currentFleetState);
+      setHasUnsavedChanges(false);
+      return;
+    }
+    
+    // Check if fleet state has changed from last saved state
+    if (currentFleetState !== lastSavedState && (selectedShips.length > 0 || selectedSquadrons.length > 0)) {
+      setHasUnsavedChanges(true);
+    } else if (selectedShips.length === 0 && selectedSquadrons.length === 0) {
+      // Empty fleet - no unsaved changes
+      setHasUnsavedChanges(false);
+      setLastSavedState('');
+    }
+  }, [
+    selectedShips,
+    selectedSquadrons,
+    selectedAssaultObjectives,
+    selectedDefenseObjectives,
+    selectedNavigationObjectives,
+    fleetName,
+    points,
+    generateExportText,
+    lastSavedState,
+    isImporting
+  ]);
+
+  // Handle successful save
+  const handleFleetSaved = useCallback(() => {
+    const currentFleetState = generateExportText();
+    setLastSavedState(currentFleetState);
+    setHasUnsavedChanges(false);
+  }, [generateExportText]);
+
+  // Handle router navigation for unsaved changes
+  useEffect(() => {
+    const handleRouteChangeStart = (url: string) => {
+      if (hasUnsavedChanges && user) {
+        setPendingNavigation(url);
+        setShowUnsavedChangesDialog(true);
+        throw 'Abort route change. Please ignore this error.';
+      }
+    };
+
+    router.events.on('routeChangeStart', handleRouteChangeStart);
+
+    return () => {
+      router.events.off('routeChangeStart', handleRouteChangeStart);
+    };
+  }, [hasUnsavedChanges, user, router.events]);
+
+  // Dialog handlers
+  const handleSaveAndLeave = useCallback(() => {
+    // Trigger save via the save button, then navigate
+    const saveButton = document.querySelector('[data-save-button]') as HTMLButtonElement;
+    if (saveButton) {
+      saveButton.click();
+    }
+    
+    // Set up a listener for when the save completes
+    const checkSaved = () => {
+      if (!hasUnsavedChanges && pendingNavigation) {
+        setShowUnsavedChangesDialog(false);
+        router.push(pendingNavigation);
+        setPendingNavigation(null);
+      } else {
+        setTimeout(checkSaved, 100);
+      }
+    };
+    setTimeout(checkSaved, 100);
+  }, [hasUnsavedChanges, pendingNavigation, router]);
+
+  const handleDiscardAndLeave = useCallback(() => {
+    setShowUnsavedChangesDialog(false);
+    setHasUnsavedChanges(false);
+    if (pendingNavigation) {
+      router.push(pendingNavigation);
+      setPendingNavigation(null);
+    }
+  }, [pendingNavigation, router]);
+
+  const handleCancelNavigation = useCallback(() => {
+    setShowUnsavedChangesDialog(false);
+    setPendingNavigation(null);
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -4348,7 +4461,7 @@ export default function FleetBuilder({
         setForcedObjective(forcedObjectives.skirmish2, setSelectedSkirmish2Objectives);
       }
     }
-  }, [gamemode, restrictions]);
+  }, [gamemode, restrictions, fetchObjective]);
 
   // Get gamemode restrictions
   const gamemodeRestrictions = useMemo(() => {
@@ -4426,6 +4539,11 @@ export default function FleetBuilder({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <SaveFleetButton
+                    ref={(ref) => {
+                      if (ref) {
+                        ref.setAttribute('data-save-button', 'true');
+                      }
+                    }}
                     fleetData={generateExportText()}
                     faction={faction}
                     fleetName={fleetName}
@@ -4434,6 +4552,7 @@ export default function FleetBuilder({
                       ship.assignedUpgrades.some(upgrade => upgrade.type === "commander"))?.assignedUpgrades
                         .find(upgrade => upgrade.type === "commander")?.name || ""}
                     points={points}
+                    onSave={handleFleetSaved}
                   />
                 </TooltipTrigger>
                 <TooltipContent>
@@ -4941,6 +5060,13 @@ export default function FleetBuilder({
         action="share"
       />
     )}
+
+    <UnsavedChangesDialog
+      isOpen={showUnsavedChangesDialog}
+      onSave={handleSaveAndLeave}
+      onDiscard={handleDiscardAndLeave}
+      onCancel={handleCancelNavigation}
+    />
     </div>
   );
 }

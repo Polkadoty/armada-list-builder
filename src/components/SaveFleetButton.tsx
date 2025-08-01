@@ -14,10 +14,11 @@ interface SaveFleetButtonProps {
     setFleetName: (name: string) => void;
     commander: string;
     points: number;
+    onSave?: () => void;
 }
 
 export const SaveFleetButton = forwardRef<HTMLButtonElement, SaveFleetButtonProps>(
-  ({ fleetData, faction, fleetName, setFleetName, commander, points }, ref) => {
+  ({ fleetData, faction, fleetName, setFleetName, commander, points, onSave }, ref) => {
     const { user } = useUser();
     const [isSaving, setIsSaving] = useState(false);
     const [showNotification, setShowNotification] = useState(false);
@@ -119,6 +120,11 @@ export const SaveFleetButton = forwardRef<HTMLButtonElement, SaveFleetButtonProp
         }
 
         setShowNotification(true);
+        
+        // Notify parent component that save was successful
+        if (onSave) {
+          onSave();
+        }
       } catch (error) {
         console.error('Error saving fleet:', error);
         setNotificationMessage('Failed to save fleet. Please try again.');

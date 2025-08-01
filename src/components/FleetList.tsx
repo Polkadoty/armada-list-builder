@@ -1129,7 +1129,16 @@ export function FleetList() {
     currentPage,
     totalPages,
     showDeleteConfirmation,
-    fleetToDelete
+    fleetToDelete,
+    confirmDelete,
+    handleCopyLink,
+    handleCopyText,
+    handleFleetCopy,
+    handleFleetDelete,
+    handleFleetSelect,
+    handleOpenRenameDialog,
+    handleSearchQueryChange,
+    handleToggleShare
   ]);
 
   // Memoize dialog render content to avoid re-rendering when closed
@@ -1358,7 +1367,22 @@ export function FleetList() {
     totalPages,
     rowsPerPage,
     showDeleteConfirmation,
-    fleetToDelete
+    fleetToDelete,
+    capitalizeFirstLetter,
+    confirmDelete,
+    handleCommanderFilterChange,
+    handleCommanderPageChange,
+    handleCopyLink,
+    handleCopyText,
+    handleFactionFilterChange,
+    handleFactionPageChange,
+    handleFleetCopy,
+    handleFleetDelete,
+    handleFleetSelect,
+    handleOpenRenameDialog,
+    handleSearchQueryChange,
+    handleSort,
+    handleToggleShare
   ]);
 
   // Return either the Dialog or Sheet based on screen size
