@@ -51,15 +51,18 @@ export function UserMenu() {
   }
 
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Avatar className="cursor-pointer hover:opacity-80 transition-opacity">
-          <AvatarImage src={user?.picture || undefined} alt={user?.name || 'User'} />
-          <AvatarFallback className="bg-accent">
-            <User className="h-5 w-5 text-muted-foreground" />
-          </AvatarFallback>
-        </Avatar>
-      </PopoverTrigger>
+    <div className="relative">
+      <Popover>
+        <PopoverTrigger asChild>
+          <Avatar className={`cursor-pointer hover:opacity-80 transition-all duration-300 ${
+            !user ? 'ring-2 ring-blue-400 ring-opacity-75 shadow-lg shadow-blue-400/50 animate-pulse' : ''
+          }`}>
+            <AvatarImage src={user?.picture || undefined} alt={user?.name || 'User'} />
+            <AvatarFallback className="bg-accent">
+              <User className="h-5 w-5 text-muted-foreground" />
+            </AvatarFallback>
+          </Avatar>
+        </PopoverTrigger>
       <PopoverContent className="w-56 p-0">
         <div>
           {user && (
@@ -124,6 +127,14 @@ export function UserMenu() {
         </div>
       </PopoverContent>
 
+      {!user && (
+        <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs text-blue-400 whitespace-nowrap animate-bounce">
+          <span className="inline-block animate-pulse font-medium">
+            Don't forget to sign in!
+          </span>
+        </div>
+      )}
+
       {showSignOutConfirmation && (
         <NotificationWindow
           title="Sign Out"
@@ -135,6 +146,7 @@ export function UserMenu() {
           }}
         />
       )}
-    </Popover>
+      </Popover>
+    </div>
   );
 }
