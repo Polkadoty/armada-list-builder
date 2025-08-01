@@ -268,10 +268,10 @@ export function SquadronSelector({
         });
 
         if (hasErrata) {
-          // First check for ARC errata if ARC content is enabled
+          // First check for ARC errata (squadrons ending in -errata-arc) if ARC content is enabled
           const arcErrata = group.find(squadron => 
             squadronErrataKeys.includes(squadron.id) && 
-            squadron.source === 'arc' &&
+            squadron.id.endsWith('-errata-arc') &&
             contentSourcesEnabled.arc
           );
           
@@ -279,10 +279,10 @@ export function SquadronSelector({
             return arcErrata;
           }
 
-          // Then return other errata versions
+          // Then return other errata versions (excluding ARC errata)
           return group.find(squadron => 
             squadronErrataKeys.includes(squadron.id) && 
-            squadron.source !== 'arc' && // Exclude ARC since we already checked it
+            !squadron.id.endsWith('-errata-arc') && // Exclude ARC errata since we already checked it
             (squadron.id.endsWith('-errata') ? 
               Cookies.get('enableAMG') === 'true' : 
               contentSourcesEnabled[squadron.source as keyof typeof contentSourcesEnabled])

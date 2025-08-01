@@ -152,7 +152,7 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose, gamemodeRe
               }
             });
           } catch (error) {
-            console.error(`Error processing ${storageKey}:`, error);
+            // Error processing storage key
           }
         });
 
@@ -186,6 +186,11 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose, gamemodeRe
               if (shouldInclude && objectiveId.includes('-errata-')) {
                 const baseId = objectiveId.replace(/-errata-(legacy|legends|legacyBeta|arc|arcBeta)$/, '');
                 
+                // Skip ARC errata in first pass
+                if (objectiveId.endsWith('-errata-arc')) {
+                  return;
+                }
+                
                 if (errataKeys.includes(objectiveId)) {
                   objectiveMap.set(baseId, {
                     id: objectiveId,
@@ -198,7 +203,7 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose, gamemodeRe
               }
             });
           } catch (error) {
-            console.error(`Error processing ${storageKey}:`, error);
+            // Error processing storage key
           }
         });
 
@@ -224,11 +229,10 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose, gamemodeRe
                   ? ['skirmish'].includes(objective.type)
                   : objective.type === type;
                   
-                if (shouldInclude && objectiveId.includes('-errata-')) {
-                  const baseId = objectiveId.replace(/-errata-(legacy|legends|legacyBeta|arc|arcBeta)$/, '');
+                if (shouldInclude && objectiveId.endsWith('-errata-arc')) {
+                  const baseId = objectiveId.replace(/-errata-arc$/, '');
                   
                   if (errataKeys.includes(objectiveId)) {
-                    console.log(`ARC errata overwriting: ${baseId} with ${objectiveId}`);
                     objectiveMap.set(baseId, {
                       id: objectiveId,
                       name: objective.name,
@@ -248,7 +252,7 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose, gamemodeRe
         setObjectives(Array.from(objectiveMap.values()));
         setLoading(false);
       } catch (error) {
-        console.error('Error fetching objectives:', error);
+        // Error fetching objectives
       }
     };
 

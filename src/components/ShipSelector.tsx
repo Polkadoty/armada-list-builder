@@ -242,104 +242,89 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose, gamemodeR
 
       // Get errata keys from localStorage
       const errataKeys = JSON.parse(localStorage.getItem('errataKeys') || '{}');
-      const shipErrataKeys = errataKeys.ships || [];
-      // console.log('Retrieved errata keys:', shipErrataKeys);
+      const shipModelErrataKeys = errataKeys.shipmodels || [];
       
-      // Create a Map to group ships by their base name
+      // Create a Map to group ships by their chassis
       const shipGroups = new Map<string, ShipModel[]>();
 
       allShips.forEach(ship => {
-        // Use chassis name for grouping since errata is chassis-based
-        const baseName = ship.chassis
-          .replace(/^(legacy|legends|legacyBeta|arc|arcBeta|amg|nexus)-/, '') // Remove source prefix
-          .replace(/-errata(-[^-]+)?$/, ''); // Remove both types of errata suffixes
+        // Group by chassis name
+        const chassisName = ship.chassis;
         
-        // console.log(`Processing ship: ${ship.id}, baseName: ${baseName}`);
-        
-        if (!shipGroups.has(baseName)) {
-          shipGroups.set(baseName, []);
+        if (!shipGroups.has(chassisName)) {
+          shipGroups.set(chassisName, []);
         }
-        shipGroups.get(baseName)?.push(ship);
+        shipGroups.get(chassisName)?.push(ship);
       });
 
-      // console.log('Grouped ships by base name:', Array.from(shipGroups.entries()));
 
-      // Filter out non-errata versions when errata exists
+
+      // Filter out non-errata versions when errata exists within each chassis
       allShips = Array.from(shipGroups.values()).map(group => {
-        // First, identify which ships in the group have errata versions
-        const shipsWithErrataStatus = group.map(ship => {
-          // Check if this ship's chassis matches any errata keys or has -errata suffix
-          const hasErrata = shipErrataKeys.some((errataKey: string) => ship.chassis.includes(errataKey)) ||
-                           ship.chassis.endsWith('-errata');
-          return { ship, hasErrata };
+        
+        // Helper function to convert ship name to errata key format
+        const toErrataKeyFormat = (name: string) => {
+          return name.toLowerCase().replace(/\s+/g, '-').replace(/[{}]/g, '');
+        };
+
+        // First pass: identify ships that have errata versions available
+        const shipsToKeep: ShipModel[] = [];
+        const processedShips = new Set<string>();
+        
+        group.forEach(ship => {
+          if (processedShips.has(ship.id)) return;
+          
+          // Convert ship name to errata key format to check against the keys
+          const shipKeyFormat = toErrataKeyFormat(ship.name);
+          const expectedErrataKeyArc = `${shipKeyFormat}-errata-arc`;
+          const expectedErrataKey = `${shipKeyFormat}-errata`;
+          
+          // Check if this ship has an errata version in the keys
+          const hasErrataInKeys = shipModelErrataKeys.includes(expectedErrataKeyArc) || shipModelErrataKeys.includes(expectedErrataKey);
+          
+          if (hasErrataInKeys) {
+            // This ship has an errata version - find all versions with the same name in this chassis
+            const sameNameShips = group.filter(otherShip => otherShip.name === ship.name);
+            
+            if (sameNameShips.length > 1) {
+              // Multiple ships with same name - determine which is the errata version
+              
+              // Priority order for errata versions: arc > other sources > regular
+              const arcVersion = sameNameShips.find(s => s.source === 'arc' || s.id.startsWith('arc-'));
+              const otherSourceVersion = sameNameShips.find(s => s.source !== 'regular' && s.source !== 'arc' && !s.id.startsWith('regular-') && !s.id.startsWith('arc-'));
+              const regularVersion = sameNameShips.find(s => s.source === 'regular' || s.id.startsWith('regular-'));
+              
+              let selectedVersion = null;
+              
+              if (arcVersion && shipModelErrataKeys.includes(expectedErrataKeyArc)) {
+                selectedVersion = arcVersion;
+              } else if (otherSourceVersion && shipModelErrataKeys.includes(expectedErrataKey)) {
+                selectedVersion = otherSourceVersion;
+              } else if (regularVersion) {
+                selectedVersion = regularVersion;
+              }
+              
+              if (selectedVersion) {
+                shipsToKeep.push(selectedVersion);
+                // Mark all versions of this ship as processed
+                sameNameShips.forEach(s => {
+                  processedShips.add(s.id);
+                });
+              }
+            } else {
+              // Only one ship with this name - keep it
+              shipsToKeep.push(ship);
+              processedShips.add(ship.id);
+            }
+          } else {
+            // This ship has no errata version - keep it
+            shipsToKeep.push(ship);
+            processedShips.add(ship.id);
+          }
         });
 
-        // If any ship in this group has errata, process the replacements
-        if (shipsWithErrataStatus.some(({ hasErrata }) => hasErrata)) {
-          const processedShips = group.map(ship => {
-            // First check for AMG errata version
-            const amgErrata = group.find(candidate => 
-              candidate.chassis === `${ship.chassis}-errata`
-            );
-            
-            // Only apply AMG errata if the cookie is enabled
-            const enableAMG = Cookies.get('enableAMG') === 'true';
-            if (amgErrata && enableAMG) {
-              console.log(`Replacing ${ship.id} with AMG errata version ${amgErrata.id}`);
-              return amgErrata;
-            }
-
-            // Then check for source-prefixed versions, prioritizing ARC over regular errata
-            // First check for ARC version if ARC content is enabled
-            const arcVersion = group.find(candidate => 
-              candidate.id !== ship.id && 
-              candidate.id.match(/^arc-/) &&
-              ship.id === candidate.id.replace(/^arc-/, '') &&
-              contentSourcesEnabled.arc
-            );
-
-            if (arcVersion) {
-              console.log(`Replacing ${ship.id} with ARC version ${arcVersion.id}`);
-              return arcVersion;
-            }
-
-            // Then check for other source-prefixed versions
-            const sourceVersion = group.find(candidate => 
-              candidate.id !== ship.id && 
-              candidate.id.match(/^(legacy|legends|legacyBeta|arcBeta|amg|nexus)-/) && // Exclude arc since we already checked it
-              ship.id === candidate.id.replace(/^(legacy|legends|legacyBeta|arcBeta|amg|nexus)-/, '')
-            );
-
-            if (sourceVersion) {
-              // Check if the source version is enabled
-              const source = sourceVersion.source;
-              const isSourceEnabled = source ? contentSourcesEnabled[source as keyof typeof contentSourcesEnabled] : true;
-              
-              if (isSourceEnabled) {
-                console.log(`Replacing ${ship.id} with source version ${sourceVersion.id}`);
-                return sourceVersion;
-              }
-            }
-            
-            return ship;
-          });
-
-          // Remove duplicates and check content sources
-          const uniqueShips = new Map();
-          processedShips.forEach(ship => {
-            const normalizedId = ship.id.replace(/^(legacy|legends|legacyBeta|arc|arcBeta|nexus|amg)-/, '');
-            const isSourceEnabled = ship.source === 'regular' || contentSourcesEnabled[ship.source as keyof typeof contentSourcesEnabled];
-            
-            if (isSourceEnabled && (!uniqueShips.has(normalizedId) || ship.id.match(/^(legacy|legends|legacyBeta|arc|arcBeta|nexus|amg)-/))) {
-              uniqueShips.set(normalizedId, ship);
-            }
-          });
-
-          return Array.from(uniqueShips.values());
-        }
-
-        // If no errata exists, filter by enabled content sources
-        return group.filter(ship => 
+        // Filter by enabled content sources
+        return shipsToKeep.filter(ship => 
           ship.source === 'regular' || contentSourcesEnabled[ship.source as keyof typeof contentSourcesEnabled]
         );
       }).flat();

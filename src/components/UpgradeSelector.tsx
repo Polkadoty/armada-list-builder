@@ -201,7 +201,6 @@ export default function UpgradeSelector({
       // Get errata keys from localStorage
       const errataKeys = JSON.parse(localStorage.getItem('errataKeys') || '{}');
       const upgradeErrataKeys = errataKeys.upgrades || [];
-      console.log('Errata Keys for Upgrades:', upgradeErrataKeys);
 
       // Create a Map to group upgrades by their base name
       const upgradeGroups = new Map<string, Upgrade[]>();
@@ -230,32 +229,31 @@ export default function UpgradeSelector({
         // Only apply AMG errata if the cookie is enabled
         const enableAMG = Cookies.get('enableAMG') === 'true';
         if (amgErrata && enableAMG) {
-          console.log(`Found AMG errata: ${amgErrata.id} replacing ${group[0].id}`);
           return amgErrata;
         }
 
         // Then look for source-specific errata, prioritizing ARC errata over regular errata
-        // First check for ARC errata if ARC content is enabled
-        const arcErrata = group.find(upgrade => 
-          upgrade.source === 'arc' &&
-          upgradeErrataKeys.includes(upgrade.id) && 
-          contentSources.arc
-        );
+        // First check for ARC errata (upgrades ending in -errata-arc) if ARC content is enabled
+        const arcErrata = group.find(upgrade => {
+          if (!upgrade.id.endsWith('-errata-arc') || !contentSources.arc) return false;
+          
+          // Remove source prefix to match errata keys format
+          const keyToCheck = upgrade.id.replace(/^(legacy|legends|legacyBeta|arc|arcBeta|amg|nexus)-/, '');
+          return upgradeErrataKeys.includes(keyToCheck);
+        });
         
         if (arcErrata) {
-          console.log(`Found ARC errata: ${arcErrata.id} replacing ${group[0].id}`);
           return arcErrata;
         }
 
-        // Then look for other source-specific errata
+        // Then look for other source-specific errata (excluding ARC errata)
         const sourceErrata = group.find(upgrade => 
-          upgrade.source !== 'arc' && // Exclude ARC since we already checked it
+          !upgrade.id.endsWith('-errata-arc') && // Exclude ARC errata since we already checked it
           upgradeErrataKeys.includes(upgrade.id) && 
           contentSources[upgrade.source as keyof typeof contentSources]
         );
         
         if (sourceErrata) {
-          console.log(`Found source errata: ${sourceErrata.id} replacing ${group[0].id}`);
           return sourceErrata;
         }
 
