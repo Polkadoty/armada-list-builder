@@ -151,7 +151,7 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose, gamemodeRe
                 });
               }
             });
-          } catch (error) {
+          } catch {
             // Error processing storage key
           }
         });
@@ -202,7 +202,7 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose, gamemodeRe
                 }
               }
             });
-          } catch (error) {
+          } catch {
             // Error processing storage key
           }
         });
@@ -251,7 +251,7 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose, gamemodeRe
 
         setObjectives(Array.from(objectiveMap.values()));
         setLoading(false);
-      } catch (error) {
+      } catch {
         // Error fetching objectives
       }
     };
