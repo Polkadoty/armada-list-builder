@@ -147,35 +147,10 @@ export default function FactionPage() {
       }
 
       if (!hasContent) {
-        console.log('[LogoNav] no content detected; forcing home navigation');
-        e.preventDefault();
-        // Try client-side first and attach a one-time completion watcher
-        let fallbackTimer: number | undefined;
-        const handleComplete = (url: string) => {
-          if (url === '/') {
-            console.log('[LogoNav] routeChangeComplete detected for home; cancelling fallback');
-            if (fallbackTimer) window.clearTimeout(fallbackTimer);
-            router.events.off('routeChangeComplete', handleComplete as (url: string) => void);
-          }
-        };
-        router.events.on('routeChangeComplete', handleComplete as (url: string) => void);
-        router.replace('/')
-          .then(() => {
-            console.log('[LogoNav] router.replace resolved');
-            // If for any reason the route doesn't finalize, hard-refresh to home after grace period
-            fallbackTimer = window.setTimeout(() => {
-              if (window.location.pathname !== '/') {
-                console.log('[LogoNav] SPA did not navigate in time; hard redirecting');
-                router.events.off('routeChangeComplete', handleComplete as (url: string) => void);
-                window.location.assign('/');
-              }
-            }, 1200);
-          })
-          .catch(() => {
-            console.log('[LogoNav] router.replace rejected; hard redirecting');
-            router.events.off('routeChangeComplete', handleComplete as (url: string) => void);
-            window.location.assign('/');
-          });
+        // No content: just rely on normal Link navigation (no forced replace/refresh)
+        // This avoids post-navigation flashes/refreshes on Vercel
+        console.log('[LogoNav] no content detected; letting Link handle navigation');
+        return; // do not preventDefault
       }
       // If content exists, let the normal Link navigation proceed (and unsaved guard will handle prompting)
     } catch {
