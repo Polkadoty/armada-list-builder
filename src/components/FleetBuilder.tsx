@@ -2033,7 +2033,10 @@ export default function FleetBuilder({
     return aliasKeys[0];
   };
 
-  const fetchObjective = (key: string): ObjectiveModel | null => {
+  // Optimized localStorage fetching with caching
+  const storageCache = useMemo(() => new Map(), []);
+
+  const fetchObjective = useCallback((key: string): ObjectiveModel | null => {
     const cacheKey = `objective_${key}`;
     
     // Check cache first
@@ -2088,10 +2091,7 @@ export default function FleetBuilder({
     // Cache null result
     storageCache.set(cacheKey, null);
     return null;
-  };
-  
-  // Optimized localStorage fetching with caching
-  const storageCache = useMemo(() => new Map(), []);
+  }, [storageCache]);
   
   const fetchFromLocalStorage = useCallback((
     key: string,
@@ -3094,8 +3094,6 @@ export default function FleetBuilder({
     applyUpdates,
     generateUniqueShipId,
     removeUniqueClassName,
-    selectedShips,
-    selectedSquadrons,
     generateUniqueSquadronId
   ]);
 
@@ -4046,7 +4044,7 @@ export default function FleetBuilder({
       </body>
       </html>
     `;
-  }, [selectedShips, selectedSquadrons, selectedAssaultObjectives, selectedDefenseObjectives, selectedNavigationObjectives, fleetName, paperSize, showCardBacks]);
+  }, [selectedShips, selectedSquadrons, selectedAssaultObjectives, selectedDefenseObjectives, selectedNavigationObjectives, fleetName, paperSize, showCardBacks, /* stable helpers: */ chunkShipsForLayout, generateDamageDeckContent]);
 
   const handlePrintnPlay = useCallback(() => {
     const printContent = generatePrintnPlayContent();
@@ -4249,10 +4247,10 @@ export default function FleetBuilder({
           // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           // @ts-ignore
           router.events.emit('routeChangeError', new Error('Route change aborted due to unsaved changes'), url, { shallow: false });
-        } catch (_) {}
+        } catch {}
         try {
           window.history.replaceState(null, '', router.asPath);
-        } catch (_) {}
+        } catch {}
         // eslint-disable-next-line no-throw-literal
         throw 'Abort route change. Please ignore this error.';
       }
@@ -4267,12 +4265,12 @@ export default function FleetBuilder({
     };
 
     router.events.on('routeChangeStart', handleRouteChangeStart);
-    router.events.on('routeChangeError', handleRouteChangeError as any);
+    router.events.on('routeChangeError', handleRouteChangeError as (err: unknown, url: string) => void);
     router.events.on('routeChangeComplete', handleRouteChangeComplete);
 
     return () => {
       router.events.off('routeChangeStart', handleRouteChangeStart);
-      router.events.off('routeChangeError', handleRouteChangeError as any);
+      router.events.off('routeChangeError', handleRouteChangeError as (err: unknown, url: string) => void);
       router.events.off('routeChangeComplete', handleRouteChangeComplete);
     };
   }, [hasUnsavedChanges, selectedShips, selectedSquadrons, router.asPath, router.events]);

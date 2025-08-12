@@ -78,7 +78,7 @@ export default function FactionPage() {
   useEffect(() => {
     try {
       router.prefetch('/');
-    } catch (_) {}
+    } catch {}
   }, [router]);
 
   // Auto-switch gamemode based on faction
@@ -143,7 +143,7 @@ export default function FactionPage() {
           if (data && data.faction === faction && ((data.ships && data.ships.length > 0) || (data.squadrons && data.squadrons.length > 0))) {
             hasContent = true;
           }
-        } catch (_) {}
+        } catch {}
       }
 
       if (!hasContent) {
@@ -155,10 +155,10 @@ export default function FactionPage() {
           if (url === '/') {
             console.log('[LogoNav] routeChangeComplete detected for home; cancelling fallback');
             if (fallbackTimer) window.clearTimeout(fallbackTimer);
-            router.events.off('routeChangeComplete', handleComplete as any);
+            router.events.off('routeChangeComplete', handleComplete as (url: string) => void);
           }
         };
-        router.events.on('routeChangeComplete', handleComplete as any);
+        router.events.on('routeChangeComplete', handleComplete as (url: string) => void);
         router.replace('/')
           .then(() => {
             console.log('[LogoNav] router.replace resolved');
@@ -166,19 +166,19 @@ export default function FactionPage() {
             fallbackTimer = window.setTimeout(() => {
               if (window.location.pathname !== '/') {
                 console.log('[LogoNav] SPA did not navigate in time; hard redirecting');
-                router.events.off('routeChangeComplete', handleComplete as any);
+                router.events.off('routeChangeComplete', handleComplete as (url: string) => void);
                 window.location.assign('/');
               }
             }, 1200);
           })
           .catch(() => {
             console.log('[LogoNav] router.replace rejected; hard redirecting');
-            router.events.off('routeChangeComplete', handleComplete as any);
+            router.events.off('routeChangeComplete', handleComplete as (url: string) => void);
             window.location.assign('/');
           });
       }
       // If content exists, let the normal Link navigation proceed (and unsaved guard will handle prompting)
-    } catch (_) {
+    } catch {
       console.log('[LogoNav] exception during click handler; falling through to default navigation');
       // As a safety net, fall back to default navigation
     }

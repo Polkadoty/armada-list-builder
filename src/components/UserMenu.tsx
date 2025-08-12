@@ -129,9 +129,9 @@ export function UserMenu() {
 
       {!user && (
         <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs text-blue-400 whitespace-nowrap animate-bounce">
-          <span className="inline-block animate-pulse font-medium">
-            Don't forget to sign in!
-          </span>
+              <span className="inline-block animate-pulse font-medium">
+                Don&apos;t forget to sign in!
+              </span>
         </div>
       )}
 
