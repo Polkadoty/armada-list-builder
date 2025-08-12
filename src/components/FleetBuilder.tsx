@@ -4172,23 +4172,41 @@ export default function FleetBuilder({
   useEffect(() => {
     // Skip during import operations
     if (isImporting) return;
-    
-    const currentFleetState = generateExportText();
-    
-    // If this is the first time generating state or state is empty, mark as saved
-    if (!lastSavedState && (selectedShips.length === 0 && selectedSquadrons.length === 0)) {
-      setLastSavedState(currentFleetState);
+
+    const shipsCount = selectedShips.length;
+    const squadronsCount = selectedSquadrons.length;
+    const hasContent = shipsCount > 0 || squadronsCount > 0;
+
+    if (!hasContent) {
+      // For an empty fleet, never mark unsaved; do not mutate lastSavedState here to avoid loops
+      if (hasUnsavedChanges) {
+        console.log('[NavGuard] empty fleet; marking clean (no content)');
+      }
       setHasUnsavedChanges(false);
       return;
     }
-    
-    // Check if fleet state has changed from last saved state
-    if (currentFleetState !== lastSavedState && (selectedShips.length > 0 || selectedSquadrons.length > 0)) {
+
+    // When there is content:
+    if (!lastSavedState) {
+      // No saved snapshot yet; treat as dirty until a save occurs
+      if (!hasUnsavedChanges) {
+        console.log('[NavGuard] content present with no saved snapshot; marking dirty', { ships: shipsCount, squadrons: squadronsCount });
+      }
       setHasUnsavedChanges(true);
-    } else if (selectedShips.length === 0 && selectedSquadrons.length === 0) {
-      // Empty fleet - no unsaved changes
+      return;
+    }
+
+    const currentFleetState = generateExportText();
+    if (currentFleetState !== lastSavedState) {
+      if (!hasUnsavedChanges) {
+        console.log('[NavGuard] content changed; marking dirty');
+      }
+      setHasUnsavedChanges(true);
+    } else {
+      if (hasUnsavedChanges) {
+        console.log('[NavGuard] content equals saved; marking clean');
+      }
       setHasUnsavedChanges(false);
-      setLastSavedState('');
     }
   }, [
     selectedShips,
@@ -4200,12 +4218,14 @@ export default function FleetBuilder({
     points,
     generateExportText,
     lastSavedState,
+    hasUnsavedChanges,
     isImporting
   ]);
 
   // Handle successful save
   const handleFleetSaved = useCallback(() => {
     const currentFleetState = generateExportText();
+    console.log('[NavGuard] handleFleetSaved: snapshot saved');
     setLastSavedState(currentFleetState);
     setHasUnsavedChanges(false);
   }, [generateExportText]);
@@ -4213,22 +4233,53 @@ export default function FleetBuilder({
   // Handle router navigation for unsaved changes
   useEffect(() => {
     const handleRouteChangeStart = (url: string) => {
-      if (hasUnsavedChanges && user) {
+      const hasAnyContent = (selectedShips && selectedShips.length > 0) || (selectedSquadrons && selectedSquadrons.length > 0);
+      console.log('[NavGuard] routeChangeStart', {
+        from: router.asPath,
+        to: url,
+        hasUnsavedChanges,
+        hasAnyContent,
+        ships: selectedShips?.length || 0,
+        squadrons: selectedSquadrons?.length || 0,
+      });
+      if (hasUnsavedChanges && hasAnyContent) {
         setPendingNavigation(url);
         setShowUnsavedChangesDialog(true);
+        try {
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
+          router.events.emit('routeChangeError', new Error('Route change aborted due to unsaved changes'), url, { shallow: false });
+        } catch (_) {}
+        try {
+          window.history.replaceState(null, '', router.asPath);
+        } catch (_) {}
+        // eslint-disable-next-line no-throw-literal
         throw 'Abort route change. Please ignore this error.';
       }
+      console.log('[NavGuard] routeChangeStart allowed');
+    };
+
+    const handleRouteChangeError = (err: unknown, url: string) => {
+      console.log('[NavGuard] routeChangeError', { err, url, current: router.asPath });
+    };
+    const handleRouteChangeComplete = (url: string) => {
+      console.log('[NavGuard] routeChangeComplete', { url });
     };
 
     router.events.on('routeChangeStart', handleRouteChangeStart);
+    router.events.on('routeChangeError', handleRouteChangeError as any);
+    router.events.on('routeChangeComplete', handleRouteChangeComplete);
 
     return () => {
       router.events.off('routeChangeStart', handleRouteChangeStart);
+      router.events.off('routeChangeError', handleRouteChangeError as any);
+      router.events.off('routeChangeComplete', handleRouteChangeComplete);
     };
-  }, [hasUnsavedChanges, user, router.events]);
+  }, [hasUnsavedChanges, selectedShips, selectedSquadrons, router.asPath, router.events]);
 
   // Dialog handlers
   const handleSaveAndLeave = useCallback(() => {
+    console.log('[NavGuard] handleSaveAndLeave');
     // Trigger save via the save button, then navigate
     const saveButton = document.querySelector('[data-save-button]') as HTMLButtonElement;
     if (saveButton) {
@@ -4238,6 +4289,7 @@ export default function FleetBuilder({
     // Set up a listener for when the save completes
     const checkSaved = () => {
       if (!hasUnsavedChanges && pendingNavigation) {
+        console.log('[NavGuard] save complete; proceeding', { to: pendingNavigation });
         setShowUnsavedChangesDialog(false);
         router.push(pendingNavigation);
         setPendingNavigation(null);
@@ -4249,6 +4301,7 @@ export default function FleetBuilder({
   }, [hasUnsavedChanges, pendingNavigation, router]);
 
   const handleDiscardAndLeave = useCallback(() => {
+    console.log('[NavGuard] handleDiscardAndLeave', { to: pendingNavigation });
     setShowUnsavedChangesDialog(false);
     setHasUnsavedChanges(false);
     if (pendingNavigation) {
@@ -4258,6 +4311,7 @@ export default function FleetBuilder({
   }, [pendingNavigation, router]);
 
   const handleCancelNavigation = useCallback(() => {
+    console.log('[NavGuard] handleCancelNavigation');
     setShowUnsavedChangesDialog(false);
     setPendingNavigation(null);
   }, []);

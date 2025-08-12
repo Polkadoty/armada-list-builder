@@ -74,6 +74,13 @@ export default function FactionPage() {
     smartCheckAndFetchData(setIsLoading, setLoadingProgress, setLoadingMessage);
   }, []);
 
+  // Prefetch home route to minimize flash on navigation back to index
+  useEffect(() => {
+    try {
+      router.prefetch('/');
+    } catch (_) {}
+  }, [router]);
+
   // Auto-switch gamemode based on faction
   useEffect(() => {
     if (faction && mounted) {
@@ -119,15 +126,65 @@ export default function FactionPage() {
     setIsEditingName(false);
   };
 
+  // Robust home-navigation handler: if there's clearly no content, force a hard navigation as a fallback
   const handleLogoClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    
-    // Clear any existing fleet data
-    // localStorage.removeItem(`savedFleet_${faction}`);
-    
-    // Navigate to home page
-    router.push('/');
+    console.log('[LogoNav] click', { faction });
+    // Determine whether the current fleet has any content without depending on builder internals
+    try {
+      let hasContent = false;
+      const savedFleet = typeof window !== 'undefined' && faction ? localStorage.getItem(`savedFleet_${faction}`) : null;
+      if (savedFleet && savedFleet.trim().length > 0) {
+        hasContent = true;
+      }
+      const recoveryRaw = typeof window !== 'undefined' ? localStorage.getItem('fleetRecovery') : null;
+      if (!hasContent && recoveryRaw) {
+        try {
+          const data = JSON.parse(recoveryRaw);
+          if (data && data.faction === faction && ((data.ships && data.ships.length > 0) || (data.squadrons && data.squadrons.length > 0))) {
+            hasContent = true;
+          }
+        } catch (_) {}
+      }
+
+      if (!hasContent) {
+        console.log('[LogoNav] no content detected; forcing home navigation');
+        e.preventDefault();
+        // Try client-side first and attach a one-time completion watcher
+        let fallbackTimer: number | undefined;
+        const handleComplete = (url: string) => {
+          if (url === '/') {
+            console.log('[LogoNav] routeChangeComplete detected for home; cancelling fallback');
+            if (fallbackTimer) window.clearTimeout(fallbackTimer);
+            router.events.off('routeChangeComplete', handleComplete as any);
+          }
+        };
+        router.events.on('routeChangeComplete', handleComplete as any);
+        router.replace('/')
+          .then(() => {
+            console.log('[LogoNav] router.replace resolved');
+            // If for any reason the route doesn't finalize, hard-refresh to home after grace period
+            fallbackTimer = window.setTimeout(() => {
+              if (window.location.pathname !== '/') {
+                console.log('[LogoNav] SPA did not navigate in time; hard redirecting');
+                router.events.off('routeChangeComplete', handleComplete as any);
+                window.location.assign('/');
+              }
+            }, 1200);
+          })
+          .catch(() => {
+            console.log('[LogoNav] router.replace rejected; hard redirecting');
+            router.events.off('routeChangeComplete', handleComplete as any);
+            window.location.assign('/');
+          });
+      }
+      // If content exists, let the normal Link navigation proceed (and unsaved guard will handle prompting)
+    } catch (_) {
+      console.log('[LogoNav] exception during click handler; falling through to default navigation');
+      // As a safety net, fall back to default navigation
+    }
   };
+
+  // Use Link default navigation to avoid interfering with Next's routing
 
   return (
     <div className="relative min-h-screen w-full text-gray-900 dark:text-white overflow-hidden bg-transparent">

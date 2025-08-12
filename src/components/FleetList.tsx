@@ -634,7 +634,9 @@ export function FleetList() {
     // Set the flag and new fleet data
     document.cookie = "retrieved-from-list=true; path=/";
     localStorage.setItem(`savedFleet_${fleet.faction}`, fleet.fleet_data);
-    
+    // Close any open dialog/sheet before navigation so interceptors can show
+    setIsDialogOpen(false);
+
     // If we're already on a faction page, first navigate to home to force a component reset
     if (router.pathname.includes('[faction]')) {
       router.push('/').then(() => {
