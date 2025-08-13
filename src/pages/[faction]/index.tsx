@@ -127,7 +127,7 @@ export default function FactionPage() {
   };
 
   // Robust home-navigation handler: if there's clearly no content, force a hard navigation as a fallback
-  const handleLogoClick = (e: React.MouseEvent) => {
+  const handleLogoClick = () => {
     console.log('[LogoNav] click', { faction });
     // Determine whether the current fleet has any content without depending on builder internals
     try {

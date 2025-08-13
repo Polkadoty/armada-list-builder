@@ -4044,7 +4044,18 @@ export default function FleetBuilder({
       </body>
       </html>
     `;
-  }, [selectedShips, selectedSquadrons, selectedAssaultObjectives, selectedDefenseObjectives, selectedNavigationObjectives, fleetName, paperSize, showCardBacks, /* stable helpers: */ chunkShipsForLayout, generateDamageDeckContent]);
+  }, [
+    selectedShips,
+    selectedSquadrons,
+    selectedAssaultObjectives,
+    selectedDefenseObjectives,
+    selectedNavigationObjectives,
+    fleetName,
+    paperSize,
+    showCardBacks,
+    expandCardBacks,
+    showDamageDeck,
+  ]);
 
   const handlePrintnPlay = useCallback(() => {
     const printContent = generatePrintnPlayContent();
