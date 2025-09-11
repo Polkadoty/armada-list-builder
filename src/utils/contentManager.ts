@@ -114,33 +114,11 @@ export async function smartCheckAndFetchData(
     console.log('Content state unchanged, skipping data fetch entirely');
     // Content state is the same, so we can skip loading entirely
     // Just do a quick check for API updates without showing loading screen
-    await checkForApiUpdatesOnly();
+    await checkAndFetchData(setIsLoading, setLoadingProgress, setLoadingMessage, false);
   }
 }
 
-// Lightweight check for API updates without triggering loading screens
-async function checkForApiUpdatesOnly(): Promise<void> {
-  try {
-    // Use primary API URL for quick lastModified check
-    const primaryApiUrl = process.env.NEXT_PUBLIC_PRIMARY_API_URL || 'https://api.swarmada.wiki';
-    const response = await fetch(primaryApiUrl, {
-      cache: 'no-cache',
-      headers: { 'Cache-Control': 'no-cache' }
-    });
-    const data = await response.json();
-    const lastModified = data.lastModified;
-    const savedLastModified = Cookies.get('lastModified');
-    
-    // Only update the lastModified cookie if API has newer data
-    // but don't trigger a reload since content toggles haven't changed
-    if (savedLastModified !== lastModified) {
-      console.log('API has newer data, but content toggles unchanged - updating lastModified only');
-      Cookies.set('lastModified', lastModified, { expires: 7, sameSite: 'Strict' });
-    }
-  } catch (error) {
-    console.error('Error checking API updates:', error);
-  }
-}
+// (removed) checkForApiUpdatesOnly was unused after integrating checkAndFetchData path
 
 // Force reload content and update state tracking
 export async function forceReloadContent(

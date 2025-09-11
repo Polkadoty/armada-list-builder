@@ -7,6 +7,7 @@ import { useTheme } from 'next-themes';
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import Cookies from 'js-cookie';
 import { forceReloadContent } from '../utils/contentManager';
+import { flushCacheAndReload } from '../utils/dataFetcher';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue, SelectLabel, SelectGroup } from "@/components/ui/select";
 import ContentAdditionWindow from './ContentAdditionWindow';
 import { useUser } from '@auth0/nextjs-auth0/client';
@@ -283,7 +284,8 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
   };
 
   const handleFlushCache = async () => {
-    await forceReloadContent(setIsLoading, setLoadingProgress, setLoadingMessage);
+    // Unconditionally flush and reload to honor the button label
+    await flushCacheAndReload(setIsLoading, setLoadingProgress, setLoadingMessage);
   };
 
   return (
