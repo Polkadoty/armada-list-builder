@@ -173,7 +173,7 @@ const ContentAdditionWindow: React.FC<ContentAdditionWindowProps> = ({ contentTy
                       const key = (card.id ? card.id : `${card.name}-${card.faction}-${i}`) + '-' + Math.random().toString(36).substr(2, 6);
                       let width = 250, height = 350, aspect = 'aspect-[8.75/15]', colSpan = '';
                       const className = 'object-cover object-center w-full h-full rounded shadow border border-zinc-700';
-                      if (card.type === 'Ships' && (card.size === 'huge' || card.size === '280-huge')) {
+                      if (card.type === 'Ships' && (card.size === 'huge' || card.size === '280-huge' || card.size === 'wide-huge')) {
                         width = 900; height = 630; aspect = 'aspect-[5/4]';
                         colSpan = 'col-span-3';
                       } else if (card.type === 'Squadrons' || card.type === 'Upgrades') {
@@ -270,7 +270,7 @@ const ContentAdditionWindow: React.FC<ContentAdditionWindowProps> = ({ contentTy
                       const key = (card.id ? card.id : `${card.name}-${card.faction}-${i}`) + '-' + Math.random().toString(36).substr(2, 6);
                       let width = 250, height = 350, aspect = 'aspect-[8.75/15]', colSpan = '';
                       const className = 'object-cover object-center w-full h-full rounded shadow border border-zinc-700';
-                      if (card.type === 'Ships' && (card.size === 'huge' || card.size === '280-huge')) {
+                      if (card.type === 'Ships' && (card.size === 'huge' || card.size === '280-huge' || card.size === 'wide-huge')) {
                         width = 900; height = 630; aspect = 'aspect-[5/4]';
                         colSpan = 'col-span-3';
                       } else if (card.type === 'Squadrons' || card.type === 'Upgrades') {

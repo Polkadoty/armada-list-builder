@@ -20,7 +20,7 @@ export interface ShipModel {
   upgrades?: string[];
   unique: boolean;
   chassis: string;
-  size: "small" | "medium" | "large" | "huge" | "280-huge";
+  size: "small" | "medium" | "large" | "huge" | "280-huge" | "wide-huge";
   traits?: string[];
   source: ContentSource;
   speed: Record<string, number[]>;
@@ -36,7 +36,7 @@ interface ShipData {
 
 interface ChassisData {
   models: Record<string, ShipModel>;
-  size: "small" | "medium" | "large" | "huge" | "280-huge";
+  size: "small" | "medium" | "large" | "huge" | "280-huge" | "wide-huge";
 }
 
 interface ShipSelectorProps {
@@ -355,9 +355,11 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose, gamemodeR
 
       // Sort ships: non-unique, unique, then huge
       const sortedShips = filteredShips.sort((a, b) => {
-        // Put both huge and 280-huge ships at the end
-        if ((a.size === 'huge' || a.size === '280-huge') && (b.size !== 'huge' && b.size !== '280-huge')) return 1;
-        if ((a.size !== 'huge' && a.size !== '280-huge') && (b.size === 'huge' || b.size === '280-huge')) return -1;
+        // Put huge variants at the end (tall huge, 280-huge, and wide-huge)
+        const aIsHugeVariant = a.size === 'huge' || a.size === '280-huge' || a.size === 'wide-huge';
+        const bIsHugeVariant = b.size === 'huge' || b.size === '280-huge' || b.size === 'wide-huge';
+        if (aIsHugeVariant && !bIsHugeVariant) return 1;
+        if (!aIsHugeVariant && bIsHugeVariant) return -1;
         if (a.unique && !b.unique) return 1;
         if (!a.unique && b.unique) return -1;
         return a.name.localeCompare(b.name);
@@ -431,9 +433,11 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose, gamemodeR
 
     // Apply sorting
     sortedShips.sort((a, b) => {
-      // Always keep huge ships at the end
-      if ((a.size === 'huge' || a.size === '280-huge') && (b.size !== 'huge' && b.size !== '280-huge')) return 1;
-      if ((a.size !== 'huge' && a.size !== '280-huge') && (b.size === 'huge' || b.size === '280-huge')) return -1;
+      // Always keep huge variants at the end
+      const aIsHugeVariant = a.size === 'huge' || a.size === '280-huge' || a.size === 'wide-huge';
+      const bIsHugeVariant = b.size === 'huge' || b.size === '280-huge' || b.size === 'wide-huge';
+      if (aIsHugeVariant && !bIsHugeVariant) return 1;
+      if (!aIsHugeVariant && bIsHugeVariant) return -1;
 
       // If no active sorts, use default sorting (non-unique first, then unique)
       if (Object.values(activeSorts).every(sort => sort === null)) {
@@ -522,7 +526,7 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose, gamemodeR
     }
   };
 
-  const isHugeShip = (ship: ShipModel) => ship.size === 'huge' || ship.size === '280-huge';
+  const isHugeShip = (ship: ShipModel) => ship.size === 'huge' || ship.size === '280-huge' || ship.size === 'wide-huge';
 
   // Helper function to generate ship size limit messages
   const getShipSizeLimitMessages = () => {

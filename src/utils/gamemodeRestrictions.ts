@@ -11,9 +11,9 @@ export interface GamemodeRestrictions {
   requireCommander?: boolean;
   allowedShipClasses?: string[];
   disallowedShipClasses?: string[];
-  allowedShipSizes?: ("small" | "medium" | "large" | "huge" | "280-huge")[];
-  disallowedShipSizes?: ("small" | "medium" | "large" | "huge" | "280-huge")[];
-  shipSizeLimits?: Partial<Record<("small" | "medium" | "large" | "huge" | "280-huge"), number>>;
+  allowedShipSizes?: ("small" | "medium" | "large" | "huge" | "280-huge" | "wide-huge")[];
+  disallowedShipSizes?: ("small" | "medium" | "large" | "huge" | "280-huge" | "wide-huge")[];
+  shipSizeLimits?: Partial<Record<("small" | "medium" | "large" | "huge" | "280-huge" | "wide-huge"), number>>;
   allowedSquadronKeywords?: string[];
   disallowedSquadronKeywords?: string[];
   allowedCommanders?: string[];
@@ -428,7 +428,7 @@ export interface FleetState {
   selectedShips: {
     traits?: string[];
     shipClass?: string;
-    size?: "small" | "medium" | "large" | "huge" | "280-huge";
+    size?: "small" | "medium" | "large" | "huge" | "280-huge" | "wide-huge";
     commander?: string;
   }[];
   selectedSquadrons: {
@@ -708,7 +708,7 @@ export function checkFleetViolations(gamemode: Gamemode, fleet: FleetState, fact
   // Validate ship size limits
   if (restrictions.shipSizeLimits) {
     Object.entries(restrictions.shipSizeLimits).forEach(([size, limit]) => {
-      const shipSize = size as "small" | "medium" | "large" | "huge" | "280-huge";
+      const shipSize = size as "small" | "medium" | "large" | "huge" | "280-huge" | "wide-huge";
       const shipsOfSize = fleet.selectedShips.filter(ship => ship.size === shipSize);
       if (shipsOfSize.length > limit) {
         violations.push(`More than ${limit} ${size} ship(s) in fleet (${shipsOfSize.length} found)`);

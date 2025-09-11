@@ -88,7 +88,7 @@ export interface Ship {
   assignedUpgrades: Upgrade[];
   unique: boolean;
   chassis: string;
-  size: "small" | "medium" | "large" | "huge" | "280-huge";
+  size: "small" | "medium" | "large" | "huge" | "280-huge" | "wide-huge";
   traits?: string[];
   source: ContentSource;
   searchableText: string;
@@ -595,7 +595,7 @@ export default function FleetBuilder({
       availableUpgrades: [...(ship.upgrades || [])], // Create new array
       assignedUpgrades: [],
       chassis: ship.chassis,
-      size: (ship.size || "small") as "small" | "medium" | "large" | "huge" | "280-huge",
+      size: (ship.size || "small") as "small" | "medium" | "large" | "huge" | "280-huge" | "wide-huge",
       traits: ship.traits || [],
       source: ship.source || "regular",
     };
@@ -1258,7 +1258,7 @@ export default function FleetBuilder({
       id: Date.now().toString(),
       assignedUpgrades: [],
       availableUpgrades: freshShipModel.upgrades || [],
-      size: (freshShipModel.size || "small") as "small" | "medium" | "large" | "huge" | "280-huge",
+      size: (freshShipModel.size || "small") as "small" | "medium" | "large" | "huge" | "280-huge" | "wide-huge",
       searchableText: freshShipModel.searchableText || "",
       source: shipToCopy.source
     };
@@ -2569,7 +2569,7 @@ export default function FleetBuilder({
             id: generateUniqueShipId(),
             assignedUpgrades: [],
             availableUpgrades: shipModel.upgrades || [],
-            size: (shipModel.size || "small") as "small" | "medium" | "large" | "huge" | "280-huge",
+            size: (shipModel.size || "small") as "small" | "medium" | "large" | "huge" | "280-huge" | "wide-huge",
             searchableText: shipModel.searchableText || "",
             source: source,
           };
@@ -3514,7 +3514,7 @@ export default function FleetBuilder({
     }).join('');
   };
 
-  const isHugeShip = (ship: Ship) => ship.size === 'huge' || ship.size === '280-huge';
+  const isHugeShip = (ship: Ship) => ship.size === 'huge' || ship.size === '280-huge' || ship.size === 'wide-huge';
 
   // Add this helper function near the top of the file
   const chunkShipsForLayout = (ships: Ship[]) => {
@@ -3564,7 +3564,8 @@ export default function FleetBuilder({
       medium: { width: '58.5mm', height: '101.5mm' },
       large: { width: '73.0mm', height: '128.5mm' },
       huge: { width: '73mm', height: '355mm' },
-      '280-huge': { width: '73mm', height: '280mm' }
+      '280-huge': { width: '73mm', height: '280mm' },
+      'wide-huge': { width: '174mm', height: '128.5mm' }
     };
 
     // Helper function to calculate optimal layout
@@ -3602,7 +3603,8 @@ export default function FleetBuilder({
         medium: { width: 58.5/25.4, height: 101.5/25.4 },
         large: { width: 73.0/25.4, height: 128.5/25.4 },
         huge: { width: 73/25.4, height: 355/25.4 },
-        '280-huge': { width: 73/25.4, height: 280/25.4 }
+        '280-huge': { width: 73/25.4, height: 280/25.4 },
+        'wide-huge': { width: 174/25.4, height: 128.5/25.4 }
       };
 
 
@@ -3697,7 +3699,7 @@ export default function FleetBuilder({
                   ${row.ships.map(ship => {
                     const baseTokenUrl = ship.cardimage.replace('.webp', '-base.webp');
                     
-                    // Handle huge and 280-huge ships differently
+                    // Handle tall huge ships differently (split vertically). Wide-huge prints as a single piece.
                     if (ship.size === 'huge' || ship.size === '280-huge') {
                       const baseHeight = ship.size === 'huge' ? '355mm' : '280mm';
                       const halfHeight = Math.floor(parseInt(baseHeight) / 2) + 'mm';
