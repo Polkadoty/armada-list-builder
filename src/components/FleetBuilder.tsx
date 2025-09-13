@@ -3086,6 +3086,8 @@ export default function FleetBuilder({
     setSelectedDefenseObjectives,
     setSelectedNavigationObjectives,
     setSelectedCampaignObjectives,
+    selectedShips,
+    selectedSquadrons,
     setSelectedShips,
     setShowNotification,
     setTotalShipPoints,
@@ -4057,6 +4059,8 @@ export default function FleetBuilder({
     showCardBacks,
     expandCardBacks,
     showDamageDeck,
+    chunkShipsForLayout,
+    generateDamageDeckContent,
   ]);
 
   const handlePrintnPlay = useCallback(() => {
