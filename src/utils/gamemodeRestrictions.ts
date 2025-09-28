@@ -81,6 +81,7 @@ export interface GamemodeRestrictions {
     enableLegacy: boolean;
     enableLegends: boolean;
     enableLegacyBeta: boolean;
+    enableLegacyAlpha: boolean;
     enableArc: boolean;
     enableArcBeta: boolean;
     enableNexus: boolean;

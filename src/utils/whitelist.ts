@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabase';
 
-export async function isUserWhitelistedForLegacyBeta(userSub: string): Promise<boolean> {
+export async function isUserWhitelistedForLegacyAlpha(userSub: string): Promise<boolean> {
   try {
     // Fetch all whitelisted users to avoid URL encoding issues with pipe characters
     const { data: allUsers, error } = await supabase

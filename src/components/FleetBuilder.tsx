@@ -182,7 +182,7 @@ export interface Ship extends ShipModel {
   searchableText: string;
 }
 
-export type ContentSource = "regular" | "legacy" | "legends" | "legacyBeta" | "arc" | "arcBeta" | "community" | "amg" | "nexus" | "naboo";
+export type ContentSource = "regular" | "legacy" | "legends" | "legacyBeta" | "legacyAlpha" | "arc" | "arcBeta" | "community" | "amg" | "nexus" | "naboo";
 
 const SectionHeader = ({
   title,

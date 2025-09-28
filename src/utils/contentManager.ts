@@ -5,6 +5,7 @@ interface ContentState {
   enableLegacy: boolean;
   enableLegends: boolean;
   enableLegacyBeta: boolean;
+  enableLegacyAlpha: boolean;
   enableArc: boolean;
   enableArcBeta: boolean;
   enableNexus: boolean;
@@ -21,6 +22,7 @@ function getCurrentContentState(): ContentState {
     enableLegacy: Cookies.get('enableLegacy') === 'true',
     enableLegends: Cookies.get('enableLegends') === 'true',
     enableLegacyBeta: Cookies.get('enableLegacyBeta') === 'true',
+    enableLegacyAlpha: Cookies.get('enableLegacyAlpha') === 'true',
     enableArc: Cookies.get('enableArc') === 'true',
     enableArcBeta: Cookies.get('enableArcBeta') === 'true',
     enableNexus: Cookies.get('enableNexus') === 'true',
@@ -37,6 +39,7 @@ function hasContentStateChanged(current: ContentState, previous: ContentState | 
     current.enableLegacy !== previous.enableLegacy ||
     current.enableLegends !== previous.enableLegends ||
     current.enableLegacyBeta !== previous.enableLegacyBeta ||
+    current.enableLegacyAlpha !== previous.enableLegacyAlpha ||
     current.enableArc !== previous.enableArc ||
     current.enableArcBeta !== previous.enableArcBeta ||
     current.enableNexus !== previous.enableNexus ||
