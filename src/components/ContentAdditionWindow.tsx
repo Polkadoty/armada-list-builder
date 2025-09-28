@@ -29,8 +29,8 @@ const formatFactionName = (faction: string): string => {
   if (faction === 'legacy') return 'Legacy';
   if (faction === 'nexus') return 'Nexus';
   if (faction === 'legends') return 'Legends';
-  if (faction === 'legacyBeta') return 'Legacy Beta';
-  if (faction === 'legacyAlpha') return 'Legacy Alpha';
+  if (faction === 'legacyBeta') return 'LegacyBeta';
+  if (faction === 'legacyAlpha') return 'LegacyAlpha';
   if (faction === 'naboo') return 'Battle for Naboo';
   
   return faction
