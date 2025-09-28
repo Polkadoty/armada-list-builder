@@ -159,15 +159,7 @@ export default function Home() {
           {/* Battle for Naboo Campaign Information */}
           <div className="mb-6 p-4 bg-blue-100/80 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg backdrop-blur-md">
             <p className="text-sm text-blue-800 dark:text-blue-200 text-center">
-                                                             Join the <b>Battle for Naboo</b> event by making your fleet using the &quot;Battle for Naboo&quot; gamemode. Select it in the top right corner in the &quot;plus&quot; menu, and check out the status menu here:{' '}
-              <a 
-                href="https://www.armada.community/events/battle-for-naboo" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="underline hover:text-blue-600 dark:hover:text-blue-300 font-medium"
-              >
-                https://www.armada.community/events/battle-for-naboo
-              </a>
+                                                             Check out the Legacy Beta content by making your fleet using the &quot;Legacy Beta&quot; gamemode! Select it in the top right corner in the &quot;plus&quot; menu.
             </p>
           </div>
           
