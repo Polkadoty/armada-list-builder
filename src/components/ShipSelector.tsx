@@ -76,6 +76,7 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose, gamemodeR
       arcBeta: Cookies.get('enableArcBeta') === 'true',
       amg: Cookies.get('enableAMG') === 'true',
       nexus: Cookies.get('enableNexus') === 'true',
+      nexusExperimental: Cookies.get('enableNexusExperimental') === 'true',
       naboo: Cookies.get('enableNaboo') === 'true'
     };
   }, []);
@@ -107,6 +108,7 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose, gamemodeR
       arcBeta: Cookies.get('enableArcBeta') === 'true',
       amg: Cookies.get('enableAMG') === 'true',
       nexus: Cookies.get('enableNexus') === 'true',
+      nexusExperimental: Cookies.get('enableNexusExperimental') === 'true',
       naboo: Cookies.get('enableNaboo') === 'true'
     };
   });
@@ -124,6 +126,7 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose, gamemodeR
         arcBeta: Cookies.get('enableArcBeta') === 'true',
         amg: Cookies.get('enableAMG') === 'true',
         nexus: Cookies.get('enableNexus') === 'true',
+        nexusExperimental: Cookies.get('enableNexusExperimental') === 'true',
         naboo: Cookies.get('enableNaboo') === 'true'
       };
 
@@ -187,6 +190,7 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose, gamemodeR
       const cachedLegacyShips = localStorage.getItem('legacyShips');
       const cachedLegendsShips = localStorage.getItem('legendsShips');
       const cachedNexusShips = localStorage.getItem('nexusShips');
+      const cachedNexusExperimentalShips = localStorage.getItem('nexusExperimentalShips');
       const cachedLegacyBetaShips = localStorage.getItem('legacyBetaShips');
       const cachedArcShips = localStorage.getItem('arcShips');
       const cachedArcBetaShips = localStorage.getItem('arcBetaShips');
@@ -214,6 +218,12 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose, gamemodeR
       if (cachedNexusShips) {
         const nexusShipData = JSON.parse(cachedNexusShips);
         allShips = [...allShips, ...processShips(nexusShipData, 'nexus')];
+      }
+
+      // Process nexus experimental ships
+      if (cachedNexusExperimentalShips) {
+        const nexusExperimentalShipData = JSON.parse(cachedNexusExperimentalShips);
+        allShips = [...allShips, ...processShips(nexusExperimentalShipData, 'nexusExperimental')];
       }
 
       // Process legacy beta ships

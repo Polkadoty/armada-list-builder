@@ -19,6 +19,7 @@ const CONFIG = {
   showLegacyToggle: true,
   showLegendsToggle: true,
   showNexusToggle: true,
+  showNexusExperimentalToggle: true,
   showLegacyBetaToggle: true,
   showLegacyAlphaToggle: true,
   showArcToggle: true,
@@ -45,6 +46,7 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
   const [enableLegends, setEnableLegends] = useState(false);
   const [enableProxy, setEnableProxy] = useState(false);
   const [enableNexus, setEnableNexus] = useState(false);
+  const [enableNexusExperimental, setEnableNexusExperimental] = useState(false);
   const [enableNaboo, setEnableNaboo] = useState(false);
   const [isLegacyAlphaWhitelisted, setIsLegacyAlphaWhitelisted] = useState(false);
   const [isArcBetaWhitelisted, setIsArcBetaWhitelisted] = useState(false);
@@ -66,6 +68,7 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
     const legendsCookie = Cookies.get('enableLegends');
     const proxyCookie = Cookies.get('enableProxy');
     const nexusCookie = Cookies.get('enableNexus');
+    const nexusExperimentalCookie = Cookies.get('enableNexusExperimental');
     const nabooCookie = Cookies.get('enableNaboo');
     // const amgCookie = Cookies.get('enableAMG');
     setEnableLegacy(CONFIG.showLegacyToggle && legacyCookie === 'true');
@@ -76,6 +79,7 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
     setEnableLegends(CONFIG.showLegendsToggle && legendsCookie === 'true');
     setEnableProxy(CONFIG.showProxyToggle && proxyCookie === 'true');
     setEnableNexus(nexusCookie === 'true');
+    setEnableNexusExperimental(CONFIG.showNexusExperimentalToggle && nexusExperimentalCookie === 'true');
     setEnableNaboo(CONFIG.showNabooToggle && nabooCookie === 'true');
     // setEnableAMG(CONFIG.showAMGToggle && amgCookie !== 'false');
   }, []);
@@ -182,6 +186,11 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
       if (forceToggles.enableNexus !== undefined) {
         setEnableNexus(forceToggles.enableNexus);
         Cookies.set('enableNexus', forceToggles.enableNexus.toString(), { expires: 365 });
+      }
+
+      if (forceToggles.enableNexusExperimental !== undefined) {
+        setEnableNexusExperimental(forceToggles.enableNexusExperimental);
+        Cookies.set('enableNexusExperimental', forceToggles.enableNexusExperimental.toString(), { expires: 365 });
       }
       
       if (forceToggles.enableProxy !== undefined) {
@@ -290,6 +299,14 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
     setEnableNexus(checked);
     Cookies.set('enableNexus', checked.toString(), { expires: 365 });
     forceReloadContent(setIsLoading, setLoadingProgress, setLoadingMessage);
+  };
+
+  const handleNexusExperimentalToggle = (checked: boolean) => {
+    if (CONFIG.showNexusExperimentalToggle) {
+      setEnableNexusExperimental(checked);
+      Cookies.set('enableNexusExperimental', checked.toString(), { expires: 365 });
+      forceReloadContent(setIsLoading, setLoadingProgress, setLoadingMessage);
+    }
   };
 
   const handleNabooToggle = (checked: boolean) => {
@@ -401,6 +418,26 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
                 {/* Experimental Content Section */}
                 <div className="mt-4">
                   <h5 className="font-semibold text-sm mb-3">Experimental Content</h5>
+                  {CONFIG.showNexusExperimentalToggle && (
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <label htmlFor="nexus-experimental-toggle" className={`text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${isToggleDisabled('enableNexusExperimental') ? 'opacity-50' : ''}`}>
+                          Enable Nexus Experimental Content
+                          {isToggleDisabled('enableNexusExperimental') && <span className="text-xs text-muted-foreground ml-2">(Controlled by gamemode)</span>}
+                        </label>
+                        <button type="button" onClick={() => { setInfoOpen('nexus-experimental'); }} className="ml-1 p-1 hover:bg-zinc-700/20 rounded-full" aria-label="Info">
+                          <Info className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <Switch
+                        id="nexus-experimental-toggle"
+                        checked={enableNexusExperimental}
+                        onCheckedChange={handleNexusExperimentalToggle}
+                        disabled={isToggleDisabled('enableNexusExperimental')}
+                        className="custom-switch"
+                      />
+                    </div>
+                  )}
                   {CONFIG.showNabooToggle && (
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">

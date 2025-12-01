@@ -52,6 +52,7 @@ export function ExpansionSelector({
     legacyBeta: Cookies.get('enableLegacyBeta') === 'true',
     arcBeta: Cookies.get('enableArcBeta') === 'true',
     nexus: Cookies.get('enableNexus') === 'true',
+    nexusExperimental: Cookies.get('enableNexusExperimental') === 'true',
     naboo: Cookies.get('enableNaboo') === 'true'
   });
 
@@ -80,6 +81,11 @@ export function ExpansionSelector({
           }
 
           if (alias === 'nexus' && contentSources.nexus) {
+            acc[key] = expansion as Expansion;
+            return acc;
+          }
+
+          if (alias === 'nexusexperimental' && contentSources.nexusExperimental) {
             acc[key] = expansion as Expansion;
             return acc;
           }
@@ -121,6 +127,11 @@ export function ExpansionSelector({
             return acc;
           }
 
+          if (alias === 'nexusexperimental' && contentSources.nexusExperimental) {
+            acc[key] = release as Release;
+            return acc;
+          }
+
           return acc;
         }, {} as Record<string, Release>);
 
@@ -139,6 +150,7 @@ export function ExpansionSelector({
         legacyBeta: Cookies.get('enableLegacyBeta') === 'true',
         arcBeta: Cookies.get('enableArcBeta') === 'true',
         nexus: Cookies.get('enableNexus') === 'true',
+        nexusExperimental: Cookies.get('enableNexusExperimental') === 'true',
         naboo: Cookies.get('enableNaboo') === 'true'
       };
 

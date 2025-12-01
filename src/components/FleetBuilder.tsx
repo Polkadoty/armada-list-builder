@@ -182,7 +182,7 @@ export interface Ship extends ShipModel {
   searchableText: string;
 }
 
-export type ContentSource = "regular" | "legacy" | "legends" | "legacyBeta" | "legacyAlpha" | "arc" | "arcBeta" | "community" | "amg" | "nexus" | "naboo";
+export type ContentSource = "regular" | "legacy" | "legends" | "legacyBeta" | "legacyAlpha" | "arc" | "arcBeta" | "community" | "amg" | "nexus" | "nexusExperimental" | "naboo";
 
 const SectionHeader = ({
   title,
@@ -1233,6 +1233,7 @@ export default function FleetBuilder({
           shipToCopy.source === 'legends' ? 'Legends' : 
           shipToCopy.source === 'arc' ? 'ARC' : 
           shipToCopy.source === 'nexus' ? 'Nexus' : 
+          shipToCopy.source === 'nexusExperimental' ? 'NexusExperimental' : 
           shipToCopy.source === 'naboo' ? 'Naboo' : ''
         }]`
       : shipToCopy.name;
@@ -1751,6 +1752,8 @@ export default function FleetBuilder({
         return '[ARCBeta]';
       case 'nexus':
         return '[Nexus]';
+      case 'nexusExperimental':
+        return '[NexusExperimental]';
       case 'naboo':
         return '[Naboo]';
       default:
@@ -2558,6 +2561,8 @@ export default function FleetBuilder({
             source = "legends";
           } else if (shipName.includes("[ARC]")) {
             source = "arc";
+          } else if (shipName.includes("[NexusExperimental]")) {
+            source = "nexusExperimental";
           } else if (shipName.includes("[Nexus]")) {
             source = "nexus";
           } else if (shipName.includes("[Naboo]")) {
@@ -2590,6 +2595,8 @@ export default function FleetBuilder({
               source = "legends";
             } else if (shipName.includes("[ARC]")) {
               source = "arc";
+            } else if (shipName.includes("[NexusExperimental]")) {
+              source = "nexusExperimental";
             } else if (shipName.includes("[Nexus]")) {
               source = "nexus";
             } else if (shipName.includes("[Naboo]")) {
@@ -2835,6 +2842,9 @@ export default function FleetBuilder({
                   case 'arc':
                     source = 'arc';
                     break;
+                  case 'nexusexperimental':
+                    source = 'nexusExperimental';
+                    break;
                   case 'nexus':
                     source = 'nexus';
                     break;
@@ -2900,6 +2910,9 @@ export default function FleetBuilder({
                   case 'arc':
                     source = 'arc';
                     break;
+                  case 'nexusexperimental':
+                    source = 'nexusExperimental';
+                    break;
                   case 'nexus':
                     source = 'nexus';
                     break;
@@ -2956,11 +2969,13 @@ export default function FleetBuilder({
                   source = "legends";
                 } else if (squadronName.includes("[ARC]")) {
                   source = "arc";
-                          } else if (squadronName.includes("[Nexus]")) {
-            source = "nexus";
-          } else if (squadronName.includes("[Naboo]")) {
-            source = "naboo";
-          }
+                } else if (squadronName.includes("[NexusExperimental]")) {
+                  source = "nexusExperimental";
+                } else if (squadronName.includes("[Nexus]")) {
+                  source = "nexus";
+                } else if (squadronName.includes("[Naboo]")) {
+                  source = "naboo";
+                }
                 
                 // For Fighter Group mode, handle squadrons individually to support leaders
                 const selectedSquadron = {
@@ -4456,7 +4471,8 @@ export default function FleetBuilder({
       legacyBeta: Cookies.get('enableLegacyBeta') === 'true',
       arcBeta: Cookies.get('enableArcBeta') === 'true',
       amg: Cookies.get('enableAMG') === 'true',
-      nexus: Cookies.get('enableNexus') === 'true'
+      nexus: Cookies.get('enableNexus') === 'true',
+      nexusExperimental: Cookies.get('enableNexusExperimental') === 'true'
     };
   }, []); // Empty dependency array as this should only run once on mount
 
@@ -4473,7 +4489,8 @@ export default function FleetBuilder({
         legacyBeta: Cookies.get('enableLegacyBeta') === 'true',
         arcBeta: Cookies.get('enableArcBeta') === 'true',
         amg: Cookies.get('enableAMG') === 'true',
-        nexus: Cookies.get('enableNexus') === 'true'
+        nexus: Cookies.get('enableNexus') === 'true',
+        nexusExperimental: Cookies.get('enableNexusExperimental') === 'true'
       };
 
       if (JSON.stringify(newSources) !== JSON.stringify(previousContentSources.current)) {

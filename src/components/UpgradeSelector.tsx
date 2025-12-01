@@ -79,6 +79,7 @@ export default function UpgradeSelector({
     arcBeta: Cookies.get('enableArcBeta') === 'true',
     amg: Cookies.get('enableAMG') === 'true',
     nexus: Cookies.get('enableNexus') === 'true',
+    nexusExperimental: Cookies.get('enableNexusExperimental') === 'true',
     naboo: Cookies.get('enableNaboo') === 'true'
   });
 
@@ -111,6 +112,7 @@ export default function UpgradeSelector({
       const cachedArcBetaUpgrades = localStorage.getItem('arcBetaUpgrades');
       const cachedAMGUpgrades = localStorage.getItem('amgUpgrades');
       const cachedNexusUpgrades = localStorage.getItem('nexusUpgrades');
+      const cachedNexusExperimentalUpgrades = localStorage.getItem('nexusExperimentalUpgrades');
       const cachedNabooUpgrades = localStorage.getItem('nabooUpgrades');
 
       let allUpgrades: Upgrade[] = [];
@@ -191,6 +193,11 @@ export default function UpgradeSelector({
       if (cachedNexusUpgrades) {
         const nexusUpgradeData = JSON.parse(cachedNexusUpgrades);
         allUpgrades = [...allUpgrades, ...processUpgrades(nexusUpgradeData, 'nexus')];
+      }
+
+      if (cachedNexusExperimentalUpgrades) {
+        const nexusExperimentalUpgradeData = JSON.parse(cachedNexusExperimentalUpgrades);
+        allUpgrades = [...allUpgrades, ...processUpgrades(nexusExperimentalUpgradeData, 'nexusExperimental')];
       }
 
       if (cachedNabooUpgrades) {

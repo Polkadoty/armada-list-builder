@@ -65,6 +65,7 @@ export function SquadronSelector({
       arcBeta: Cookies.get('enableArcBeta') === 'true',
       amg: Cookies.get('enableAMG') === 'true',
       nexus: Cookies.get('enableNexus') === 'true',
+      nexusExperimental: Cookies.get('enableNexusExperimental') === 'true',
       naboo: Cookies.get('enableNaboo') === 'true'
     };
   }, []);
@@ -96,6 +97,7 @@ export function SquadronSelector({
       arcBeta: Cookies.get('enableArcBeta') === 'true',
       amg: Cookies.get('enableAMG') === 'true',
       nexus: Cookies.get('enableNexus') === 'true',
+      nexusExperimental: Cookies.get('enableNexusExperimental') === 'true',
       naboo: Cookies.get('enableNaboo') === 'true'
     };
   });
@@ -110,6 +112,7 @@ export function SquadronSelector({
         arcBeta: Cookies.get('enableArcBeta') === 'true',
         amg: Cookies.get('enableAMG') === 'true',
         nexus: Cookies.get('enableNexus') === 'true',
+        nexusExperimental: Cookies.get('enableNexusExperimental') === 'true',
         naboo: Cookies.get('enableNaboo') === 'true'
       };
 
@@ -133,6 +136,7 @@ export function SquadronSelector({
       const cachedArcBetaSquadrons = localStorage.getItem('arcBetaSquadrons');
       const cachedAMGSquadrons = localStorage.getItem('amgSquadrons');
       const cachedNexusSquadrons = localStorage.getItem('nexusSquadrons');
+      const cachedNexusExperimentalSquadrons = localStorage.getItem('nexusExperimentalSquadrons');
       const cachedNabooSquadrons = localStorage.getItem('nabooSquadrons');
 
       const squadronMap = new Map<string, Squadron>();
@@ -214,6 +218,11 @@ export function SquadronSelector({
       if (cachedNexusSquadrons) {
         const nexusSquadronData = JSON.parse(cachedNexusSquadrons);
         processSquadrons(nexusSquadronData, 'nexus');
+      }
+
+      if (cachedNexusExperimentalSquadrons) {
+        const nexusExperimentalSquadronData = JSON.parse(cachedNexusExperimentalSquadrons);
+        processSquadrons(nexusExperimentalSquadronData, 'nexusExperimental');
       }
 
       if (cachedArcSquadrons) {

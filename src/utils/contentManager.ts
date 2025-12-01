@@ -9,6 +9,7 @@ interface ContentState {
   enableArc: boolean;
   enableArcBeta: boolean;
   enableNexus: boolean;
+  enableNexusExperimental: boolean;
   enableNaboo: boolean;
   enableProxy: boolean;
 }
@@ -26,6 +27,7 @@ function getCurrentContentState(): ContentState {
     enableArc: Cookies.get('enableArc') === 'true',
     enableArcBeta: Cookies.get('enableArcBeta') === 'true',
     enableNexus: Cookies.get('enableNexus') === 'true',
+    enableNexusExperimental: Cookies.get('enableNexusExperimental') === 'true',
     enableNaboo: Cookies.get('enableNaboo') === 'true',
     enableProxy: Cookies.get('enableProxy') === 'true',
   };
@@ -43,6 +45,7 @@ function hasContentStateChanged(current: ContentState, previous: ContentState | 
     current.enableArc !== previous.enableArc ||
     current.enableArcBeta !== previous.enableArcBeta ||
     current.enableNexus !== previous.enableNexus ||
+    current.enableNexusExperimental !== previous.enableNexusExperimental ||
     current.enableNaboo !== previous.enableNaboo ||
     current.enableProxy !== previous.enableProxy
   );

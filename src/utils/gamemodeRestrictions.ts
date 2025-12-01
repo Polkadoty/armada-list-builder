@@ -85,6 +85,7 @@ export interface GamemodeRestrictions {
     enableArc: boolean;
     enableArcBeta: boolean;
     enableNexus: boolean;
+    enableNexusExperimental: boolean;
     enableNaboo: boolean;
     enableCustomFactions: boolean;
     enableLocalContent: boolean;
@@ -185,6 +186,7 @@ export const GAMEMODE_RESTRICTIONS: Record<Gamemode, GamemodeRestrictions> = {
       enableLegacyBeta: false,
       enableArc: false,
       enableNexus: false,
+      enableNexusExperimental: false,
       enableNaboo: true,
       enableProxy: false,
     },
@@ -233,6 +235,7 @@ export const GAMEMODE_RESTRICTIONS: Record<Gamemode, GamemodeRestrictions> = {
       enableLegacyBeta: false,
       enableArc: false,
       enableNexus: false,
+      enableNexusExperimental: false,
       enableNaboo: true,
       enableProxy: false,
     },
@@ -269,6 +272,7 @@ export const GAMEMODE_RESTRICTIONS: Record<Gamemode, GamemodeRestrictions> = {
       enableLegacyBeta: false,
       enableArc: false,
       enableNexus: false,
+      enableNexusExperimental: false,
       enableNaboo: true,
       enableProxy: false,
     },
@@ -304,6 +308,7 @@ export const GAMEMODE_RESTRICTIONS: Record<Gamemode, GamemodeRestrictions> = {
         enableLegacyBeta: false,
         enableArc: false,
         enableNexus: false,
+        enableNexusExperimental: false,
         enableNaboo: true,
         enableProxy: false,
       },
@@ -354,6 +359,7 @@ export const GAMEMODE_RESTRICTIONS: Record<Gamemode, GamemodeRestrictions> = {
         enableLegacyBeta: false,
         enableArc: false,
         enableNexus: false,
+        enableNexusExperimental: false,
         enableNaboo: true,
         enableProxy: false,
       },
@@ -388,6 +394,7 @@ export const GAMEMODE_RESTRICTIONS: Record<Gamemode, GamemodeRestrictions> = {
         enableLegacyBeta: false,
         enableArc: false,
         enableNexus: false,
+        enableNexusExperimental: false,
         enableNaboo: true,
         enableProxy: false,
       },

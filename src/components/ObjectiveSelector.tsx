@@ -57,6 +57,7 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose, gamemodeRe
       arcBeta: Cookies.get('enableArcBeta') === 'true',
       amg: Cookies.get('enableAMG') === 'true',
       nexus: Cookies.get('enableNexus') === 'true',
+      nexusExperimental: Cookies.get('enableNexusExperimental') === 'true',
       naboo: Cookies.get('enableNaboo') === 'true'
     };
   }, []);
@@ -70,6 +71,7 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose, gamemodeRe
       arcBeta: Cookies.get('enableArcBeta') === 'true',
       amg: Cookies.get('enableAMG') === 'true',
       nexus: Cookies.get('enableNexus') === 'true',
+      nexusExperimental: Cookies.get('enableNexusExperimental') === 'true',
       naboo: Cookies.get('enableNaboo') === 'true'
     };
   });
@@ -85,6 +87,7 @@ export function ObjectiveSelector({ type, onSelectObjective, onClose, gamemodeRe
         arcBeta: Cookies.get('enableArcBeta') === 'true',
         amg: Cookies.get('enableAMG') === 'true',
         nexus: Cookies.get('enableNexus') === 'true',
+        nexusExperimental: Cookies.get('enableNexusExperimental') === 'true',
         naboo: Cookies.get('enableNaboo') === 'true'
       };
 

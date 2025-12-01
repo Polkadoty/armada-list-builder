@@ -84,6 +84,7 @@ const fetchAndSaveData = async (
   const enableLegacy = Cookies.get('enableLegacy') === 'true';
   const enableLegends = Cookies.get('enableLegends') === 'true';
   const enableNexus = Cookies.get('enableNexus') === 'true';
+  const enableNexusExperimental = Cookies.get('enableNexusExperimental') === 'true';
   const enableLegacyBeta = Cookies.get('enableLegacyBeta') === 'true';
   const enableArc = Cookies.get('enableArc') === 'true';
   const enableArcBeta = Cookies.get('enableArcBeta') === 'true';
@@ -124,6 +125,14 @@ const fetchAndSaveData = async (
       { name: 'nexusShips', url: '/nexus/ships/' },
       { name: 'nexusSquadrons', url: '/nexus/squadrons/' },
       { name: 'nexusUpgrades', url: '/nexus/upgrades/' }
+    );
+  }
+
+  if (enableNexusExperimental) {
+    endpoints.push(
+      { name: 'nexusExperimentalShips', url: '/nexus-experimental/ships/' },
+      { name: 'nexusExperimentalSquadrons', url: '/nexus-experimental/squadrons/' },
+      { name: 'nexusExperimentalUpgrades', url: '/nexus-experimental/upgrades/' }
     );
   }
 
