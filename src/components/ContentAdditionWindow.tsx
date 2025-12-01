@@ -140,18 +140,17 @@ const ContentAdditionWindow: React.FC<ContentAdditionWindowProps> = ({ contentTy
   const isHome = router.pathname === '/';
   return (
     isHome ? (
-      <div className="fixed inset-0 z-[9999] bg-black bg-opacity-80 flex items-center justify-center" style={{ pointerEvents: 'auto', width: '100vw', height: '100vh' }}>
-        <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-lg w-[98vw] h-[98vh] min-w-[200px] min-h-[120px] overflow-y-auto transition-all duration-200 flex flex-col" style={{ maxWidth: '98vw', maxHeight: '98vh', padding: 0 }}>
+      <div className="fixed inset-0 z-[9999] backdrop-blur-md bg-black/50 flex items-center justify-center" style={{ pointerEvents: 'auto', width: '100vw', height: '100vh' }}>
+        <div className="bg-white/95 dark:bg-zinc-900/95 rounded-lg shadow-lg w-[98vw] h-[98vh] min-w-[200px] min-h-[120px] overflow-y-auto transition-all duration-200 flex flex-col border border-zinc-200 dark:border-zinc-700" style={{ maxWidth: '98vw', maxHeight: '98vh', padding: 0 }}>
           {/* Sticky header for title and close button, always at the very top */}
-          <div className="sticky top-0 z-20 bg-white dark:bg-zinc-900 rounded-t-lg flex items-center justify-between px-4 sm:px-10 pt-2 pb-2 sm:pt-6 sm:pb-4" style={{ borderBottom: '1px solid #e5e7eb', minWidth: 0 }}>
-            <h2 className="font-bold" style={{ fontSize: 'clamp(1.1rem, 2vw, 2rem)', minWidth: 0, whiteSpace: 'normal', wordBreak: 'break-word', flex: 1, paddingRight: '1rem' }}>
+          <div className="sticky top-0 z-20 bg-white dark:bg-zinc-900 rounded-t-lg flex items-center justify-between px-4 sm:px-10 pt-2 pb-2 sm:pt-6 sm:pb-4 border-b border-zinc-200 dark:border-zinc-700" style={{ minWidth: 0 }}>
+            <h2 className="font-bold text-zinc-900 dark:text-white logo-font" style={{ fontSize: 'clamp(1.1rem, 2vw, 2rem)', minWidth: 0, whiteSpace: 'normal', wordBreak: 'break-word', flex: 1, paddingRight: '1rem' }}>
               Content Window - {formatFactionName(contentType)}
             </h2>
             <button
               onClick={onClose}
-              className="text-zinc-500 hover:text-zinc-900 dark:hover:text-white text-3xl ml-4"
+              className="flex items-center justify-center w-9 h-9 rounded-full text-zinc-500 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors text-2xl"
               aria-label="Close"
-              style={{ minWidth: '2.2rem', minHeight: '2.2rem', lineHeight: 1 }}
             >
               ×
             </button>
@@ -237,18 +236,17 @@ const ContentAdditionWindow: React.FC<ContentAdditionWindowProps> = ({ contentTy
         )}
       </div>
     ) : (
-      <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[9999] bg-black bg-opacity-80" style={{ pointerEvents: 'auto', width: '100vw', height: '100vh' }}>
-        <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-lg w-[98vw] h-[98vh] min-w-[200px] min-h-[120px] overflow-y-auto transition-all duration-200 flex flex-col" style={{ maxWidth: '98vw', maxHeight: '98vh', padding: 0 }}>
+      <div className="fixed inset-0 z-[9999] backdrop-blur-md bg-black/50 flex items-center justify-center" style={{ pointerEvents: 'auto', width: '100vw', height: '100vh' }}>
+        <div className="bg-white/95 dark:bg-zinc-900/95 rounded-lg shadow-lg w-[98vw] h-[98vh] min-w-[200px] min-h-[120px] overflow-y-auto transition-all duration-200 flex flex-col border border-zinc-200 dark:border-zinc-700" style={{ maxWidth: '98vw', maxHeight: '98vh', padding: 0 }}>
           {/* Sticky header for title and close button, always at the very top */}
-          <div className="sticky top-0 z-20 bg-white dark:bg-zinc-900 rounded-t-lg flex items-center justify-between px-4 sm:px-10 pt-2 pb-2 sm:pt-6 sm:pb-4" style={{ borderBottom: '1px solid #e5e7eb', minWidth: 0 }}>
-            <h2 className="font-bold" style={{ fontSize: 'clamp(1.1rem, 2vw, 2rem)', minWidth: 0, whiteSpace: 'normal', wordBreak: 'break-word', flex: 1, paddingRight: '1rem' }}>
+          <div className="sticky top-0 z-20 bg-white dark:bg-zinc-900 rounded-t-lg flex items-center justify-between px-4 sm:px-10 pt-2 pb-2 sm:pt-6 sm:pb-4 border-b border-zinc-200 dark:border-zinc-700" style={{ minWidth: 0 }}>
+            <h2 className="font-bold text-zinc-900 dark:text-white logo-font" style={{ fontSize: 'clamp(1.1rem, 2vw, 2rem)', minWidth: 0, whiteSpace: 'normal', wordBreak: 'break-word', flex: 1, paddingRight: '1rem' }}>
               Content Window - {formatFactionName(contentType)}
             </h2>
             <button
               onClick={onClose}
-              className="text-zinc-500 hover:text-zinc-900 dark:hover:text-white text-3xl ml-4"
+              className="flex items-center justify-center w-9 h-9 rounded-full text-zinc-500 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors text-2xl"
               aria-label="Close"
-              style={{ minWidth: '2.2rem', minHeight: '2.2rem', lineHeight: 1 }}
             >
               ×
             </button>

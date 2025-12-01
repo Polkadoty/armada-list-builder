@@ -8,7 +8,18 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import Cookies from 'js-cookie';
 import { forceReloadContent } from '../utils/contentManager';
 import { flushCacheAndReload } from '../utils/dataFetcher';
-import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue, SelectLabel, SelectGroup } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+} from "@/components/ui/dropdown-menu";
+import { ChevronDown, Check } from 'lucide-react';
 import ContentAdditionWindow from './ContentAdditionWindow';
 import { useUser } from '@auth0/nextjs-auth0/client';
 import { isUserWhitelistedForArcBeta, isUserWhitelistedForLegacyAlpha } from '../utils/whitelist';
@@ -345,28 +356,69 @@ export function ContentToggleButton({ setIsLoading, setLoadingProgress, setLoadi
                 {/* Gamemode Dropdown */}
                 <div className="mt-4">
                   <h5 className="font-semibold text-sm mb-3">Gamemode</h5>
-                  <Select value={selectedGamemode} onValueChange={setSelectedGamemode}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select a gamemode" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectLabel>Gamemode</SelectLabel>
-                        <SelectItem value="Task Force">Task Force</SelectItem>
-                        <SelectItem value="Standard">Standard</SelectItem>
-                        <SelectItem value="Sector Fleet">Sector Fleet</SelectItem>
-                        <SelectItem value="Campaign">Campaign</SelectItem>
-                        <SelectItem value="Fighter Group">Fighter Group</SelectItem>
-                        <SelectItem value="Battle for Naboo - Week 1">Battle for Naboo - Week 1</SelectItem>
-                        <SelectItem value="Battle for Naboo - Week 2">Battle for Naboo - Week 2</SelectItem>
-                        <SelectItem value="Battle for Naboo - Week 3">Battle for Naboo - Week 3</SelectItem>
-                        <SelectItem value="Battle for Naboo - Week 4">Battle for Naboo - Week 4</SelectItem>
-                        <SelectItem value="Battle for Naboo - Week 5">Battle for Naboo - Week 5</SelectItem>
-                        <SelectItem value="Battle for Naboo - Week 6">Battle for Naboo - Week 6</SelectItem>
-                        <SelectItem value="Unrestricted">Unrestricted</SelectItem>
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button 
+                        variant="outline" 
+                        className="w-full justify-between bg-zinc-100/80 dark:bg-zinc-800/80 text-zinc-900 dark:text-white hover:bg-zinc-200/90 dark:hover:bg-zinc-700/90 border-zinc-200 dark:border-zinc-700"
+                      >
+                        <span>{selectedGamemode || "Select a gamemode"}</span>
+                        <ChevronDown className="h-4 w-4 opacity-50" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-56 max-h-80 overflow-y-auto">
+                      <DropdownMenuLabel>Gamemode</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => setSelectedGamemode("Task Force")} className="flex items-center justify-between">
+                        Task Force
+                        {selectedGamemode === "Task Force" && <Check className="h-4 w-4" />}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setSelectedGamemode("Standard")} className="flex items-center justify-between">
+                        Standard
+                        {selectedGamemode === "Standard" && <Check className="h-4 w-4" />}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setSelectedGamemode("Sector Fleet")} className="flex items-center justify-between">
+                        Sector Fleet
+                        {selectedGamemode === "Sector Fleet" && <Check className="h-4 w-4" />}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setSelectedGamemode("Campaign")} className="flex items-center justify-between">
+                        Campaign
+                        {selectedGamemode === "Campaign" && <Check className="h-4 w-4" />}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setSelectedGamemode("Fighter Group")} className="flex items-center justify-between">
+                        Fighter Group
+                        {selectedGamemode === "Fighter Group" && <Check className="h-4 w-4" />}
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuSub>
+                        <DropdownMenuSubTrigger className={selectedGamemode.startsWith("Battle for Naboo") ? "bg-accent" : ""}>
+                          <span>Battle for Naboo</span>
+                          {selectedGamemode.startsWith("Battle for Naboo") && (
+                            <span className="ml-auto text-xs opacity-70">
+                              Week {selectedGamemode.split("Week ")[1]}
+                            </span>
+                          )}
+                        </DropdownMenuSubTrigger>
+                        <DropdownMenuSubContent>
+                          {[1, 2, 3, 4, 5, 6].map((week) => (
+                            <DropdownMenuItem 
+                              key={week}
+                              onClick={() => setSelectedGamemode(`Battle for Naboo - Week ${week}`)}
+                              className="flex items-center justify-between"
+                            >
+                              Week {week}
+                              {selectedGamemode === `Battle for Naboo - Week ${week}` && <Check className="h-4 w-4" />}
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuSubContent>
+                      </DropdownMenuSub>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => setSelectedGamemode("Unrestricted")} className="flex items-center justify-between">
+                        Unrestricted
+                        {selectedGamemode === "Unrestricted" && <Check className="h-4 w-4" />}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
 
                 {/* Core Content Section */}

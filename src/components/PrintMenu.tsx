@@ -54,9 +54,9 @@ export function PrintMenu({
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
-        <Card className="w-80 p-4" onClick={(e) => e.stopPropagation()}>
-          <h2 className="text-xl font-bold mb-4">Print Options</h2>
+      <div className="fixed inset-0 backdrop-blur-md bg-black/30 flex items-center justify-center z-50" onClick={onClose}>
+        <Card className="w-80 p-4 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md border border-zinc-200 dark:border-zinc-700" onClick={(e) => e.stopPropagation()}>
+          <h2 className="text-xl font-bold mb-4 text-zinc-900 dark:text-white">Print Options</h2>
           <div className="space-y-4">
             <div className="space-y-2">
               <h3 className="text-sm font-medium">Paper Size</h3>

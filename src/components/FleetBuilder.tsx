@@ -202,7 +202,7 @@ const SectionHeader = ({
 }) => (
   <Card className="mb-4 relative">
     <Button
-      className="w-full justify-between bg-white dark:bg-gray-900 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md bg-opacity-30 dark:bg-opacity-30 text-lg py-6"
+      className="w-full justify-between bg-zinc-100/80 dark:bg-zinc-800/80 text-zinc-900 dark:text-white hover:bg-zinc-200/90 dark:hover:bg-zinc-700/90 border-zinc-200 dark:border-zinc-700 backdrop-blur-md text-lg py-6"
       variant="outline"
       onClick={onAdd}
     >
@@ -4591,7 +4591,7 @@ export default function FleetBuilder({
               {user && (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                                     <Button variant="outline" className="bg-white/50 dark:bg-gray-900/50 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md" onClick={handleShareButtonClick}>
+                    <Button variant="outline" className="bg-zinc-100/80 dark:bg-zinc-800/80 text-zinc-900 dark:text-white hover:bg-zinc-200/90 dark:hover:bg-zinc-700/90 border-zinc-200 dark:border-zinc-700 backdrop-blur-md" onClick={handleShareButtonClick}>
                       <Share2 className="h-4 w-4" />
                     </Button>
                   </TooltipTrigger>
@@ -4601,16 +4601,16 @@ export default function FleetBuilder({
                 </Tooltip>
               )}
               
-                             <Tooltip>
-                 <TooltipTrigger asChild>
-                 <Button variant="outline" className="bg-white/50 dark:bg-gray-900/50 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-blur-md" onClick={() => setShowExportPopup(true)}>
-                     <FileText className="h-4 w-4" />
-                   </Button>
-                 </TooltipTrigger>
-                 <TooltipContent>
-                   <p>Export Fleet</p>
-                 </TooltipContent>
-               </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="outline" className="bg-zinc-100/80 dark:bg-zinc-800/80 text-zinc-900 dark:text-white hover:bg-zinc-200/90 dark:hover:bg-zinc-700/90 border-zinc-200 dark:border-zinc-700 backdrop-blur-md" onClick={() => setShowExportPopup(true)}>
+                    <FileText className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Export Fleet</p>
+                </TooltipContent>
+              </Tooltip>
 
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -4731,7 +4731,7 @@ export default function FleetBuilder({
           ) : (
             <Card className="mb-4 relative">
               <Button
-                className={`w-full justify-between bg-white/50 dark:bg-gray-900/50 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-md text-lg py-6 ${
+                className={`w-full justify-between bg-zinc-100/80 dark:bg-zinc-800/80 text-zinc-900 dark:text-white hover:bg-zinc-200/90 dark:hover:bg-zinc-700/90 border-zinc-200 dark:border-zinc-700 backdrop-blur-md text-lg py-6 ${
                   gamemode === "Fighter Group" ? 'opacity-50 cursor-not-allowed' : ''
                 }`}
                 variant="outline"
@@ -4789,7 +4789,7 @@ export default function FleetBuilder({
           ) : (
             <Card className="mb-4 relative">
               <Button
-                className="w-full justify-between bg-white/30 dark:bg-gray-900/30 text-gray-900 dark:text-white hover:bg-opacity-20 backdrop-md text-lg py-6"
+                className="w-full justify-between bg-zinc-100/80 dark:bg-zinc-800/80 text-zinc-900 dark:text-white hover:bg-zinc-200/90 dark:hover:bg-zinc-700/90 border-zinc-200 dark:border-zinc-700 backdrop-blur-md text-lg py-6"
                 variant="outline"
                 onClick={handleAddSquadron}
               >

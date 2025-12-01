@@ -142,12 +142,12 @@ export function ExportTextPopup({
 
   return (
     <div 
-      className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-md bg-opacity-30 dark:bg-opacity-30"
+      className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-md bg-black/30"
       data-export-popup="true"
     >
-      <Card className="w-full max-w-lg md:max-w-2xl bg-white/90 dark:bg-gray-800/90 backdrop-blur-md shadow-lg flex flex-col max-h-[90vh]">
-        <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-          <h2 className="text-lg sm:text-xl lg:text-2xl font-bold logo-font">Export Fleet</h2>
+      <Card className="w-full max-w-lg md:max-w-2xl bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md shadow-lg flex flex-col max-h-[90vh] border border-zinc-200 dark:border-zinc-700">
+        <div className="p-4 border-b border-zinc-200 dark:border-zinc-700 flex justify-between items-center">
+          <h2 className="text-lg sm:text-xl lg:text-2xl font-bold logo-font text-zinc-900 dark:text-white">Export Fleet</h2>
           <Button variant="ghost" size="icon" onClick={onClose}>
             <X className="h-4 w-4" />
           </Button>
@@ -162,17 +162,17 @@ export function ExportTextPopup({
               />
               <label 
                 htmlFor="share-fleet" 
-                className="text-sm text-gray-700 dark:text-gray-300 cursor-pointer"
+                className="text-sm text-zinc-700 dark:text-zinc-300 cursor-pointer"
               >
                 Share Fleet
               </label>
             </div>
           )}
-          <pre className="whitespace-pre-wrap font-mono text-sm text-gray-900 dark:text-white">
+          <pre className="whitespace-pre-wrap font-mono text-sm text-zinc-900 dark:text-white">
             {text}
           </pre>
         </CardContent>
-        <div className="flex justify-end gap-2 p-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex justify-end gap-2 p-4 border-t border-zinc-200 dark:border-zinc-700">
           <Button 
             onClick={copyToClipboard} 
             variant="outline" 
