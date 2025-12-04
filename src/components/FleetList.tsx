@@ -79,6 +79,7 @@ export const getContentTypes = (fleetData: string) => {
     legends: fleetData.includes("[Legends]"),
     legacy: fleetData.includes("[Legacy]"),
     legacy_beta: fleetData.includes("[LegacyBeta]"),
+    legacy_alpha: fleetData.includes("[LegacyAlpha]"),
     arc: fleetData.includes("[ARC]"),
     arc_beta: fleetData.includes("[ARCBeta]"),
     nexus: fleetData.includes("[Nexus]")
@@ -553,6 +554,7 @@ export function FleetList() {
           legends: contentTypes.legends,
           legacy: contentTypes.legacy,
           legacy_beta: contentTypes.legacy_beta,
+          legacy_alpha: contentTypes.legacy_alpha,
           arc: contentTypes.arc,
           arc_beta: contentTypes.arc_beta,
           nexus: contentTypes.nexus
@@ -571,6 +573,7 @@ export function FleetList() {
           fleet.legends !== currentContentTypes.legends ||
           fleet.legacy !== currentContentTypes.legacy ||
           fleet.legacy_beta !== currentContentTypes.legacy_beta ||
+          fleet.legacy_alpha !== currentContentTypes.legacy_alpha ||
           fleet.arc !== currentContentTypes.arc ||
           fleet.arc_beta !== currentContentTypes.arc_beta ||
           fleet.nexus !== currentContentTypes.nexus
@@ -841,6 +844,7 @@ export function FleetList() {
           legends: contentTypes.legends,
           legacy: contentTypes.legacy,
           legacy_beta: contentTypes.legacy_beta,
+          legacy_alpha: contentTypes.legacy_alpha,
           arc: contentTypes.arc,
           arc_beta: contentTypes.arc_beta,
           nexus: contentTypes.nexus
