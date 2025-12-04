@@ -76,6 +76,7 @@ export default function UpgradeSelector({
     legacy: Cookies.get('enableLegacy') === 'true',
     legends: Cookies.get('enableLegends') === 'true',
     legacyBeta: Cookies.get('enableLegacyBeta') === 'true',
+    legacyAlpha: Cookies.get('enableLegacyAlpha') === 'true',
     arcBeta: Cookies.get('enableArcBeta') === 'true',
     amg: Cookies.get('enableAMG') === 'true',
     nexus: Cookies.get('enableNexus') === 'true',
@@ -108,6 +109,7 @@ export default function UpgradeSelector({
       const cachedLegacyUpgrades = localStorage.getItem('legacyUpgrades');
       const cachedLegendsUpgrades = localStorage.getItem('legendsUpgrades');
       const cachedLegacyBetaUpgrades = localStorage.getItem('legacyBetaUpgrades');
+      const cachedLegacyAlphaUpgrades = localStorage.getItem('legacyAlphaUpgrades');
       const cachedArcUpgrades = localStorage.getItem('arcUpgrades');
       const cachedArcBetaUpgrades = localStorage.getItem('arcBetaUpgrades');
       const cachedAMGUpgrades = localStorage.getItem('amgUpgrades');
@@ -180,6 +182,11 @@ export default function UpgradeSelector({
         allUpgrades = [...allUpgrades, ...processUpgrades(legacyBetaUpgradeData, 'legacyBeta')];
       }
 
+      if (cachedLegacyAlphaUpgrades) {
+        const legacyAlphaUpgradeData = JSON.parse(cachedLegacyAlphaUpgrades);
+        allUpgrades = [...allUpgrades, ...processUpgrades(legacyAlphaUpgradeData, 'legacyAlpha')];
+      }
+
       if (cachedArcBetaUpgrades) {
         const arcBetaUpgradeData = JSON.parse(cachedArcBetaUpgrades);
         allUpgrades = [...allUpgrades, ...processUpgrades(arcBetaUpgradeData, 'arcBeta')];
@@ -215,7 +222,7 @@ export default function UpgradeSelector({
       allUpgrades.forEach(upgrade => {
         // Extract base name by removing any source prefixes and errata suffixes
         const baseName = upgrade.id
-          .replace(/^(legacy|legends|legacyBeta|arc|arcBeta|amg|nexus)-/, '') // Remove source prefix
+          .replace(/^(legacy|legends|legacyBeta|legacyAlpha|arc|arcBeta|amg|nexus)-/, '') // Remove source prefix
           .replace(/-errata(-[^-]+)?$/, ''); // Remove both types of errata suffixes
         
         // console.log(`Processing upgrade: ${upgrade.id}, baseName: ${baseName}`);
@@ -245,7 +252,7 @@ export default function UpgradeSelector({
           if (!upgrade.id.endsWith('-errata-arc') || !contentSources.arc) return false;
           
           // Remove source prefix to match errata keys format
-          const keyToCheck = upgrade.id.replace(/^(legacy|legends|legacyBeta|arc|arcBeta|amg|nexus)-/, '');
+          const keyToCheck = upgrade.id.replace(/^(legacy|legends|legacyBeta|legacyAlpha|arc|arcBeta|amg|nexus)-/, '');
           return upgradeErrataKeys.includes(keyToCheck);
         });
         
@@ -797,9 +804,11 @@ export default function UpgradeSelector({
         legacy: Cookies.get('enableLegacy') === 'true',
         legends: Cookies.get('enableLegends') === 'true',
         legacyBeta: Cookies.get('enableLegacyBeta') === 'true',
+        legacyAlpha: Cookies.get('enableLegacyAlpha') === 'true',
         arcBeta: Cookies.get('enableArcBeta') === 'true',
         amg: Cookies.get('enableAMG') === 'true',
         nexus: Cookies.get('enableNexus') === 'true',
+        nexusExperimental: Cookies.get('enableNexusExperimental') === 'true',
         naboo: Cookies.get('enableNaboo') === 'true'
       };
 

@@ -73,6 +73,7 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose, gamemodeR
       legacy: Cookies.get('enableLegacy') === 'true',
       legends: Cookies.get('enableLegends') === 'true',
       legacyBeta: Cookies.get('enableLegacyBeta') === 'true',
+      legacyAlpha: Cookies.get('enableLegacyAlpha') === 'true',
       arcBeta: Cookies.get('enableArcBeta') === 'true',
       amg: Cookies.get('enableAMG') === 'true',
       nexus: Cookies.get('enableNexus') === 'true',
@@ -105,6 +106,7 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose, gamemodeR
       legacy: Cookies.get('enableLegacy') === 'true',
       legends: Cookies.get('enableLegends') === 'true',
       legacyBeta: Cookies.get('enableLegacyBeta') === 'true',
+      legacyAlpha: Cookies.get('enableLegacyAlpha') === 'true',
       arcBeta: Cookies.get('enableArcBeta') === 'true',
       amg: Cookies.get('enableAMG') === 'true',
       nexus: Cookies.get('enableNexus') === 'true',
@@ -123,6 +125,7 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose, gamemodeR
         legacy: Cookies.get('enableLegacy') === 'true',
         legends: Cookies.get('enableLegends') === 'true',
         legacyBeta: Cookies.get('enableLegacyBeta') === 'true',
+        legacyAlpha: Cookies.get('enableLegacyAlpha') === 'true',
         arcBeta: Cookies.get('enableArcBeta') === 'true',
         amg: Cookies.get('enableAMG') === 'true',
         nexus: Cookies.get('enableNexus') === 'true',
@@ -192,6 +195,7 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose, gamemodeR
       const cachedNexusShips = localStorage.getItem('nexusShips');
       const cachedNexusExperimentalShips = localStorage.getItem('nexusExperimentalShips');
       const cachedLegacyBetaShips = localStorage.getItem('legacyBetaShips');
+      const cachedLegacyAlphaShips = localStorage.getItem('legacyAlphaShips');
       const cachedArcShips = localStorage.getItem('arcShips');
       const cachedArcBetaShips = localStorage.getItem('arcBetaShips');
       const cachedNabooShips = localStorage.getItem('nabooShips');
@@ -230,6 +234,12 @@ export function ShipSelector({ faction, filter, onSelectShip, onClose, gamemodeR
       if (cachedLegacyBetaShips) {
         const legacyBetaShipData = JSON.parse(cachedLegacyBetaShips);
         allShips = [...allShips, ...processShips(legacyBetaShipData, 'legacyBeta')];
+      }
+
+      // Process legacy alpha ships
+      if (cachedLegacyAlphaShips) {
+        const legacyAlphaShipData = JSON.parse(cachedLegacyAlphaShips);
+        allShips = [...allShips, ...processShips(legacyAlphaShipData, 'legacyAlpha')];
       }
 
       // Process arc ships

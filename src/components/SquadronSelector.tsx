@@ -62,6 +62,7 @@ export function SquadronSelector({
       legacy: Cookies.get('enableLegacy') === 'true',
       legends: Cookies.get('enableLegends') === 'true',
       legacyBeta: Cookies.get('enableLegacyBeta') === 'true',
+      legacyAlpha: Cookies.get('enableLegacyAlpha') === 'true',
       arcBeta: Cookies.get('enableArcBeta') === 'true',
       amg: Cookies.get('enableAMG') === 'true',
       nexus: Cookies.get('enableNexus') === 'true',
@@ -94,6 +95,7 @@ export function SquadronSelector({
       legacy: Cookies.get('enableLegacy') === 'true',
       legends: Cookies.get('enableLegends') === 'true',
       legacyBeta: Cookies.get('enableLegacyBeta') === 'true',
+      legacyAlpha: Cookies.get('enableLegacyAlpha') === 'true',
       arcBeta: Cookies.get('enableArcBeta') === 'true',
       amg: Cookies.get('enableAMG') === 'true',
       nexus: Cookies.get('enableNexus') === 'true',
@@ -109,6 +111,7 @@ export function SquadronSelector({
         legacy: Cookies.get('enableLegacy') === 'true',
         legends: Cookies.get('enableLegends') === 'true',
         legacyBeta: Cookies.get('enableLegacyBeta') === 'true',
+        legacyAlpha: Cookies.get('enableLegacyAlpha') === 'true',
         arcBeta: Cookies.get('enableArcBeta') === 'true',
         amg: Cookies.get('enableAMG') === 'true',
         nexus: Cookies.get('enableNexus') === 'true',
@@ -132,6 +135,7 @@ export function SquadronSelector({
       const cachedLegacySquadrons = localStorage.getItem('legacySquadrons');
       const cachedLegendsSquadrons = localStorage.getItem('legendsSquadrons');
       const cachedLegacyBetaSquadrons = localStorage.getItem('legacyBetaSquadrons');
+      const cachedLegacyAlphaSquadrons = localStorage.getItem('legacyAlphaSquadrons');
       const cachedArcSquadrons = localStorage.getItem('arcSquadrons');
       const cachedArcBetaSquadrons = localStorage.getItem('arcBetaSquadrons');
       const cachedAMGSquadrons = localStorage.getItem('amgSquadrons');
@@ -210,6 +214,11 @@ export function SquadronSelector({
         processSquadrons(legacyBetaSquadronData, 'legacyBeta');
       }
 
+      if (cachedLegacyAlphaSquadrons) {
+        const legacyAlphaSquadronData = JSON.parse(cachedLegacyAlphaSquadrons);
+        processSquadrons(legacyAlphaSquadronData, 'legacyAlpha');
+      }
+
       if (cachedAMGSquadrons) {
         const amgSquadronData = JSON.parse(cachedAMGSquadrons);
         processSquadrons(amgSquadronData, 'amg');
@@ -252,7 +261,7 @@ export function SquadronSelector({
 
       squadronsArray.forEach(squadron => {
         // Extract base name without any prefixes or errata suffixes
-        const baseName = squadron.id.replace(/^(legacy|legends|legacyBeta|arc|arcBeta|nexus|amg)-/, '').replace(/-errata(-[^-]+)?$/, '');
+        const baseName = squadron.id.replace(/^(legacy|legends|legacyBeta|legacyAlpha|arc|arcBeta|nexus|amg)-/, '').replace(/-errata(-[^-]+)?$/, '');
         
         if (!squadronGroups.has(baseName)) {
           squadronGroups.set(baseName, []);

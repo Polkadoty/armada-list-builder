@@ -86,6 +86,7 @@ const fetchAndSaveData = async (
   const enableNexus = Cookies.get('enableNexus') === 'true';
   const enableNexusExperimental = Cookies.get('enableNexusExperimental') === 'true';
   const enableLegacyBeta = Cookies.get('enableLegacyBeta') === 'true';
+  const enableLegacyAlpha = Cookies.get('enableLegacyAlpha') === 'true';
   const enableArc = Cookies.get('enableArc') === 'true';
   const enableArcBeta = Cookies.get('enableArcBeta') === 'true';
   const enableNaboo = Cookies.get('enableNaboo') === 'true';
@@ -141,6 +142,15 @@ const fetchAndSaveData = async (
       { name: 'legacyBetaShips', url: '/legacy-beta/ships/' },
       { name: 'legacyBetaSquadrons', url: '/legacy-beta/squadrons/' },
       { name: 'legacyBetaUpgrades', url: '/legacy-beta/upgrades/' }
+    );
+  }
+
+  if (enableLegacyAlpha) {
+    endpoints.push(
+      { name: 'legacyAlphaShips', url: '/legacy-alpha/ships/' },
+      { name: 'legacyAlphaSquadrons', url: '/legacy-alpha/squadrons/' },
+      { name: 'legacyAlphaUpgrades', url: '/legacy-alpha/upgrades/' },
+      { name: 'legacyAlphaObjectives', url: '/legacy-alpha/objectives/' }
     );
   }
 
@@ -230,8 +240,11 @@ export const flushCacheAndReload = async (
     'oldLegacyShips', 'oldLegacySquadrons', 'oldLegacyUpgrades',
     'legendsShips', 'legendsSquadrons', 'legendsUpgrades',
     'nexusShips', 'nexusSquadrons', 'nexusUpgrades',
+    'nexusExperimentalShips', 'nexusExperimentalSquadrons', 'nexusExperimentalUpgrades',
     'legacyBetaShips', 'legacyBetaSquadrons', 'legacyBetaUpgrades',
+    'legacyAlphaShips', 'legacyAlphaSquadrons', 'legacyAlphaUpgrades', 'legacyAlphaObjectives',
     'arcShips', 'arcSquadrons', 'arcUpgrades', 'arcObjectives',
+    'arcBetaShips', 'arcBetaSquadrons', 'arcBetaUpgrades', 'arcBetaObjectives',
     'nabooShips', 'nabooSquadrons', 'nabooUpgrades'
   ];
 

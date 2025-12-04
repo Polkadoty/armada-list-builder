@@ -1746,6 +1746,8 @@ export default function FleetBuilder({
         return '[Legends]';
       case 'legacyBeta':
         return '[LegacyBeta]';
+      case 'legacyAlpha':
+        return '[LegacyAlpha]';
       case 'arc':
         return '[ARC]';
       case 'arcBeta':
@@ -2075,11 +2077,15 @@ export default function FleetBuilder({
           const objective = {
             ...objectivesData[key],
             // Set source based on storage key
-            source: storageKey.includes('arc') ? 'arc' :
+            source: storageKey.includes('arcBeta') ? 'arcBeta' :
+                   storageKey.includes('arc') ? 'arc' :
+                   storageKey.includes('legacyAlpha') ? 'legacyAlpha' :
                    storageKey.includes('legacyBeta') ? 'legacyBeta' :
                    storageKey.includes('legacy') ? 'legacy' :
                    storageKey.includes('legends') ? 'legends' :
-                   storageKey.includes('nexus') ? 'nexus' : 'regular'
+                   storageKey.includes('nexusExperimental') ? 'nexusExperimental' :
+                   storageKey.includes('nexus') ? 'nexus' :
+                   storageKey.includes('naboo') ? 'naboo' : 'regular'
           } as ObjectiveModel;
           
           // Cache the result
@@ -2148,9 +2154,11 @@ export default function FleetBuilder({
                 // Add source information
                 source: storageKey.includes('arcBeta') ? 'arcBeta' :
                         storageKey.includes('arc') ? 'arc' :
+                        storageKey.includes('legacyAlpha') ? 'legacyAlpha' :
                         storageKey.includes('legacyBeta') ? 'legacyBeta' :
                         storageKey.includes('legacy') ? 'legacy' :
                         storageKey.includes('legends') ? 'legends' :
+                        storageKey.includes('nexusExperimental') ? 'nexusExperimental' :
                         storageKey.includes('nexus') ? 'nexus' :
                         storageKey.includes('naboo') ? 'naboo' :
                         storageKey.includes('amg') ? 'amg' : 'regular'
@@ -2167,9 +2175,11 @@ export default function FleetBuilder({
               ...itemsData[key],
               source: storageKey.includes('arcBeta') ? 'arcBeta' :
                       storageKey.includes('arc') ? 'arc' :
+                      storageKey.includes('legacyAlpha') ? 'legacyAlpha' :
                       storageKey.includes('legacyBeta') ? 'legacyBeta' :
                       storageKey.includes('legacy') ? 'legacy' :
                       storageKey.includes('legends') ? 'legends' :
+                      storageKey.includes('nexusExperimental') ? 'nexusExperimental' :
                       storageKey.includes('nexus') ? 'nexus' :
                       storageKey.includes('naboo') ? 'naboo' :
                       storageKey.includes('amg') ? 'amg' : 'regular'
@@ -2551,7 +2561,9 @@ export default function FleetBuilder({
         if (shipModel) {
           console.log(`Adding ship to fleet:`, shipModel);
           let source: ContentSource = "regular";
-          if (shipName.includes("[LegacyBeta]")) {
+          if (shipName.includes("[LegacyAlpha]")) {
+            source = "legacyAlpha";
+          } else if (shipName.includes("[LegacyBeta]")) {
             source = "legacyBeta";
           } else if (shipName.includes("[ARCBeta]")) {
             source = "arcBeta";
@@ -2585,7 +2597,9 @@ export default function FleetBuilder({
           if (squadron) {
             console.log(`Found squadron instead of ship:`, squadron);
             let source: ContentSource = "regular";
-            if (shipName.includes("[LegacyBeta]")) {
+            if (shipName.includes("[LegacyAlpha]")) {
+              source = "legacyAlpha";
+            } else if (shipName.includes("[LegacyBeta]")) {
               source = "legacyBeta";
             } else if (shipName.includes("[ARCBeta]")) {
               source = "arcBeta";
@@ -2827,6 +2841,9 @@ export default function FleetBuilder({
               if (sourceMatch) {
                 const sourceTag = sourceMatch[1].toLowerCase();
                 switch (sourceTag) {
+                  case 'legacyalpha':
+                    source = 'legacyAlpha';
+                    break;
                   case 'legacybeta':
                     source = 'legacyBeta';
                     break;
@@ -2895,6 +2912,9 @@ export default function FleetBuilder({
               if (sourceMatch) {
                 const sourceTag = sourceMatch[1].toLowerCase();
                 switch (sourceTag) {
+                  case 'legacyalpha':
+                    source = 'legacyAlpha';
+                    break;
                   case 'legacybeta':
                     source = 'legacyBeta';
                     break;
@@ -2959,7 +2979,9 @@ export default function FleetBuilder({
               if (squadron) {
                 console.log(`Selecting squadron:`, squadron);
                 let source: ContentSource = "regular";
-                if (squadronName.includes("[LegacyBeta]")) {
+                if (squadronName.includes("[LegacyAlpha]")) {
+                  source = "legacyAlpha";
+                } else if (squadronName.includes("[LegacyBeta]")) {
                   source = "legacyBeta";
                 } else if (squadronName.includes("[ARCBeta]")) {
                   source = "arcBeta";
