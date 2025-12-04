@@ -222,7 +222,7 @@ export default function UpgradeSelector({
       allUpgrades.forEach(upgrade => {
         // Extract base name by removing any source prefixes and errata suffixes
         const baseName = upgrade.id
-          .replace(/^(legacy|legends|legacyBeta|legacyAlpha|arc|arcBeta|amg|nexus)-/, '') // Remove source prefix
+          .replace(/^(legacy|legends|legacyBeta|legacyAlpha|arc|arcBeta|amg|nexusExperimental|nexus|naboo)-/, '') // Remove source prefix
           .replace(/-errata(-[^-]+)?$/, ''); // Remove both types of errata suffixes
         
         // console.log(`Processing upgrade: ${upgrade.id}, baseName: ${baseName}`);
@@ -252,7 +252,7 @@ export default function UpgradeSelector({
           if (!upgrade.id.endsWith('-errata-arc') || !contentSources.arc) return false;
           
           // Remove source prefix to match errata keys format
-          const keyToCheck = upgrade.id.replace(/^(legacy|legends|legacyBeta|legacyAlpha|arc|arcBeta|amg|nexus)-/, '');
+          const keyToCheck = upgrade.id.replace(/^(legacy|legends|legacyBeta|legacyAlpha|arc|arcBeta|amg|nexusExperimental|nexus|naboo)-/, '');
           return upgradeErrataKeys.includes(keyToCheck);
         });
         

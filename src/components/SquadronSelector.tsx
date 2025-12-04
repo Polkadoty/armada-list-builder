@@ -261,7 +261,7 @@ export function SquadronSelector({
 
       squadronsArray.forEach(squadron => {
         // Extract base name without any prefixes or errata suffixes
-        const baseName = squadron.id.replace(/^(legacy|legends|legacyBeta|legacyAlpha|arc|arcBeta|nexus|amg)-/, '').replace(/-errata(-[^-]+)?$/, '');
+        const baseName = squadron.id.replace(/^(legacy|legends|legacyBeta|legacyAlpha|arc|arcBeta|nexusExperimental|nexus|amg|naboo)-/, '').replace(/-errata(-[^-]+)?$/, '');
         
         if (!squadronGroups.has(baseName)) {
           squadronGroups.set(baseName, []);
