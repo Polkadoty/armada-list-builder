@@ -463,7 +463,7 @@ export function SelectedSquadron({ squadron, onRemove, onIncrement, onDecrement,
         {gamemode === "Fighter Group" && squadron.ace && squadron.assignedUpgrades && squadron.assignedUpgrades.filter(u => u.type === "leader").length > 0 && (
           <div className="p-2 space-y-2">
             {squadron.assignedUpgrades.filter(u => u.type === "leader").map((upgrade, index) => (
-              <div key={`leader-${index}`} className="flex items-center justify-between bg-gray-100 dark:bg-gray-700 rounded p-2">
+              <div key={`leader-${index}`} className="flex items-center justify-between bg-secondary rounded p-2">
                 <div className="flex items-center min-w-0">
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <Image
