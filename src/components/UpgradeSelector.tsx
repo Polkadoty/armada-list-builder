@@ -288,6 +288,21 @@ export default function UpgradeSelector({
         if (contentSources.legends) {
           allowedFactions.push('scum');
         }
+        
+        // Include nexus factions if nexus content is enabled
+        if (contentSources.nexus) {
+          allowedFactions.push('new-republic');
+        }
+        
+        // Include nexus experimental factions if nexus experimental content is enabled
+        if (contentSources.nexusExperimental) {
+          allowedFactions.push('first-order');
+          allowedFactions.push('resistance');
+          allowedFactions.push('unsc');
+          allowedFactions.push('covenant');
+          allowedFactions.push('chiss');
+          allowedFactions.push('impwar');
+        }
 
         const factionMatch = faction === 'sandbox'
           ? Array.isArray(upgrade.faction)

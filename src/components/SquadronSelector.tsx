@@ -323,8 +323,16 @@ export function SquadronSelector({
           if (contentSourcesEnabled.nexus) {
             allowedFactions.push('scum');
             allowedFactions.push('new-republic');
+          }
+          
+          // Include nexus experimental factions if nexus experimental content is enabled
+          if (contentSourcesEnabled.nexusExperimental) {
             allowedFactions.push('first-order');
             allowedFactions.push('resistance');
+            allowedFactions.push('unsc');
+            allowedFactions.push('covenant');
+            allowedFactions.push('chiss');
+            allowedFactions.push('impwar');
           }
           
           return allowedFactions.includes(squadron.faction) &&

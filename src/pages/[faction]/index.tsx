@@ -32,6 +32,8 @@ export const factionLogos = {
   'new-republic': '/icons/new-republic.svg',
   'first-order': '/icons/first-order.svg',
   'resistance': '/icons/resistance.svg',
+  'chiss': '/icons/chiss-logo.webp',
+  'impwar': '/icons/impwar-logo.webp',
 };
 
 const factionColors = {
@@ -47,7 +49,9 @@ const factionColors = {
   scum: '#FFF8E1',
   'new-republic': '#27E6FF',
   'first-order': '#FF0000',
-  'resistance': '#FF8C00'
+  'resistance': '#FF8C00',
+  'chiss': '#364870',
+  'impwar': '#FF0000'
 };
 
 export default function FactionPage() {
