@@ -20,6 +20,8 @@ const nexusExperimentalFactions = [
   { name: 'Resistance', logo: '/icons/resistance.svg', slug: 'resistance', shipImage: '/images/mc85.webp' },
   { name: 'United Nations Space Command', logo: '/icons/unsc.webp', slug: 'unsc', shipImage: '/images/unsc-marathon.webp' },
   { name: 'Covenant Empire', logo: '/icons/covenant.webp', slug: 'covenant', shipImage: '/images/covenant-ccs.webp' },
+  { name: 'Chiss Ascendancy', logo: '/icons/chiss-logo.webp', slug: 'chiss', shipImage: '/images/peltast.webp' },
+  { name: 'Imperial Warlords', logo: '/icons/impwar-logo.webp', slug: 'impwar', shipImage: '/images/arc-hammer.webp' },
 ];
 
 const customFactions = [

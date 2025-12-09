@@ -26,14 +26,18 @@ const factionColors = {
   scum: '#FFD700',
   'new-republic': '#27E6FF',
   'first-order': '#FF0000',
-  'resistance': '#FF8C00'
+  'resistance': '#FF8C00',
+  'chiss': '#364870',
+  'impwar': '#FF0000'
 };
 
 const customFactionIcons = [
   '/icons/unsc.webp',
   '/icons/covenant.webp',
   '/icons/colonial.webp',
-  '/icons/cylon.webp'
+  '/icons/cylon.webp',
+  '/icons/chiss-logo.webp',
+  '/icons/impwar-logo.webp'
 ];
 
 export function FactionIcon({ faction, onHover }: FactionIconProps) {
@@ -56,7 +60,9 @@ export function FactionIcon({ faction, onHover }: FactionIconProps) {
       '/icons/unsc.webp',
       '/icons/covenant.webp',
       '/icons/colonial.webp',
-      '/icons/cylon.webp'
+      '/icons/cylon.webp',
+      '/icons/chiss-logo.webp',
+      '/icons/impwar-logo.webp'
     ];
     
     if (customFactionIcons.includes(logoPath)) {
@@ -84,8 +90,8 @@ export function FactionIcon({ faction, onHover }: FactionIconProps) {
             <Image 
               src={faction.logo} 
               alt={faction.name} 
-              width={faction.slug === 'resistance' ? 77 : 64} 
-              height={faction.slug === 'resistance' ? 77 : 64} 
+              width={faction.slug === 'impwar' ? 90 : faction.slug === 'resistance' ? 77 : 64} 
+              height={faction.slug === 'impwar' ? 90 : faction.slug === 'resistance' ? 77 : 64} 
               className={`transition-all duration-200 hover:drop-shadow-[0_0_8px_var(--glow-color)] ${
                 !mounted ? '' : 
                 customFactionIcons.includes(faction.logo)

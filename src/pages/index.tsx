@@ -30,6 +30,8 @@ const factionShips = {
   'new-republic': '/images/nebula.webp',
   'first-order': '/images/resurgent.webp',
   'resistance': '/images/mc85.webp',
+  'chiss': '/images/peltast.webp',
+  'impwar': '/images/arc-hammer.webp',
 };
 
 export default function Home() {
