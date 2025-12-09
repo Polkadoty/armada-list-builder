@@ -51,6 +51,7 @@ export default function Home() {
   const { resolvedTheme } = useTheme();
   const [enableLegends, setEnableLegends] = useState(false);
   const [enableNexus, setEnableNexus] = useState(false);
+  const [enableNexusExperimental, setEnableNexusExperimental] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -66,6 +67,9 @@ export default function Home() {
       // Initialize enableNexus from cookie
       const nexusCookie = Cookies.get('enableNexus');
       setEnableNexus(nexusCookie === 'true');
+      // Initialize enableNexusExperimental from cookie
+      const nexusExperimentalCookie = Cookies.get('enableNexusExperimental');
+      setEnableNexusExperimental(nexusExperimentalCookie === 'true');
     }
     return () => window.removeEventListener('resize', handleResize);
   }, [gamemode]);
@@ -91,6 +95,19 @@ export default function Home() {
       if (currentNexus !== prevNexus) {
         setEnableNexus(currentNexus === 'true');
         prevNexus = currentNexus;
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Poll for enableNexusExperimental cookie changes and update state
+  useEffect(() => {
+    let prevNexusExperimental = Cookies.get('enableNexusExperimental');
+    const interval = setInterval(() => {
+      const currentNexusExperimental = Cookies.get('enableNexusExperimental');
+      if (currentNexusExperimental !== prevNexusExperimental) {
+        setEnableNexusExperimental(currentNexusExperimental === 'true');
+        prevNexusExperimental = currentNexusExperimental;
       }
     }, 1000);
     return () => clearInterval(interval);
@@ -163,7 +180,7 @@ export default function Home() {
             </p>
           </div>
           
-          <FactionSelection onHover={setHoveredFaction} enableLegends={enableLegends} enableNexus={enableNexus} />
+          <FactionSelection onHover={setHoveredFaction} enableLegends={enableLegends} enableNexus={enableNexus} enableNexusExperimental={enableNexusExperimental} />
           <div className="mt-8 flex flex-col items-center space-y-4">
             <div className="flex justify-center space-x-4">
               <Button 

@@ -13,13 +13,16 @@ const sandboxFaction = { name: 'Sandbox Mode', logo: '/icons/sandbox.webp', slug
 const nexusFactions = [
   { name: 'Scum and Villainy', logo: '/icons/scum.svg', slug: 'scum', shipImage: '/images/action-vi.webp' },
   { name: 'New Republic', logo: '/icons/new-republic.svg', slug: 'new-republic', shipImage: '/images/nebula.webp' },
+];
+
+const nexusExperimentalFactions = [
   { name: 'First Order', logo: '/icons/first-order.svg', slug: 'first-order', shipImage: '/images/resurgent.webp' },
   { name: 'Resistance', logo: '/icons/resistance.svg', slug: 'resistance', shipImage: '/images/mc85.webp' },
+  { name: 'United Nations Space Command', logo: '/icons/unsc.webp', slug: 'unsc', shipImage: '/images/unsc-marathon.webp' },
+  { name: 'Covenant Empire', logo: '/icons/covenant.webp', slug: 'covenant', shipImage: '/images/covenant-ccs.webp' },
 ];
 
 const customFactions = [
-  { name: 'United Nations Space Command', logo: '/icons/unsc.webp', slug: 'unsc', shipImage: '/images/unsc-marathon.webp' },
-  { name: 'Covenant Empire', logo: '/icons/covenant.webp', slug: 'covenant', shipImage: '/images/covenant-ccs.webp' },
   { name: 'Colonial Fleet', logo: '/icons/colonial.webp', slug: 'colonial', shipImage: '/images/colonial-galactica.webp' },
   { name: 'Cylon Alliance', logo: '/icons/cylon.webp', slug: 'cylon', shipImage: '/images/cylon-basestar.webp' },
 ];
@@ -31,7 +34,7 @@ const customFactions = [
 //   return !logoPath.endsWith('.webp');
 // };
 
-export default function FactionSelection({ onHover, enableLegends, enableNexus }: { onHover: (faction: string | null) => void, enableLegends: boolean, enableNexus?: boolean }) {
+export default function FactionSelection({ onHover, enableLegends, enableNexus, enableNexusExperimental }: { onHover: (faction: string | null) => void, enableLegends: boolean, enableNexus?: boolean, enableNexusExperimental?: boolean }) {
   const handleHover = (faction: string | null) => {
     onHover(faction);
   };
@@ -39,6 +42,7 @@ export default function FactionSelection({ onHover, enableLegends, enableNexus }
   const availableFactions = {
     base: baseFactions,
     nexus: enableNexus ? nexusFactions : [],
+    nexusExperimental: enableNexusExperimental ? nexusExperimentalFactions : [],
     sandbox: [sandboxFaction],
     custom: enableLegends ? customFactions : []
   };
@@ -64,6 +68,17 @@ export default function FactionSelection({ onHover, enableLegends, enableNexus }
             <Separator className="bg-gray-600/30 dark:bg-gray-400/30 h-[2px]" />
             <div className="grid grid-cols-2 gap-4 justify-items-center">
               {availableFactions.nexus.map((faction) => (
+                <FactionIcon key={faction.slug} faction={faction} onHover={handleHover} />
+              ))}
+            </div>
+          </>
+        )}
+
+        {availableFactions.nexusExperimental.length > 0 && (
+          <>
+            <Separator className="bg-gray-600/30 dark:bg-gray-400/30 h-[2px]" />
+            <div className="grid grid-cols-2 gap-4 justify-items-center">
+              {availableFactions.nexusExperimental.map((faction) => (
                 <FactionIcon key={faction.slug} faction={faction} onHover={handleHover} />
               ))}
             </div>
